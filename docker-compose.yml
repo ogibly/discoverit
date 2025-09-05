@@ -1,0 +1,57 @@
+version: "3.9"   # can be removed if you want, since Compose v2 ignores it
+
+networks:
+  discoverit-net:
+    driver: bridge
+services:
+  postgres:
+    networks:
+      - discoverit-net
+    image: postgres:15
+    container_name: discoverit-db
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U discoverit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: discoverit
+      POSTGRES_PASSWORD: DiscoverIT4DB
+      POSTGRES_DB: discoverit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  backend:
+    env_file:
+      ./backend/.env
+    networks:
+      - discoverit-net
+    build: ./backend
+    container_name: discoverit-backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://discoverit:DiscoverIT4DB@postgres:5432/discoverit
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: discoverit-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE: http://localhost:8000
+    ports:
+      - "5173:5173"
+    networks:
+      - discoverit-net
+volumes:
+  postgres_data:

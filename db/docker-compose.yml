@@ -5,7 +5,7 @@ services:
     container_name: discoverit-db
     environment:
       POSTGRES_USER: discoverit
-      POSTGRES_PASSWORD: DiscoverIT@DB
+      POSTGRES_PASSWORD: DiscoverIT4DB
       POSTGRES_DB: discoverit
     ports:
       - "5432:5432"

@@ -30,14 +30,71 @@ export default function HistoryTimeline({ deviceId }) {
 			<ul className="divide-y divide-gray-200">
 				{history.map((scan, idx) => (
 					<li key={idx} className="p-2">
-						<p className="text-sm text-gray-400 mb-1">Timestamp: {new Date(scan.timestamp).toLocaleString()}</p>
-						<ul className="ml-4">
-							{scan.ports.map((port, i) => (
-								<li key={i}>
-									<span className="font-medium">{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
-								</li>
-							))}
-						</ul>
+						<div className="flex items-center justify-between mb-2">
+							<p className="text-sm text-gray-400">Timestamp: {new Date(scan.timestamp).toLocaleString()}</p>
+							{scan.aborted && <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">ABORTED</span>}
+						</div>
+						
+						{/* Device Information */}
+						{scan.hostname && (
+							<div className="mb-2">
+								<p className="text-sm"><span className="font-medium">Hostname:</span> {scan.hostname}</p>
+							</div>
+						)}
+						
+						{/* OS Information */}
+						{scan.os_info && scan.os_info.os_name !== 'Unknown' && (
+							<div className="mb-2">
+								<p className="text-sm"><span className="font-medium">OS:</span> {scan.os_info.os_name} ({scan.os_info.os_accuracy}% accuracy)</p>
+							</div>
+						)}
+						
+						{/* Services */}
+						{scan.services && scan.services.length > 0 && (
+							<div className="mb-2">
+								<p className="text-sm font-medium mb-1">Services:</p>
+								<ul className="ml-4 text-sm">
+									{scan.services.map((service, i) => (
+										<li key={i} className="mb-1">
+											<span className="font-medium">{service.port}/{service.proto}</span> - {service.service}
+											{service.version && <span className="text-gray-600"> ({service.version})</span>}
+											{service.product && <span className="text-gray-600"> - {service.product}</span>}
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
+						
+						{/* Basic Ports (fallback for old scans) */}
+						{scan.ports && scan.ports.length > 0 && (
+							<div className="mb-2">
+								<p className="text-sm font-medium mb-1">Open Ports:</p>
+								<ul className="ml-4 text-sm">
+									{scan.ports.map((port, i) => (
+										<li key={i}>
+											<span className="font-medium">{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
+						
+						{/* Script Results */}
+						{scan.script_results && Object.keys(scan.script_results).length > 0 && (
+							<div className="mb-2">
+								<p className="text-sm font-medium mb-1">Additional Info:</p>
+								<div className="ml-4 text-xs text-gray-600">
+									{Object.entries(scan.script_results).slice(0, 3).map(([script, result]) => (
+										<div key={script} className="mb-1">
+											<span className="font-medium">{script}:</span> {result}
+										</div>
+									))}
+									{Object.keys(scan.script_results).length > 3 && (
+										<p>... and {Object.keys(scan.script_results).length - 3} more</p>
+									)}
+								</div>
+							</div>
+						)}
 					</li>
 				))}
 			</ul>

@@ -11,7 +11,7 @@ function App() {
 	const [selectedDevice, setSelectedDevice] = useState(null);
 	const [loadingScan, setLoadingScan] = useState(false);
 	const [newDevice, setNewDevice] = useState({ ip: "", mac: "", vendor: "" });
-	const [subnet, setSubnet] = useState("");
+	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
     const [progress, setProgress] = useState({ status: "idle", current_ip: null, message: null });
 
@@ -23,7 +23,7 @@ function App() {
 		fetchDevices();
 		// fetch suggested subnet
 		axios.get(`${API_BASE}/suggest_subnet`).then(res => {
-			if (res.data && res.data.subnet && !subnet) setSubnet(res.data.subnet);
+			if (res.data && res.data.subnet && !target) setTarget(res.data.subnet);
 		}).catch(() => {});
 		// poll progress
 		const id = setInterval(async () => {
@@ -56,13 +56,18 @@ function App() {
 
 	const triggerScan = async () => {
 		setLoadingScan(true);
+		setStatusMsg("");
 		try {
-			const url = subnet ? `${API_BASE}/scan?subnet=${encodeURIComponent(subnet)}` : `${API_BASE}/scan`;
+			const url = target ? `${API_BASE}/scan?target=${encodeURIComponent(target)}` : `${API_BASE}/scan`;
 			const res = await axios.post(url);
 			await new Promise(r => setTimeout(r, 2000));
 			fetchDevices();
 			if (res && res.data && (res.data.count !== undefined)) {
-				setStatusMsg(subnet ? `Discovery done. Found ${res.data.count} host(s).` : `Scan done for ${res.data.count} device(s).`);
+				if (res.data.aborted) {
+					setStatusMsg(`Scan aborted. Found ${res.data.count} host(s) before cancellation.`);
+				} else {
+					setStatusMsg(target ? `Comprehensive scan done. Found ${res.data.count} host(s).` : `Scan done for ${res.data.count} device(s).`);
+				}
 			} else {
 				setStatusMsg("Scan completed.");
 			}
@@ -71,6 +76,15 @@ function App() {
 			}
 		} finally {
 			setLoadingScan(false);
+		}
+	};
+
+	const cancelScan = async () => {
+		try {
+			await axios.post(`${API_BASE}/scan/cancel`);
+			setLoadingScan(false);
+		} catch (error) {
+			console.error("Failed to cancel scan:", error);
 		}
 	};
 
@@ -95,16 +109,24 @@ function App() {
 				</form>
 				<div className="ml-auto flex items-end gap-2">
 					<div>
-						<label className="block text-sm text-gray-600">Subnet</label>
-						<input value={subnet} onChange={e => setSubnet(e.target.value)} className="border rounded px-2 py-1" placeholder="192.168.1.0/24" />
+						<label className="block text-sm text-gray-600">Target</label>
+						<input value={target} onChange={e => setTarget(e.target.value)} className="border rounded px-2 py-1" placeholder="192.168.1.0/24 or 192.168.1.1-50" />
 					</div>
 					<button
 						onClick={triggerScan}
 						disabled={loadingScan}
 						className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
 					>
-						{loadingScan ? "Scanning..." : "Trigger Network Scan"}
+						{loadingScan ? "Scanning..." : "Start Comprehensive Scan"}
 					</button>
+					{loadingScan && (
+						<button
+							onClick={cancelScan}
+							className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+						>
+							Cancel Scan
+						</button>
+					)}
 				</div>
 			</div>
 			{(progress.status !== 'idle' || statusMsg) && (

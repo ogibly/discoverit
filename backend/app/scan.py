@@ -82,7 +82,7 @@ def get_os_fingerprint(ip: str) -> Dict:
     nm = nmap.PortScanner()
     try:
         # OS detection scan
-        nm.scan(ip, arguments="-O -T4 --max-retries 1 --host-timeout 10s")
+        nm.scan(ip, arguments="-O -sS -T3 -p 1-1000 --max-retries 3 --host-timeout 5m --osscan-guess --version-all")
         if ip in nm.all_hosts():
             host = nm[ip]
             os_info = {
@@ -101,7 +101,7 @@ def get_service_detection(ip: str) -> List[Dict]:
     nm = nmap.PortScanner()
     try:
         # Service version detection
-        nm.scan(ip, arguments="-sV -T4 --max-retries 1 --host-timeout 15s")
+        nm.scan(ip, arguments="-sV -sS -T3 -p 1-1000 --max-retries 3 --host-timeout 5m --version-all")
         services = []
         for proto in nm[ip].all_protocols():
             for port in nm[ip][proto].keys():
@@ -127,7 +127,7 @@ def get_script_scan(ip: str) -> Dict:
     nm = nmap.PortScanner()
     try:
         # Run common information gathering scripts
-        nm.scan(ip, arguments="--script=default,safe -T4 --max-retries 1 --host-timeout 20s")
+        nm.scan(ip, arguments="--script=default,safe,http-title -T3 --max-retries 1 --host-timeout 20s")
         script_results = {}
         if ip in nm.all_hosts():
             host = nm[ip]
@@ -140,7 +140,7 @@ def get_script_scan(ip: str) -> Dict:
 
 def comprehensive_scan(ip: str) -> Dict:
     """Comprehensive device fingerprinting and information gathering"""
-    timestamp = datetime.utcnow().isoformat() + "Z"
+    timestamp = datetime.now().isoformat() + "Z"
     
     # Basic port scan
     basic_ports = run_scan(ip)

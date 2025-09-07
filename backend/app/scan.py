@@ -2,48 +2,47 @@ import nmap
 from datetime import datetime
 import json
 from typing import List, Dict
-import subprocess
 import socket
-import re
 
 def run_scan(ip: str):
+    """
+    Runs a quick scan on the top ports.
+    """
     nm = nmap.PortScanner()
     try:
-        # Very fast scan: common ports only, aggressive timing, short timeout
-        nm.scan(ip, arguments="-sT -T5 -Pn -F --max-retries 1 --host-timeout 15s")
+        # Fast scan: common ports, aggressive timing, no ping
+        nm.scan(ip, arguments="-sT -T4 -Pn -F")
         ports = []
-        for proto in nm[ip].all_protocols():
-            for port in nm[ip][proto].keys():
-                ports.append({
-                    "port": port,
-                    "proto": proto,
-                    "state": nm[ip][proto][port]["state"],
-                    "service": nm[ip][proto][port].get("name", "")
-                })
+        if ip in nm.all_hosts() and nm[ip].all_protocols():
+            for proto in nm[ip].all_protocols():
+                for port in nm[ip][proto].keys():
+                    ports.append({
+                        "port": port,
+                        "proto": proto,
+                        "state": nm[ip][proto][port]["state"],
+                        "service": nm[ip][proto][port].get("name", "")
+                    })
         return {
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "ports": ports
+            "ports": ports,
+            "scan_type": "quick"
         }
     except Exception as e:
         return {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "ports": [],
-            "error": str(e)
+            "error": str(e),
+            "scan_type": "quick"
         }
-
 
 def discover_subnet(target: str):
     """
-    Discover hosts in a subnet (CIDR) or IP range.
-    Supports formats like:
-    - 192.168.1.0/24 (CIDR)
-    - 192.168.1.1-192.168.1.50 (IP range)
-    - 10.0.0.1-10.0.0.100 (IP range)
+    Discovers hosts in a subnet using a fast ping scan.
     """
     nm = nmap.PortScanner()
     try:
-        # Very fast ping scan with short timeout
-        nm.scan(hosts=target, arguments="-sn -T5 --max-retries 1 --host-timeout 5s")
+        # Fast ping scan
+        nm.scan(hosts=target, arguments="-sn -T4")
         hosts: List[dict] = []
         for host in nm.all_hosts():
             addresses = nm[host].get('addresses', {})
@@ -67,106 +66,83 @@ def discover_subnet(target: str):
             "error": str(e)
         }
 
-
-def get_hostname(ip: str) -> str:
-    """Get hostname for IP address"""
-    try:
-        hostname = socket.gethostbyaddr(ip)[0]
-        return hostname
-    except:
-        return None
-
-
-def get_os_fingerprint(ip: str) -> Dict:
-    """Get OS fingerprint using nmap OS detection"""
-    nm = nmap.PortScanner()
-    try:
-        # OS detection scan
-        nm.scan(ip, arguments="-O -sS -T3 -p 1-1000 --max-retries 3 --host-timeout 5m --osscan-guess --version-all")
-        if ip in nm.all_hosts():
-            host = nm[ip]
-            os_info = {
-                "os_name": host.get('osmatch', [{}])[0].get('name', 'Unknown') if host.get('osmatch') else 'Unknown',
-                "os_accuracy": host.get('osmatch', [{}])[0].get('accuracy', 0) if host.get('osmatch') else 0,
-                "os_family": host.get('osmatch', [{}])[0].get('osclass', [{}])[0].get('osfamily', 'Unknown') if host.get('osmatch') and host.get('osmatch')[0].get('osclass') else 'Unknown'
-            }
-            return os_info
-    except:
-        pass
-    return {"os_name": "Unknown", "os_accuracy": 0, "os_family": "Unknown"}
-
-
-def get_service_detection(ip: str) -> List[Dict]:
-    """Get detailed service information"""
-    nm = nmap.PortScanner()
-    try:
-        # Service version detection
-        nm.scan(ip, arguments="-sV -sS -T3 -p 1-1000 --max-retries 3 --host-timeout 5m --version-all")
-        services = []
-        for proto in nm[ip].all_protocols():
-            for port in nm[ip][proto].keys():
-                port_info = nm[ip][proto][port]
-                service = {
-                    "port": port,
-                    "proto": proto,
-                    "state": port_info["state"],
-                    "service": port_info.get("name", ""),
-                    "version": port_info.get("version", ""),
-                    "product": port_info.get("product", ""),
-                    "extrainfo": port_info.get("extrainfo", ""),
-                    "cpe": port_info.get("cpe", "")
-                }
-                services.append(service)
-        return services
-    except:
-        return []
-
-
-def get_script_scan(ip: str) -> Dict:
-    """Run nmap scripts for additional information"""
-    nm = nmap.PortScanner()
-    try:
-        # Run common information gathering scripts
-        nm.scan(ip, arguments="--script=default,safe,http-title -T3 --max-retries 1 --host-timeout 20s")
-        script_results = {}
-        if ip in nm.all_hosts():
-            host = nm[ip]
-            for script in host.get('script', {}):
-                script_results[script] = host['script'][script]
-        return script_results
-    except:
-        return {}
-
-
 def comprehensive_scan(ip: str) -> Dict:
-    """Comprehensive device fingerprinting and information gathering"""
-    timestamp = datetime.now().isoformat() + "Z"
+    """
+    Runs a comprehensive, aggressive scan to gather maximum information.
+    This uses the -A flag to enable OS detection, version detection,
+    script scanning, and traceroute. Requires root privileges.
+    """
+    nm = nmap.PortScanner()
+    timestamp = datetime.utcnow().isoformat() + "Z"
     
-    # Basic port scan
-    basic_ports = run_scan(ip)
-    
-    # Get hostname
-    hostname = get_hostname(ip)
-    
-    # OS fingerprinting
-    os_info = get_os_fingerprint(ip)
-    
-    # Service detection
-    services = get_service_detection(ip)
-    
-    # Script scan results
-    script_results = get_script_scan(ip)
-    
-    # Combine all information
-    result = {
-        "timestamp": timestamp,
-        "ip": ip,
-        "hostname": hostname,
-        "os_info": os_info,
-        "ports": basic_ports.get("ports", []),
-        "services": services,
-        "script_results": script_results,
-        "scan_type": "comprehensive"
-    }
-    
-    return result
+    try:
+        # Aggressive scan with OS, version, script, and traceroute detection
+        nm.scan(ip, arguments="-A -T4")
+        
+        if ip not in nm.all_hosts():
+            return {"timestamp": timestamp, "ip": ip, "error": "Host not responding.", "scan_type": "comprehensive"}
+
+        host_data = nm[ip]
+        
+        # Extract Hostname
+        hostname = host_data.hostname() if host_data.hostname() else None
+
+        # Extract OS Information
+        os_info = {}
+        if 'osmatch' in host_data and host_data['osmatch']:
+            best_match = host_data['osmatch'][0]
+            os_info = {
+                "os_name": best_match.get('name', 'Unknown'),
+                "os_accuracy": best_match.get('accuracy', 0),
+                "os_family": best_match.get('osclass', [{}])[0].get('osfamily', 'Unknown') if best_match.get('osclass') else 'Unknown'
+            }
+
+        # Extract Services and Ports
+        services = []
+        ports = []
+        if host_data.all_protocols():
+            for proto in host_data.all_protocols():
+                for port in host_data[proto].keys():
+                    port_info = host_data[proto][port]
+                    service_detail = {
+                        "port": port,
+                        "proto": proto,
+                        "state": port_info.get("state", ""),
+                        "service": port_info.get("name", ""),
+                        "version": port_info.get("version", ""),
+                        "product": port_info.get("product", ""),
+                        "extrainfo": port_info.get("extrainfo", ""),
+                        "cpe": port_info.get("cpe", "")
+                    }
+                    services.append(service_detail)
+                    ports.append({
+                        "port": port,
+                        "proto": proto,
+                        "state": port_info.get("state", ""),
+                        "service": port_info.get("name", "")
+                    })
+
+        # Extract Script Results
+        script_results = host_data.get('script', {})
+
+        # Combine all information
+        result = {
+            "timestamp": timestamp,
+            "ip": ip,
+            "hostname": hostname,
+            "os_info": os_info,
+            "ports": ports,
+            "services": services,
+            "script_results": script_results,
+            "scan_type": "comprehensive"
+        }
+        
+        return result
+
+    except Exception as e:
+        return {
+            "timestamp": timestamp,
+            "ip": ip,
+            "error": str(e),
+            "scan_type": "comprehensive"
+        }

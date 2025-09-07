@@ -8,7 +8,6 @@ class Device(Base):
     ip = Column(String, unique=True, index=True)
     mac = Column(String, nullable=True)
     vendor = Column(String, nullable=True)
-    last_seen = Column(DateTime)
 
     scans = relationship("Scan", back_populates="device")
 

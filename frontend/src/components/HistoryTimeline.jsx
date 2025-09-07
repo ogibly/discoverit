@@ -19,8 +19,8 @@ export default function HistoryTimeline({ deviceId }) {
 		fetchHistory(1);
 	}, [deviceId]);
 
-	const prevPage = () => { if (page > 1) fetchHistory(page - 1); };
-	const nextPage = () => { if (page < total) fetchHistory(page + 1); };
+	const prevPage = () => { if (page < total) fetchHistory(page + 1); };
+	const nextPage = () => { if (page > 1) fetchHistory(page - 1); };
 
 	if (!history.length) return <p className="text-gray-500">No scans available</p>;
 
@@ -101,17 +101,17 @@ export default function HistoryTimeline({ deviceId }) {
 			<div className="flex justify-between mt-4">
 				<button
 					onClick={prevPage}
-					disabled={page <= 1}
-					className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
-				>
-					Previous
-				</button>
-				<button
-					onClick={nextPage}
 					disabled={page >= total}
 					className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
 				>
-					Next
+					&larr; Older
+				</button>
+				<button
+					onClick={nextPage}
+					disabled={page <= 1}
+					className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
+				>
+					Newer &rarr;
 				</button>
 			</div>
 		</div>

@@ -9,10 +9,10 @@ const API_BASE = import.meta.env.VITE_API_BASE;
 function App() {
 	const [devices, setDevices] = useState([]);
 	const [selectedDevice, setSelectedDevice] = useState(null);
-	const [loadingScan, setLoadingScan] = useState(false);
 	const [newDevice, setNewDevice] = useState({ ip: "", mac: "", vendor: "" });
 	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
+    const [activeScan, setActiveScan] = useState(null);
 
 	const fetchDevices = () => {
 		axios.get(`${API_BASE}/devices`).then(res => setDevices(res.data));
@@ -24,9 +24,19 @@ function App() {
 		axios.get(`${API_BASE}/suggest_subnet`).then(res => {
 			if (res.data && res.data.subnet && !target) setTarget(res.data.subnet);
 		}).catch(() => {});
-		// poll for devices every 3 seconds
-		const id = setInterval(fetchDevices, 3000);
-		return () => clearInterval(id);
+		
+		// poll for devices and active scan status
+		const deviceInterval = setInterval(fetchDevices, 3000);
+		const scanInterval = setInterval(() => {
+			axios.get(`${API_BASE}/scan/active`).then(res => {
+				setActiveScan(res.data);
+			}).catch(() => setActiveScan(null));
+		}, 3000);
+
+		return () => {
+			clearInterval(deviceInterval);
+			clearInterval(scanInterval);
+		};
 	}, []);
 
 	const createDevice = async (e) => {
@@ -42,17 +52,25 @@ function App() {
 	};
 
 	const triggerScan = async (scanType) => {
-		setLoadingScan(true);
 		setStatusMsg(`${scanType.charAt(0).toUpperCase() + scanType.slice(1)} scan started...`);
 		try {
 			const url = target
 				? `${API_BASE}/scan?target=${encodeURIComponent(target)}&scan_type=${scanType}`
 				: `${API_BASE}/scan`;
-			await axios.post(url);
+			const res = await axios.post(url);
+			setActiveScan(res.data);
 		} catch (error) {
 			setStatusMsg("Failed to start scan.");
-		} finally {
-			setLoadingScan(false);
+		}
+	};
+
+	const cancelScan = async () => {
+		if (!activeScan) return;
+		try {
+			await axios.post(`${API_BASE}/scan/${activeScan.id}/cancel`);
+			setStatusMsg("Scan cancellation requested.");
+		} catch (error) {
+			setStatusMsg("Failed to cancel scan.");
 		}
 	};
 
@@ -83,24 +101,36 @@ function App() {
 					<div className="flex items-end gap-2">
 						<button
 							onClick={() => triggerScan("quick")}
-							disabled={loadingScan}
+							disabled={!!activeScan}
 							className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 disabled:opacity-50"
 						>
-							{loadingScan ? "Scanning..." : "Quick Scan"}
+							{activeScan ? "Scanning..." : "Quick Scan"}
 						</button>
 						<button
 							onClick={() => triggerScan("comprehensive")}
-							disabled={loadingScan}
+							disabled={!!activeScan}
 							className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
 						>
-							{loadingScan ? "Scanning..." : "Comprehensive Scan"}
+							{activeScan ? "Scanning..." : "Comprehensive Scan"}
 						</button>
+						{activeScan && (
+							<button
+								onClick={cancelScan}
+								className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+							>
+								Cancel Scan
+							</button>
+						)}
 					</div>
 				</div>
 			</div>
-			{statusMsg && (
+			{(activeScan || statusMsg) && (
 				<div className="mb-2 text-sm text-gray-700">
-					<span>{statusMsg}</span>
+					{activeScan ? (
+						<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
+					) : (
+						<span>{statusMsg}</span>
+					)}
 				</div>
 			)}
 			<div className="grid grid-cols-3 gap-6">

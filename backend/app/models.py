@@ -8,13 +8,24 @@ class Device(Base):
     ip = Column(String, unique=True, index=True)
     mac = Column(String, nullable=True)
     vendor = Column(String, nullable=True)
+    last_seen = Column(DateTime)
 
     scans = relationship("Scan", back_populates="device")
+
+class ScanTask(Base):
+    __tablename__ = "scan_tasks"
+    id = Column(Integer, primary_key=True, index=True)
+    start_time = Column(DateTime, default=datetime.utcnow)
+    end_time = Column(DateTime, nullable=True)
+    target = Column(String)
+    status = Column(String, default="running") # running, completed, cancelled, failed
+    scan_type = Column(String)
 
 class Scan(Base):
     __tablename__ = "scans"
     id = Column(Integer, primary_key=True, index=True)
     device_id = Column(Integer, ForeignKey("devices.id"))
+    scan_task_id = Column(Integer, ForeignKey("scan_tasks.id"), nullable=True)
     timestamp = Column(DateTime)
     scan_data = Column(String)  # JSON serialized
     status = Column(String, default="completed")

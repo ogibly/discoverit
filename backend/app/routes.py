@@ -9,6 +9,7 @@ from pydantic import BaseModel
 import socket
 from fastapi import BackgroundTasks
 from . import schemas
+from datetime import datetime
 
 class DeviceOut(BaseModel):
     id: int
@@ -97,20 +98,27 @@ def suggest_subnet():
         pass
     return {"subnet": None}
 
-def run_background_scan(target: str, scan_type: str):
+def run_background_scan(task_id: int):
     """
     This function runs in the background.
     It creates its own database session.
-    1. Discover hosts
-    2. For each host, upsert device and run a scan of the specified type
     """
     db = SessionLocal()
     try:
+        task = db.query(models.ScanTask).filter(models.ScanTask.id == task_id).first()
+        if not task:
+            return
+
         # Discover devices on subnet/range
-        result = scan.discover_subnet(target)
+        result = scan.discover_subnet(task.target)
         hosts = result.get("hosts", [])
         
         for h in hosts:
+            # Check for cancellation
+            db.refresh(task)
+            if task.status == "cancelled":
+                break
+
             ip = h.get("ip")
             if not ip:
                 continue
@@ -130,23 +138,44 @@ def run_background_scan(target: str, scan_type: str):
                 db.flush()
             
             # Run the specified scan type
-            if scan_type == "quick":
+            if task.scan_type == "quick":
                 scan_result = scan.run_scan(ip)
             else:
                 scan_result = scan.comprehensive_scan(ip)
             
             db_scan = models.Scan(
                 device_id=device.id,
+                scan_task_id=task.id,
                 timestamp=now_ts,
                 scan_data=json.dumps(scan_result),
                 status="completed"
             )
             db.add(db_scan)
             db.commit()
+
+        # Update task status
+        db.refresh(task)
+        if task.status != "cancelled":
+            task.status = "completed"
+        task.end_time = datetime.utcnow()
+        db.commit()
     finally:
         db.close()
 
-@router.post("/scan", status_code=202)
+@router.get("/scan/active", response_model=Optional[ScanTaskOut])
+def get_active_scan(db: Session = Depends(get_db)):
+    return db.query(models.ScanTask).filter(models.ScanTask.status == "running").first()
+
+@router.post("/scan/{task_id}/cancel", status_code=200)
+def cancel_scan(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(models.ScanTask).filter(models.ScanTask.id == task_id).first()
+    if task and task.status == "running":
+        task.status = "cancelled"
+        db.commit()
+        return {"message": "Scan cancellation requested"}
+    return {"message": "No active scan to cancel or scan not found"}
+
+@router.post("/scan", status_code=202, response_model=ScanTaskOut)
 def trigger_scan(
     background_tasks: BackgroundTasks,
     target: Optional[str] = None,
@@ -154,14 +183,21 @@ def trigger_scan(
     db: Session = Depends(get_db)
 ):
     if not target:
-        # Fallback: scan all known devices' ports (always a quick scan)
+        # This part can be refactored or removed if not needed
+        # For now, it remains a simple, non-task-based scan
         devices = db.query(models.Device).all()
         for d in devices:
             result = scan.run_scan(d.ip)
             db_scan = models.Scan(device_id=d.id, timestamp=datetime.utcnow(), scan_data=json.dumps(result))
             db.add(db_scan)
         db.commit()
-        return {"message": "Scan completed for known devices", "count": len(devices)}
+        return {"message": "Simple scan completed for known devices", "count": len(devices)}
 
-    background_tasks.add_task(run_background_scan, target, scan_type)
-    return {"message": f"{scan_type.capitalize()} scan started in the background"}
+    # Create a new scan task
+    new_task = models.ScanTask(target=target, scan_type=scan_type)
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+
+    background_tasks.add_task(run_background_scan, new_task.id)
+    return new_task

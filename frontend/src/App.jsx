@@ -74,6 +74,35 @@ function App() {
 		}
 	};
 
+	const deleteDevice = async (deviceId) => {
+		if (window.confirm("Are you sure you want to delete this device and all its scan history?")) {
+			try {
+				await axios.delete(`${API_BASE}/devices/${deviceId}`);
+				fetchDevices();
+				if (selectedDevice && selectedDevice.id === deviceId) {
+					setSelectedDevice(null);
+				}
+			} catch (error) {
+				setStatusMsg("Failed to delete device.");
+			}
+		}
+	};
+
+	const deleteScan = async (scanId) => {
+		if (window.confirm("Are you sure you want to delete this scan record?")) {
+			try {
+				await axios.delete(`${API__BASE}/scans/${scanId}`);
+				// We need to force a re-fetch of the history for the selected device
+				// A simple way is to "deselect" and "reselect" the device
+				const currentDevice = selectedDevice;
+				setSelectedDevice(null);
+				setTimeout(() => setSelectedDevice(currentDevice), 0);
+			} catch (error) {
+				setStatusMsg("Failed to delete scan record.");
+			}
+		}
+	};
+
 	const cancelScan = async () => {
 		if (!activeScan) return;
 		try {
@@ -145,11 +174,11 @@ function App() {
 			)}
 			<div className="grid grid-cols-3 gap-6">
 				<div className="col-span-1">
-					<DeviceList devices={devices} onSelect={setSelectedDevice} />
+					<DeviceList devices={devices} onSelect={setSelectedDevice} onDelete={deleteDevice} />
 				</div>
 				<div className="col-span-2">
 					{selectedDevice ? (
-						<DeviceDetail device={selectedDevice} />
+						<DeviceDetail device={selectedDevice} onDeleteScan={deleteScan} />
 					) : (
 						<p className="text-gray-600">Select a device to see details.</p>
 					)}

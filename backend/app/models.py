@@ -11,7 +11,7 @@ class Device(Base):
     vendor = Column(String, nullable=True)
     last_seen = Column(DateTime)
 
-    scans = relationship("Scan", back_populates="device")
+    scans = relationship("Scan", back_populates="device", cascade="all, delete-orphan")
 
 class ScanTask(Base):
     __tablename__ = "scan_tasks"

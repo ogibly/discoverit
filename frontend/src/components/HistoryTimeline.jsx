@@ -3,16 +3,21 @@ import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
-export default function HistoryTimeline({ deviceId }) {
+export default function HistoryTimeline({ deviceId, onDeleteScan }) {
 	const [history, setHistory] = useState([]);
 	const [page, setPage] = useState(1);
 	const [total, setTotal] = useState(0);
 
 	const fetchHistory = async (p = 1) => {
-		const res = await axios.get(`${API_BASE}/devices/${deviceId}/history?page=${p}&limit=1`);
-		setHistory(res.data.scan ? [res.data.scan] : []);
-		setPage(res.data.page);
-		setTotal(res.data.total);
+		try {
+			const res = await axios.get(`${API_BASE}/devices/${deviceId}/history?page=${p}&limit=1`);
+			setHistory(res.data.scan ? [res.data.scan] : []);
+			setPage(res.data.page);
+			setTotal(res.data.total);
+		} catch (error) {
+			setHistory([]);
+			setTotal(0);
+		}
 	};
 
 	useEffect(() => {
@@ -28,11 +33,19 @@ export default function HistoryTimeline({ deviceId }) {
 		<div className="bg-white shadow rounded p-4 mt-4">
 			<h3 className="text-lg font-bold mb-2">Scan History</h3>
 			<ul className="divide-y divide-gray-200">
-				{history.map((scan, idx) => (
-					<li key={idx} className="p-2">
+				{history.map((scan) => (
+					<li key={scan.id} className="p-2">
 						<div className="flex items-center justify-between mb-2">
 							<p className="text-sm text-gray-400">Timestamp: {new Date(scan.timestamp).toLocaleString()}</p>
-							{scan.aborted && <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">ABORTED</span>}
+							<div>
+								{scan.aborted && <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">ABORTED</span>}
+								<button
+									onClick={() => onDeleteScan(scan.id)}
+									className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+								>
+									Delete
+								</button>
+							</div>
 						</div>
 						
 						{/* Device Information */}

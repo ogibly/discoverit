@@ -75,6 +75,22 @@ def create_device(payload: DeviceCreate, db: Session = Depends(get_db)):
     db.refresh(device)
     return device
 
+@router.delete("/devices/{device_id}", status_code=204)
+def delete_device(device_id: int, db: Session = Depends(get_db)):
+    device = db.query(models.Device).filter(models.Device.id == device_id).first()
+    if device:
+        db.delete(device)
+        db.commit()
+    return
+
+@router.delete("/scans/{scan_id}", status_code=204)
+def delete_scan(scan_id: int, db: Session = Depends(get_db)):
+    scan = db.query(models.Scan).filter(models.Scan.id == scan_id).first()
+    if scan:
+        db.delete(scan)
+        db.commit()
+    return
+
 @router.get("/devices/{device_id}/history", response_model=HistoryResponse)
 def device_history(device_id: int, page: int = 1, limit: int = 1, db: Session = Depends(get_db)):
     scans = db.query(models.Scan).filter(models.Scan.device_id==device_id)\

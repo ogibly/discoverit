@@ -28,8 +28,7 @@ services:
   backend:
     env_file:
       ./backend/.env
-    networks:
-      - discoverit-net
+    network_mode: "host"
     build: ./backend
     container_name: discoverit-backend
     restart: always
@@ -37,9 +36,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://discoverit:DiscoverIT4DB@postgres:5432/discoverit
-    ports:
-      - "8000:8000"
+      DATABASE_URL: postgresql://discoverit:DiscoverIT4DB@localhost:5432/discoverit
 
   frontend:
     build: ./frontend

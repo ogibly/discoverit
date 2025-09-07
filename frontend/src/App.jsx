@@ -24,8 +24,8 @@ function App() {
 		axios.get(`${API_BASE}/suggest_subnet`).then(res => {
 			if (res.data && res.data.subnet && !target) setTarget(res.data.subnet);
 		}).catch(() => {});
-		// poll for devices every 5 seconds
-		const id = setInterval(fetchDevices, 5000);
+		// poll for devices every 3 seconds
+		const id = setInterval(fetchDevices, 3000);
 		return () => clearInterval(id);
 	}, []);
 
@@ -41,11 +41,13 @@ function App() {
 		fetchDevices();
 	};
 
-	const triggerScan = async () => {
+	const triggerScan = async (scanType) => {
 		setLoadingScan(true);
-		setStatusMsg("Scan started in the background. The device list will update as devices are discovered.");
+		setStatusMsg(`${scanType.charAt(0).toUpperCase() + scanType.slice(1)} scan started...`);
 		try {
-			const url = target ? `${API_BASE}/scan?target=${encodeURIComponent(target)}` : `${API_BASE}/scan`;
+			const url = target
+				? `${API_BASE}/scan?target=${encodeURIComponent(target)}&scan_type=${scanType}`
+				: `${API_BASE}/scan`;
 			await axios.post(url);
 		} catch (error) {
 			setStatusMsg("Failed to start scan.");
@@ -79,11 +81,18 @@ function App() {
 						<input value={target} onChange={e => setTarget(e.target.value)} className="border rounded px-2 py-1" placeholder="192.168.1.0/24 or 192.168.1.1-50" />
 					</div>
 					<button
-						onClick={triggerScan}
+						onClick={() => triggerScan("quick")}
+						disabled={loadingScan}
+						className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+					>
+						{loadingScan ? "Scanning..." : "Quick Scan"}
+					</button>
+					<button
+						onClick={() => triggerScan("comprehensive")}
 						disabled={loadingScan}
 						className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
 					>
-						{loadingScan ? "Scanning..." : "Start Comprehensive Scan"}
+						{loadingScan ? "Scanning..." : "Comprehensive Scan"}
 					</button>
 				</div>
 			</div>

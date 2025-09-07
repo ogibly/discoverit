@@ -97,12 +97,12 @@ def suggest_subnet():
         pass
     return {"subnet": None}
 
-def run_background_scan(target: str):
+def run_background_scan(target: str, scan_type: str):
     """
     This function runs in the background.
     It creates its own database session.
     1. Discover hosts
-    2. For each host, upsert device and run a comprehensive scan
+    2. For each host, upsert device and run a scan of the specified type
     """
     db = SessionLocal()
     try:
@@ -129,8 +129,12 @@ def run_background_scan(target: str):
                 db.add(device)
                 db.flush()
             
-            # Comprehensive scan for this host
-            scan_result = scan.comprehensive_scan(ip)
+            # Run the specified scan type
+            if scan_type == "quick":
+                scan_result = scan.run_scan(ip)
+            else:
+                scan_result = scan.comprehensive_scan(ip)
+            
             db_scan = models.Scan(
                 device_id=device.id,
                 timestamp=now_ts,
@@ -143,9 +147,14 @@ def run_background_scan(target: str):
         db.close()
 
 @router.post("/scan", status_code=202)
-def trigger_scan(background_tasks: BackgroundTasks, target: Optional[str] = None, db: Session = Depends(get_db)):
+def trigger_scan(
+    background_tasks: BackgroundTasks,
+    target: Optional[str] = None,
+    scan_type: str = "comprehensive",
+    db: Session = Depends(get_db)
+):
     if not target:
-        # Fallback: scan all known devices' ports
+        # Fallback: scan all known devices' ports (always a quick scan)
         devices = db.query(models.Device).all()
         for d in devices:
             result = scan.run_scan(d.ip)
@@ -154,5 +163,5 @@ def trigger_scan(background_tasks: BackgroundTasks, target: Optional[str] = None
         db.commit()
         return {"message": "Scan completed for known devices", "count": len(devices)}
 
-    background_tasks.add_task(run_background_scan, target)
-    return {"message": "Comprehensive scan started in the background"}
+    background_tasks.add_task(run_background_scan, target, scan_type)
+    return {"message": f"{scan_type.capitalize()} scan started in the background"}

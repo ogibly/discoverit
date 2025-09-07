@@ -13,7 +13,6 @@ function App() {
 	const [newDevice, setNewDevice] = useState({ ip: "", mac: "", vendor: "" });
 	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
-    const [progress, setProgress] = useState({ status: "idle", current_ip: null, message: null });
 
 	const fetchDevices = () => {
 		axios.get(`${API_BASE}/devices`).then(res => setDevices(res.data));
@@ -25,22 +24,10 @@ function App() {
 		axios.get(`${API_BASE}/suggest_subnet`).then(res => {
 			if (res.data && res.data.subnet && !target) setTarget(res.data.subnet);
 		}).catch(() => {});
-		// poll progress
-		const id = setInterval(async () => {
-			try {
-				const res = await axios.get(`${API_BASE}/scan/progress`);
-				setProgress(res.data);
-			} catch {}
-		}, 1000);
+		// poll for devices every 5 seconds
+		const id = setInterval(fetchDevices, 5000);
 		return () => clearInterval(id);
 	}, []);
-
-	// poll devices during scanning for live updates
-	useEffect(() => {
-		if (progress.status === 'idle') return;
-		const id = setInterval(fetchDevices, 2000);
-		return () => clearInterval(id);
-	}, [progress.status]);
 
 	const createDevice = async (e) => {
 		e.preventDefault();
@@ -56,35 +43,14 @@ function App() {
 
 	const triggerScan = async () => {
 		setLoadingScan(true);
-		setStatusMsg("");
+		setStatusMsg("Scan started in the background. The device list will update as devices are discovered.");
 		try {
 			const url = target ? `${API_BASE}/scan?target=${encodeURIComponent(target)}` : `${API_BASE}/scan`;
-			const res = await axios.post(url);
-			await new Promise(r => setTimeout(r, 2000));
-			fetchDevices();
-			if (res && res.data && (res.data.count !== undefined)) {
-				if (res.data.aborted) {
-					setStatusMsg(`Scan aborted. Found ${res.data.count} host(s) before cancellation.`);
-				} else {
-					setStatusMsg(target ? `Comprehensive scan done. Found ${res.data.count} host(s).` : `Scan done for ${res.data.count} device(s).`);
-				}
-			} else {
-				setStatusMsg("Scan completed.");
-			}
-			if (selectedDevice) {
-				setSelectedDevice(devices.find(d => d.id === selectedDevice.id) || null);
-			}
+			await axios.post(url);
+		} catch (error) {
+			setStatusMsg("Failed to start scan.");
 		} finally {
 			setLoadingScan(false);
-		}
-	};
-
-	const cancelScan = async () => {
-		try {
-			await axios.post(`${API_BASE}/scan/cancel`);
-			setLoadingScan(false);
-		} catch (error) {
-			console.error("Failed to cancel scan:", error);
 		}
 	};
 
@@ -119,23 +85,11 @@ function App() {
 					>
 						{loadingScan ? "Scanning..." : "Start Comprehensive Scan"}
 					</button>
-					{loadingScan && (
-						<button
-							onClick={cancelScan}
-							className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-						>
-							Cancel Scan
-						</button>
-					)}
 				</div>
 			</div>
-			{(progress.status !== 'idle' || statusMsg) && (
+			{statusMsg && (
 				<div className="mb-2 text-sm text-gray-700">
-					{progress.status !== 'idle' ? (
-						<span>{progress.message || `Working...`} {progress.current_ip && `( ${progress.current_ip} )`}</span>
-					) : (
-						<span>{statusMsg}</span>
-					)}
+					<span>{statusMsg}</span>
 				</div>
 			)}
 			<div className="grid grid-cols-3 gap-6">

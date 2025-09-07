@@ -18,5 +18,6 @@ class Scan(Base):
     device_id = Column(Integer, ForeignKey("devices.id"))
     timestamp = Column(DateTime)
     scan_data = Column(String)  # JSON serialized
+    status = Column(String, default="completed")
 
     device = relationship("Device", back_populates="scans")

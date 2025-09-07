@@ -8,10 +8,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 import socket
 from fastapi import BackgroundTasks
-
-SCAN_PROGRESS = {"status": "idle", "current_ip": None, "message": None, "scan_id": None}
-CURRENT_SCAN_ID = None
-
+from . import schemas
 
 class DeviceOut(BaseModel):
     id: int
@@ -35,6 +32,17 @@ class DeviceCreate(BaseModel):
     ip: str
     mac: Optional[str] = None
     vendor: Optional[str] = None
+
+class ScanTaskOut(BaseModel):
+    id: int
+    status: str
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    target: str
+
+    class Config:
+        orm_mode = True
+
 
 router = APIRouter()
 
@@ -89,77 +97,57 @@ def suggest_subnet():
         pass
     return {"subnet": None}
 
-@router.get("/scan/progress")
-def scan_progress():
-    return SCAN_PROGRESS
-
-@router.post("/scan/cancel")
-def cancel_scan():
-    global CURRENT_SCAN_ID
-    if SCAN_PROGRESS["status"] != "idle":
-        CURRENT_SCAN_ID = "cancelled"
-        SCAN_PROGRESS.update({"status": "cancelled", "message": "Scan cancelled by user"})
-        return {"message": "Scan cancellation requested"}
-    return {"message": "No active scan to cancel"}
-
-
-@router.post("/scan")
-def trigger_scan(target: Optional[str] = None, db: Session = Depends(get_db)):
-    global CURRENT_SCAN_ID
-    import uuid
-    scan_id = str(uuid.uuid4())
-    CURRENT_SCAN_ID = scan_id
+def run_background_scan(target: str, db: Session):
+    """
+    This function runs in the background.
+    1. Discover hosts
+    2. For each host, upsert device and run a comprehensive scan
+    """
+    # Discover devices on subnet/range
+    result = scan.discover_subnet(target)
+    hosts = result.get("hosts", [])
     
-    if target:
-        # Discover devices on subnet/range and upsert devices, then run comprehensive scan per device
-        result = scan.discover_subnet(target)
-        discovered = []
-        hosts = result.get("hosts", [])
-        SCAN_PROGRESS.update({"status": "discovering", "current_ip": None, "message": f"Discovering {target} - found {len(hosts)} hosts", "scan_id": scan_id})
+    for h in hosts:
+        ip = h.get("ip")
+        if not ip:
+            continue
         
-        for i, h in enumerate(hosts):
-            # Check for cancellation
-            if CURRENT_SCAN_ID != scan_id:
-                SCAN_PROGRESS.update({"status": "idle", "current_ip": None, "message": "Scan aborted", "scan_id": None})
-                return {"message": "Scan aborted", "count": len(discovered), "aborted": True}
-            
-            ip = h.get("ip")
-            if not ip:
-                continue
-            
-            SCAN_PROGRESS.update({"current_ip": ip, "status": "upserting", "message": f"Processing {i+1}/{len(hosts)}: {ip}", "scan_id": scan_id})
-            device = db.query(models.Device).filter(models.Device.ip == ip).first()
-            now_ts = datetime.utcnow()
-            if device:
-                if h.get("mac"):
-                    device.mac = h["mac"]
-                if h.get("vendor"):
-                    device.vendor = h["vendor"]
-                device.last_seen = now_ts
-            else:
-                device = models.Device(ip=ip, mac=h.get("mac"), vendor=h.get("vendor"), last_seen=now_ts)
-                db.add(device)
-                db.flush()
-            
-            # comprehensive scan for this host
-            SCAN_PROGRESS.update({"status": "scanning", "current_ip": ip, "message": f"Comprehensive scan {i+1}/{len(hosts)}: {ip}", "scan_id": scan_id})
-            scan_result = scan.comprehensive_scan(ip)
-            scan_result["scan_id"] = scan_id
-            scan_result["aborted"] = CURRENT_SCAN_ID != scan_id
-            db_scan = models.Scan(device_id=device.id, timestamp=now_ts, scan_data=json.dumps(scan_result))
-            db.add(db_scan)
-            discovered.append(ip)
+        # Upsert device
+        device = db.query(models.Device).filter(models.Device.ip == ip).first()
+        now_ts = datetime.utcnow()
+        if device:
+            if h.get("mac"):
+                device.mac = h["mac"]
+            if h.get("vendor"):
+                device.vendor = h["vendor"]
+            device.last_seen = now_ts
+        else:
+            device = models.Device(ip=ip, mac=h.get("mac"), vendor=h.get("vendor"), last_seen=now_ts)
+            db.add(device)
+            db.flush()
         
-        db.commit()
-        SCAN_PROGRESS.update({"status": "idle", "current_ip": None, "message": None, "scan_id": None})
-        return {"message": "Comprehensive scan completed", "count": len(discovered)}
-    # Fallback: scan all known devices' ports
-    devices = db.query(models.Device).all()
-    for d in devices:
-        SCAN_PROGRESS.update({"status": "scanning", "current_ip": d.ip, "message": f"Scanning {d.ip}"})
-        result = scan.run_scan(d.ip)
-        db_scan = models.Scan(device_id=d.id, timestamp=datetime.utcnow(), scan_data=json.dumps(result))
+        # Comprehensive scan for this host
+        scan_result = scan.comprehensive_scan(ip)
+        db_scan = models.Scan(
+            device_id=device.id,
+            timestamp=now_ts,
+            scan_data=json.dumps(scan_result),
+            status="completed"
+        )
         db.add(db_scan)
-    db.commit()
-    SCAN_PROGRESS.update({"status": "idle", "current_ip": None, "message": None})
-    return {"message": "Scan completed", "count": len(devices)}
+        db.commit()
+
+@router.post("/scan", status_code=202)
+def trigger_scan(background_tasks: BackgroundTasks, target: Optional[str] = None, db: Session = Depends(get_db)):
+    if not target:
+        # Fallback: scan all known devices' ports
+        devices = db.query(models.Device).all()
+        for d in devices:
+            result = scan.run_scan(d.ip)
+            db_scan = models.Scan(device_id=d.id, timestamp=datetime.utcnow(), scan_data=json.dumps(result))
+            db.add(db_scan)
+        db.commit()
+        return {"message": "Scan completed for known devices", "count": len(devices)}
+
+    background_tasks.add_task(run_background_scan, target, db)
+    return {"message": "Comprehensive scan started in the background"}

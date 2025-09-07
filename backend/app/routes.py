@@ -40,6 +40,7 @@ class ScanTaskOut(BaseModel):
     start_time: datetime
     end_time: Optional[datetime] = None
     target: str
+    scan_type: str
 
     class Config:
         orm_mode = True

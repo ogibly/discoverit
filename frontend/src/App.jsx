@@ -13,6 +13,7 @@ function App() {
 	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
     const [activeScan, setActiveScan] = useState(null);
+    const prevActiveScan = React.useRef();
 
 	const fetchDevices = () => {
 		axios.get(`${API_BASE}/devices`).then(res => setDevices(res.data));
@@ -39,6 +40,15 @@ function App() {
 		};
 	}, []);
 
+	useEffect(() => {
+		if (prevActiveScan.current && !activeScan) {
+			setStatusMsg("Scan completed.");
+			const timer = setTimeout(() => setStatusMsg(""), 5000);
+			return () => clearTimeout(timer);
+		}
+		prevActiveScan.current = activeScan;
+	}, [activeScan]);
+
 	const createDevice = async (e) => {
 		e.preventDefault();
 		if (!newDevice.ip) return;
@@ -52,7 +62,7 @@ function App() {
 	};
 
 	const triggerScan = async (scanType) => {
-		setStatusMsg(`${scanType.charAt(0).toUpperCase() + scanType.slice(1)} scan started...`);
+		setStatusMsg(""); // Clear previous messages
 		try {
 			const url = target
 				? `${API_BASE}/scan?target=${encodeURIComponent(target)}&scan_type=${scanType}`

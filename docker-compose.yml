@@ -1,8 +1,9 @@
-version: "3.9"   # can be removed if you want, since Compose v2 ignores it
+version: "3.9"
 
 networks:
   discoverit-net:
     driver: bridge
+
 services:
   postgres:
     networks:
@@ -28,23 +29,34 @@ services:
   backend:
     env_file:
       ./backend/.env
-    network_mode: "host"
+    networks:
+      - discoverit-net
     build: ./backend
     container_name: discoverit-backend
     restart: always
     depends_on:
       postgres:
         condition: service_healthy
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     environment:
-      DATABASE_URL: postgresql://discoverit:DiscoverIT4DB@localhost:5432/discoverit
+      DATABASE_URL: postgresql://discoverit:DiscoverIT4DB@postgres:5432/discoverit
+    ports:
+      - "8000:8000"
 
   frontend:
     build: ./frontend
     container_name: discoverit-frontend
     restart: always
+    depends_on:
+      - backend
     environment:
       VITE_API_BASE: http://localhost:8000
     ports:
       - "5173:5173"
+    networks:
+      - discoverit-net
+
 volumes:
   postgres_data:

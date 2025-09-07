@@ -97,45 +97,50 @@ def suggest_subnet():
         pass
     return {"subnet": None}
 
-def run_background_scan(target: str, db: Session):
+def run_background_scan(target: str):
     """
     This function runs in the background.
+    It creates its own database session.
     1. Discover hosts
     2. For each host, upsert device and run a comprehensive scan
     """
-    # Discover devices on subnet/range
-    result = scan.discover_subnet(target)
-    hosts = result.get("hosts", [])
-    
-    for h in hosts:
-        ip = h.get("ip")
-        if not ip:
-            continue
+    db = SessionLocal()
+    try:
+        # Discover devices on subnet/range
+        result = scan.discover_subnet(target)
+        hosts = result.get("hosts", [])
         
-        # Upsert device
-        device = db.query(models.Device).filter(models.Device.ip == ip).first()
-        now_ts = datetime.utcnow()
-        if device:
-            if h.get("mac"):
-                device.mac = h["mac"]
-            if h.get("vendor"):
-                device.vendor = h["vendor"]
-            device.last_seen = now_ts
-        else:
-            device = models.Device(ip=ip, mac=h.get("mac"), vendor=h.get("vendor"), last_seen=now_ts)
-            db.add(device)
-            db.flush()
-        
-        # Comprehensive scan for this host
-        scan_result = scan.comprehensive_scan(ip)
-        db_scan = models.Scan(
-            device_id=device.id,
-            timestamp=now_ts,
-            scan_data=json.dumps(scan_result),
-            status="completed"
-        )
-        db.add(db_scan)
-        db.commit()
+        for h in hosts:
+            ip = h.get("ip")
+            if not ip:
+                continue
+            
+            # Upsert device
+            device = db.query(models.Device).filter(models.Device.ip == ip).first()
+            now_ts = datetime.utcnow()
+            if device:
+                if h.get("mac"):
+                    device.mac = h["mac"]
+                if h.get("vendor"):
+                    device.vendor = h["vendor"]
+                device.last_seen = now_ts
+            else:
+                device = models.Device(ip=ip, mac=h.get("mac"), vendor=h.get("vendor"), last_seen=now_ts)
+                db.add(device)
+                db.flush()
+            
+            # Comprehensive scan for this host
+            scan_result = scan.comprehensive_scan(ip)
+            db_scan = models.Scan(
+                device_id=device.id,
+                timestamp=now_ts,
+                scan_data=json.dumps(scan_result),
+                status="completed"
+            )
+            db.add(db_scan)
+            db.commit()
+    finally:
+        db.close()
 
 @router.post("/scan", status_code=202)
 def trigger_scan(background_tasks: BackgroundTasks, target: Optional[str] = None, db: Session = Depends(get_db)):
@@ -149,5 +154,5 @@ def trigger_scan(background_tasks: BackgroundTasks, target: Optional[str] = None
         db.commit()
         return {"message": "Scan completed for known devices", "count": len(devices)}
 
-    background_tasks.add_task(run_background_scan, target, db)
+    background_tasks.add_task(run_background_scan, target)
     return {"message": "Comprehensive scan started in the background"}

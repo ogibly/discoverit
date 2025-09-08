@@ -1,7 +1,12 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
+
+asset_group_association = Table('asset_group_association', Base.metadata,
+    Column('asset_id', Integer, ForeignKey('assets.id')),
+    Column('asset_group_id', Integer, ForeignKey('asset_groups.id'))
+)
 
 class Device(Base):
     __tablename__ = "devices"
@@ -46,6 +51,15 @@ class Asset(Base):
     custom_fields = Column(String) # JSON serialized
 
     ips = relationship("IPAddress", back_populates="asset", cascade="all, delete-orphan")
+    groups = relationship("AssetGroup", secondary=asset_group_association, back_populates="assets")
+
+class AssetGroup(Base):
+    __tablename__ = "asset_groups"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    labels = Column(String) # JSON serialized
+
+    assets = relationship("Asset", secondary=asset_group_association, back_populates="groups")
 
 class IPAddress(Base):
     __tablename__ = "ip_addresses"

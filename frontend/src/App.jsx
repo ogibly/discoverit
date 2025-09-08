@@ -6,6 +6,9 @@ import DeviceDetail from "./components/DeviceDetail";
 import AssetList from "./components/AssetList";
 import AssetDetail from "./components/AssetDetail";
 import AssetManager from "./components/AssetManager";
+import AssetGroupList from "./components/AssetGroupList";
+import AssetGroupDetail from "./components/AssetGroupDetail";
+import AssetGroupManager from "./components/AssetGroupManager";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -16,6 +19,10 @@ function App() {
 	const [assets, setAssets] = useState([]);
 	const [selectedAsset, setSelectedAsset] = useState(null);
 	const [showAssetManager, setShowAssetManager] = useState(false);
+	const [assetGroups, setAssetGroups] = useState([]);
+	const [selectedAssetGroup, setSelectedAssetGroup] = useState(null);
+	const [showAssetGroupManager, setShowAssetGroupManager] = useState(false);
+	const [editingAssetGroup, setEditingAssetGroup] = useState(null);
 	const [newDevice, setNewDevice] = useState({ ip: "", mac: "", vendor: "" });
 	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
@@ -30,9 +37,14 @@ function App() {
 		axios.get(`${API_BASE}/assets`).then(res => setAssets(res.data));
 	};
 
+	const fetchAssetGroups = () => {
+		axios.get(`${API_BASE}/asset_groups`).then(res => setAssetGroups(res.data));
+	};
+
 	useEffect(() => {
 		fetchDevices();
 		fetchAssets();
+		fetchAssetGroups();
 		// fetch suggested subnet
 		axios.get(`${API_BASE}/suggest_subnet`).then(res => {
 			if (res.data && res.data.subnet && !target) setTarget(res.data.subnet);
@@ -41,6 +53,7 @@ function App() {
 		// poll for devices and active scan status
 		const deviceInterval = setInterval(fetchDevices, 3000);
 		const assetInterval = setInterval(fetchAssets, 3000);
+		const assetGroupInterval = setInterval(fetchAssetGroups, 3000);
 		const scanInterval = setInterval(() => {
 			axios.get(`${API_BASE}/scan/active`).then(res => {
 				setActiveScan(res.data);
@@ -50,6 +63,7 @@ function App() {
 		return () => {
 			clearInterval(deviceInterval);
 			clearInterval(assetInterval);
+			clearInterval(assetGroupInterval);
 			clearInterval(scanInterval);
 		};
 	}, []);
@@ -154,6 +168,35 @@ function App() {
 			fetchAssets();
 		} catch (error) {
 			setStatusMsg("Failed to update asset.");
+		}
+	};
+
+	const handleSaveAssetGroup = async (groupData) => {
+		try {
+			if (editingAssetGroup) {
+				await axios.put(`${API_BASE}/asset_groups/${editingAssetGroup.id}`, groupData);
+			} else {
+				await axios.post(`${API_BASE}/asset_groups`, groupData);
+			}
+			fetchAssetGroups();
+			setShowAssetGroupManager(false);
+			setEditingAssetGroup(null);
+		} catch (error) {
+			setStatusMsg("Failed to save asset group.");
+		}
+	};
+
+	const deleteAssetGroup = async (assetGroupId) => {
+		if (window.confirm("Are you sure you want to delete this asset group?")) {
+			try {
+				await axios.delete(`${API_BASE}/asset_groups/${assetGroupId}`);
+				fetchAssetGroups();
+				if (selectedAssetGroup && selectedAssetGroup.id === assetGroupId) {
+					setSelectedAssetGroup(null);
+				}
+			} catch (error) {
+				setStatusMsg("Failed to delete asset group.");
+			}
 		}
 	};
 
@@ -291,6 +334,21 @@ function App() {
 						</div>
 						<AssetList assets={assets} onSelect={setSelectedAsset} onDelete={deleteAsset} />
 					</div>
+					<div className="mt-6">
+						<div className="flex justify-between items-center mb-2">
+							<h2 className="text-xl font-bold">Asset Groups</h2>
+							<button
+								onClick={() => {
+									setEditingAssetGroup(null);
+									setShowAssetGroupManager(true);
+								}}
+								className="px-3 py-1 bg-gray-200 text-gray-800 text-xs rounded hover:bg-gray-300"
+							>
+								Create
+							</button>
+						</div>
+						<AssetGroupList assetGroups={assetGroups} onSelect={setSelectedAssetGroup} onDelete={deleteAssetGroup} />
+					</div>
 				</div>
 				<div className="col-span-2">
 					{selectedDevice ? (
@@ -303,6 +361,11 @@ function App() {
 							<AssetDetail asset={selectedAsset} />
 						</div>
 					)}
+					{selectedAssetGroup && (
+						<div className="mt-6">
+							<AssetGroupDetail assetGroup={selectedAssetGroup} />
+						</div>
+					)}
 				</div>
 			</div>
 			{showAssetManager && (
@@ -311,6 +374,17 @@ function App() {
 					onUpdate={handleUpdateAsset}
 					onDelete={deleteAsset}
 					onClose={() => setShowAssetManager(false)}
+				/>
+			)}
+			{showAssetGroupManager && (
+				<AssetGroupManager
+					assets={assets}
+					assetGroup={editingAssetGroup}
+					onSave={handleSaveAssetGroup}
+					onClose={() => {
+						setShowAssetGroupManager(false);
+						setEditingAssetGroup(null);
+					}}
 				/>
 			)}
 		</div>

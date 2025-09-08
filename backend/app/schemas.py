@@ -51,9 +51,27 @@ class AssetBase(BaseModel):
 class AssetCreate(AssetBase):
     ips: List[IPAddressCreate] = []
 
-class Asset(AssetBase):
+class AssetGroupBase(BaseModel):
+    name: str
+    labels: Optional[str] = None
+
+class AssetGroupCreate(AssetGroupBase):
+    asset_ids: List[int] = []
+
+class AssetGroup(AssetGroupBase):
     id: int
-    ips: List[IPAddress] = []
+    assets: "List[Asset]" = []
 
     class Config:
         orm_mode = True
+
+class Asset(AssetBase):
+    id: int
+    ips: List[IPAddress] = []
+    groups: "List[AssetGroup]" = []
+
+    class Config:
+        orm_mode = True
+
+AssetGroup.update_forward_refs()
+Asset.update_forward_refs()

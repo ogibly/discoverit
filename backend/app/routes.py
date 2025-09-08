@@ -249,10 +249,95 @@ def list_assets(db: Session = Depends(get_db)):
 def get_asset(asset_id: int, db: Session = Depends(get_db)):
     return db.query(models.Asset).filter(models.Asset.id == asset_id).first()
 
+@router.put("/assets/{asset_id}", response_model=schemas.Asset)
+def update_asset(asset_id: int, asset: schemas.AssetCreate, db: Session = Depends(get_db)):
+    db_asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+    if not db_asset:
+        return None
+    for key, value in asset.dict().items():
+        setattr(db_asset, key, value)
+    db.commit()
+    db.refresh(db_asset)
+    return db_asset
+
 @router.delete("/assets/{asset_id}", status_code=204)
 def delete_asset(asset_id: int, db: Session = Depends(get_db)):
     asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
     if asset:
         db.delete(asset)
         db.commit()
+    return
+
+@router.post("/asset_groups", response_model=schemas.AssetGroup)
+def create_asset_group(asset_group: schemas.AssetGroupCreate, db: Session = Depends(get_db)):
+    db_asset_group = models.AssetGroup(
+        name=asset_group.name,
+        labels=asset_group.labels
+    )
+    db.add(db_asset_group)
+    db.commit()
+    db.refresh(db_asset_group)
+    for asset_id in asset_group.asset_ids:
+        asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+        if asset:
+            db_asset_group.assets.append(asset)
+    db.commit()
+    db.refresh(db_asset_group)
+    return db_asset_group
+
+@router.get("/asset_groups", response_model=List[schemas.AssetGroup])
+def list_asset_groups(db: Session = Depends(get_db)):
+    return db.query(models.AssetGroup).all()
+
+@router.get("/asset_groups/{asset_group_id}", response_model=schemas.AssetGroup)
+def get_asset_group(asset_group_id: int, db: Session = Depends(get_db)):
+    return db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
+
+@router.put("/asset_groups/{asset_group_id}", response_model=schemas.AssetGroup)
+def update_asset_group(asset_group_id: int, asset_group: schemas.AssetGroupCreate, db: Session = Depends(get_db)):
+    db_asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
+    if not db_asset_group:
+        return None
+    db_asset_group.name = asset_group.name
+    db_asset_group.labels = asset_group.labels
+    db_asset_group.assets = []
+    for asset_id in asset_group.asset_ids:
+        asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+        if asset:
+            db_asset_group.assets.append(asset)
+    db.commit()
+    db.refresh(db_asset_group)
+    return db_asset_group
+
+@router.delete("/asset_groups/{asset_group_id}", status_code=204)
+def delete_asset_group(asset_group_id: int, db: Session = Depends(get_db)):
+    asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
+    if asset_group:
+        db.delete(asset_group)
+        db.commit()
+    return
+
+@router.post("/asset_groups/{asset_group_id}/assets", response_model=schemas.AssetGroup)
+def add_asset_to_group(asset_group_id: int, asset_id: int, db: Session = Depends(get_db)):
+    db_asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
+    if not db_asset_group:
+        return None
+    asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+    if not asset:
+        return None
+    db_asset_group.assets.append(asset)
+    db.commit()
+    db.refresh(db_asset_group)
+    return db_asset_group
+
+@router.delete("/asset_groups/{asset_group_id}/assets/{asset_id}", status_code=204)
+def remove_asset_from_group(asset_group_id: int, asset_id: int, db: Session = Depends(get_db)):
+    db_asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
+    if not db_asset_group:
+        return
+    asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+    if not asset:
+        return
+    db_asset_group.assets.remove(asset)
+    db.commit()
     return

@@ -3,12 +3,19 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import DeviceList from "./components/DeviceList";
 import DeviceDetail from "./components/DeviceDetail";
+import AssetList from "./components/AssetList";
+import AssetDetail from "./components/AssetDetail";
+import AssetManager from "./components/AssetManager";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 function App() {
 	const [devices, setDevices] = useState([]);
 	const [selectedDevice, setSelectedDevice] = useState(null);
+	const [selectedDevices, setSelectedDevices] = useState([]);
+	const [assets, setAssets] = useState([]);
+	const [selectedAsset, setSelectedAsset] = useState(null);
+	const [showAssetManager, setShowAssetManager] = useState(false);
 	const [newDevice, setNewDevice] = useState({ ip: "", mac: "", vendor: "" });
 	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
@@ -19,8 +26,13 @@ function App() {
 		axios.get(`${API_BASE}/devices`).then(res => setDevices(res.data));
 	};
 
+	const fetchAssets = () => {
+		axios.get(`${API_BASE}/assets`).then(res => setAssets(res.data));
+	};
+
 	useEffect(() => {
 		fetchDevices();
+		fetchAssets();
 		// fetch suggested subnet
 		axios.get(`${API_BASE}/suggest_subnet`).then(res => {
 			if (res.data && res.data.subnet && !target) setTarget(res.data.subnet);
@@ -28,6 +40,7 @@ function App() {
 		
 		// poll for devices and active scan status
 		const deviceInterval = setInterval(fetchDevices, 3000);
+		const assetInterval = setInterval(fetchAssets, 3000);
 		const scanInterval = setInterval(() => {
 			axios.get(`${API_BASE}/scan/active`).then(res => {
 				setActiveScan(res.data);
@@ -36,6 +49,7 @@ function App() {
 
 		return () => {
 			clearInterval(deviceInterval);
+			clearInterval(assetInterval);
 			clearInterval(scanInterval);
 		};
 	}, []);
@@ -84,6 +98,87 @@ function App() {
 				}
 			} catch (error) {
 				setStatusMsg("Failed to delete device.");
+			}
+		}
+	};
+
+	const handleSelectDevice = (deviceId) => {
+		setSelectedDevices((prev) =>
+			prev.includes(deviceId)
+				? prev.filter((id) => id !== deviceId)
+				: [...prev, deviceId]
+		);
+	};
+
+	const handleDeleteSelected = async () => {
+		if (window.confirm(`Are you sure you want to delete ${selectedDevices.length} devices?`)) {
+			try {
+				await Promise.all(
+					selectedDevices.map((id) => axios.delete(`${API_BASE}/devices/${id}`))
+				);
+				fetchDevices();
+				setSelectedDevices([]);
+			} catch (error) {
+				setStatusMsg("Failed to delete devices.");
+			}
+		}
+	};
+
+	const handleCreateAsset = async () => {
+		const devicesToConvert = devices.filter((d) => selectedDevices.includes(d.id));
+		if (devicesToConvert.length === 0) return;
+
+		const name = devicesToConvert[0].ip;
+		if (!name) return;
+
+		const assetData = {
+			name,
+			mac: devicesToConvert[0].mac,
+			ips: devicesToConvert.map((d) => ({ ip: d.ip })),
+			// You can add more fields here as needed
+		};
+
+		try {
+			await axios.post(`${API_BASE}/assets`, assetData);
+			setStatusMsg("Asset created successfully.");
+			setSelectedDevices([]);
+			fetchAssets();
+		} catch (error) {
+			setStatusMsg("Failed to create asset.");
+		}
+	};
+
+	const handleUpdateAsset = async (assetId, updatedData) => {
+		try {
+			await axios.put(`${API_BASE}/assets/${assetId}`, updatedData);
+			fetchAssets();
+		} catch (error) {
+			setStatusMsg("Failed to update asset.");
+		}
+	};
+
+	const handleRescanSelected = async () => {
+		const devicesToRescan = devices.filter((d) => selectedDevices.includes(d.id));
+		if (devicesToRescan.length === 0) return;
+
+		const targets = devicesToRescan.map((d) => d.ip).join(",");
+		try {
+			await triggerScan("comprehensive", targets);
+		} catch (error) {
+			setStatusMsg("Failed to start re-scan.");
+		}
+	};
+
+	const deleteAsset = async (assetId) => {
+		if (window.confirm("Are you sure you want to delete this asset?")) {
+			try {
+				await axios.delete(`${API_BASE}/assets/${assetId}`);
+				fetchAssets();
+				if (selectedAsset && selectedAsset.id === assetId) {
+					setSelectedAsset(null);
+				}
+			} catch (error) {
+				setStatusMsg("Failed to delete asset.");
 			}
 		}
 	};
@@ -174,7 +269,28 @@ function App() {
 			)}
 			<div className="grid grid-cols-3 gap-6">
 				<div className="col-span-1">
-					<DeviceList devices={devices} onSelect={setSelectedDevice} onDelete={deleteDevice} />
+					<DeviceList
+						devices={devices}
+						onSelect={setSelectedDevice}
+						onDelete={deleteDevice}
+						selectedDevices={selectedDevices}
+						onSelectDevice={handleSelectDevice}
+						onDeleteSelected={handleDeleteSelected}
+						onCreateAsset={handleCreateAsset}
+						onRescanSelected={handleRescanSelected}
+					/>
+					<div className="mt-6">
+						<div className="flex justify-between items-center mb-2">
+							<h2 className="text-xl font-bold">Assets</h2>
+							<button
+								onClick={() => setShowAssetManager(true)}
+								className="px-3 py-1 bg-gray-200 text-gray-800 text-xs rounded hover:bg-gray-300"
+							>
+								Manage
+							</button>
+						</div>
+						<AssetList assets={assets} onSelect={setSelectedAsset} onDelete={deleteAsset} />
+					</div>
 				</div>
 				<div className="col-span-2">
 					{selectedDevice ? (
@@ -182,8 +298,21 @@ function App() {
 					) : (
 						<p className="text-gray-600">Select a device to see details.</p>
 					)}
+					{selectedAsset && (
+						<div className="mt-6">
+							<AssetDetail asset={selectedAsset} />
+						</div>
+					)}
 				</div>
 			</div>
+			{showAssetManager && (
+				<AssetManager
+					assets={assets}
+					onUpdate={handleUpdateAsset}
+					onDelete={deleteAsset}
+					onClose={() => setShowAssetManager(false)}
+				/>
+			)}
 		</div>
 	);
 }

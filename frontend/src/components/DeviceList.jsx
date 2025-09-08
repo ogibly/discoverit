@@ -1,18 +1,60 @@
 import React from "react";
 
-export default function DeviceList({ devices, onSelect, onDelete }) {
+export default function DeviceList({
+	devices,
+	onSelect,
+	onDelete,
+	selectedDevices,
+	onSelectDevice,
+	onDeleteSelected,
+	onCreateAsset,
+	onRescanSelected,
+}) {
 	return (
 		<div className="bg-white shadow rounded p-4">
-			<h2 className="text-xl font-bold mb-2">Devices</h2>
+			<div className="flex justify-between items-center mb-2">
+				<h2 className="text-xl font-bold">Devices</h2>
+				<div>
+					<button
+						onClick={onRescanSelected}
+						disabled={selectedDevices.length === 0}
+						className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:bg-gray-400"
+					>
+						Re-run scan
+					</button>
+					<button
+						onClick={onDeleteSelected}
+						disabled={selectedDevices.length === 0}
+						className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 disabled:bg-gray-400"
+					>
+						Delete
+					</button>
+					<button
+						onClick={onCreateAsset}
+						disabled={selectedDevices.length === 0}
+						className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:bg-gray-400"
+					>
+						Create Asset
+					</button>
+				</div>
+			</div>
 			<ul className="divide-y divide-gray-200">
 				{devices.map((device) => (
 					<li
 						key={device.id}
 						className="p-2 hover:bg-gray-100 rounded flex justify-between items-center"
 					>
-						<div onClick={() => onSelect(device)} className="cursor-pointer flex-grow">
-							<p className="font-medium">{device.ip}</p>
-							{device.mac && <p className="text-sm text-gray-500">{device.mac}</p>}
+						<div className="flex items-center flex-grow">
+							<input
+								type="checkbox"
+								checked={selectedDevices.includes(device.id)}
+								onChange={() => onSelectDevice(device.id)}
+								className="mr-2"
+							/>
+							<div onClick={() => onSelect(device)} className="cursor-pointer flex-grow">
+								<p className="font-medium">{device.ip}</p>
+								{device.mac && <p className="text-sm text-gray-500">{device.mac}</p>}
+							</div>
 						</div>
 						<button
 							onClick={() => onDelete(device.id)}

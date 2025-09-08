@@ -218,3 +218,41 @@ def trigger_scan(
 
     background_tasks.add_task(run_background_scan, new_task.id)
     return new_task
+
+@router.post("/assets", response_model=schemas.Asset)
+def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)):
+    db_asset = models.Asset(
+        name=asset.name,
+        mac=asset.mac,
+        owner=asset.owner,
+        username=asset.username,
+        password=asset.password,
+        scan_data=asset.scan_data,
+        labels=asset.labels,
+        custom_fields=asset.custom_fields
+    )
+    db.add(db_asset)
+    db.commit()
+    db.refresh(db_asset)
+    for ip in asset.ips:
+        db_ip = models.IPAddress(ip=ip.ip, asset_id=db_asset.id)
+        db.add(db_ip)
+    db.commit()
+    db.refresh(db_asset)
+    return db_asset
+
+@router.get("/assets", response_model=List[schemas.Asset])
+def list_assets(db: Session = Depends(get_db)):
+    return db.query(models.Asset).all()
+
+@router.get("/assets/{asset_id}", response_model=schemas.Asset)
+def get_asset(asset_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+
+@router.delete("/assets/{asset_id}", status_code=204)
+def delete_asset(asset_id: int, db: Session = Depends(get_db)):
+    asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+    if asset:
+        db.delete(asset)
+        db.commit()
+    return

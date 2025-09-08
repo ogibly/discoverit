@@ -24,3 +24,36 @@ class DeviceOut(BaseModel):
     last_seen: datetime
     class Config:
         orm_mode = True
+
+class IPAddressBase(BaseModel):
+    ip: str
+
+class IPAddressCreate(IPAddressBase):
+    pass
+
+class IPAddress(IPAddressBase):
+    id: int
+    asset_id: int
+
+    class Config:
+        orm_mode = True
+
+class AssetBase(BaseModel):
+    name: str
+    mac: Optional[str] = None
+    owner: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    scan_data: Optional[str] = None
+    labels: Optional[str] = None
+    custom_fields: Optional[str] = None
+
+class AssetCreate(AssetBase):
+    ips: List[IPAddressCreate] = []
+
+class Asset(AssetBase):
+    id: int
+    ips: List[IPAddress] = []
+
+    class Config:
+        orm_mode = True

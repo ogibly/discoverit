@@ -32,3 +32,25 @@ class Scan(Base):
     status = Column(String, default="completed")
 
     device = relationship("Device", back_populates="scans")
+
+class Asset(Base):
+    __tablename__ = "assets"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    mac = Column(String, nullable=True)
+    owner = Column(String, nullable=True)
+    username = Column(String, nullable=True)
+    password = Column(String, nullable=True) # Should be encrypted
+    scan_data = Column(String) # JSON serialized
+    labels = Column(String) # JSON serialized
+    custom_fields = Column(String) # JSON serialized
+
+    ips = relationship("IPAddress", back_populates="asset", cascade="all, delete-orphan")
+
+class IPAddress(Base):
+    __tablename__ = "ip_addresses"
+    id = Column(Integer, primary_key=True, index=True)
+    ip = Column(String, index=True)
+    asset_id = Column(Integer, ForeignKey("assets.id"))
+
+    asset = relationship("Asset", back_populates="ips")

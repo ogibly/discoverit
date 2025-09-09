@@ -45,7 +45,7 @@ export default function Operations() {
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-4">
-				<h2 className="text-2xl font-bold">Operations</h2>
+				<h2>Operations</h2>
 				<button
 					onClick={() => {
 						setEditingOperation(null);

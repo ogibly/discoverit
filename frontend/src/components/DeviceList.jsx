@@ -82,18 +82,28 @@ export default function DeviceList({
 					))}
 				</tbody>
 			</table>
-			<div className="flex justify-center mt-4">
+			<div className="pagination">
+				<button
+					onClick={() => setCurrentPage(currentPage - 1)}
+					disabled={currentPage === 1}
+				>
+					Previous
+				</button>
 				{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
 					<button
 						key={page}
 						onClick={() => setCurrentPage(page)}
-						className={`px-3 py-1 mx-1 rounded ${
-							currentPage === page ? "bg-blue-500 text-white" : "bg-gray-700"
-						}`}
+						className={currentPage === page ? "active" : ""}
 					>
 						{page}
 					</button>
 				))}
+				<button
+					onClick={() => setCurrentPage(currentPage + 1)}
+					disabled={currentPage === totalPages}
+				>
+					Next
+				</button>
 			</div>
 		</div>
 	);

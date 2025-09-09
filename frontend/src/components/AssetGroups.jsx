@@ -1,7 +1,6 @@
 import React from "react";
 import AssetGroupList from "./AssetGroupList";
 import AssetGroupDetail from "./AssetGroupDetail";
-import Operations from "./Operations";
 
 export default function AssetGroups({
 	assetGroups,
@@ -25,7 +24,7 @@ export default function AssetGroups({
 					Create
 				</button>
 			</div>
-			<div className="grid grid-cols-3 gap-6">
+			<div className="grid grid-cols-2 gap-6">
 				<div className="col-span-1">
 					<div className="card">
 						<AssetGroupList
@@ -44,11 +43,6 @@ export default function AssetGroups({
 								Select an asset group to see details.
 							</p>
 						)}
-					</div>
-				</div>
-				<div className="col-span-1">
-					<div className="card">
-						<Operations />
 					</div>
 				</div>
 			</div>

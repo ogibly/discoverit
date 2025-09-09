@@ -10,6 +10,10 @@ import AssetGroupList from "./components/AssetGroupList";
 import AssetGroupDetail from "./components/AssetGroupDetail";
 import AssetGroupManager from "./components/AssetGroupManager";
 import Operations from "./components/Operations";
+import Scans from "./components/Scans";
+import Assets from "./components/Assets";
+import AssetGroups from "./components/AssetGroups";
+import OperationsTracker from "./components/OperationsTracker";
 import "./modern.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -262,112 +266,53 @@ function App() {
 			<div className="sidebar">
 				<h1>DiscoverIT</h1>
 				<nav>
-					<a href="#" onClick={() => setPage("dashboard")} className={page === "dashboard" ? "active" : ""}>Dashboard</a>
-					<a href="#" onClick={() => setPage("operations")} className={page === "operations" ? "active" : ""}>Operations</a>
-					<a href="#">Settings</a>
+					<a href="#" onClick={() => setPage("scans")} className={page === "scans" ? "active" : ""}>Scans</a>
+					<a href="#" onClick={() => setPage("assets")} className={page === "assets" ? "active" : ""}>Assets</a>
+					<a href="#" onClick={() => setPage("asset_groups")} className={page === "asset_groups" ? "active" : ""}>Asset Groups</a>
+					<a href="#" onClick={() => setPage("operations_tracker")} className={page === "operations_tracker" ? "active" : ""}>Operations Tracker</a>
 				</nav>
 			</div>
 			<div className="main-content">
-				{page === "dashboard" && (
-					<div>
-						<div className="header">
-							<h2>Dashboard</h2>
-					<div className="flex items-end gap-2">
-						<input value={target} onChange={e => setTarget(e.target.value)} className="border rounded px-2 py-1" placeholder="192.168.1.0/24 or 192.168.1.1-50" />
-						<button
-							onClick={() => triggerScan("quick")}
-							disabled={!!activeScan}
-							className="btn btn-secondary"
-						>
-							{activeScan ? "Scanning..." : "Quick Scan"}
-						</button>
-						<button
-							onClick={() => triggerScan("comprehensive")}
-							disabled={!!activeScan}
-							className="btn btn-primary"
-						>
-							{activeScan ? "Scanning..." : "Comprehensive Scan"}
-						</button>
-						{activeScan && (
-							<button
-								onClick={cancelScan}
-								className="btn btn-danger"
-							>
-								Cancel Scan
-							</button>
-						)}
-					</div>
-				</div>
-				{(activeScan || statusMsg) && (
-					<div className="mb-2 text-sm text-gray-400">
-						{activeScan ? (
-							<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
-						) : (
-							<span>{statusMsg}</span>
-						)}
-					</div>
+				{page === "scans" && (
+					<Scans
+						devices={devices}
+						selectedDevice={selectedDevice}
+						setSelectedDevice={setSelectedDevice}
+						deleteDevice={deleteDevice}
+						selectedDevices={selectedDevices}
+						handleSelectDevice={handleSelectDevice}
+						handleSelectAllDevices={handleSelectAllDevices}
+						handleDeleteSelected={handleDeleteSelected}
+						handleCreateAsset={handleCreateAsset}
+						triggerScan={triggerScan}
+						activeScan={activeScan}
+						cancelScan={cancelScan}
+						target={target}
+						setTarget={setTarget}
+						statusMsg={statusMsg}
+						deleteScan={deleteScan}
+					/>
 				)}
-				<div className="grid grid-cols-4 gap-6">
-					<div className="card">
-						<DeviceList
-							devices={devices}
-							onSelect={setSelectedDevice}
-							onDelete={deleteDevice}
-							selectedDevices={selectedDevices}
-							onSelectDevice={handleSelectDevice}
-							onSelectAll={handleSelectAllDevices}
-							onDeleteSelected={handleDeleteSelected}
-							onCreateAsset={handleCreateAsset}
-						/>
-					</div>
-					<div className="card">
-						<div className="flex justify-between items-center mb-2">
-							<h2 className="text-xl font-bold">Assets</h2>
-							<button
-								onClick={() => setShowAssetManager(true)}
-								className="btn btn-secondary"
-							>
-								Manage
-							</button>
-						</div>
-						<AssetList assets={assets} onSelect={setSelectedAsset} onDelete={deleteAsset} />
-					</div>
-					<div className="card">
-						<div className="flex justify-between items-center mb-2">
-							<h2 className="text-xl font-bold">Asset Groups</h2>
-							<button
-								onClick={() => {
-									setEditingAssetGroup(null);
-									setShowAssetGroupManager(true);
-								}}
-								className="btn btn-secondary"
-							>
-								Create
-							</button>
-						</div>
-						<AssetGroupList assetGroups={assetGroups} onSelect={setSelectedAssetGroup} onDelete={deleteAssetGroup} />
-					</div>
-					<div className="card">
-						<Operations />
-					</div>
-				</div>
-				<div className="mt-6">
-					{selectedDevice && (
-						<div className="card">
-							<DeviceDetail device={selectedDevice} onDeleteScan={deleteScan} />
-						</div>
-					)}
-					{selectedAsset && (
-						<div className="card">
-							<AssetDetail asset={selectedAsset} />
-						</div>
-					)}
-					{selectedAssetGroup && (
-						<div className="card">
-							<AssetGroupDetail assetGroup={selectedAssetGroup} />
-						</div>
-					)}
-				</div>
+				{page === "assets" && (
+					<Assets
+						assets={assets}
+						selectedAsset={selectedAsset}
+						setSelectedAsset={setSelectedAsset}
+						deleteAsset={deleteAsset}
+						setShowAssetManager={setShowAssetManager}
+					/>
+				)}
+				{page === "asset_groups" && (
+					<AssetGroups
+						assetGroups={assetGroups}
+						selectedAssetGroup={selectedAssetGroup}
+						setSelectedAssetGroup={setSelectedAssetGroup}
+						deleteAssetGroup={deleteAssetGroup}
+						setEditingAssetGroup={setEditingAssetGroup}
+						setShowAssetGroupManager={setShowAssetGroupManager}
+					/>
+				)}
+				{page === "operations_tracker" && <OperationsTracker />}
 				{showAssetManager && (
 					<AssetManager
 						assets={assets}
@@ -387,9 +332,6 @@ function App() {
 						}}
 					/>
 				)}
-					</div>
-				)}
-				{page === "operations" && <Operations />}
 			</div>
 		</div>
 	);

@@ -438,3 +438,7 @@ async def run_operation(
 @router.get("/jobs/{job_id}", response_model=schemas.Job)
 def get_job(job_id: int, db: Session = Depends(get_db)):
     return db.query(models.Job).filter(models.Job.id == job_id).first()
+
+@router.get("/jobs", response_model=List[schemas.Job])
+def list_jobs(db: Session = Depends(get_db)):
+    return db.query(models.Job).all()

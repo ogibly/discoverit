@@ -270,6 +270,7 @@ function App() {
 					<a href="#" onClick={() => setPage("scans")} className={page === "scans" ? "active" : ""}>Scans</a>
 					<a href="#" onClick={() => setPage("assets")} className={page === "assets" ? "active" : ""}>Assets</a>
 					<a href="#" onClick={() => setPage("asset_groups")} className={page === "asset_groups" ? "active" : ""}>Asset Groups</a>
+					<a href="#" onClick={() => setPage("operations")} className={page === "operations" ? "active" : ""}>Operations</a>
 					<a href="#" onClick={() => setPage("operations_tracker")} className={page === "operations_tracker" ? "active" : ""}>Operations Tracker</a>
 				</nav>
 			</div>
@@ -313,6 +314,7 @@ function App() {
 						setShowAssetGroupManager={setShowAssetGroupManager}
 					/>
 				)}
+				{page === "operations" && <Operations />}
 				{page === "operations_tracker" && <OperationsTracker />}
 				{showAssetManager && (
 					<AssetManager

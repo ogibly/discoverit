@@ -34,15 +34,15 @@ export default function Scans({
 						placeholder="192.168.1.0/24 or 192.168.1.1-50"
 					/>
 					<button
-						onClick={() => triggerScan("quick", selectedDevices)}
-						disabled={!!activeScan || selectedDevices.length === 0}
+						onClick={() => triggerScan("quick")}
+						disabled={!!activeScan || (!target.trim() && selectedDevices.length === 0)}
 						className="btn btn-secondary scan-btn"
 					>
 						{activeScan ? "Scanning..." : "Quick Scan"}
 					</button>
 					<button
-						onClick={() => triggerScan("comprehensive", selectedDevices)}
-						disabled={!!activeScan || selectedDevices.length === 0}
+						onClick={() => triggerScan("comprehensive")}
+						disabled={!!activeScan || (!target.trim() && selectedDevices.length === 0)}
 						className="btn btn-primary scan-btn"
 					>
 						{activeScan ? "Scanning..." : "Comprehensive Scan"}
@@ -63,8 +63,8 @@ export default function Scans({
 					</div>
 				)}
 			</div>
-			<div className="grid grid-cols-3 gap-6 flex-grow overflow-auto">
-				<div className="col-span-1">
+			<div className="grid grid-cols-3 gap-6 flex-grow">
+				<div className="col-span-1 overflow-auto">
 					<div className="card h-full">
 						<DeviceList
 							devices={devices}
@@ -79,8 +79,8 @@ export default function Scans({
 						/>
 					</div>
 				</div>
-				<div className="col-span-2">
-					<div className="card h-full overflow-auto">
+				<div className="col-span-2 overflow-auto">
+					<div className="card h-full">
 						{selectedDevice ? (
 							<DeviceDetail
 								device={selectedDevice}

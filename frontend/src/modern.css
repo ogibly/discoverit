@@ -32,11 +32,8 @@ html, body, #root {
 .main-content {
   flex-grow: 1;
   padding: 20px;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  width: calc(100vw - 250px); /* Full width minus sidebar */
-  max-height: 100vh;
   box-sizing: border-box;
 }
 
@@ -247,6 +244,11 @@ tr.selected {
 .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.scrollable-list {
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 /* Custom Scrollbar */

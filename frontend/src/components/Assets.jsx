@@ -25,8 +25,8 @@ export default function Assets({
 					Manage
 				</button>
 			</div>
-			<div className="grid grid-cols-2 gap-6 flex-grow">
-				<div className="col-span-1 overflow-auto">
+			<div className="flex gap-6 flex-grow min-h-0">
+				<div className="w-2/3">
 					<div className="card h-full">
 						<AssetList
 							assets={assets}
@@ -41,8 +41,8 @@ export default function Assets({
 						/>
 					</div>
 				</div>
-				<div className="col-span-1 overflow-auto">
-					<div className="card h-full">
+				<div className="w-1/3">
+					<div className="card">
 						{selectedAsset ? (
 							<AssetDetail asset={selectedAsset} />
 						) : (

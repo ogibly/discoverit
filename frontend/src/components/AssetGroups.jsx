@@ -28,8 +28,8 @@ export default function AssetGroups({
 					Create
 				</button>
 			</div>
-			<div className="grid grid-cols-2 gap-6 flex-grow">
-				<div className="col-span-1 overflow-auto">
+			<div className="flex gap-6 flex-grow min-h-0">
+				<div className="w-2/3">
 					<div className="card h-full">
 						<AssetGroupList
 							assetGroups={assetGroups}
@@ -43,8 +43,8 @@ export default function AssetGroups({
 						/>
 					</div>
 				</div>
-				<div className="col-span-1 overflow-auto">
-					<div className="card h-full">
+				<div className="w-1/3">
+					<div className="card">
 						{selectedAssetGroup ? (
 							<AssetGroupDetail assetGroup={selectedAssetGroup} />
 						) : (

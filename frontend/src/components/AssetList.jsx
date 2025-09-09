@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ActionsDropdown from "./ActionsDropdown";
 
 export default function AssetList({
 	assets,
@@ -44,25 +45,23 @@ export default function AssetList({
 
 	const allSelected = paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.includes(a.id));
 
+	const actions = [
+		{
+			label: "Delete",
+			onClick: onDeleteSelected,
+			disabled: selectedAssets.length === 0,
+		},
+		{
+			label: "Create Asset Group",
+			onClick: onCreateAssetGroup,
+			disabled: selectedAssets.length === 0,
+		},
+	];
+
 	return (
 		<div className="flex flex-col h-full">
 			<div className="flex justify-between items-center mb-4">
-				<div>
-					<button
-						onClick={onDeleteSelected}
-						disabled={selectedAssets.length === 0}
-						className="btn btn-danger"
-					>
-						Delete
-					</button>
-					<button
-						onClick={onCreateAssetGroup}
-						disabled={selectedAssets.length === 0}
-						className="btn btn-primary ml-2"
-					>
-						Create Asset Group
-					</button>
-				</div>
+				<ActionsDropdown actions={actions} />
 			</div>
 			<input
 				type="text"
@@ -71,7 +70,7 @@ export default function AssetList({
 				placeholder="Filter by label"
 				className="mb-4"
 			/>
-			<div className="overflow-auto flex-grow">
+			<div className="scrollable-list">
 				<table className="w-full">
 					<thead>
 						<tr>

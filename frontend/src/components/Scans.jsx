@@ -25,7 +25,7 @@ export default function Scans({
 			<div className="header">
 				<h2>Scans</h2>
 			</div>
-			<div className="card mb-4">
+			<div className="card mb-4 shrink-0">
 				<div className="flex items-center gap-2">
 					<input
 						value={target}
@@ -63,8 +63,8 @@ export default function Scans({
 					</div>
 				)}
 			</div>
-			<div className="grid grid-cols-3 gap-6 flex-grow">
-				<div className="col-span-1 overflow-auto">
+			<div className="flex gap-6 flex-grow min-h-0">
+				<div className="w-2/3">
 					<div className="card h-full">
 						<DeviceList
 							devices={devices}
@@ -79,8 +79,8 @@ export default function Scans({
 						/>
 					</div>
 				</div>
-				<div className="col-span-2 overflow-auto">
-					<div className="card h-full">
+				<div className="w-1/3">
+					<div className="card">
 						{selectedDevice ? (
 							<DeviceDetail
 								device={selectedDevice}

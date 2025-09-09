@@ -148,24 +148,24 @@ function App() {
 		const devicesToConvert = devices.filter((d) => selectedDevices.includes(d.id));
 		if (devicesToConvert.length === 0) return;
 
-		const name = devicesToConvert[0].ip;
-		if (!name) return;
+		for (const device of devicesToConvert) {
+			const assetData = {
+				name: device.ip,
+				mac: device.mac,
+				ips: [{ ip: device.ip }],
+				// You can add more fields here as needed
+			};
 
-		const assetData = {
-			name,
-			mac: devicesToConvert[0].mac,
-			ips: devicesToConvert.map((d) => ({ ip: d.ip })),
-			// You can add more fields here as needed
-		};
-
-		try {
-			await axios.post(`${API_BASE}/assets`, assetData);
-			setStatusMsg("Asset created successfully.");
-			setSelectedDevices([]);
-			fetchAssets();
-		} catch (error) {
-			setStatusMsg("Failed to create asset.");
+			try {
+				await axios.post(`${API_BASE}/assets`, assetData);
+				setStatusMsg(`Asset created for ${device.ip}.`);
+			} catch (error) {
+				setStatusMsg(`Failed to create asset for ${device.ip}.`);
+			}
 		}
+
+		setSelectedDevices([]);
+		fetchAssets();
 	};
 
 	const handleSelectAsset = (assetId) => {

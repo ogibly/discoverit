@@ -3,6 +3,7 @@ body {
   background-color: #111;
   color: #f0f0f0;
   font-family: 'Inter', sans-serif;
+  border: 5px solid red; /* Temporary for debugging */
 }
 
 /* Layout */

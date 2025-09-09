@@ -1,20 +1,49 @@
-import React from "react";
+import React, { useState } from "react";
+import RunOperationModal from "./RunOperationModal";
 
 export default function AssetGroupDetail({ assetGroup }) {
+	const [showRunOperationModal, setShowRunOperationModal] = useState(false);
+
 	return (
-		<div className="bg-white shadow rounded p-4">
-			<h2 className="text-xl font-bold mb-2">{assetGroup.name}</h2>
-			<div>
-				<h3 className="text-lg font-semibold mt-4">Assets</h3>
-				<ul className="divide-y divide-gray-200">
-					{assetGroup.assets.map((asset) => (
-						<li key={asset.id} className="p-2">
-							<p className="font-medium">{asset.name}</p>
-							{asset.mac && <p className="text-sm text-gray-500">{asset.mac}</p>}
-						</li>
-					))}
-				</ul>
+		<div>
+			<div className="flex justify-between items-center mb-4">
+				<h2 className="text-2xl font-bold">{assetGroup.name}</h2>
+				<button
+					onClick={() => setShowRunOperationModal(true)}
+					className="btn btn-primary"
+				>
+					Run Operation
+				</button>
 			</div>
+			<div className="mt-4">
+				<h3 className="text-xl font-bold mb-2">Labels:</h3>
+				<p>{assetGroup.labels ? JSON.parse(assetGroup.labels).join(", ") : ""}</p>
+			</div>
+			<div className="mt-4">
+				<h3 className="text-xl font-bold mb-2">Assets</h3>
+				<table>
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>MAC</th>
+						</tr>
+					</thead>
+					<tbody>
+						{assetGroup.assets.map((asset) => (
+							<tr key={asset.id}>
+								<td>{asset.name}</td>
+								<td>{asset.mac}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+			{showRunOperationModal && (
+				<RunOperationModal
+					assetGroup={assetGroup}
+					onClose={() => setShowRunOperationModal(false)}
+				/>
+			)}
 		</div>
 	);
 }

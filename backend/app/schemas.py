@@ -74,3 +74,36 @@ class Asset(AssetBase):
 
 AssetGroup.update_forward_refs()
 Asset.update_forward_refs()
+
+class OperationBase(BaseModel):
+    name: str
+    api_url: str
+    api_method: str
+    api_headers: Optional[str] = None
+    api_body: Optional[str] = None
+
+class OperationCreate(OperationBase):
+    pass
+
+class Operation(OperationBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class JobBase(BaseModel):
+    operation_id: int
+    asset_group_id: int
+    status: str
+    results: Optional[str] = None
+
+class JobCreate(JobBase):
+    pass
+
+class Job(JobBase):
+    id: int
+    start_time: datetime
+    end_time: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True

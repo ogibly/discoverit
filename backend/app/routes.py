@@ -341,3 +341,100 @@ def remove_asset_from_group(asset_group_id: int, asset_id: int, db: Session = De
     db_asset_group.assets.remove(asset)
     db.commit()
     return
+
+@router.post("/operations", response_model=schemas.Operation)
+def create_operation(operation: schemas.OperationCreate, db: Session = Depends(get_db)):
+    db_operation = models.Operation(**operation.dict())
+    db.add(db_operation)
+    db.commit()
+    db.refresh(db_operation)
+    return db_operation
+
+@router.get("/operations", response_model=List[schemas.Operation])
+def list_operations(db: Session = Depends(get_db)):
+    return db.query(models.Operation).all()
+
+@router.get("/operations/{operation_id}", response_model=schemas.Operation)
+def get_operation(operation_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Operation).filter(models.Operation.id == operation_id).first()
+
+@router.put("/operations/{operation_id}", response_model=schemas.Operation)
+def update_operation(operation_id: int, operation: schemas.OperationCreate, db: Session = Depends(get_db)):
+    db_operation = db.query(models.Operation).filter(models.Operation.id == operation_id).first()
+    if not db_operation:
+        return None
+    for key, value in operation.dict().items():
+        setattr(db_operation, key, value)
+    db.commit()
+    db.refresh(db_operation)
+    return db_operation
+
+@router.delete("/operations/{operation_id}", status_code=204)
+def delete_operation(operation_id: int, db: Session = Depends(get_db)):
+    operation = db.query(models.Operation).filter(models.Operation.id == operation_id).first()
+    if operation:
+        db.delete(operation)
+        db.commit()
+    return
+
+def run_operation_background(job_id: int):
+    db = SessionLocal()
+    try:
+        job = db.query(models.Job).filter(models.Job.id == job_id).first()
+        if not job:
+            return
+
+        operation = db.query(models.Operation).filter(models.Operation.id == job.operation_id).first()
+        asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == job.asset_group_id).first()
+
+        if not operation or not asset_group:
+            job.status = "failed"
+            job.end_time = datetime.utcnow()
+            db.commit()
+            return
+
+        results = []
+        for asset in asset_group.assets:
+            # Here you would make the actual API call using the operation's details.
+            # For this example, we'll just simulate a successful call.
+            results.append({
+                "asset_id": asset.id,
+                "asset_name": asset.name,
+                "status": "success",
+                "response": "Operation completed successfully."
+            })
+
+        job.results = json.dumps(results)
+        job.status = "completed"
+        job.end_time = datetime.utcnow()
+        db.commit()
+    finally:
+        db.close()
+
+@router.post("/operations/{operation_id}/run/{asset_group_id}", response_model=schemas.Job)
+async def run_operation(
+    operation_id: int,
+    asset_group_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    operation = db.query(models.Operation).filter(models.Operation.id == operation_id).first()
+    asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
+
+    if not operation or not asset_group:
+        return None
+
+    new_job = models.Job(
+        operation_id=operation_id,
+        asset_group_id=asset_group_id,
+    )
+    db.add(new_job)
+    db.commit()
+    db.refresh(new_job)
+
+    background_tasks.add_task(run_operation_background, new_job.id)
+    return new_job
+
+@router.get("/jobs/{job_id}", response_model=schemas.Job)
+def get_job(job_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Job).filter(models.Job.id == job_id).first()

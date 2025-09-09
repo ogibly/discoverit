@@ -13,32 +13,37 @@ export default function AssetGroupList({ assetGroups, onSelect, onDelete }) {
 	});
 
 	return (
-		<div className="bg-white shadow rounded p-4">
+		<div>
 			<input
 				type="text"
 				value={filter}
 				onChange={(e) => setFilter(e.target.value)}
 				placeholder="Filter by label"
-				className="border rounded px-2 py-1 w-full mb-4"
+				className="mb-4"
 			/>
-			<ul className="divide-y divide-gray-200">
-				{filteredAssetGroups.map((group) => (
-					<li
-						key={group.id}
-						className="p-2 hover:bg-gray-100 rounded flex justify-between items-center"
-					>
-						<div onClick={() => onSelect(group)} className="cursor-pointer flex-grow">
-							<p className="font-medium">{group.name}</p>
-						</div>
-						<button
-							onClick={() => onDelete(group.id)}
-							className="ml-4 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
-						>
-							Delete
-						</button>
-					</li>
-				))}
-			</ul>
+			<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{filteredAssetGroups.map((group) => (
+						<tr key={group.id}>
+							<td onClick={() => onSelect(group)} className="cursor-pointer">{group.name}</td>
+							<td>
+								<button
+									onClick={() => onDelete(group.id)}
+									className="btn btn-danger"
+								>
+									Delete
+								</button>
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</div>
 	);
 }

@@ -61,6 +61,25 @@ class AssetGroup(Base):
 
     assets = relationship("Asset", secondary=asset_group_association, back_populates="groups")
 
+class Operation(Base):
+    __tablename__ = "operations"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    api_url = Column(String)
+    api_method = Column(String)
+    api_headers = Column(String) # JSON serialized
+    api_body = Column(String) # JSON serialized
+
+class Job(Base):
+    __tablename__ = "jobs"
+    id = Column(Integer, primary_key=True, index=True)
+    operation_id = Column(Integer, ForeignKey("operations.id"))
+    asset_group_id = Column(Integer, ForeignKey("asset_groups.id"))
+    status = Column(String, default="running") # running, completed, failed
+    results = Column(String) # JSON serialized
+    start_time = Column(DateTime, default=datetime.utcnow)
+    end_time = Column(DateTime, nullable=True)
+
 class IPAddress(Base):
     __tablename__ = "ip_addresses"
     id = Column(Integer, primary_key=True, index=True)

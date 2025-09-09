@@ -9,10 +9,13 @@ import AssetManager from "./components/AssetManager";
 import AssetGroupList from "./components/AssetGroupList";
 import AssetGroupDetail from "./components/AssetGroupDetail";
 import AssetGroupManager from "./components/AssetGroupManager";
+import Operations from "./components/Operations";
+import "./modern.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 function App() {
+	const [page, setPage] = useState("dashboard");
 	const [devices, setDevices] = useState([]);
 	const [selectedDevice, setSelectedDevice] = useState(null);
 	const [selectedDevices, setSelectedDevices] = useState([]);
@@ -255,141 +258,140 @@ function App() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gray-100 p-6">
-			<h1 className="text-3xl font-bold mb-6">DiscoverIT Dashboard</h1>
-			<div className="mb-4 flex items-end gap-4">
-				<form onSubmit={createDevice} className="flex gap-2 items-end">
+		<div className="container">
+			<div className="sidebar">
+				<h1>DiscoverIT</h1>
+				<nav>
+					<a href="#" onClick={() => setPage("dashboard")} className={page === "dashboard" ? "active" : ""}>Dashboard</a>
+					<a href="#" onClick={() => setPage("operations")} className={page === "operations" ? "active" : ""}>Operations</a>
+					<a href="#">Settings</a>
+				</nav>
+			</div>
+			<div className="main-content">
+				{page === "dashboard" && (
 					<div>
-						<label className="block text-sm text-gray-600">IP</label>
-						<input value={newDevice.ip} onChange={e => setNewDevice({ ...newDevice, ip: e.target.value })} className="border rounded px-2 py-1" placeholder="192.168.1.10" />
-					</div>
-					<div>
-						<label className="block text-sm text-gray-600">MAC</label>
-						<input value={newDevice.mac} onChange={e => setNewDevice({ ...newDevice, mac: e.target.value })} className="border rounded px-2 py-1" placeholder="AA:BB:CC:DD:EE:FF" />
-					</div>
-					<div>
-						<label className="block text-sm text-gray-600">Vendor</label>
-						<input value={newDevice.vendor} onChange={e => setNewDevice({ ...newDevice, vendor: e.target.value })} className="border rounded px-2 py-1" placeholder="Vendor" />
-					</div>
-					<button type="submit" className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">Add Device</button>
-				</form>
-				<div className="ml-auto flex items-end gap-4">
-					<div>
-						<label className="block text-sm text-gray-600">Target</label>
-						<input value={target} onChange={e => setTarget(e.target.value)} className="border rounded px-2 py-1" placeholder="192.168.1.0/24 or 192.168.1.1-50" />
-					</div>
+						<div className="header">
+							<h2>Dashboard</h2>
 					<div className="flex items-end gap-2">
+						<input value={target} onChange={e => setTarget(e.target.value)} className="border rounded px-2 py-1" placeholder="192.168.1.0/24 or 192.168.1.1-50" />
 						<button
 							onClick={() => triggerScan("quick")}
 							disabled={!!activeScan}
-							className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700 disabled:opacity-50"
+							className="btn btn-secondary"
 						>
 							{activeScan ? "Scanning..." : "Quick Scan"}
 						</button>
 						<button
 							onClick={() => triggerScan("comprehensive")}
 							disabled={!!activeScan}
-							className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+							className="btn btn-primary"
 						>
 							{activeScan ? "Scanning..." : "Comprehensive Scan"}
 						</button>
 						{activeScan && (
 							<button
 								onClick={cancelScan}
-								className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+								className="btn btn-danger"
 							>
 								Cancel Scan
 							</button>
 						)}
 					</div>
 				</div>
-			</div>
-			{(activeScan || statusMsg) && (
-				<div className="mb-2 text-sm text-gray-700">
-					{activeScan ? (
-						<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
-					) : (
-						<span>{statusMsg}</span>
-					)}
+				{(activeScan || statusMsg) && (
+					<div className="mb-2 text-sm text-gray-400">
+						{activeScan ? (
+							<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
+						) : (
+							<span>{statusMsg}</span>
+						)}
+					</div>
+				)}
+				<div className="grid grid-cols-3 gap-6">
+					<div className="col-span-1">
+						<div className="card">
+							<DeviceList
+								devices={devices}
+								onSelect={setSelectedDevice}
+								onDelete={deleteDevice}
+								selectedDevices={selectedDevices}
+								onSelectDevice={handleSelectDevice}
+								onSelectAll={handleSelectAllDevices}
+								onDeleteSelected={handleDeleteSelected}
+								onCreateAsset={handleCreateAsset}
+							/>
+						</div>
+						<div className="card">
+							<div className="flex justify-between items-center mb-2">
+								<h2 className="text-xl font-bold">Assets</h2>
+								<button
+									onClick={() => setShowAssetManager(true)}
+									className="btn btn-secondary"
+								>
+									Manage
+								</button>
+							</div>
+							<AssetList assets={assets} onSelect={setSelectedAsset} onDelete={deleteAsset} />
+						</div>
+						<div className="card">
+							<div className="flex justify-between items-center mb-2">
+								<h2 className="text-xl font-bold">Asset Groups</h2>
+								<button
+									onClick={() => {
+										setEditingAssetGroup(null);
+										setShowAssetGroupManager(true);
+									}}
+									className="btn btn-secondary"
+								>
+									Create
+								</button>
+							</div>
+							<AssetGroupList assetGroups={assetGroups} onSelect={setSelectedAssetGroup} onDelete={deleteAssetGroup} />
+						</div>
+					</div>
+					<div className="col-span-2">
+						<div className="card">
+							{selectedDevice ? (
+								<DeviceDetail device={selectedDevice} onDeleteScan={deleteScan} />
+							) : (
+								<p className="text-gray-400">Select a device to see details.</p>
+							)}
+						</div>
+						{selectedAsset && (
+							<div className="card mt-6">
+								<AssetDetail asset={selectedAsset} />
+							</div>
+						)}
+						{selectedAssetGroup && (
+							<div className="card mt-6">
+								<AssetGroupDetail assetGroup={selectedAssetGroup} />
+							</div>
+						)}
+					</div>
 				</div>
-			)}
-			<div className="grid grid-cols-3 gap-6">
-				<div className="col-span-1">
-					<DeviceList
-						devices={devices}
-						onSelect={setSelectedDevice}
-						onDelete={deleteDevice}
-						selectedDevices={selectedDevices}
-						onSelectDevice={handleSelectDevice}
-						onSelectAll={handleSelectAllDevices}
-						onDeleteSelected={handleDeleteSelected}
-						onCreateAsset={handleCreateAsset}
+				{showAssetManager && (
+					<AssetManager
+						assets={assets}
+						onUpdate={handleUpdateAsset}
+						onDelete={deleteAsset}
+						onClose={() => setShowAssetManager(false)}
 					/>
-					<div className="mt-6">
-						<div className="flex justify-between items-center mb-2">
-							<h2 className="text-xl font-bold">Assets</h2>
-							<button
-								onClick={() => setShowAssetManager(true)}
-								className="px-3 py-1 bg-gray-200 text-gray-800 text-xs rounded hover:bg-gray-300"
-							>
-								Manage
-							</button>
-						</div>
-						<AssetList assets={assets} onSelect={setSelectedAsset} onDelete={deleteAsset} />
+				)}
+				{showAssetGroupManager && (
+					<AssetGroupManager
+						assets={assets}
+						assetGroup={editingAssetGroup}
+						onSave={handleSaveAssetGroup}
+						onClose={() => {
+							setShowAssetGroupManager(false);
+							setEditingAssetGroup(null);
+						}}
+					/>
+				)}
 					</div>
-					<div className="mt-6">
-						<div className="flex justify-between items-center mb-2">
-							<h2 className="text-xl font-bold">Asset Groups</h2>
-							<button
-								onClick={() => {
-									setEditingAssetGroup(null);
-									setShowAssetGroupManager(true);
-								}}
-								className="px-3 py-1 bg-gray-200 text-gray-800 text-xs rounded hover:bg-gray-300"
-							>
-								Create
-							</button>
-						</div>
-						<AssetGroupList assetGroups={assetGroups} onSelect={setSelectedAssetGroup} onDelete={deleteAssetGroup} />
-					</div>
-				</div>
-				<div className="col-span-2">
-					{selectedDevice ? (
-						<DeviceDetail device={selectedDevice} onDeleteScan={deleteScan} />
-					) : (
-						<p className="text-gray-600">Select a device to see details.</p>
-					)}
-					{selectedAsset && (
-						<div className="mt-6">
-							<AssetDetail asset={selectedAsset} />
-						</div>
-					)}
-					{selectedAssetGroup && (
-						<div className="mt-6">
-							<AssetGroupDetail assetGroup={selectedAssetGroup} />
-						</div>
-					)}
-				</div>
+				)}
+				{page === "operations" && <Operations />}
 			</div>
-			{showAssetManager && (
-				<AssetManager
-					assets={assets}
-					onUpdate={handleUpdateAsset}
-					onDelete={deleteAsset}
-					onClose={() => setShowAssetManager(false)}
-				/>
-			)}
-			{showAssetGroupManager && (
-				<AssetGroupManager
-					assets={assets}
-					assetGroup={editingAssetGroup}
-					onSave={handleSaveAssetGroup}
-					onClose={() => {
-						setShowAssetGroupManager(false);
-						setEditingAssetGroup(null);
-					}}
-				/>
-			)}
 		</div>
 	);
 }

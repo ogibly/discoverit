@@ -63,7 +63,7 @@ export default function Scans({
 					</div>
 				)}
 			</div>
-			<div className="grid grid-cols-3 gap-6 items-start">
+			<div className="grid grid-cols-3 gap-6">
 				<div className="col-span-1">
 					<div className="card">
 						<DeviceList

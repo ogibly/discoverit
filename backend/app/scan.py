@@ -35,14 +35,14 @@ def run_scan(ip: str):
             "scan_type": "quick"
         }
 
-def discover_subnet(target: str):
+def arp_scan(target: str):
     """
-    Discovers hosts in a subnet using a fast ping scan.
+    Discovers hosts in a subnet using an ARP scan.
     """
     nm = nmap.PortScanner()
     try:
-        # Fast ping scan
-        nm.scan(hosts=target, arguments="-sn -T4")
+        # ARP scan
+        nm.scan(hosts=target, arguments="-PR -sn -T4")
         hosts: List[dict] = []
         for host in nm.all_hosts():
             addresses = nm[host].get('addresses', {})
@@ -66,6 +66,37 @@ def discover_subnet(target: str):
             "error": str(e)
         }
 
+def discover_subnet(target: str):
+    """
+    Discovers hosts in a subnet using a fast ping scan and ARP scan.
+    """
+    ping_results = nmap.PortScanner().scan(hosts=target, arguments="-sn -T4")
+    arp_results = arp_scan(target)
+
+    hosts_by_ip = {}
+
+    for host in ping_results.get('scan', {}):
+        if ping_results['scan'][host].get('status', {}).get('state') == 'up':
+            addresses = ping_results['scan'][host].get('addresses', {})
+            mac = addresses.get('mac')
+            vendor = None
+            if mac:
+                vendor = ping_results['scan'][host].get('vendor', {}).get(mac)
+            hosts_by_ip[host] = {
+                "ip": host,
+                "mac": mac,
+                "vendor": vendor
+            }
+
+    for host in arp_results.get('hosts', []):
+        if host['ip'] not in hosts_by_ip:
+            hosts_by_ip[host['ip']] = host
+
+    return {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "hosts": list(hosts_by_ip.values())
+    }
+
 def comprehensive_scan(ip: str) -> Dict:
     """
     Runs a comprehensive, aggressive scan to gather maximum information.
@@ -76,8 +107,8 @@ def comprehensive_scan(ip: str) -> Dict:
     timestamp = datetime.utcnow().isoformat() + "Z"
     
     try:
-        # Aggressive scan with OS, version, script, and traceroute detection
-        nm.scan(ip, arguments="-A -T4")
+        # Aggressive scan with OS, version, script, traceroute, and SNMP detection
+        nm.scan(ip, arguments="-A -T4 -sU -p 161 --script snmp-info")
         
         if ip not in nm.all_hosts():
             return {"timestamp": timestamp, "ip": ip, "error": "Host not responding.", "scan_type": "comprehensive"}

@@ -8,20 +8,23 @@ export default function DeviceList({
 	onSelectDevice,
 	onDeleteSelected,
 	onCreateAsset,
-	onRescanSelected,
+	onSelectAll,
 }) {
+	const allSelected = devices.length > 0 && selectedDevices.length === devices.length;
+
 	return (
 		<div className="bg-white shadow rounded p-4">
 			<div className="flex justify-between items-center mb-2">
-				<h2 className="text-xl font-bold">Devices</h2>
+				<div className="flex items-center">
+					<input
+						type="checkbox"
+						checked={allSelected}
+						onChange={onSelectAll}
+						className="mr-2"
+					/>
+					<h2 className="text-xl font-bold">Devices</h2>
+				</div>
 				<div>
-					<button
-						onClick={onRescanSelected}
-						disabled={selectedDevices.length === 0}
-						className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:bg-gray-400"
-					>
-						Re-run scan
-					</button>
 					<button
 						onClick={onDeleteSelected}
 						disabled={selectedDevices.length === 0}

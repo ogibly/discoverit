@@ -68,7 +68,6 @@ class AssetGroup(AssetGroupBase):
 class Asset(AssetBase):
     id: int
     ips: List[IPAddress] = []
-    groups: "List[AssetGroup]" = []
 
     class Config:
         orm_mode = True

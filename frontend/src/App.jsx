@@ -92,8 +92,15 @@ function App() {
 	const triggerScan = async (scanType) => {
 		setStatusMsg(""); // Clear previous messages
 		try {
-			const url = target
-				? `${API_BASE}/scan?target=${encodeURIComponent(target)}&scan_type=${scanType}`
+			let scanTarget = target;
+			if (selectedDevices.length > 0) {
+				scanTarget = devices
+					.filter((d) => selectedDevices.includes(d.id))
+					.map((d) => d.ip)
+					.join(",");
+			}
+			const url = scanTarget
+				? `${API_BASE}/scan?target=${encodeURIComponent(scanTarget)}&scan_type=${scanType}`
 				: `${API_BASE}/scan`;
 			const res = await axios.post(url);
 			setActiveScan(res.data);
@@ -122,6 +129,14 @@ function App() {
 				? prev.filter((id) => id !== deviceId)
 				: [...prev, deviceId]
 		);
+	};
+
+	const handleSelectAllDevices = () => {
+		if (selectedDevices.length === devices.length) {
+			setSelectedDevices([]);
+		} else {
+			setSelectedDevices(devices.map((d) => d.id));
+		}
 	};
 
 	const handleDeleteSelected = async () => {
@@ -197,18 +212,6 @@ function App() {
 			} catch (error) {
 				setStatusMsg("Failed to delete asset group.");
 			}
-		}
-	};
-
-	const handleRescanSelected = async () => {
-		const devicesToRescan = devices.filter((d) => selectedDevices.includes(d.id));
-		if (devicesToRescan.length === 0) return;
-
-		const targets = devicesToRescan.map((d) => d.ip).join(",");
-		try {
-			await triggerScan("comprehensive", targets);
-		} catch (error) {
-			setStatusMsg("Failed to start re-scan.");
 		}
 	};
 
@@ -318,9 +321,9 @@ function App() {
 						onDelete={deleteDevice}
 						selectedDevices={selectedDevices}
 						onSelectDevice={handleSelectDevice}
+						onSelectAll={handleSelectAllDevices}
 						onDeleteSelected={handleDeleteSelected}
 						onCreateAsset={handleCreateAsset}
-						onRescanSelected={handleRescanSelected}
 					/>
 					<div className="mt-6">
 						<div className="flex justify-between items-center mb-2">

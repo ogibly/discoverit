@@ -24,12 +24,6 @@ export default function DeviceList({
 		<div>
 			<div className="flex justify-between items-center mb-4">
 				<div className="flex items-center">
-					<input
-						type="checkbox"
-						checked={allSelected}
-						onChange={() => onSelectAll(paginatedDevices.map(d => d.id))}
-						className="mr-2"
-					/>
 					<h2 className="text-xl font-bold">Devices</h2>
 				</div>
 				<div>
@@ -49,39 +43,47 @@ export default function DeviceList({
 					</button>
 				</div>
 			</div>
-			<table>
-				<thead>
-					<tr>
-						<th></th>
-						<th>IP</th>
-						<th>MAC</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					{paginatedDevices.map((device) => (
-						<tr key={device.id}>
-							<td>
+			<div className="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>
 								<input
 									type="checkbox"
-									checked={selectedDevices.includes(device.id)}
-									onChange={() => onSelectDevice(device.id)}
+									checked={allSelected}
+									onChange={() => onSelectAll(paginatedDevices.map(d => d.id))}
 								/>
-							</td>
-							<td onClick={() => onSelect(device)} className="cursor-pointer">{device.ip}</td>
-							<td>{device.mac}</td>
-							<td>
-								<button
-									onClick={() => onDelete(device.id)}
-									className="btn btn-danger"
-								>
-									Delete
-								</button>
-							</td>
+							</th>
+							<th>Device Details</th>
+							<th></th>
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{paginatedDevices.map((device) => (
+							<tr key={device.id}>
+								<td>
+									<input
+										type="checkbox"
+										checked={selectedDevices.includes(device.id)}
+										onChange={() => onSelectDevice(device.id)}
+									/>
+								</td>
+								<td onClick={() => onSelect(device)} className="cursor-pointer">
+									{device.ip} ({device.mac})
+								</td>
+								<td>
+									<button
+										onClick={() => onDelete(device.id)}
+										className="btn btn-danger"
+									>
+										Delete
+									</button>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
 			<div className="pagination">
 				<button
 					onClick={() => setCurrentPage(currentPage - 1)}

@@ -44,7 +44,7 @@ export default function Operations() {
 
 	return (
 		<div>
-			<div className="flex justify-between items-center mb-4">
+			<div className="header">
 				<h2>Operations</h2>
 				<button
 					onClick={() => {

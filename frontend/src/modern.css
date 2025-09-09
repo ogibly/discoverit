@@ -119,6 +119,10 @@ textarea:focus {
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
+.scan-input {
+  height: 40px;
+}
+
 /* Buttons */
 .btn {
   padding: 8px 16px;
@@ -166,6 +170,11 @@ textarea:focus {
 
 .btn-danger:hover {
   background-color: #c82333;
+}
+
+.scan-btn {
+  height: 40px;
+  padding: 0 20px;
 }
 
 /* Tables */

@@ -34,15 +34,7 @@ export default function AssetList({
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-4">
-				<div className="flex items-center">
-					<input
-						type="checkbox"
-						checked={allSelected}
-						onChange={() => onSelectAll(paginatedAssets.map(a => a.id))}
-						className="mr-2"
-					/>
-					<h2 className="text-xl font-bold">Assets</h2>
-				</div>
+				<h2 className="text-xl font-bold">Assets</h2>
 				<div>
 					<button
 						onClick={onDeleteSelected}
@@ -67,39 +59,47 @@ export default function AssetList({
 				placeholder="Filter by label"
 				className="mb-4"
 			/>
-			<table>
-				<thead>
-					<tr>
-						<th></th>
-						<th>Name</th>
-						<th>MAC</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					{paginatedAssets.map((asset) => (
-						<tr key={asset.id}>
-							<td>
+			<div className="overflow-x-auto">
+				<table className="w-full">
+					<thead>
+						<tr>
+							<th>
 								<input
 									type="checkbox"
-									checked={selectedAssets.includes(asset.id)}
-									onChange={() => onSelectAsset(asset.id)}
+									checked={allSelected}
+									onChange={() => onSelectAll(paginatedAssets.map(a => a.id))}
 								/>
-							</td>
-							<td onClick={() => onSelect(asset)} className="cursor-pointer">{asset.name}</td>
-							<td>{asset.mac}</td>
-							<td>
-								<button
-									onClick={() => onDelete(asset.id)}
-									className="btn btn-danger"
-								>
-									Delete
-								</button>
-							</td>
+							</th>
+							<th>Name</th>
+							<th>MAC</th>
+							<th></th>
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{paginatedAssets.map((asset) => (
+							<tr key={asset.id}>
+								<td>
+									<input
+										type="checkbox"
+										checked={selectedAssets.includes(asset.id)}
+										onChange={() => onSelectAsset(asset.id)}
+									/>
+								</td>
+								<td onClick={() => onSelect(asset)} className="cursor-pointer">{asset.name}</td>
+								<td>{asset.mac}</td>
+								<td>
+									<button
+										onClick={() => onDelete(asset.id)}
+										className="btn btn-danger"
+									>
+										Delete
+									</button>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
 			<div className="pagination">
 				<button
 					onClick={() => setCurrentPage(currentPage - 1)}

@@ -26,24 +26,24 @@ export default function Scans({
 				<h2>Scans</h2>
 			</div>
 			<div className="card mb-4">
-				<div className="flex items-end gap-2">
+				<div className="flex items-center gap-2">
 					<input
 						value={target}
 						onChange={(e) => setTarget(e.target.value)}
-						className="border rounded px-2 py-1"
+						className="border rounded px-2 py-1 scan-input"
 						placeholder="192.168.1.0/24 or 192.168.1.1-50"
 					/>
 					<button
-						onClick={() => triggerScan("quick")}
-						disabled={!!activeScan}
-						className="btn btn-secondary"
+						onClick={() => triggerScan("quick", selectedDevices)}
+						disabled={!!activeScan || selectedDevices.length === 0}
+						className="btn btn-secondary scan-btn"
 					>
 						{activeScan ? "Scanning..." : "Quick Scan"}
 					</button>
 					<button
-						onClick={() => triggerScan("comprehensive")}
-						disabled={!!activeScan}
-						className="btn btn-primary"
+						onClick={() => triggerScan("comprehensive", selectedDevices)}
+						disabled={!!activeScan || selectedDevices.length === 0}
+						className="btn btn-primary scan-btn"
 					>
 						{activeScan ? "Scanning..." : "Comprehensive Scan"}
 					</button>

@@ -33,15 +33,7 @@ export default function AssetGroupList({
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-4">
-				<div className="flex items-center">
-					<input
-						type="checkbox"
-						checked={allSelected}
-						onChange={() => onSelectAll(paginatedAssetGroups.map(ag => ag.id))}
-						className="mr-2"
-					/>
-					<h2 className="text-xl font-bold">Asset Groups</h2>
-				</div>
+				<h2 className="text-xl font-bold">Asset Groups</h2>
 				<div>
 					<button
 						onClick={onDeleteSelected}
@@ -59,37 +51,45 @@ export default function AssetGroupList({
 				placeholder="Filter by label"
 				className="mb-4"
 			/>
-			<table>
-				<thead>
-					<tr>
-						<th></th>
-						<th>Name</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					{paginatedAssetGroups.map((group) => (
-						<tr key={group.id}>
-							<td>
+			<div className="overflow-x-auto">
+				<table className="w-full">
+					<thead>
+						<tr>
+							<th>
 								<input
 									type="checkbox"
-									checked={selectedAssetGroups.includes(group.id)}
-									onChange={() => onSelectAssetGroup(group.id)}
+									checked={allSelected}
+									onChange={() => onSelectAll(paginatedAssetGroups.map(ag => ag.id))}
 								/>
-							</td>
-							<td onClick={() => onSelect(group)} className="cursor-pointer">{group.name}</td>
-							<td>
-								<button
-									onClick={() => onDelete(group.id)}
-									className="btn btn-danger"
-								>
-									Delete
-								</button>
-							</td>
+							</th>
+							<th>Name</th>
+							<th></th>
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{paginatedAssetGroups.map((group) => (
+							<tr key={group.id}>
+								<td>
+									<input
+										type="checkbox"
+										checked={selectedAssetGroups.includes(group.id)}
+										onChange={() => onSelectAssetGroup(group.id)}
+									/>
+								</td>
+								<td onClick={() => onSelect(group)} className="cursor-pointer">{group.name}</td>
+								<td>
+									<button
+										onClick={() => onDelete(group.id)}
+										className="btn btn-danger"
+									>
+										Delete
+									</button>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
 			<div className="pagination">
 				<button
 					onClick={() => setCurrentPage(currentPage - 1)}

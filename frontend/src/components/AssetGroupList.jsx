@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export default function AssetGroupList({
 	assetGroups,
@@ -12,7 +12,19 @@ export default function AssetGroupList({
 }) {
 	const [filter, setFilter] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const itemsPerPage = 10;
+	const [itemsPerPage, setItemsPerPage] = useState(8);
+	const tableBodyRef = useRef(null);
+
+	useEffect(() => {
+		if (tableBodyRef.current) {
+			const rowHeight = 40; // Approximate height of a row
+			const availableHeight = tableBodyRef.current.clientHeight;
+			const newItemsPerPage = Math.floor(availableHeight / rowHeight);
+			if (newItemsPerPage > 0) {
+				setItemsPerPage(newItemsPerPage);
+			}
+		}
+	}, [assetGroups]);
 
 	const filteredAssetGroups = assetGroups.filter((group) => {
 		if (!filter) return true;
@@ -32,7 +44,7 @@ export default function AssetGroupList({
 	const allSelected = paginatedAssetGroups.length > 0 && paginatedAssetGroups.every(ag => selectedAssetGroups.includes(ag.id));
 
 	return (
-		<div>
+		<div className="flex flex-col h-full">
 			<div className="flex justify-between items-center mb-4">
 				<div>
 					<button
@@ -51,7 +63,7 @@ export default function AssetGroupList({
 				placeholder="Filter by label"
 				className="mb-4"
 			/>
-			<div className="overflow-x-auto">
+			<div className="overflow-auto flex-grow">
 				<table className="w-full">
 					<thead>
 						<tr>
@@ -66,7 +78,7 @@ export default function AssetGroupList({
 							<th></th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody ref={tableBodyRef}>
 						{paginatedAssetGroups.map((group) => (
 							<tr
 								key={group.id}
@@ -93,7 +105,7 @@ export default function AssetGroupList({
 					</tbody>
 				</table>
 			</div>
-			<div className="pagination">
+			<div className="pagination shrink-0">
 				<button
 					onClick={() => setCurrentPage(currentPage - 1)}
 					disabled={currentPage === 1}

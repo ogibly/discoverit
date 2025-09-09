@@ -21,7 +21,7 @@ export default function Scans({
 	deleteScan,
 }) {
 	return (
-		<div>
+		<div className="flex flex-col h-full">
 			<div className="header">
 				<h2>Scans</h2>
 			</div>
@@ -63,9 +63,9 @@ export default function Scans({
 					</div>
 				)}
 			</div>
-			<div className="grid grid-cols-3 gap-6">
+			<div className="grid grid-cols-3 gap-6 flex-grow overflow-auto">
 				<div className="col-span-1">
-					<div className="card">
+					<div className="card h-full">
 						<DeviceList
 							devices={devices}
 							selectedDevice={selectedDevice}
@@ -80,7 +80,7 @@ export default function Scans({
 					</div>
 				</div>
 				<div className="col-span-2">
-					<div className="card">
+					<div className="card h-full overflow-auto">
 						{selectedDevice ? (
 							<DeviceDetail
 								device={selectedDevice}

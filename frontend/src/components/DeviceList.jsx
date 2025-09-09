@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export default function DeviceList({
 	devices,
@@ -12,7 +12,20 @@ export default function DeviceList({
 	onSelectAll,
 }) {
 	const [currentPage, setCurrentPage] = useState(1);
-	const itemsPerPage = 10;
+	const [itemsPerPage, setItemsPerPage] = useState(8);
+	const tableBodyRef = useRef(null);
+
+	useEffect(() => {
+		if (tableBodyRef.current) {
+			const rowHeight = 40; // Approximate height of a row
+			const availableHeight = tableBodyRef.current.clientHeight;
+			const newItemsPerPage = Math.floor(availableHeight / rowHeight);
+			if (newItemsPerPage > 0) {
+				setItemsPerPage(newItemsPerPage);
+			}
+		}
+	}, [devices]);
+
 	const totalPages = Math.ceil(devices.length / itemsPerPage);
 	const paginatedDevices = devices.slice(
 		(currentPage - 1) * itemsPerPage,
@@ -22,7 +35,7 @@ export default function DeviceList({
 	const allSelected = paginatedDevices.length > 0 && paginatedDevices.every(d => selectedDevices.includes(d.id));
 
 	return (
-		<div>
+		<div className="flex flex-col h-full">
 			<div className="flex justify-between items-center mb-4">
 				<div>
 					<button
@@ -41,7 +54,7 @@ export default function DeviceList({
 					</button>
 				</div>
 			</div>
-			<div className="overflow-x-auto">
+			<div className="overflow-auto flex-grow">
 				<table className="w-full">
 					<thead>
 						<tr>
@@ -57,7 +70,7 @@ export default function DeviceList({
 							<th></th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody ref={tableBodyRef}>
 						{paginatedDevices.map((device) => (
 							<tr
 								key={device.id}
@@ -85,7 +98,7 @@ export default function DeviceList({
 					</tbody>
 				</table>
 			</div>
-			<div className="pagination">
+			<div className="pagination shrink-0">
 				<button
 					onClick={() => setCurrentPage(currentPage - 1)}
 					disabled={currentPage === 1}

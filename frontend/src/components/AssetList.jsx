@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export default function AssetList({
 	assets,
@@ -13,7 +13,19 @@ export default function AssetList({
 }) {
 	const [filter, setFilter] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const itemsPerPage = 10;
+	const [itemsPerPage, setItemsPerPage] = useState(8);
+	const tableBodyRef = useRef(null);
+
+	useEffect(() => {
+		if (tableBodyRef.current) {
+			const rowHeight = 40; // Approximate height of a row
+			const availableHeight = tableBodyRef.current.clientHeight;
+			const newItemsPerPage = Math.floor(availableHeight / rowHeight);
+			if (newItemsPerPage > 0) {
+				setItemsPerPage(newItemsPerPage);
+			}
+		}
+	}, [assets]);
 
 	const filteredAssets = assets.filter((asset) => {
 		if (!filter) return true;
@@ -33,7 +45,7 @@ export default function AssetList({
 	const allSelected = paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.includes(a.id));
 
 	return (
-		<div>
+		<div className="flex flex-col h-full">
 			<div className="flex justify-between items-center mb-4">
 				<div>
 					<button
@@ -59,7 +71,7 @@ export default function AssetList({
 				placeholder="Filter by label"
 				className="mb-4"
 			/>
-			<div className="overflow-x-auto">
+			<div className="overflow-auto flex-grow">
 				<table className="w-full">
 					<thead>
 						<tr>
@@ -75,7 +87,7 @@ export default function AssetList({
 							<th></th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody ref={tableBodyRef}>
 						{paginatedAssets.map((asset) => (
 							<tr
 								key={asset.id}
@@ -103,7 +115,7 @@ export default function AssetList({
 					</tbody>
 				</table>
 			</div>
-			<div className="pagination">
+			<div className="pagination shrink-0">
 				<button
 					onClick={() => setCurrentPage(currentPage - 1)}
 					disabled={currentPage === 1}

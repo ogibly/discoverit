@@ -15,7 +15,7 @@ export default function Assets({
 	onCreateAssetGroup,
 }) {
 	return (
-		<div>
+		<div className="flex flex-col h-full">
 			<div className="header">
 				<h2>Assets</h2>
 				<button
@@ -25,9 +25,9 @@ export default function Assets({
 					Manage
 				</button>
 			</div>
-			<div className="grid grid-cols-2 gap-6">
+			<div className="grid grid-cols-2 gap-6 flex-grow">
 				<div className="col-span-1">
-					<div className="card">
+					<div className="card h-full">
 						<AssetList
 							assets={assets}
 							selectedAsset={selectedAsset}

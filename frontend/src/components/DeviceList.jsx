@@ -24,7 +24,6 @@ export default function DeviceList({
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-4">
-				<h2 className="text-xl font-bold">Devices</h2>
 				<div>
 					<button
 						onClick={onDeleteSelected}
@@ -51,17 +50,13 @@ export default function DeviceList({
 									type="checkbox"
 									checked={allSelected}
 									onChange={() => onSelectAll(paginatedDevices.map(d => d.id))}
-								/>
+				/>
 							</th>
 							<th>IP</th>
 							<th>MAC</th>
 							<th></th>
 						</tr>
 					</thead>
-				</table>
-			</div>
-			<div className="overflow-y-auto" style={{ height: "300px" }}>
-				<table className="w-full">
 					<tbody>
 						{paginatedDevices.map((device) => (
 							<tr

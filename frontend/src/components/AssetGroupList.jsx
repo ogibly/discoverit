@@ -34,7 +34,6 @@ export default function AssetGroupList({
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-4">
-				<h2 className="text-xl font-bold">Asset Groups</h2>
 				<div>
 					<button
 						onClick={onDeleteSelected}
@@ -61,16 +60,12 @@ export default function AssetGroupList({
 									type="checkbox"
 									checked={allSelected}
 									onChange={() => onSelectAll(paginatedAssetGroups.map(ag => ag.id))}
-								/>
+				/>
 							</th>
 							<th>Name</th>
 							<th></th>
 						</tr>
 					</thead>
-				</table>
-			</div>
-			<div className="overflow-y-auto" style={{ height: "300px" }}>
-				<table className="w-full">
 					<tbody>
 						{paginatedAssetGroups.map((group) => (
 							<tr

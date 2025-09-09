@@ -30,6 +30,7 @@ export default function Assets({
 					<div className="card">
 						<AssetList
 							assets={assets}
+							selectedAsset={selectedAsset}
 							onSelect={setSelectedAsset}
 							onDelete={deleteAsset}
 							selectedAssets={selectedAssets}

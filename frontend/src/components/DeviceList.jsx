@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 export default function DeviceList({
 	devices,
+	selectedDevice,
 	onSelect,
 	onDelete,
 	selectedDevices,
@@ -57,12 +58,15 @@ export default function DeviceList({
 							<th></th>
 						</tr>
 					</thead>
-					<tbody>
-						{paginatedDevices.map((device) => (
-							<tr key={device.id}>
-								<td>
-									<input
-										type="checkbox"
+				<tbody>
+					{paginatedDevices.map((device) => (
+						<tr
+							key={device.id}
+							className={selectedDevice && selectedDevice.id === device.id ? "selected" : ""}
+						>
+							<td>
+								<input
+									type="checkbox"
 										checked={selectedDevices.includes(device.id)}
 										onChange={() => onSelectDevice(device.id)}
 									/>

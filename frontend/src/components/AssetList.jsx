@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 export default function AssetList({
 	assets,
+	selectedAsset,
 	onSelect,
 	onDelete,
 	selectedAssets,
@@ -75,12 +76,15 @@ export default function AssetList({
 							<th></th>
 						</tr>
 					</thead>
-					<tbody>
-						{paginatedAssets.map((asset) => (
-							<tr key={asset.id}>
-								<td>
-									<input
-										type="checkbox"
+				<tbody>
+					{paginatedAssets.map((asset) => (
+						<tr
+							key={asset.id}
+							className={selectedAsset && selectedAsset.id === asset.id ? "selected" : ""}
+						>
+							<td>
+								<input
+									type="checkbox"
 										checked={selectedAssets.includes(asset.id)}
 										onChange={() => onSelectAsset(asset.id)}
 									/>

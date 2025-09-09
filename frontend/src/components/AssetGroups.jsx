@@ -33,6 +33,7 @@ export default function AssetGroups({
 					<div className="card">
 						<AssetGroupList
 							assetGroups={assetGroups}
+							selectedAssetGroup={selectedAssetGroup}
 							onSelect={setSelectedAssetGroup}
 							onDelete={deleteAssetGroup}
 							selectedAssetGroups={selectedAssetGroups}

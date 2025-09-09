@@ -206,6 +206,15 @@ tr:last-child td {
   border-bottom: none;
 }
 
+tr:hover {
+  background-color: #22272e;
+}
+
+tr.selected {
+  background-color: #388bfd;
+  color: #ffffff;
+}
+
 /* Pagination */
 .pagination {
   display: flex;

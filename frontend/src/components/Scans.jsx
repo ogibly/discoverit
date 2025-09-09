@@ -68,6 +68,7 @@ export default function Scans({
 					<div className="card">
 						<DeviceList
 							devices={devices}
+							selectedDevice={selectedDevice}
 							onSelect={setSelectedDevice}
 							onDelete={deleteDevice}
 							selectedDevices={selectedDevices}

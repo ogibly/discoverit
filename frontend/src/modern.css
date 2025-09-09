@@ -9,6 +9,7 @@ body {
 .container {
   display: flex;
   height: 100vh;
+  width: 100vw;
 }
 
 .sidebar {
@@ -17,12 +18,15 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .main-content {
   flex-grow: 1;
   padding: 20px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Sidebar */
@@ -86,11 +90,17 @@ textarea {
   border: none;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.3s;
+  transition: all 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .btn-primary {
-  background-color: #007bff;
+  background: linear-gradient(45deg, #007bff, #0056b3);
   color: #fff;
 }
 

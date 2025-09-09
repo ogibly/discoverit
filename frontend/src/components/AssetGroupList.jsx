@@ -2,6 +2,8 @@ import React, { useState } from "react";
 
 export default function AssetGroupList({ assetGroups, onSelect, onDelete }) {
 	const [filter, setFilter] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 10;
 
 	const filteredAssetGroups = assetGroups.filter((group) => {
 		if (!filter) return true;
@@ -11,6 +13,12 @@ export default function AssetGroupList({ assetGroups, onSelect, onDelete }) {
 			label.toLowerCase().includes(filter.toLowerCase())
 		);
 	});
+
+	const totalPages = Math.ceil(filteredAssetGroups.length / itemsPerPage);
+	const paginatedAssetGroups = filteredAssetGroups.slice(
+		(currentPage - 1) * itemsPerPage,
+		currentPage * itemsPerPage
+	);
 
 	return (
 		<div>
@@ -29,7 +37,7 @@ export default function AssetGroupList({ assetGroups, onSelect, onDelete }) {
 					</tr>
 				</thead>
 				<tbody>
-					{filteredAssetGroups.map((group) => (
+					{paginatedAssetGroups.map((group) => (
 						<tr key={group.id}>
 							<td onClick={() => onSelect(group)} className="cursor-pointer">{group.name}</td>
 							<td>
@@ -44,6 +52,19 @@ export default function AssetGroupList({ assetGroups, onSelect, onDelete }) {
 					))}
 				</tbody>
 			</table>
+			<div className="flex justify-center mt-4">
+				{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+					<button
+						key={page}
+						onClick={() => setCurrentPage(page)}
+						className={`px-3 py-1 mx-1 rounded ${
+							currentPage === page ? "bg-blue-500 text-white" : "bg-gray-700"
+						}`}
+					>
+						{page}
+					</button>
+				))}
+			</div>
 		</div>
 	);
 }

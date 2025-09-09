@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function DeviceList({
 	devices,
@@ -10,7 +10,15 @@ export default function DeviceList({
 	onCreateAsset,
 	onSelectAll,
 }) {
-	const allSelected = devices.length > 0 && selectedDevices.length === devices.length;
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 10;
+	const totalPages = Math.ceil(devices.length / itemsPerPage);
+	const paginatedDevices = devices.slice(
+		(currentPage - 1) * itemsPerPage,
+		currentPage * itemsPerPage
+	);
+
+	const allSelected = paginatedDevices.length > 0 && paginatedDevices.every(d => selectedDevices.includes(d.id));
 
 	return (
 		<div>
@@ -19,7 +27,7 @@ export default function DeviceList({
 					<input
 						type="checkbox"
 						checked={allSelected}
-						onChange={onSelectAll}
+						onChange={() => onSelectAll(paginatedDevices.map(d => d.id))}
 						className="mr-2"
 					/>
 					<h2 className="text-xl font-bold">Devices</h2>
@@ -51,7 +59,7 @@ export default function DeviceList({
 					</tr>
 				</thead>
 				<tbody>
-					{devices.map((device) => (
+					{paginatedDevices.map((device) => (
 						<tr key={device.id}>
 							<td>
 								<input
@@ -74,6 +82,19 @@ export default function DeviceList({
 					))}
 				</tbody>
 			</table>
+			<div className="flex justify-center mt-4">
+				{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+					<button
+						key={page}
+						onClick={() => setCurrentPage(page)}
+						className={`px-3 py-1 mx-1 rounded ${
+							currentPage === page ? "bg-blue-500 text-white" : "bg-gray-700"
+						}`}
+					>
+						{page}
+					</button>
+				))}
+			</div>
 		</div>
 	);
 }

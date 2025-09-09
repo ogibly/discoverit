@@ -138,11 +138,12 @@ function App() {
 		);
 	};
 
-	const handleSelectAllDevices = () => {
-		if (selectedDevices.length === devices.length) {
-			setSelectedDevices([]);
+	const handleSelectAllDevices = (deviceIds) => {
+		const allSelected = deviceIds.every(id => selectedDevices.includes(id));
+		if (allSelected) {
+			setSelectedDevices(selectedDevices.filter(id => !deviceIds.includes(id)));
 		} else {
-			setSelectedDevices(devices.map((d) => d.id));
+			setSelectedDevices([...new Set([...selectedDevices, ...deviceIds])]);
 		}
 	};
 

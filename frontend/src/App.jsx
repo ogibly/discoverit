@@ -1,13 +1,7 @@
 import React from 'react';
 import { useState, useEffect } from "react";
 import axios from "axios";
-import DeviceList from "./components/DeviceList";
-import DeviceDetail from "./components/DeviceDetail";
-import AssetList from "./components/AssetList";
-import AssetDetail from "./components/AssetDetail";
 import AssetManager from "./components/AssetManager";
-import AssetGroupList from "./components/AssetGroupList";
-import AssetGroupDetail from "./components/AssetGroupDetail";
 import AssetGroupManager from "./components/AssetGroupManager";
 import Operations from "./components/Operations";
 import Scans from "./components/Scans";
@@ -30,7 +24,6 @@ function App() {
 	const [selectedAssetGroup, setSelectedAssetGroup] = useState(null);
 	const [showAssetGroupManager, setShowAssetGroupManager] = useState(false);
 	const [editingAssetGroup, setEditingAssetGroup] = useState(null);
-	const [newDevice, setNewDevice] = useState({ ip: "", mac: "", vendor: "" });
 	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
     const [activeScan, setActiveScan] = useState(null);
@@ -83,18 +76,6 @@ function App() {
 		}
 		prevActiveScan.current = activeScan;
 	}, [activeScan]);
-
-	const createDevice = async (e) => {
-		e.preventDefault();
-		if (!newDevice.ip) return;
-		await axios.post(`${API_BASE}/devices`, {
-			ip: newDevice.ip,
-			mac: newDevice.mac || undefined,
-			vendor: newDevice.vendor || undefined,
-		});
-		setNewDevice({ ip: "", mac: "", vendor: "" });
-		fetchDevices();
-	};
 
 	const triggerScan = async (scanType) => {
 		setStatusMsg(""); // Clear previous messages

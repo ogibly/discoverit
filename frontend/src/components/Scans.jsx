@@ -24,6 +24,8 @@ export default function Scans({
 		<div>
 			<div className="header">
 				<h2>Scans</h2>
+			</div>
+			<div className="card mb-4">
 				<div className="flex items-end gap-2">
 					<input
 						value={target}
@@ -51,16 +53,16 @@ export default function Scans({
 						</button>
 					)}
 				</div>
+				{(activeScan || statusMsg) && (
+					<div className="mt-2 text-sm text-gray-400">
+						{activeScan ? (
+							<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
+						) : (
+							<span>{statusMsg}</span>
+						)}
+					</div>
+				)}
 			</div>
-			{(activeScan || statusMsg) && (
-				<div className="mb-2 text-sm text-gray-400">
-					{activeScan ? (
-						<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
-					) : (
-						<span>{statusMsg}</span>
-					)}
-				</div>
-			)}
 			<div className="grid grid-cols-3 gap-6">
 				<div className="col-span-1">
 					<div className="card">

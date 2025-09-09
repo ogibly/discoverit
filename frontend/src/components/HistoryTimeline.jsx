@@ -27,79 +27,74 @@ export default function HistoryTimeline({ deviceId, onDeleteScan }) {
 	const prevPage = () => { if (page < total) fetchHistory(page + 1); };
 	const nextPage = () => { if (page > 1) fetchHistory(page - 1); };
 
-	if (!history.length) return <p className="text-gray-500">No scans available</p>;
+	if (!history.length) return <p>No scans available.</p>;
 
 	return (
-		<div className="bg-white shadow rounded p-4 mt-4">
-			<h3 className="text-lg font-bold mb-2">Scan History</h3>
-			<ul className="divide-y divide-gray-200">
+		<div className="card">
+			<h3>Scan History</h3>
+			<ul style={{ listStyle: 'none', padding: 0 }}>
 				{history.map((scan) => (
-					<li key={scan.id} className="p-2">
-						<div className="flex items-center justify-between mb-2">
-							<p className="text-sm text-gray-400">Timestamp: {new Date(scan.timestamp).toLocaleString()}</p>
+					<li key={scan.id} style={{ marginBottom: '20px', borderBottom: '1px solid #30363D', paddingBottom: '15px' }}>
+						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+							<p style={{ fontSize: '12px', color: '#8B949E' }}>{new Date(scan.timestamp).toLocaleString()}</p>
 							<div>
-								{scan.aborted && <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">ABORTED</span>}
+								{scan.aborted && <span style={{ backgroundColor: '#DA3633', color: 'white', padding: '3px 8px', borderRadius: '6px', fontSize: '10px', marginRight: '10px', fontWeight: '500' }}>ABORTED</span>}
 								<button
 									onClick={() => onDeleteScan(scan.id)}
-									className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+									className="btn btn-danger"
 								>
 									Delete
 								</button>
 							</div>
 						</div>
 						
-						{/* Device Information */}
 						{scan.hostname && (
-							<div className="mb-2">
-								<p className="text-sm"><span className="font-medium">Hostname:</span> {scan.hostname}</p>
+							<div style={{ marginBottom: '8px' }}>
+								<p><span style={{ fontWeight: '500', color: '#8B949E' }}>Hostname:</span> {scan.hostname}</p>
 							</div>
 						)}
 						
-						{/* OS Information */}
 						{scan.os_info && scan.os_info.os_name !== 'Unknown' && (
-							<div className="mb-2">
-								<p className="text-sm"><span className="font-medium">OS:</span> {scan.os_info.os_name} ({scan.os_info.os_accuracy}% accuracy)</p>
+							<div style={{ marginBottom: '8px' }}>
+								<p><span style={{ fontWeight: '500', color: '#8B949E' }}>OS:</span> {scan.os_info.os_name} ({scan.os_info.os_accuracy}% accuracy)</p>
 							</div>
 						)}
 						
-						{/* Services */}
 						{scan.services && scan.services.length > 0 && (
-							<div className="mb-2">
-								<p className="text-sm font-medium mb-1">Services:</p>
-								<ul className="ml-4 text-sm">
+							<div style={{ marginBottom: '8px' }}>
+								<p style={{ fontWeight: '500', color: '#8B949E', marginBottom: '5px' }}>Services:</p>
+								<ul style={{ listStyle: 'none', paddingLeft: '15px' }}>
 									{scan.services.map((service, i) => (
-										<li key={i} className="mb-1">
-											<span className="font-medium">{service.port}/{service.proto}</span> - {service.service}
-											{service.version && <span className="text-gray-600"> ({service.version})</span>}
-											{service.product && <span className="text-gray-600"> - {service.product}</span>}
+										<li key={i} style={{ marginBottom: '3px' }}>
+											<span style={{ fontWeight: '500' }}>{service.port}/{service.proto}</span> - {service.service}
+											{service.version && <span style={{ color: '#8B949E' }}> ({service.version})</span>}
+											{service.product && <span style={{ color: '#8B949E' }}> - {service.product}</span>}
 										</li>
 									))}
 								</ul>
 							</div>
 						)}
 						
-						{/* Basic Ports (fallback for old scans) */}
 						{scan.ports && scan.ports.length > 0 && (
-							<div className="mb-2">
-								<p className="text-sm font-medium mb-1">Open Ports:</p>
-								<ul className="ml-4 text-sm">
+							<div style={{ marginBottom: '8px' }}>
+								<p style={{ fontWeight: '500', color: '#8B949E', marginBottom: '5px' }}>Open Ports:</p>
+								<ul style={{ listStyle: 'none', paddingLeft: '15px' }}>
 									{scan.ports.map((port, i) => (
 										<li key={i}>
-											<span className="font-medium">{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
+											<span style={{ fontWeight: '500' }}>{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
 										</li>
 									))}
 								</ul>
 							</div>
 						)}
 						
-						{/* Script Results */}
 						{scan.script_results && Object.keys(scan.script_results).length > 0 && (
-							<div className="mb-2">
-								<p className="text-sm font-medium mb-1">Additional Info:</p>
-								<div className="ml-4 text-xs text-gray-600">
+							<div style={{ marginBottom: '8px' }}>
+								<p style={{ fontWeight: '500', color: '#8B949E', marginBottom: '5px' }}>Additional Info:</p>
+								<div style={{ paddingLeft: '15px', fontSize: '12px', color: '#8B949E' }}>
 									{Object.entries(scan.script_results).slice(0, 3).map(([script, result]) => (
-										<div key={script} className="mb-1">
-											<span className="font-medium">{script}:</span> {result}
+										<div key={script} style={{ marginBottom: '3px' }}>
+											<span style={{ fontWeight: '500' }}>{script}:</span> {String(result)}
 										</div>
 									))}
 									{Object.keys(scan.script_results).length > 3 && (
@@ -111,18 +106,18 @@ export default function HistoryTimeline({ deviceId, onDeleteScan }) {
 					</li>
 				))}
 			</ul>
-			<div className="flex justify-between mt-4">
+			<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
 				<button
 					onClick={prevPage}
 					disabled={page >= total}
-					className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
+					className="btn btn-secondary"
 				>
 					&larr; Older
 				</button>
 				<button
 					onClick={nextPage}
 					disabled={page <= 1}
-					className="px-2 py-1 bg-gray-200 rounded disabled:opacity-50"
+					className="btn btn-secondary"
 				>
 					Newer &rarr;
 				</button>

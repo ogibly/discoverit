@@ -80,6 +80,13 @@ html, body, #root {
   margin-bottom: 10px; /* Add space below header */
 }
 
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #C9D1D9;
+}
+
 .card {
   background-color: #161B22;
   border-radius: 8px;

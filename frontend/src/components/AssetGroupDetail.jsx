@@ -1,19 +1,10 @@
-import React, { useState } from "react";
-import RunOperationModal from "./RunOperationModal";
+import React from "react";
 
 export default function AssetGroupDetail({ assetGroup }) {
-	const [showRunOperationModal, setShowRunOperationModal] = useState(false);
-
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-4">
 				<h2 className="text-2xl font-bold">{assetGroup.name}</h2>
-				<button
-					onClick={() => setShowRunOperationModal(true)}
-					className="btn btn-primary"
-				>
-					Run Operation
-				</button>
 			</div>
 			<div className="mt-4">
 				<h3 className="text-xl font-bold mb-2">Labels:</h3>
@@ -38,12 +29,6 @@ export default function AssetGroupDetail({ assetGroup }) {
 					</tbody>
 				</table>
 			</div>
-			{showRunOperationModal && (
-				<RunOperationModal
-					assetGroup={assetGroup}
-					onClose={() => setShowRunOperationModal(false)}
-				/>
-			)}
 		</div>
 	);
 }

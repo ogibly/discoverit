@@ -67,30 +67,34 @@ export default function AssetGroupList({
 							<th></th>
 						</tr>
 					</thead>
-				<tbody>
-					{paginatedAssetGroups.map((group) => (
-						<tr
-							key={group.id}
-							className={selectedAssetGroup && selectedAssetGroup.id === group.id ? "selected" : ""}
-						>
-							<td>
-								<input
-									type="checkbox"
-										checked={selectedAssetGroups.includes(group.id)}
-										onChange={() => onSelectAssetGroup(group.id)}
-									/>
-								</td>
-								<td onClick={() => onSelect(group)} className="cursor-pointer">{group.name}</td>
+				</table>
+			</div>
+			<div className="overflow-y-auto" style={{ height: "300px" }}>
+				<table className="w-full">
+					<tbody>
+						{paginatedAssetGroups.map((group) => (
+							<tr
+								key={group.id}
+								className={selectedAssetGroup && selectedAssetGroup.id === group.id ? "selected" : ""}
+							>
 								<td>
-									<button
-										onClick={() => onDelete(group.id)}
-										className="btn btn-danger"
-									>
-										Delete
-									</button>
-								</td>
-							</tr>
-						))}
+									<input
+										type="checkbox"
+											checked={selectedAssetGroups.includes(group.id)}
+											onChange={() => onSelectAssetGroup(group.id)}
+										/>
+									</td>
+									<td onClick={() => onSelect(group)} className="cursor-pointer">{group.name}</td>
+									<td>
+										<button
+											onClick={() => onDelete(group.id)}
+											className="btn btn-danger"
+										>
+											Delete
+										</button>
+									</td>
+								</tr>
+							))}
 					</tbody>
 				</table>
 			</div>

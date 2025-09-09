@@ -58,31 +58,35 @@ export default function DeviceList({
 							<th></th>
 						</tr>
 					</thead>
-				<tbody>
-					{paginatedDevices.map((device) => (
-						<tr
-							key={device.id}
-							className={selectedDevice && selectedDevice.id === device.id ? "selected" : ""}
-						>
-							<td>
-								<input
-									type="checkbox"
-										checked={selectedDevices.includes(device.id)}
-										onChange={() => onSelectDevice(device.id)}
-									/>
-								</td>
-								<td onClick={() => onSelect(device)} className="cursor-pointer">{device.ip}</td>
-								<td>{device.mac}</td>
+				</table>
+			</div>
+			<div className="overflow-y-auto" style={{ height: "300px" }}>
+				<table className="w-full">
+					<tbody>
+						{paginatedDevices.map((device) => (
+							<tr
+								key={device.id}
+								className={selectedDevice && selectedDevice.id === device.id ? "selected" : ""}
+							>
 								<td>
-									<button
-										onClick={() => onDelete(device.id)}
-										className="btn btn-danger"
-									>
-										Delete
-									</button>
-								</td>
-							</tr>
-						))}
+									<input
+										type="checkbox"
+											checked={selectedDevices.includes(device.id)}
+											onChange={() => onSelectDevice(device.id)}
+										/>
+									</td>
+									<td onClick={() => onSelect(device)} className="cursor-pointer">{device.ip}</td>
+									<td>{device.mac}</td>
+									<td>
+										<button
+											onClick={() => onDelete(device.id)}
+											className="btn btn-danger"
+										>
+											Delete
+										</button>
+									</td>
+								</tr>
+							))}
 					</tbody>
 				</table>
 			</div>

@@ -48,7 +48,7 @@ export default function Scans({
 						{activeScan ? "Scanning..." : "Comprehensive Scan"}
 					</button>
 					{activeScan && (
-						<button onClick={cancelScan} className="btn btn-danger">
+						<button onClick={cancelScan} className="btn btn-danger scan-btn">
 							Cancel Scan
 						</button>
 					)}

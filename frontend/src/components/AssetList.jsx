@@ -35,7 +35,6 @@ export default function AssetList({
 	return (
 		<div>
 			<div className="flex justify-between items-center mb-4">
-				<h2 className="text-xl font-bold">Assets</h2>
 				<div>
 					<button
 						onClick={onDeleteSelected}
@@ -69,38 +68,38 @@ export default function AssetList({
 									type="checkbox"
 									checked={allSelected}
 									onChange={() => onSelectAll(paginatedAssets.map(a => a.id))}
-								/>
-							</th>
+				/>
+			</th>
 							<th>Name</th>
 							<th>MAC</th>
 							<th></th>
 						</tr>
 					</thead>
-				<tbody>
-					{paginatedAssets.map((asset) => (
-						<tr
-							key={asset.id}
-							className={selectedAsset && selectedAsset.id === asset.id ? "selected" : ""}
-						>
-							<td>
-								<input
-									type="checkbox"
-										checked={selectedAssets.includes(asset.id)}
-										onChange={() => onSelectAsset(asset.id)}
-									/>
-								</td>
-								<td onClick={() => onSelect(asset)} className="cursor-pointer">{asset.name}</td>
-								<td>{asset.mac}</td>
+					<tbody>
+						{paginatedAssets.map((asset) => (
+							<tr
+								key={asset.id}
+								className={selectedAsset && selectedAsset.id === asset.id ? "selected" : ""}
+							>
 								<td>
-									<button
-										onClick={() => onDelete(asset.id)}
-										className="btn btn-danger"
-									>
-										Delete
-									</button>
-								</td>
-							</tr>
-						))}
+									<input
+										type="checkbox"
+											checked={selectedAssets.includes(asset.id)}
+											onChange={() => onSelectAsset(asset.id)}
+										/>
+									</td>
+									<td onClick={() => onSelect(asset)} className="cursor-pointer">{asset.name}</td>
+									<td>{asset.mac}</td>
+									<td>
+										<button
+											onClick={() => onDelete(asset.id)}
+											className="btn btn-danger"
+										>
+											Delete
+										</button>
+									</td>
+								</tr>
+							))}
 					</tbody>
 				</table>
 			</div>

@@ -307,67 +307,66 @@ function App() {
 						)}
 					</div>
 				)}
-				<div className="grid grid-cols-3 gap-6">
-					<div className="col-span-1">
-						<div className="card">
-							<DeviceList
-								devices={devices}
-								onSelect={setSelectedDevice}
-								onDelete={deleteDevice}
-								selectedDevices={selectedDevices}
-								onSelectDevice={handleSelectDevice}
-								onSelectAll={handleSelectAllDevices}
-								onDeleteSelected={handleDeleteSelected}
-								onCreateAsset={handleCreateAsset}
-							/>
-						</div>
-						<div className="card">
-							<div className="flex justify-between items-center mb-2">
-								<h2 className="text-xl font-bold">Assets</h2>
-								<button
-									onClick={() => setShowAssetManager(true)}
-									className="btn btn-secondary"
-								>
-									Manage
-								</button>
-							</div>
-							<AssetList assets={assets} onSelect={setSelectedAsset} onDelete={deleteAsset} />
-						</div>
-						<div className="card">
-							<div className="flex justify-between items-center mb-2">
-								<h2 className="text-xl font-bold">Asset Groups</h2>
-								<button
-									onClick={() => {
-										setEditingAssetGroup(null);
-										setShowAssetGroupManager(true);
-									}}
-									className="btn btn-secondary"
-								>
-									Create
-								</button>
-							</div>
-							<AssetGroupList assetGroups={assetGroups} onSelect={setSelectedAssetGroup} onDelete={deleteAssetGroup} />
-						</div>
+				<div className="grid grid-cols-4 gap-6">
+					<div className="card">
+						<DeviceList
+							devices={devices}
+							onSelect={setSelectedDevice}
+							onDelete={deleteDevice}
+							selectedDevices={selectedDevices}
+							onSelectDevice={handleSelectDevice}
+							onSelectAll={handleSelectAllDevices}
+							onDeleteSelected={handleDeleteSelected}
+							onCreateAsset={handleCreateAsset}
+						/>
 					</div>
-					<div className="col-span-2">
-						<div className="card">
-							{selectedDevice ? (
-								<DeviceDetail device={selectedDevice} onDeleteScan={deleteScan} />
-							) : (
-								<p className="text-gray-400">Select a device to see details.</p>
-							)}
+					<div className="card">
+						<div className="flex justify-between items-center mb-2">
+							<h2 className="text-xl font-bold">Assets</h2>
+							<button
+								onClick={() => setShowAssetManager(true)}
+								className="btn btn-secondary"
+							>
+								Manage
+							</button>
 						</div>
-						{selectedAsset && (
-							<div className="card mt-6">
-								<AssetDetail asset={selectedAsset} />
-							</div>
-						)}
-						{selectedAssetGroup && (
-							<div className="card mt-6">
-								<AssetGroupDetail assetGroup={selectedAssetGroup} />
-							</div>
-						)}
+						<AssetList assets={assets} onSelect={setSelectedAsset} onDelete={deleteAsset} />
 					</div>
+					<div className="card">
+						<div className="flex justify-between items-center mb-2">
+							<h2 className="text-xl font-bold">Asset Groups</h2>
+							<button
+								onClick={() => {
+									setEditingAssetGroup(null);
+									setShowAssetGroupManager(true);
+								}}
+								className="btn btn-secondary"
+							>
+								Create
+							</button>
+						</div>
+						<AssetGroupList assetGroups={assetGroups} onSelect={setSelectedAssetGroup} onDelete={deleteAssetGroup} />
+					</div>
+					<div className="card">
+						<Operations />
+					</div>
+				</div>
+				<div className="mt-6">
+					{selectedDevice && (
+						<div className="card">
+							<DeviceDetail device={selectedDevice} onDeleteScan={deleteScan} />
+						</div>
+					)}
+					{selectedAsset && (
+						<div className="card">
+							<AssetDetail asset={selectedAsset} />
+						</div>
+					)}
+					{selectedAssetGroup && (
+						<div className="card">
+							<AssetGroupDetail assetGroup={selectedAssetGroup} />
+						</div>
+					)}
 				</div>
 				{showAssetManager && (
 					<AssetManager

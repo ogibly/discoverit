@@ -9,12 +9,19 @@ export default function AssetManager({ assets, onUpdate, onDelete, onClose }) {
 					<div className="mt-2 px-7 py-3">
 						<ul className="divide-y divide-gray-200">
 							{assets.map((asset) => (
-								<li key={asset.id} className="p-2 flex justify-between items-center">
+								<li key={asset.id} className="p-2 flex flex-col items-start">
 									<input
 										type="text"
 										defaultValue={asset.name}
-										onBlur={(e) => onUpdate(asset.id, { name: e.target.value })}
-										className="border rounded px-2 py-1 flex-grow"
+										onBlur={(e) => onUpdate(asset.id, { ...asset, name: e.target.value })}
+										className="border rounded px-2 py-1 w-full mb-2"
+									/>
+									<input
+										type="text"
+										defaultValue={asset.labels ? JSON.parse(asset.labels).join(", ") : ""}
+										onBlur={(e) => onUpdate(asset.id, { ...asset, labels: JSON.stringify(e.target.value.split(",").map(s => s.trim())) })}
+										placeholder="Labels (comma-separated)"
+										className="border rounded px-2 py-1 w-full"
 									/>
 									<button
 										onClick={() => onDelete(asset.id)}

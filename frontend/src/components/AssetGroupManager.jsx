@@ -2,6 +2,9 @@ import React, { useState } from "react";
 
 export default function AssetGroupManager({ assets, assetGroup, onSave, onClose }) {
 	const [name, setName] = useState(assetGroup ? assetGroup.name : "");
+	const [labels, setLabels] = useState(
+		assetGroup && assetGroup.labels ? JSON.parse(assetGroup.labels).join(", ") : ""
+	);
 	const [selectedAssets, setSelectedAssets] = useState(
 		assetGroup ? assetGroup.assets.map((a) => a.id) : []
 	);
@@ -9,6 +12,7 @@ export default function AssetGroupManager({ assets, assetGroup, onSave, onClose 
 	const handleSave = () => {
 		onSave({
 			name,
+			labels: JSON.stringify(labels.split(",").map(s => s.trim())),
 			asset_ids: selectedAssets,
 		});
 	};
@@ -34,6 +38,13 @@ export default function AssetGroupManager({ assets, assetGroup, onSave, onClose 
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							placeholder="Group Name"
+							className="border rounded px-2 py-1 w-full mb-4"
+						/>
+						<input
+							type="text"
+							value={labels}
+							onChange={(e) => setLabels(e.target.value)}
+							placeholder="Labels (comma-separated)"
 							className="border rounded px-2 py-1 w-full mb-4"
 						/>
 						<h4 className="text-md font-semibold mb-2">Select Assets</h4>

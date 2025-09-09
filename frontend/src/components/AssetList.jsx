@@ -1,10 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function AssetList({ assets, onSelect, onDelete }) {
+	const [filter, setFilter] = useState("");
+
+	const filteredAssets = assets.filter((asset) => {
+		if (!filter) return true;
+		if (!asset.labels) return false;
+		const labels = JSON.parse(asset.labels);
+		return labels.some((label) =>
+			label.toLowerCase().includes(filter.toLowerCase())
+		);
+	});
+
 	return (
 		<div className="bg-white shadow rounded p-4">
+			<input
+				type="text"
+				value={filter}
+				onChange={(e) => setFilter(e.target.value)}
+				placeholder="Filter by label"
+				className="border rounded px-2 py-1 w-full mb-4"
+			/>
 			<ul className="divide-y divide-gray-200">
-				{assets.map((asset) => (
+				{filteredAssets.map((asset) => (
 					<li
 						key={asset.id}
 						className="p-2 hover:bg-gray-100 rounded flex justify-between items-center"

@@ -9,6 +9,10 @@ export default function AssetGroups({
 	deleteAssetGroup,
 	setEditingAssetGroup,
 	setShowAssetGroupManager,
+	selectedAssetGroups,
+	onSelectAssetGroup,
+	onSelectAllAssetGroups,
+	onDeleteSelectedAssetGroups,
 }) {
 	return (
 		<div>
@@ -31,6 +35,10 @@ export default function AssetGroups({
 							assetGroups={assetGroups}
 							onSelect={setSelectedAssetGroup}
 							onDelete={deleteAssetGroup}
+							selectedAssetGroups={selectedAssetGroups}
+							onSelectAssetGroup={onSelectAssetGroup}
+							onSelectAll={onSelectAllAssetGroups}
+							onDeleteSelected={onDeleteSelectedAssetGroups}
 						/>
 					</div>
 				</div>

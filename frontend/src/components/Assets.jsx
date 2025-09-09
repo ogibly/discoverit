@@ -8,6 +8,11 @@ export default function Assets({
 	setSelectedAsset,
 	deleteAsset,
 	setShowAssetManager,
+	selectedAssets,
+	onSelectAsset,
+	onSelectAllAssets,
+	onDeleteSelectedAssets,
+	onCreateAssetGroup,
 }) {
 	return (
 		<div>
@@ -27,6 +32,11 @@ export default function Assets({
 							assets={assets}
 							onSelect={setSelectedAsset}
 							onDelete={deleteAsset}
+							selectedAssets={selectedAssets}
+							onSelectAsset={onSelectAsset}
+							onSelectAll={onSelectAllAssets}
+							onDeleteSelected={onDeleteSelectedAssets}
+							onCreateAssetGroup={onCreateAssetGroup}
 						/>
 					</div>
 				</div>

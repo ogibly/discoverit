@@ -19,9 +19,11 @@ function App() {
 	const [selectedDevices, setSelectedDevices] = useState([]);
 	const [assets, setAssets] = useState([]);
 	const [selectedAsset, setSelectedAsset] = useState(null);
+	const [selectedAssets, setSelectedAssets] = useState([]);
 	const [showAssetManager, setShowAssetManager] = useState(false);
 	const [assetGroups, setAssetGroups] = useState([]);
 	const [selectedAssetGroup, setSelectedAssetGroup] = useState(null);
+	const [selectedAssetGroups, setSelectedAssetGroups] = useState([]);
 	const [showAssetGroupManager, setShowAssetGroupManager] = useState(false);
 	const [editingAssetGroup, setEditingAssetGroup] = useState(null);
 	const [target, setTarget] = useState("");
@@ -166,6 +168,90 @@ function App() {
 		}
 	};
 
+	const handleSelectAsset = (assetId) => {
+		setSelectedAssets((prev) =>
+			prev.includes(assetId)
+				? prev.filter((id) => id !== assetId)
+				: [...prev, assetId]
+		);
+	};
+
+	const handleSelectAllAssets = (assetIds) => {
+		const allSelected = assetIds.every(id => selectedAssets.includes(id));
+		if (allSelected) {
+			setSelectedAssets(selectedAssets.filter(id => !assetIds.includes(id)));
+		} else {
+			setSelectedAssets([...new Set([...selectedAssets, ...assetIds])]);
+		}
+	};
+
+	const handleDeleteSelectedAssets = async () => {
+		if (window.confirm(`Are you sure you want to delete ${selectedAssets.length} assets?`)) {
+			try {
+				await Promise.all(
+					selectedAssets.map((id) => axios.delete(`${API_BASE}/assets/${id}`))
+				);
+				fetchAssets();
+				setSelectedAssets([]);
+			} catch (error) {
+				setStatusMsg("Failed to delete assets.");
+			}
+		}
+	};
+
+	const handleCreateAssetGroup = async () => {
+		const assetsToGroup = assets.filter((a) => selectedAssets.includes(a.id));
+		if (assetsToGroup.length === 0) return;
+
+		const name = prompt("Enter a name for the new asset group:");
+		if (!name) return;
+
+		const assetGroupData = {
+			name,
+			asset_ids: assetsToGroup.map((a) => a.id),
+		};
+
+		try {
+			await axios.post(`${API_BASE}/asset_groups`, assetGroupData);
+			setStatusMsg("Asset group created successfully.");
+			setSelectedAssets([]);
+			fetchAssetGroups();
+		} catch (error) {
+			setStatusMsg("Failed to create asset group.");
+		}
+	};
+
+	const handleSelectAssetGroup = (assetGroupId) => {
+		setSelectedAssetGroups((prev) =>
+			prev.includes(assetGroupId)
+				? prev.filter((id) => id !== assetGroupId)
+				: [...prev, assetGroupId]
+		);
+	};
+
+	const handleSelectAllAssetGroups = (assetGroupIds) => {
+		const allSelected = assetGroupIds.every(id => selectedAssetGroups.includes(id));
+		if (allSelected) {
+			setSelectedAssetGroups(selectedAssetGroups.filter(id => !assetGroupIds.includes(id)));
+		} else {
+			setSelectedAssetGroups([...new Set([...selectedAssetGroups, ...assetGroupIds])]);
+		}
+	};
+
+	const handleDeleteSelectedAssetGroups = async () => {
+		if (window.confirm(`Are you sure you want to delete ${selectedAssetGroups.length} asset groups?`)) {
+			try {
+				await Promise.all(
+					selectedAssetGroups.map((id) => axios.delete(`${API_BASE}/asset_groups/${id}`))
+				);
+				fetchAssetGroups();
+				setSelectedAssetGroups([]);
+			} catch (error) {
+				setStatusMsg("Failed to delete asset groups.");
+			}
+		}
+	};
+
 	const handleUpdateAsset = async (assetId, updatedData) => {
 		try {
 			await axios.put(`${API_BASE}/assets/${assetId}`, updatedData);
@@ -283,6 +369,11 @@ function App() {
 						setSelectedAsset={setSelectedAsset}
 						deleteAsset={deleteAsset}
 						setShowAssetManager={setShowAssetManager}
+						selectedAssets={selectedAssets}
+						onSelectAsset={handleSelectAsset}
+						onSelectAllAssets={handleSelectAllAssets}
+						onDeleteSelectedAssets={handleDeleteSelectedAssets}
+						onCreateAssetGroup={handleCreateAssetGroup}
 					/>
 				)}
 				{page === "asset_groups" && (
@@ -293,6 +384,10 @@ function App() {
 						deleteAssetGroup={deleteAssetGroup}
 						setEditingAssetGroup={setEditingAssetGroup}
 						setShowAssetGroupManager={setShowAssetGroupManager}
+						selectedAssetGroups={selectedAssetGroups}
+						onSelectAssetGroup={handleSelectAssetGroup}
+						onSelectAllAssetGroups={handleSelectAllAssetGroups}
+						onDeleteSelectedAssetGroups={handleDeleteSelectedAssetGroups}
 					/>
 				)}
 				{page === "operations" && <Operations />}

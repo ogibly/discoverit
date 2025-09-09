@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 
-export default function AssetList({ assets, onSelect, onDelete }) {
+export default function AssetList({
+	assets,
+	onSelect,
+	onDelete,
+	selectedAssets,
+	onSelectAsset,
+	onDeleteSelected,
+	onCreateAssetGroup,
+	onSelectAll,
+}) {
 	const [filter, setFilter] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 	const itemsPerPage = 10;
@@ -20,8 +29,37 @@ export default function AssetList({ assets, onSelect, onDelete }) {
 		currentPage * itemsPerPage
 	);
 
+	const allSelected = paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.includes(a.id));
+
 	return (
 		<div>
+			<div className="flex justify-between items-center mb-4">
+				<div className="flex items-center">
+					<input
+						type="checkbox"
+						checked={allSelected}
+						onChange={() => onSelectAll(paginatedAssets.map(a => a.id))}
+						className="mr-2"
+					/>
+					<h2 className="text-xl font-bold">Assets</h2>
+				</div>
+				<div>
+					<button
+						onClick={onDeleteSelected}
+						disabled={selectedAssets.length === 0}
+						className="btn btn-danger"
+					>
+						Delete
+					</button>
+					<button
+						onClick={onCreateAssetGroup}
+						disabled={selectedAssets.length === 0}
+						className="btn btn-primary ml-2"
+					>
+						Create Asset Group
+					</button>
+				</div>
+			</div>
 			<input
 				type="text"
 				value={filter}
@@ -32,6 +70,7 @@ export default function AssetList({ assets, onSelect, onDelete }) {
 			<table>
 				<thead>
 					<tr>
+						<th></th>
 						<th>Name</th>
 						<th>MAC</th>
 						<th></th>
@@ -40,6 +79,13 @@ export default function AssetList({ assets, onSelect, onDelete }) {
 				<tbody>
 					{paginatedAssets.map((asset) => (
 						<tr key={asset.id}>
+							<td>
+								<input
+									type="checkbox"
+									checked={selectedAssets.includes(asset.id)}
+									onChange={() => onSelectAsset(asset.id)}
+								/>
+							</td>
 							<td onClick={() => onSelect(asset)} className="cursor-pointer">{asset.name}</td>
 							<td>{asset.mac}</td>
 							<td>

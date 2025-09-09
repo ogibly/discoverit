@@ -244,7 +244,7 @@ function App() {
 	};
 
 	return (
-		<div className="dark">
+		<div className="container">
 			<div className="sidebar">
 				<h1>DiscoverIT</h1>
 				<nav>

@@ -1,7 +1,6 @@
 import React from "react";
 import AssetList from "./AssetList";
 import AssetDetail from "./AssetDetail";
-import Operations from "./Operations";
 
 export default function Assets({
 	assets,
@@ -21,7 +20,7 @@ export default function Assets({
 					Manage
 				</button>
 			</div>
-			<div className="grid grid-cols-3 gap-6">
+			<div className="grid grid-cols-2 gap-6">
 				<div className="col-span-1">
 					<div className="card">
 						<AssetList
@@ -40,11 +39,6 @@ export default function Assets({
 								Select an asset to see details.
 							</p>
 						)}
-					</div>
-				</div>
-				<div className="col-span-1">
-					<div className="card">
-						<Operations />
 					</div>
 				</div>
 			</div>

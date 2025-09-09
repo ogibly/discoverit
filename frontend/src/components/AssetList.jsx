@@ -1,14 +1,6 @@
 import React, { useState } from "react";
 
-export default function AssetList({
-	assets,
-	onSelect,
-	onDelete,
-	selectedAssets,
-	onSelectAsset,
-	onDeleteSelected,
-	onSelectAll,
-}) {
+export default function AssetList({ assets, onSelect, onDelete }) {
 	const [filter, setFilter] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 	const itemsPerPage = 10;
@@ -28,67 +20,40 @@ export default function AssetList({
 		currentPage * itemsPerPage
 	);
 
-	const allSelected = paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.includes(a.id));
-
 	return (
 		<div>
-			<div className="flex justify-between items-center mb-4">
-				<input
-					type="text"
-					value={filter}
-					onChange={(e) => setFilter(e.target.value)}
-					placeholder="Filter by label"
-					className="mb-4"
-				/>
-				<button
-					onClick={onDeleteSelected}
-					disabled={selectedAssets.length === 0}
-					className="btn btn-danger"
-				>
-					Delete Selected
-				</button>
-			</div>
-			<div className="table-container">
-				<table>
-					<thead>
-						<tr>
-							<th>
-								<input
-									type="checkbox"
-									checked={allSelected}
-									onChange={() => onSelectAll(paginatedAssets.map(a => a.id))}
-								/>
-							</th>
-							<th>Asset Details</th>
-							<th></th>
+			<input
+				type="text"
+				value={filter}
+				onChange={(e) => setFilter(e.target.value)}
+				placeholder="Filter by label"
+				className="mb-4"
+			/>
+			<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>MAC</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					{paginatedAssets.map((asset) => (
+						<tr key={asset.id}>
+							<td onClick={() => onSelect(asset)} className="cursor-pointer">{asset.name}</td>
+							<td>{asset.mac}</td>
+							<td>
+								<button
+									onClick={() => onDelete(asset.id)}
+									className="btn btn-danger"
+								>
+									Delete
+								</button>
+							</td>
 						</tr>
-					</thead>
-					<tbody>
-						{paginatedAssets.map((asset) => (
-							<tr key={asset.id}>
-								<td>
-									<input
-										type="checkbox"
-										checked={selectedAssets.includes(asset.id)}
-										onChange={() => onSelectAsset(asset.id)}
-									/>
-								</td>
-								<td onClick={() => onSelect(asset)} className="cursor-pointer">
-									{asset.name} ({asset.mac})
-								</td>
-								<td>
-									<button
-										onClick={() => onDelete(asset.id)}
-										className="btn btn-danger"
-									>
-										Delete
-									</button>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+					))}
+				</tbody>
+			</table>
 			<div className="pagination">
 				<button
 					onClick={() => setCurrentPage(currentPage - 1)}

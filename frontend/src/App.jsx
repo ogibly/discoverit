@@ -19,7 +19,7 @@ import "./modern.css";
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 function App() {
-	const [page, setPage] = useState("dashboard");
+	const [page, setPage] = useState("scans");
 	const [devices, setDevices] = useState([]);
 	const [selectedDevice, setSelectedDevice] = useState(null);
 	const [selectedDevices, setSelectedDevices] = useState([]);

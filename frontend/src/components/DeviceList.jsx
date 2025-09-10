@@ -26,22 +26,6 @@ export default function DeviceList({
 
 	return (
 		<div className="flex flex-col h-full flex-grow">
-			<div className="flex justify-end mb-4">
-				<ActionsDropdown
-					actions={[
-						{
-							label: "Delete",
-							onClick: onDeleteSelected,
-							disabled: selectedDevices.length === 0,
-						},
-						{
-							label: "Create Asset",
-							onClick: onCreateAsset,
-							disabled: selectedDevices.length === 0,
-						},
-					]}
-				/>
-			</div>
 			{/* Converted to TailwindCSS */}
 			<div className="flex flex-col flex-grow overflow-hidden border border-slate-800 rounded-lg bg-slate-900/50">
 				<div className="flex-grow overflow-y-auto">
@@ -65,7 +49,7 @@ export default function DeviceList({
 							{paginatedDevices.map((device) => (
 								<tr
 									key={device.id}
-									className={`border-b border-slate-800 hover:bg-slate-800/50 ${selectedDevice && selectedDevice.id === device.id ? "bg-slate-800" : ""}`}
+									className={`border-b border-slate-800 transition-colors duration-150 ${selectedDevice && selectedDevice.id === device.id ? "bg-blue-600/20 hover:bg-blue-600/30" : "hover:bg-slate-800/50"}`}
 								>
 									<td className="w-4 p-4">
 										<input

@@ -38,34 +38,38 @@ export default function OperationsTracker() {
 	};
 
 	return (
-		<div>
-			<div className="header">
-				<h2>Operations Tracker</h2>
+		<div className="flex flex-col h-full text-slate-300">
+			<div className="mb-6">
+				<h2 className="text-3xl font-bold text-white">Operations Tracker</h2>
 			</div>
-			<table>
-				<thead>
-					<tr>
-						<th>Job ID</th>
-						<th>Operation</th>
-						<th>Asset Group</th>
-						<th>Status</th>
-						<th>Start Time</th>
-						<th>End Time</th>
-					</tr>
-				</thead>
-				<tbody>
-					{jobs.map((job) => (
-						<tr key={job.id}>
-							<td>{job.id}</td>
-							<td>{getOperationName(job.operation_id)}</td>
-							<td>{getAssetGroupName(job.asset_group_id)}</td>
-							<td>{job.status}</td>
-							<td>{new Date(job.start_time).toLocaleString()}</td>
-							<td>{job.end_time ? new Date(job.end_time).toLocaleString() : ""}</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
+			<div className="flex flex-col flex-grow overflow-hidden border border-slate-800 rounded-lg bg-slate-900/50">
+				<div className="flex-grow overflow-y-auto">
+					<table className="w-full text-sm text-left text-slate-300">
+						<thead className="text-xs text-slate-400 uppercase bg-slate-800">
+							<tr>
+								<th scope="col" className="px-6 py-3">Job ID</th>
+								<th scope="col" className="px-6 py-3">Operation</th>
+								<th scope="col" className="px-6 py-3">Asset Group</th>
+								<th scope="col" className="px-6 py-3">Status</th>
+								<th scope="col" className="px-6 py-3">Start Time</th>
+								<th scope="col" className="px-6 py-3">End Time</th>
+							</tr>
+						</thead>
+						<tbody>
+							{jobs.map((job) => (
+								<tr key={job.id} className="border-b border-slate-800 transition-colors duration-150 hover:bg-slate-800/50">
+									<td className="px-6 py-4">{job.id}</td>
+									<td className="px-6 py-4">{getOperationName(job.operation_id)}</td>
+									<td className="px-6 py-4">{getAssetGroupName(job.asset_group_id)}</td>
+									<td className="px-6 py-4">{job.status}</td>
+									<td className="px-6 py-4">{new Date(job.start_time).toLocaleString()}</td>
+									<td className="px-6 py-4">{job.end_time ? new Date(job.end_time).toLocaleString() : ""}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 	);
 }

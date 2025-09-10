@@ -80,6 +80,9 @@ export default function Scans({
 						)}
 					</div>
 					<div className="flex-grow flex flex-col">
+						<div className="flex justify-start mb-4">
+							<ActionsDropdown actions={actions} />
+						</div>
 						<DeviceList
 							devices={devices}
 							selectedDevice={selectedDevice}

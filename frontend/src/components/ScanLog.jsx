@@ -13,34 +13,38 @@ export default function ScanLog() {
   }, []);
 
   return (
-    <div>
-      <div className="header">
-        <h2>Scans Log</h2>
+    <div className="flex flex-col h-full text-slate-300">
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-white">Scans Log</h2>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Target</th>
-            <th>Scan Type</th>
-            <th>Status</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {scans.map(scan => (
-            <tr key={scan.id}>
-              <td>{scan.id}</td>
-              <td>{scan.target}</td>
-              <td>{scan.scan_type}</td>
-              <td>{scan.status}</td>
-              <td>{new Date(scan.start_time).toLocaleString()}</td>
-              <td>{scan.end_time ? new Date(scan.end_time).toLocaleString() : 'N/A'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="flex flex-col flex-grow overflow-hidden border border-slate-800 rounded-lg bg-slate-900/50">
+        <div className="flex-grow overflow-y-auto">
+          <table className="w-full text-sm text-left text-slate-300">
+            <thead className="text-xs text-slate-400 uppercase bg-slate-800">
+              <tr>
+                <th scope="col" className="px-6 py-3">ID</th>
+                <th scope="col" className="px-6 py-3">Target</th>
+                <th scope="col" className="px-6 py-3">Scan Type</th>
+                <th scope="col" className="px-6 py-3">Status</th>
+                <th scope="col" className="px-6 py-3">Start Time</th>
+                <th scope="col" className="px-6 py-3">End Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scans.map(scan => (
+                <tr key={scan.id} className="border-b border-slate-800 transition-colors duration-150 hover:bg-slate-800/50">
+                  <td className="px-6 py-4">{scan.id}</td>
+                  <td className="px-6 py-4">{scan.target}</td>
+                  <td className="px-6 py-4">{scan.scan_type}</td>
+                  <td className="px-6 py-4">{scan.status}</td>
+                  <td className="px-6 py-4">{new Date(scan.start_time).toLocaleString()}</td>
+                  <td className="px-6 py-4">{scan.end_time ? new Date(scan.end_time).toLocaleString() : 'N/A'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

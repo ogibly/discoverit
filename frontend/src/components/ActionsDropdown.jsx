@@ -21,7 +21,7 @@ export default function ActionsDropdown({ actions }) {
       <div>
         <button
           type="button"
-          className="btn btn-secondary"
+          className="inline-flex justify-center w-full rounded-md border border-slate-700 shadow-sm px-4 py-2 bg-slate-800 text-sm font-medium text-slate-300 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500"
           onClick={() => setIsOpen(!isOpen)}
         >
           Actions
@@ -42,7 +42,7 @@ export default function ActionsDropdown({ actions }) {
       </div>
 
       {isOpen && (
-        <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5">
+        <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-slate-800 ring-1 ring-black ring-opacity-5">
           <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
             {actions.map((action, index) => (
               <button
@@ -54,7 +54,7 @@ export default function ActionsDropdown({ actions }) {
                 disabled={action.disabled}
                 className={`${
                   action.disabled ? 'opacity-50 cursor-not-allowed' : ''
-                } block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-gray-100`}
+                } block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white`}
                 role="menuitem"
               >
                 {action.label}

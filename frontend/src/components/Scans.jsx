@@ -35,42 +35,42 @@ export default function Scans({
 	];
 
 	return (
-		<div className="flex flex-col h-full">
-			<div className="header">
-				<h2>Scans</h2>
+		<div className="flex flex-col h-full text-slate-300">
+			<div className="mb-6">
+				<h2 className="text-3xl font-bold text-white">Scans</h2>
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
-				<div className="w-2/3">
-					<div className="card mb-4 shrink-0">
-						<div className="flex items-center gap-2">
+				<div className="w-2/3 flex flex-col gap-6">
+					<div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+						<div className="flex items-center gap-4">
 							<input
 								value={target}
 								onChange={(e) => setTarget(e.target.value)}
-								className="border rounded px-2 py-1 scan-input"
+								className="flex-grow bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 								placeholder="192.168.1.0/24 or 192.168.1.1-50"
 							/>
 							<button
 								onClick={() => triggerScan("quick")}
 								disabled={!!activeScan || (!target.trim() && selectedDevices.length === 0)}
-								className="btn btn-secondary scan-btn"
+								className="px-4 py-2 text-sm font-semibold text-white bg-slate-700 rounded-md hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								{activeScan ? "Scanning..." : "Quick Scan"}
 							</button>
 							<button
 								onClick={() => triggerScan("comprehensive")}
 								disabled={!!activeScan || (!target.trim() && selectedDevices.length === 0)}
-								className="btn btn-primary scan-btn"
+								className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								{activeScan ? "Scanning..." : "Comprehensive Scan"}
 							</button>
 							{activeScan && (
-								<button onClick={cancelScan} className="btn btn-danger scan-btn">
+								<button onClick={cancelScan} className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-500">
 									Cancel Scan
 								</button>
 							)}
 						</div>
 						{(activeScan || statusMsg) && (
-							<div className="mt-2 text-sm text-gray-400">
+							<div className="mt-4 text-sm text-slate-400">
 								{activeScan ? (
 									<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
 								) : (
@@ -79,7 +79,7 @@ export default function Scans({
 							</div>
 						)}
 					</div>
-					<div className="card h-full">
+					<div className="flex-grow flex flex-col">
 						<DeviceList
 							devices={devices}
 							selectedDevice={selectedDevice}
@@ -94,16 +94,18 @@ export default function Scans({
 					</div>
 				</div>
 				<div className="w-1/3">
-					<div className="card">
+					<div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 h-full">
 						{selectedDevice ? (
 							<DeviceDetail
 								device={selectedDevice}
 								onDeleteScan={deleteScan}
 							/>
 						) : (
-							<p className="text-gray-400">
-								Select a device to see details.
-							</p>
+							<div className="flex items-center justify-center h-full">
+								<p className="text-slate-500">
+									Select a device to see details.
+								</p>
+							</div>
 						)}
 					</div>
 				</div>

@@ -28,109 +28,115 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 	const nextPage = () => { if (page > 1) fetchHistory(page - 1); };
 
 	return (
-		<div>
-			<h2 className="text-2xl font-bold mb-4">Device Details</h2>
-			<p><span className="font-bold">IP:</span> {device.ip}</p>
-			{device.mac && <p><span className="font-bold">MAC:</span> {device.mac}</p>}
-			{device.vendor && <p><span className="font-bold">Vendor:</span> {device.vendor}</p>}
+		<div className="text-slate-300">
+			<h2 className="text-2xl font-bold mb-6 text-white">Device Details</h2>
+			<div className="space-y-2 text-sm">
+				<p><span className="font-semibold text-slate-400">IP:</span> {device.ip}</p>
+				{device.mac && <p><span className="font-semibold text-slate-400">MAC:</span> {device.mac}</p>}
+				{device.vendor && <p><span className="font-semibold text-slate-400">Vendor:</span> {device.vendor}</p>}
+			</div>
 
-			<div className="mt-6">
+			<div className="mt-8">
+				<h3 className="text-xl font-bold mb-4 text-white">Scan History</h3>
 				{history.length > 0 ? (
-					<div className="card">
-						<h3>Scan History</h3>
-						<ul style={{ listStyle: 'none', padding: 0 }}>
+					<div className="bg-slate-900/70 border border-slate-800 rounded-lg">
+						<ul className="divide-y divide-slate-800">
 							{history.map((scan) => (
-								<li key={scan.id} style={{ marginBottom: '20px', borderBottom: '1px solid #30363D', paddingBottom: '15px' }}>
-									<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-										<p style={{ fontSize: '12px', color: '#8B949E' }}>{new Date(scan.timestamp).toLocaleString()}</p>
-										<div>
-											{scan.aborted && <span style={{ backgroundColor: '#DA3633', color: 'white', padding: '3px 8px', borderRadius: '6px', fontSize: '10px', marginRight: '10px', fontWeight: '500' }}>ABORTED</span>}
+								<li key={scan.id} className="p-6">
+									<div className="flex justify-between items-center mb-4">
+										<p className="text-xs text-slate-500">{new Date(scan.timestamp).toLocaleString()}</p>
+										<div className="flex items-center gap-2">
+											{scan.aborted && <span className="px-2 py-1 text-xs font-semibold text-white bg-red-600 rounded-full">ABORTED</span>}
 											<button
 												onClick={() => onDeleteScan(scan.id)}
-												className="btn btn-danger"
+												className="px-3 py-1 text-xs font-medium text-red-500 bg-red-900/50 border border-red-800 rounded-md hover:bg-red-900"
 											>
 												Delete
 											</button>
 										</div>
 									</div>
 									
-									{scan.hostname && (
-										<div style={{ marginBottom: '8px' }}>
-											<p><span style={{ fontWeight: '500', color: '#8B949E' }}>Hostname:</span> {scan.hostname}</p>
-										</div>
-									)}
-									
-									{scan.os_info && scan.os_info.os_name !== 'Unknown' && (
-										<div style={{ marginBottom: '8px' }}>
-											<p><span style={{ fontWeight: '500', color: '#8B949E' }}>OS:</span> {scan.os_info.os_name} ({scan.os_info.os_accuracy}% accuracy)</p>
-										</div>
-									)}
-									
-									{scan.services && scan.services.length > 0 && (
-										<div style={{ marginBottom: '8px' }}>
-											<p style={{ fontWeight: '500', color: '#8B949E', marginBottom: '5px' }}>Services:</p>
-											<ul style={{ listStyle: 'none', paddingLeft: '15px' }}>
-												{scan.services.map((service, i) => (
-													<li key={i} style={{ marginBottom: '3px' }}>
-														<span style={{ fontWeight: '500' }}>{service.port}/{service.proto}</span> - {service.service}
-														{service.version && <span style={{ color: '#8B949E' }}> ({service.version})</span>}
-														{service.product && <span style={{ color: '#8B949E' }}> - {service.product}</span>}
-													</li>
-												))}
-											</ul>
-										</div>
-									)}
-									
-									{scan.ports && scan.ports.length > 0 && (
-										<div style={{ marginBottom: '8px' }}>
-											<p style={{ fontWeight: '500', color: '#8B949E', marginBottom: '5px' }}>Open Ports:</p>
-											<ul style={{ listStyle: 'none', paddingLeft: '15px' }}>
-												{scan.ports.map((port, i) => (
-													<li key={i}>
-														<span style={{ fontWeight: '500' }}>{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
-													</li>
-												))}
-											</ul>
-										</div>
-									)}
-									
-									{scan.script_results && Object.keys(scan.script_results).length > 0 && (
-										<div style={{ marginBottom: '8px' }}>
-											<p style={{ fontWeight: '500', color: '#8B949E', marginBottom: '5px' }}>Additional Info:</p>
-											<div style={{ paddingLeft: '15px', fontSize: '12px', color: '#8B949E' }}>
-												{Object.entries(scan.script_results).slice(0, 3).map(([script, result]) => (
-													<div key={script} style={{ marginBottom: '3px' }}>
-														<span style={{ fontWeight: '500' }}>{script}:</span> {String(result)}
-													</div>
-												))}
-												{Object.keys(scan.script_results).length > 3 && (
-													<p>... and {Object.keys(scan.script_results).length - 3} more</p>
-												)}
+									<div className="space-y-4 text-sm">
+										{scan.hostname && (
+											<div>
+												<p><span className="font-semibold text-slate-400">Hostname:</span> {scan.hostname}</p>
 											</div>
-										</div>
-									)}
+										)}
+										
+										{scan.os_info && scan.os_info.os_name !== 'Unknown' && (
+											<div>
+												<p><span className="font-semibold text-slate-400">OS:</span> {scan.os_info.os_name} ({scan.os_info.os_accuracy}% accuracy)</p>
+											</div>
+										)}
+										
+										{scan.services && scan.services.length > 0 && (
+											<div>
+												<p className="font-semibold text-slate-400 mb-2">Services:</p>
+												<ul className="pl-4 space-y-1">
+													{scan.services.map((service, i) => (
+														<li key={i}>
+															<span className="font-semibold">{service.port}/{service.proto}</span> - {service.service}
+															{service.version && <span className="text-slate-500"> ({service.version})</span>}
+															{service.product && <span className="text-slate-500"> - {service.product}</span>}
+														</li>
+													))}
+												</ul>
+											</div>
+										)}
+										
+										{scan.ports && scan.ports.length > 0 && (
+											<div>
+												<p className="font-semibold text-slate-400 mb-2">Open Ports:</p>
+												<ul className="pl-4 space-y-1">
+													{scan.ports.map((port, i) => (
+														<li key={i}>
+															<span className="font-semibold">{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
+														</li>
+													))}
+												</ul>
+											</div>
+										)}
+										
+										{scan.script_results && Object.keys(scan.script_results).length > 0 && (
+											<div>
+												<p className="font-semibold text-slate-400 mb-2">Additional Info:</p>
+												<div className="pl-4 text-xs text-slate-500 space-y-1">
+													{Object.entries(scan.script_results).slice(0, 3).map(([script, result]) => (
+														<div key={script}>
+															<span className="font-semibold">{script}:</span> {String(result)}
+														</div>
+													))}
+													{Object.keys(scan.script_results).length > 3 && (
+														<p>... and {Object.keys(scan.script_results).length - 3} more</p>
+													)}
+												</div>
+											</div>
+										)}
+									</div>
 								</li>
 							))}
 						</ul>
-						<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+						<div className="flex justify-between p-4 border-t border-slate-800">
 							<button
 								onClick={prevPage}
 								disabled={page >= total}
-								className="btn btn-secondary"
+								className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 rounded-md hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								&larr; Older
 							</button>
 							<button
 								onClick={nextPage}
 								disabled={page <= 1}
-								className="btn btn-secondary"
+								className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 rounded-md hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								Newer &rarr;
 							</button>
 						</div>
 					</div>
 				) : (
-					<p>No scans available.</p>
+					<div className="flex items-center justify-center h-48 border-2 border-dashed border-slate-800 rounded-lg">
+						<p className="text-slate-500">No scans available.</p>
+					</div>
 				)}
 			</div>
 		</div>

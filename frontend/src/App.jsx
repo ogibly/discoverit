@@ -343,20 +343,26 @@ function App() {
 		}
 	};
 
+	const navLinkClasses = "block px-4 py-2 rounded-md text-sm font-medium transition-colors";
+	const activeLinkClasses = "bg-blue-600 text-white";
+	const inactiveLinkClasses = "text-slate-400 hover:bg-slate-800 hover:text-white";
+
 	return (
-		<div className="container">
-			<div className="sidebar">
-				<h1>DiscoverIT</h1>
-				<nav>
-					<a href="#" onClick={() => setPage("scans")} className={page === "scans" ? "active" : ""}>Scans</a>
-					<a href="#" onClick={() => setPage("scan_log")} className={page === "scan_log" ? "active" : ""}>Scans Log</a>
-					<a href="#" onClick={() => setPage("assets")} className={page === "assets" ? "active" : ""}>Assets</a>
-					<a href="#" onClick={() => setPage("asset_groups")} className={page === "asset_groups" ? "active" : ""}>Asset Groups</a>
-					<a href="#" onClick={() => setPage("operations")} className={page === "operations" ? "active" : ""}>Operations</a>
-					<a href="#" onClick={() => setPage("operations_tracker")} className={page === "operations_tracker" ? "active" : ""}>Operations Tracker</a>
+		<div className="flex h-screen bg-slate-900 text-slate-300">
+			<div className="flex flex-col w-64 bg-slate-900/70 border-r border-slate-800">
+				<div className="flex items-center justify-center h-16 border-b border-slate-800">
+					<h1 className="text-2xl font-bold text-white">DiscoverIT</h1>
+				</div>
+				<nav className="flex-grow p-4 space-y-2">
+					<a href="#" onClick={() => setPage("scans")} className={`${navLinkClasses} ${page === "scans" ? activeLinkClasses : inactiveLinkClasses}`}>Scans</a>
+					<a href="#" onClick={() => setPage("scan_log")} className={`${navLinkClasses} ${page === "scan_log" ? activeLinkClasses : inactiveLinkClasses}`}>Scans Log</a>
+					<a href="#" onClick={() => setPage("assets")} className={`${navLinkClasses} ${page === "assets" ? activeLinkClasses : inactiveLinkClasses}`}>Assets</a>
+					<a href="#" onClick={() => setPage("asset_groups")} className={`${navLinkClasses} ${page === "asset_groups" ? activeLinkClasses : inactiveLinkClasses}`}>Asset Groups</a>
+					<a href="#" onClick={() => setPage("operations")} className={`${navLinkClasses} ${page === "operations" ? activeLinkClasses : inactiveLinkClasses}`}>Operations</a>
+					<a href="#" onClick={() => setPage("operations_tracker")} className={`${navLinkClasses} ${page === "operations_tracker" ? activeLinkClasses : inactiveLinkClasses}`}>Operations Tracker</a>
 				</nav>
 			</div>
-			<div className="main-content">
+			<div className="flex-grow p-6 overflow-y-auto">
 				{page === "scans" && (
 					<Scans
 						devices={devices}

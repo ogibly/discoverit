@@ -27,10 +27,16 @@ function App() {
 	const [selectedAssetGroups, setSelectedAssetGroups] = useState([]);
 	const [showAssetGroupManager, setShowAssetGroupManager] = useState(false);
 	const [editingAssetGroup, setEditingAssetGroup] = useState(null);
+	const [allLabels, setAllLabels] = useState([]);
+	const [selectedLabels, setSelectedLabels] = useState([]);
 	const [target, setTarget] = useState("");
     const [statusMsg, setStatusMsg] = useState("");
     const [activeScan, setActiveScan] = useState(null);
     const prevActiveScan = React.useRef();
+
+	const fetchLabels = () => {
+		axios.get(`${API_BASE}/labels`).then(res => setAllLabels(res.data));
+	};
 
 	const fetchDevices = () => {
 		axios.get(`${API_BASE}/devices`).then(res => setDevices(res.data));
@@ -48,6 +54,7 @@ function App() {
 		fetchDevices();
 		fetchAssets();
 		fetchAssetGroups();
+		fetchLabels();
 		// fetch suggested subnet
 		axios.get(`${API_BASE}/suggest_subnet`).then(res => {
 			if (res.data && res.data.subnet && !target) setTarget(res.data.subnet);
@@ -57,6 +64,7 @@ function App() {
 		const deviceInterval = setInterval(fetchDevices, 3000);
 		const assetInterval = setInterval(fetchAssets, 3000);
 		const assetGroupInterval = setInterval(fetchAssetGroups, 3000);
+		const labelInterval = setInterval(fetchLabels, 3000);
 		const scanInterval = setInterval(() => {
 			axios.get(`${API_BASE}/scan/active`).then(res => {
 				setActiveScan(res.data);
@@ -67,6 +75,7 @@ function App() {
 			clearInterval(deviceInterval);
 			clearInterval(assetInterval);
 			clearInterval(assetGroupInterval);
+			clearInterval(labelInterval);
 			clearInterval(scanInterval);
 		};
 	}, []);
@@ -385,7 +394,7 @@ function App() {
 				)}
 				{page === "assets" && (
 					<Assets
-						assets={assets}
+						assets={assets.filter(a => selectedLabels.length === 0 || a.labels.some(l => selectedLabels.map(sl => sl.id).includes(l.id)))}
 						selectedAsset={selectedAsset}
 						setSelectedAsset={setSelectedAsset}
 						deleteAsset={deleteAsset}
@@ -395,11 +404,14 @@ function App() {
 						onSelectAllAssets={handleSelectAllAssets}
 						onDeleteSelectedAssets={handleDeleteSelectedAssets}
 						onCreateAssetGroup={handleCreateAssetGroup}
+						allLabels={allLabels}
+						selectedLabels={selectedLabels}
+						setSelectedLabels={setSelectedLabels}
 					/>
 				)}
 				{page === "asset_groups" && (
 					<AssetGroups
-						assetGroups={assetGroups}
+						assetGroups={assetGroups.filter(ag => selectedLabels.length === 0 || ag.labels.some(l => selectedLabels.map(sl => sl.id).includes(l.id)))}
 						selectedAssetGroup={selectedAssetGroup}
 						setSelectedAssetGroup={setSelectedAssetGroup}
 						deleteAssetGroup={deleteAssetGroup}
@@ -409,6 +421,9 @@ function App() {
 						onSelectAssetGroup={handleSelectAssetGroup}
 						onSelectAllAssetGroups={handleSelectAllAssetGroups}
 						onDeleteSelectedAssetGroups={handleDeleteSelectedAssetGroups}
+						allLabels={allLabels}
+						selectedLabels={selectedLabels}
+						setSelectedLabels={setSelectedLabels}
 					/>
 				)}
 				{page === "operations" && <Operations />}
@@ -416,9 +431,10 @@ function App() {
 				{page === "scan_log" && <ScanLog />}
 				{showAssetManager && (
 					<AssetManager
-						assets={assets.filter(a => selectedAssets.includes(a.id))}
+						assets={selectedAssets.length > 0 ? assets.filter(a => selectedAssets.includes(a.id)) : []}
 						onUpdate={handleUpdateAsset}
 						onDelete={deleteAsset}
+						onCreate={handleCreateAsset}
 						onClose={() => setShowAssetManager(false)}
 					/>
 				)}

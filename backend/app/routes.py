@@ -223,6 +223,18 @@ def trigger_scan(
     background_tasks.add_task(run_background_scan, new_task.id)
     return new_task
 
+@router.post("/labels", response_model=schemas.Label)
+def create_label(label: schemas.LabelCreate, db: Session = Depends(get_db)):
+    db_label = models.Label(name=label.name)
+    db.add(db_label)
+    db.commit()
+    db.refresh(db_label)
+    return db_label
+
+@router.get("/labels", response_model=List[schemas.Label])
+def list_labels(db: Session = Depends(get_db)):
+    return db.query(models.Label).all()
+
 @router.post("/assets", response_model=schemas.Asset)
 def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)):
     db_asset = models.Asset(
@@ -232,10 +244,15 @@ def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)):
         username=asset.username,
         password=asset.password,
         scan_data=asset.scan_data,
-        labels=asset.labels,
         custom_fields=asset.custom_fields
     )
     db.add(db_asset)
+    db.commit()
+    db.refresh(db_asset)
+    for label_id in asset.labels:
+        label = db.query(models.Label).filter(models.Label.id == label_id).first()
+        if label:
+            db_asset.labels.append(label)
     db.commit()
     db.refresh(db_asset)
     for ip in asset.ips:
@@ -246,8 +263,12 @@ def create_asset(asset: schemas.AssetCreate, db: Session = Depends(get_db)):
     return db_asset
 
 @router.get("/assets", response_model=List[schemas.Asset])
-def list_assets(db: Session = Depends(get_db)):
-    return db.query(models.Asset).all()
+def list_assets(labels: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(models.Asset)
+    if labels:
+        label_ids = [int(id) for id in labels.split(',')]
+        query = query.join(models.asset_label_association).join(models.Label).filter(models.Label.id.in_(label_ids))
+    return query.all()
 
 @router.get("/assets/{asset_id}", response_model=schemas.Asset)
 def get_asset(asset_id: int, db: Session = Depends(get_db)):
@@ -258,8 +279,16 @@ def update_asset(asset_id: int, asset: schemas.AssetCreate, db: Session = Depend
     db_asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
     if not db_asset:
         return None
-    for key, value in asset.dict().items():
-        setattr(db_asset, key, value)
+    update_data = asset.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        if key != 'labels':
+            setattr(db_asset, key, value)
+    if 'labels' in update_data:
+        db_asset.labels = []
+        for label_id in asset.labels:
+            label = db.query(models.Label).filter(models.Label.id == label_id).first()
+            if label:
+                db_asset.labels.append(label)
     db.commit()
     db.refresh(db_asset)
     return db_asset
@@ -274,10 +303,7 @@ def delete_asset(asset_id: int, db: Session = Depends(get_db)):
 
 @router.post("/asset_groups", response_model=schemas.AssetGroup)
 def create_asset_group(asset_group: schemas.AssetGroupCreate, db: Session = Depends(get_db)):
-    db_asset_group = models.AssetGroup(
-        name=asset_group.name,
-        labels=asset_group.labels
-    )
+    db_asset_group = models.AssetGroup(name=asset_group.name)
     db.add(db_asset_group)
     db.commit()
     db.refresh(db_asset_group)
@@ -285,13 +311,21 @@ def create_asset_group(asset_group: schemas.AssetGroupCreate, db: Session = Depe
         asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
         if asset:
             db_asset_group.assets.append(asset)
+    for label_id in asset_group.labels:
+        label = db.query(models.Label).filter(models.Label.id == label_id).first()
+        if label:
+            db_asset_group.labels.append(label)
     db.commit()
     db.refresh(db_asset_group)
     return db_asset_group
 
 @router.get("/asset_groups", response_model=List[schemas.AssetGroup])
-def list_asset_groups(db: Session = Depends(get_db)):
-    return db.query(models.AssetGroup).all()
+def list_asset_groups(labels: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(models.AssetGroup)
+    if labels:
+        label_ids = [int(id) for id in labels.split(',')]
+        query = query.join(models.AssetGroup.labels).filter(models.Label.id.in_(label_ids))
+    return query.all()
 
 @router.get("/asset_groups/{asset_group_id}", response_model=schemas.AssetGroup)
 def get_asset_group(asset_group_id: int, db: Session = Depends(get_db)):
@@ -303,12 +337,16 @@ def update_asset_group(asset_group_id: int, asset_group: schemas.AssetGroupCreat
     if not db_asset_group:
         return None
     db_asset_group.name = asset_group.name
-    db_asset_group.labels = asset_group.labels
     db_asset_group.assets = []
     for asset_id in asset_group.asset_ids:
         asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
         if asset:
             db_asset_group.assets.append(asset)
+    db_asset_group.labels = []
+    for label_id in asset_group.labels:
+        label = db.query(models.Label).filter(models.Label.id == label_id).first()
+        if label:
+            db_asset_group.labels.append(label)
     db.commit()
     db.refresh(db_asset_group)
     return db_asset_group

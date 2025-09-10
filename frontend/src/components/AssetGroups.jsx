@@ -2,6 +2,7 @@ import React from "react";
 import AssetGroupList from "./AssetGroupList";
 import AssetGroupDetail from "./AssetGroupDetail";
 import ActionsDropdown from "./ActionsDropdown";
+import LabelFilter from "./LabelFilter";
 
 export default function AssetGroups({
 	assetGroups,
@@ -14,6 +15,9 @@ export default function AssetGroups({
 	onSelectAssetGroup,
 	onSelectAllAssetGroups,
 	onDeleteSelectedAssetGroups,
+	allLabels,
+	selectedLabels,
+	setSelectedLabels,
 }) {
 	const actions = [
 		{
@@ -40,8 +44,6 @@ export default function AssetGroups({
 		},
 	];
 
-	const [filter, setFilter] = React.useState("");
-
 	return (
 		<div className="flex flex-col h-full text-slate-300">
 			<div className="flex justify-between items-center mb-6">
@@ -49,24 +51,13 @@ export default function AssetGroups({
 			</div>
 			<div className="flex justify-between items-center mb-4">
 				<ActionsDropdown actions={actions} />
-				<input
-					type="text"
-					value={filter}
-					onChange={(e) => setFilter(e.target.value)}
-					placeholder="Filter by label"
-					className="bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-1/3"
-				/>
+				<LabelFilter allLabels={allLabels} selectedLabels={selectedLabels} setSelectedLabels={setSelectedLabels} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3 flex flex-col">
 					<div className="flex-grow flex flex-col">
 						<AssetGroupList
-							assetGroups={assetGroups.filter(ag => {
-								if (!filter) return true;
-								if (!ag.labels) return false;
-								const labels = JSON.parse(ag.labels);
-								return labels.some(label => label.toLowerCase().includes(filter.toLowerCase()));
-							})}
+							assetGroups={assetGroups}
 							selectedAssetGroup={selectedAssetGroup}
 							onSelect={setSelectedAssetGroup}
 							onDelete={deleteAssetGroup}

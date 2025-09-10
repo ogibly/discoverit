@@ -18,9 +18,8 @@ export default function AssetGroupList({
 	const filteredAssetGroups = assetGroups.filter((group) => {
 		if (!filter) return true;
 		if (!group.labels) return false;
-		const labels = JSON.parse(group.labels);
-		return labels.some((label) =>
-			label.toLowerCase().includes(filter.toLowerCase())
+		return group.labels.some((label) =>
+			label.name.toLowerCase().includes(filter.toLowerCase())
 		);
 	});
 
@@ -69,9 +68,9 @@ export default function AssetGroupList({
 									</td>
 									<td onClick={() => onSelect(group)} className="px-6 py-4 cursor-pointer">{group.name}</td>
 									<td className="px-6 py-4">
-										{group.labels && JSON.parse(group.labels).map(label => (
-											<span key={label} className="inline-block bg-slate-700 text-slate-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
-												{label}
+										{group.labels && group.labels.map(label => (
+											<span key={label.id} className="inline-block bg-slate-700 text-slate-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+												{label.name}
 											</span>
 										))}
 									</td>

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import LabelManager from "./LabelManager";
 
 export default function AssetGroupManager({ assets, assetGroup, onSave, onClose }) {
 	const [name, setName] = useState(assetGroup ? assetGroup.name : "");
 	const [labels, setLabels] = useState(
-		assetGroup && assetGroup.labels ? JSON.parse(assetGroup.labels).join(", ") : ""
+		assetGroup && assetGroup.labels ? assetGroup.labels : []
 	);
 	const [selectedAssets, setSelectedAssets] = useState(
 		assetGroup ? assetGroup.assets.map((a) => a.id) : []
@@ -12,7 +13,7 @@ export default function AssetGroupManager({ assets, assetGroup, onSave, onClose 
 	const handleSave = () => {
 		onSave({
 			name,
-			labels: JSON.stringify(labels.split(",").map(s => s.trim())),
+			labels: labels.map(l => l.id),
 			asset_ids: selectedAssets,
 		});
 	};
@@ -37,12 +38,9 @@ export default function AssetGroupManager({ assets, assetGroup, onSave, onClose 
 						placeholder="Group Name"
 						className="w-full bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 					/>
-					<input
-						type="text"
-						value={labels}
-						onChange={(e) => setLabels(e.target.value)}
-						placeholder="Labels (comma-separated)"
-						className="w-full bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					<LabelManager
+						selectedObject={{ labels }}
+						onUpdate={(updated) => setLabels(updated.labels)}
 					/>
 					<div>
 						<h4 className="text-lg font-semibold text-white mb-2">Select Assets</h4>

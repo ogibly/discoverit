@@ -1,6 +1,20 @@
 import React from "react";
 
+function safeJsonParse(jsonString, fallback) {
+	if (typeof jsonString !== 'string' || !jsonString.trim()) {
+		return fallback;
+	}
+	try {
+		return JSON.parse(jsonString);
+	} catch (error) {
+		console.error("Failed to parse JSON:", jsonString, error);
+		return fallback;
+	}
+}
+
 export default function AssetGroupDetail({ assetGroup }) {
+	const labels = safeJsonParse(assetGroup.labels, []);
+
 	return (
 		<div className="text-slate-300">
 			<div className="flex justify-between items-center mb-6">
@@ -9,7 +23,7 @@ export default function AssetGroupDetail({ assetGroup }) {
 			<div className="mt-6">
 				<h3 className="text-lg font-bold mb-2 text-white">Labels:</h3>
 				<div className="flex flex-wrap gap-2">
-					{assetGroup.labels && JSON.parse(assetGroup.labels).map(label => (
+					{labels.map(label => (
 						<span key={label} className="inline-flex items-center bg-slate-700 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-full">
 							{label}
 						</span>

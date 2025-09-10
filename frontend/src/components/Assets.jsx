@@ -2,6 +2,7 @@ import React from "react";
 import AssetList from "./AssetList";
 import AssetDetail from "./AssetDetail";
 import ActionsDropdown from "./ActionsDropdown";
+import LabelFilter from "./LabelFilter";
 
 export default function Assets({
 	assets,
@@ -14,6 +15,9 @@ export default function Assets({
 	onSelectAllAssets,
 	onDeleteSelectedAssets,
 	onCreateAssetGroup,
+	allLabels,
+	selectedLabels,
+	setSelectedLabels,
 }) {
 	const actions = [
 		{
@@ -22,7 +26,7 @@ export default function Assets({
 			disabled: selectedAssets.length === 0,
 		},
 		{
-			label: "Edit",
+			label: "Manage Assets",
 			onClick: () => setShowAssetManager(true),
 			disabled: selectedAssets.length === 0,
 		},
@@ -37,14 +41,16 @@ export default function Assets({
 		<div className="flex flex-col h-full text-slate-300">
 			<div className="flex justify-between items-center mb-6">
 				<h2 className="text-3xl font-bold text-white">Assets</h2>
+				<button
+					onClick={() => setShowAssetManager(true)}
+					className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-500"
+				>
+					Create Asset
+				</button>
 			</div>
 			<div className="flex justify-between items-center mb-4">
 				<ActionsDropdown actions={actions} />
-				<input
-					type="text"
-					placeholder="Filter by label"
-					className="bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-1/3"
-				/>
+				<LabelFilter allLabels={allLabels} selectedLabels={selectedLabels} setSelectedLabels={setSelectedLabels} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3 flex flex-col">

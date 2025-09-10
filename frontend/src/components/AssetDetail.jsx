@@ -1,5 +1,17 @@
 import React, { useState } from "react";
 
+function safeJsonParse(jsonString, fallback) {
+	if (typeof jsonString !== 'string' || !jsonString.trim()) {
+		return fallback;
+	}
+	try {
+		return JSON.parse(jsonString);
+	} catch (error) {
+		console.error("Failed to parse JSON:", jsonString, error);
+		return fallback;
+	}
+}
+
 export default function AssetDetail({ asset, onUpdate }) {
 	if (!asset) {
 		return <p className="text-gray-400">Select an asset to see details.</p>;
@@ -7,16 +19,17 @@ export default function AssetDetail({ asset, onUpdate }) {
 
 	const [newLabel, setNewLabel] = useState('');
 
+	const labels = safeJsonParse(asset.labels, []);
+	const scanData = safeJsonParse(asset.scan_data, {});
+
 	const handleAddLabel = () => {
-		if (newLabel && !asset.labels.includes(newLabel)) {
-			const labels = asset.labels ? JSON.parse(asset.labels) : [];
+		if (newLabel && !labels.includes(newLabel)) {
 			onUpdate(asset.id, { labels: JSON.stringify([...labels, newLabel]) });
 			setNewLabel('');
 		}
 	};
 
 	const handleRemoveLabel = (label) => {
-		const labels = asset.labels ? JSON.parse(asset.labels) : [];
 		onUpdate(asset.id, { labels: JSON.stringify(labels.filter(l => l !== label)) });
 	};
 
@@ -53,7 +66,7 @@ export default function AssetDetail({ asset, onUpdate }) {
 						</button>
 					</div>
 					<div className="mt-4 flex flex-wrap gap-2">
-						{asset.labels && JSON.parse(asset.labels).map(label => (
+						{labels.map(label => (
 							<span key={label} className="inline-flex items-center bg-slate-700 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-full">
 								{label}
 								<button
@@ -74,7 +87,7 @@ export default function AssetDetail({ asset, onUpdate }) {
 			<div className="mt-6">
 				<h3 className="text-lg font-bold mb-2 text-white">Scan Data:</h3>
 				<pre className="bg-slate-900/70 border border-slate-800 p-4 rounded-lg text-xs overflow-x-auto">
-					{JSON.stringify(JSON.parse(asset.scan_data || "{}"), null, 2)}
+					{JSON.stringify(scanData, null, 2)}
 				</pre>
 			</div>
 		</div>

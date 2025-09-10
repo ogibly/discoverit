@@ -19,9 +19,8 @@ export default function AssetList({
 	const filteredAssets = assets.filter((asset) => {
 		if (!filter) return true;
 		if (!asset.labels) return false;
-		const labels = JSON.parse(asset.labels);
-		return labels.some((label) =>
-			label.toLowerCase().includes(filter.toLowerCase())
+		return asset.labels.some((label) =>
+			label.name.toLowerCase().includes(filter.toLowerCase())
 		);
 	});
 
@@ -72,9 +71,9 @@ export default function AssetList({
 									<td onClick={() => onSelect(asset)} className="px-6 py-4 cursor-pointer">{asset.name}</td>
 									<td className="px-6 py-4">{asset.mac}</td>
 									<td className="px-6 py-4">
-										{asset.labels && JSON.parse(asset.labels).map(label => (
-											<span key={label} className="inline-block bg-slate-700 text-slate-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
-												{label}
+										{asset.labels && asset.labels.map(label => (
+											<span key={label.id} className="inline-block bg-slate-700 text-slate-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+												{label.name}
 											</span>
 										))}
 									</td>

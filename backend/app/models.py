@@ -3,10 +3,28 @@ from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
 
-asset_group_association = Table('asset_group_association', Base.metadata,
+asset_group_association = Table(
+    'asset_group_association', Base.metadata,
     Column('asset_id', Integer, ForeignKey('assets.id')),
     Column('asset_group_id', Integer, ForeignKey('asset_groups.id'))
 )
+
+asset_label_association = Table(
+    'asset_label_association', Base.metadata,
+    Column('asset_id', Integer, ForeignKey('assets.id')),
+    Column('label_id', Integer, ForeignKey('labels.id'))
+)
+
+asset_group_label_association = Table(
+    'asset_group_label_association', Base.metadata,
+    Column('asset_group_id', Integer, ForeignKey('asset_groups.id')),
+    Column('label_id', Integer, ForeignKey('labels.id'))
+)
+
+class Label(Base):
+    __tablename__ = "labels"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
 
 class Device(Base):
     __tablename__ = "devices"
@@ -47,19 +65,19 @@ class Asset(Base):
     username = Column(String, nullable=True)
     password = Column(String, nullable=True) # Should be encrypted
     scan_data = Column(String) # JSON serialized
-    labels = Column(String) # JSON serialized
     custom_fields = Column(String) # JSON serialized
 
     ips = relationship("IPAddress", back_populates="asset", cascade="all, delete-orphan")
     groups = relationship("AssetGroup", secondary=asset_group_association, back_populates="assets")
+    labels = relationship("Label", secondary=asset_label_association)
 
 class AssetGroup(Base):
     __tablename__ = "asset_groups"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
-    labels = Column(String) # JSON serialized
 
     assets = relationship("Asset", secondary=asset_group_association, back_populates="groups")
+    labels = relationship("Label", secondary=asset_group_label_association)
 
 class Operation(Base):
     __tablename__ = "operations"

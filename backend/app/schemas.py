@@ -45,22 +45,35 @@ class AssetBase(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
     scan_data: Optional[str] = None
-    labels: Optional[str] = None
     custom_fields: Optional[str] = None
+
+class LabelBase(BaseModel):
+    name: str
+
+class LabelCreate(LabelBase):
+    pass
+
+class Label(LabelBase):
+    id: int
+
+    class Config:
+        orm_mode = True
 
 class AssetCreate(AssetBase):
     ips: List[IPAddressCreate] = []
+    labels: List[int] = []
 
 class AssetGroupBase(BaseModel):
     name: str
-    labels: Optional[str] = None
 
 class AssetGroupCreate(AssetGroupBase):
     asset_ids: List[int] = []
+    labels: List[int] = []
 
 class AssetGroup(AssetGroupBase):
     id: int
     assets: "List[Asset]" = []
+    labels: List[Label] = []
 
     class Config:
         orm_mode = True
@@ -68,6 +81,7 @@ class AssetGroup(AssetGroupBase):
 class Asset(AssetBase):
     id: int
     ips: List[IPAddress] = []
+    labels: List[Label] = []
 
     class Config:
         orm_mode = True

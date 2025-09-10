@@ -40,7 +40,7 @@ export default function Scans({
 				<h2>Scans</h2>
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
-				<div className="w-2/3 flex flex-col">
+				<div className="w-2/3">
 					<div className="card mb-4 shrink-0">
 						<div className="flex items-center gap-2">
 							<input

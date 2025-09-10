@@ -37,6 +37,7 @@ export default function Assets({
 		<div className="flex flex-col h-full">
 			<div className="header">
 				<h2>Assets</h2>
+				<ActionsDropdown actions={actions} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3">
@@ -57,7 +58,7 @@ export default function Assets({
 				<div className="w-1/3">
 					<div className="card">
 						{selectedAsset ? (
-							<AssetDetail asset={selectedAsset} onUpdate={onUpdate} />
+							<AssetDetail asset={selectedAsset} />
 						) : (
 							<p className="text-gray-400">
 								Select an asset to see details.

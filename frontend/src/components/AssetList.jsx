@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import ActionsDropdown from "./ActionsDropdown";
-import LabelFilter from "./LabelFilter";
 
 export default function AssetList({
 	assets,
@@ -47,21 +46,16 @@ export default function AssetList({
 
 	const allSelected = paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.includes(a.id));
 
-	const allLabels = assets.reduce((acc, asset) => {
-		if (asset.labels) {
-			const labels = JSON.parse(asset.labels);
-			return [...acc, ...labels];
-		}
-		return acc;
-	}, []);
-	const uniqueLabels = [...new Set(allLabels)];
-
 	return (
 		<div className="flex flex-col h-full">
 			<div className="flex justify-between items-center mb-4">
-				<div className="w-1/2">
-					<LabelFilter labels={uniqueLabels} filter={filter} setFilter={setFilter} />
-				</div>
+				<input
+					type="text"
+					value={filter}
+					onChange={(e) => setFilter(e.target.value)}
+					placeholder="Filter by label"
+					className="mb-4 w-1/2"
+				/>
 			</div>
 			<div className="scrollable-list">
 				<table className="w-full">

@@ -8,7 +8,7 @@ export default function ScanLog() {
 
   useEffect(() => {
     axios.get(`${API_BASE}/scans`).then(res => {
-      setScans(res.data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time)));
+      setScans(res.data);
     });
   }, []);
 

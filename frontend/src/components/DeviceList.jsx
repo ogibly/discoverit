@@ -19,10 +19,7 @@ export default function DeviceList({
 	useEffect(() => {
 		if (tableBodyRef.current) {
 			const rowHeight = 40; // Approximate height of a row
-			const containerHeight = tableBodyRef.current.parentElement.parentElement.clientHeight;
-			const headerHeight = tableBodyRef.current.previousElementSibling.clientHeight;
-			const paginationHeight = tableBodyRef.current.parentElement.parentElement.nextElementSibling.clientHeight;
-			const availableHeight = containerHeight - headerHeight - paginationHeight;
+			const availableHeight = tableBodyRef.current.clientHeight;
 			const newItemsPerPage = Math.floor(availableHeight / rowHeight);
 			if (newItemsPerPage > 0) {
 				setItemsPerPage(newItemsPerPage);

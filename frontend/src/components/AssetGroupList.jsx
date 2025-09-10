@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import LabelFilter from "./LabelFilter";
 
 export default function AssetGroupList({
 	assetGroups,
@@ -45,21 +44,16 @@ export default function AssetGroupList({
 
 	const allSelected = paginatedAssetGroups.length > 0 && paginatedAssetGroups.every(ag => selectedAssetGroups.includes(ag.id));
 
-	const allLabels = assetGroups.reduce((acc, group) => {
-		if (group.labels) {
-			const labels = JSON.parse(group.labels);
-			return [...acc, ...labels];
-		}
-		return acc;
-	}, []);
-	const uniqueLabels = [...new Set(allLabels)];
-
 	return (
 		<div className="flex flex-col h-full">
 			<div className="flex justify-between items-center mb-4">
-				<div className="w-1/2">
-					<LabelFilter labels={uniqueLabels} filter={filter} setFilter={setFilter} />
-				</div>
+				<input
+					type="text"
+					value={filter}
+					onChange={(e) => setFilter(e.target.value)}
+					placeholder="Filter by label"
+					className="mb-4 w-1/2"
+				/>
 			</div>
 			<div className="scrollable-list">
 				<table className="w-full">

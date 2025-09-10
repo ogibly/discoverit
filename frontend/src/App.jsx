@@ -389,7 +389,6 @@ function App() {
 						onSelectAllAssets={handleSelectAllAssets}
 						onDeleteSelectedAssets={handleDeleteSelectedAssets}
 						onCreateAssetGroup={handleCreateAssetGroup}
-						onUpdate={handleUpdateAsset}
 					/>
 				)}
 				{page === "asset_groups" && (

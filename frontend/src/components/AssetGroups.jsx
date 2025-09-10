@@ -17,6 +17,14 @@ export default function AssetGroups({
 }) {
 	const actions = [
 		{
+			label: "Create",
+			onClick: () => {
+				setEditingAssetGroup(null);
+				setShowAssetGroupManager(true);
+			},
+			disabled: false,
+		},
+		{
 			label: "Edit",
 			onClick: () => {
 				const groupToEdit = assetGroups.find(ag => ag.id === selectedAssetGroups[0]);
@@ -36,18 +44,7 @@ export default function AssetGroups({
 		<div className="flex flex-col h-full">
 			<div className="header">
 				<h2>Asset Groups</h2>
-				<div>
-					<button
-						onClick={() => {
-							setEditingAssetGroup(null);
-							setShowAssetGroupManager(true);
-						}}
-						className="btn btn-primary"
-					>
-						Create
-					</button>
-					<ActionsDropdown actions={actions} />
-				</div>
+				<ActionsDropdown actions={actions} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3">

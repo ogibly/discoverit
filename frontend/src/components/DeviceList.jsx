@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ActionsDropdown from "./ActionsDropdown";
 
 export default function DeviceList({
 	devices,
@@ -37,6 +38,22 @@ export default function DeviceList({
 
 	return (
 		<div className="flex flex-col h-full">
+			<div className="flex justify-end mb-4">
+				<ActionsDropdown
+					actions={[
+						{
+							label: "Delete",
+							onClick: onDeleteSelected,
+							disabled: selectedDevices.length === 0,
+						},
+						{
+							label: "Create Asset",
+							onClick: onCreateAsset,
+							disabled: selectedDevices.length === 0,
+						},
+					]}
+				/>
+			</div>
 			<div className="scrollable-list">
 				<table className="w-full">
 					<thead>

@@ -46,13 +46,15 @@ export default function AssetGroupList({
 
 	return (
 		<div className="flex flex-col h-full">
-			<input
-				type="text"
-				value={filter}
-				onChange={(e) => setFilter(e.target.value)}
-				placeholder="Filter by label"
-				className="mb-4"
-			/>
+			<div className="flex justify-between items-center mb-4">
+				<input
+					type="text"
+					value={filter}
+					onChange={(e) => setFilter(e.target.value)}
+					placeholder="Filter by label"
+					className="mb-4 w-1/2"
+				/>
+			</div>
 			<div className="scrollable-list">
 				<table className="w-full">
 					<thead>

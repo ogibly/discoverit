@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import OperationModal from "./OperationModal";
-
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function Operations() {
@@ -18,16 +17,23 @@ export default function Operations() {
 	}, []);
 
 	const handleSave = (operationData) => {
+		const data = {
+			...operationData,
+			asset_ids: [],
+			asset_group_ids: [],
+			params: {},
+		};
+
 		if (editingOperation) {
 			axios
-				.put(`${API_BASE}/operations/${editingOperation.id}`, operationData)
+				.put(`${API_BASE}/operations/${editingOperation.id}`, data)
 				.then(() => {
 					fetchOperations();
 					setShowModal(false);
 					setEditingOperation(null);
 				});
 		} else {
-			axios.post(`${API_BASE}/operations`, operationData).then(() => {
+			axios.post(`${API_BASE}/operations`, data).then(() => {
 				fetchOperations();
 				setShowModal(false);
 			});

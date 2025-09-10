@@ -92,11 +92,13 @@ class Job(Base):
     __tablename__ = "jobs"
     id = Column(Integer, primary_key=True, index=True)
     operation_id = Column(Integer, ForeignKey("operations.id"))
-    asset_group_id = Column(Integer, ForeignKey("asset_groups.id"))
+    asset_ids = Column(String) # JSON serialized
+    asset_group_ids = Column(String) # JSON serialized
     status = Column(String, default="running") # running, completed, failed
     results = Column(String) # JSON serialized
     start_time = Column(DateTime, default=datetime.utcnow)
     end_time = Column(DateTime, nullable=True)
+    params = Column(String) # JSON serialized
 
 class IPAddress(Base):
     __tablename__ = "ip_addresses"

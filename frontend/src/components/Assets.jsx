@@ -16,11 +16,17 @@ export default function Assets({
 	onSelectAllAssets,
 	onDeleteSelectedAssets,
 	onCreateAssetGroup,
+	setShowOperationModal,
 	allLabels,
 	selectedLabels,
 	setSelectedLabels,
 }) {
 	const actions = [
+		{
+			label: "Run Operation",
+			onClick: () => setShowOperationModal(true),
+			disabled: selectedAssets.length === 0,
+		},
 		{
 			label: "Create Asset Group",
 			onClick: onCreateAssetGroup,

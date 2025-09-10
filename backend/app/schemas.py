@@ -91,13 +91,19 @@ Asset.update_forward_refs()
 
 class OperationBase(BaseModel):
     name: str
-    api_url: str
-    api_method: str
+    api_url: Optional[str] = None
+    api_method: Optional[str] = None
     api_headers: Optional[str] = None
     api_body: Optional[str] = None
 
 class OperationCreate(OperationBase):
     pass
+
+class OperationRun(BaseModel):
+    name: str
+    asset_ids: List[int] = []
+    asset_group_ids: List[int] = []
+    params: Optional[dict] = None
 
 class Operation(OperationBase):
     id: int
@@ -107,9 +113,11 @@ class Operation(OperationBase):
 
 class JobBase(BaseModel):
     operation_id: int
-    asset_group_id: int
+    asset_ids: Optional[str] = None
+    asset_group_ids: Optional[str] = None
     status: str
     results: Optional[str] = None
+    params: Optional[str] = None
 
 class JobCreate(JobBase):
     pass

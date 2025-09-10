@@ -453,16 +453,24 @@ def run_operation_background(job_id: int):
             return
 
         operation = db.query(models.Operation).filter(models.Operation.id == job.operation_id).first()
-        asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == job.asset_group_id).first()
-
-        if not operation or not asset_group:
+        if not operation:
             job.status = "failed"
             job.end_time = datetime.utcnow()
             db.commit()
             return
 
+        assets = []
+        if job.asset_ids:
+            asset_ids = json.loads(job.asset_ids)
+            assets.extend(db.query(models.Asset).filter(models.Asset.id.in_(asset_ids)).all())
+        if job.asset_group_ids:
+            asset_group_ids = json.loads(job.asset_group_ids)
+            asset_groups = db.query(models.AssetGroup).filter(models.AssetGroup.id.in_(asset_group_ids)).all()
+            for group in asset_groups:
+                assets.extend(group.assets)
+
         results = []
-        for asset in asset_group.assets:
+        for asset in assets:
             # Here you would make the actual API call using the operation's details.
             # For this example, we'll just simulate a successful call.
             results.append({
@@ -479,22 +487,24 @@ def run_operation_background(job_id: int):
     finally:
         db.close()
 
-@router.post("/operations/{operation_id}/run/{asset_group_id}", response_model=schemas.Job)
+@router.post("/operations/run", response_model=schemas.Job)
 async def run_operation(
-    operation_id: int,
-    asset_group_id: int,
+    operation_data: schemas.OperationRun,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    operation = db.query(models.Operation).filter(models.Operation.id == operation_id).first()
-    asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
-
-    if not operation or not asset_group:
-        return None
+    operation = db.query(models.Operation).filter(models.Operation.name == operation_data.name).first()
+    if not operation:
+        operation = models.Operation(name=operation_data.name)
+        db.add(operation)
+        db.commit()
+        db.refresh(operation)
 
     new_job = models.Job(
-        operation_id=operation_id,
-        asset_group_id=asset_group_id,
+        operation_id=operation.id,
+        asset_ids=json.dumps(operation_data.asset_ids),
+        asset_group_ids=json.dumps(operation_data.asset_group_ids),
+        params=json.dumps(operation_data.params)
     )
     db.add(new_job)
     db.commit()

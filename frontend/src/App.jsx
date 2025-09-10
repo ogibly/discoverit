@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import AssetManager from "./components/AssetManager";
 import AssetGroupManager from "./components/AssetGroupManager";
+import RunOperationModal from "./components/RunOperationModal";
 import Operations from "./components/Operations";
 import Scans from "./components/Scans";
 import Assets from "./components/Assets";
@@ -27,6 +28,7 @@ function App() {
 	const [selectedAssetGroups, setSelectedAssetGroups] = useState([]);
 	const [showAssetGroupManager, setShowAssetGroupManager] = useState(false);
 	const [editingAssetGroup, setEditingAssetGroup] = useState(null);
+	const [showOperationModal, setShowOperationModal] = useState(false);
 	const [allLabels, setAllLabels] = useState([]);
 	const [selectedLabels, setSelectedLabels] = useState([]);
 	const [target, setTarget] = useState("");
@@ -435,6 +437,7 @@ function App() {
 						onSelectAllAssets={handleSelectAllAssets}
 						onDeleteSelectedAssets={handleDeleteSelectedAssets}
 						onCreateAssetGroup={handleCreateAssetGroup}
+						setShowOperationModal={setShowOperationModal}
 						allLabels={allLabels}
 						selectedLabels={selectedLabels}
 						setSelectedLabels={setSelectedLabels}
@@ -453,6 +456,7 @@ function App() {
 						onSelectAssetGroup={handleSelectAssetGroup}
 						onSelectAllAssetGroups={handleSelectAllAssetGroups}
 						onDeleteSelectedAssetGroups={handleDeleteSelectedAssetGroups}
+						setShowOperationModal={setShowOperationModal}
 						allLabels={allLabels}
 						selectedLabels={selectedLabels}
 						setSelectedLabels={setSelectedLabels}
@@ -479,6 +483,13 @@ function App() {
 							setShowAssetGroupManager(false);
 							setEditingAssetGroup(null);
 						}}
+					/>
+				)}
+				{showOperationModal && (
+					<RunOperationModal
+						assets={assets.filter(a => selectedAssets.includes(a.id))}
+						assetGroups={assetGroups.filter(ag => selectedAssetGroups.includes(ag.id))}
+						onClose={() => setShowOperationModal(false)}
 					/>
 				)}
 			</div>

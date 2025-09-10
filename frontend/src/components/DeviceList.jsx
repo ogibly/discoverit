@@ -19,15 +19,18 @@ export default function DeviceList({
 	useEffect(() => {
 		if (tableBodyRef.current) {
 			const rowHeight = 40; // Approximate height of a row
-			const availableHeight = tableBodyRef.current.clientHeight;
+			const containerHeight = tableBodyRef.current.parentElement.parentElement.clientHeight;
+			const headerHeight = tableBodyRef.current.previousElementSibling.clientHeight;
+			const paginationHeight = tableBodyRef.current.parentElement.parentElement.nextElementSibling.clientHeight;
+			const availableHeight = containerHeight - headerHeight - paginationHeight;
 			const newItemsPerPage = Math.floor(availableHeight / rowHeight);
 			if (newItemsPerPage > 0) {
 				setItemsPerPage(newItemsPerPage);
 			}
 		}
-	}, [devices]);
+	}, []);
 
-	const sortedDevices = [...devices].sort((a, b) => a.ip.localeCompare(b.ip));
+	const sortedDevices = [...devices].sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
 	const totalPages = Math.ceil(sortedDevices.length / itemsPerPage);
 	const paginatedDevices = sortedDevices.slice(
 		(currentPage - 1) * itemsPerPage,

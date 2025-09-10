@@ -1,9 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 
-export default function AssetDetail({ asset }) {
+export default function AssetDetail({ asset, onUpdate }) {
 	if (!asset) {
 		return <p className="text-gray-400">Select an asset to see details.</p>;
 	}
+
+	const [newLabel, setNewLabel] = useState('');
+
+	const handleAddLabel = () => {
+		if (newLabel && !asset.labels.includes(newLabel)) {
+			const labels = asset.labels ? JSON.parse(asset.labels) : [];
+			onUpdate(asset.id, { labels: JSON.stringify([...labels, newLabel]) });
+			setNewLabel('');
+		}
+	};
+
+	const handleRemoveLabel = (label) => {
+		const labels = asset.labels ? JSON.parse(asset.labels) : [];
+		onUpdate(asset.id, { labels: JSON.stringify(labels.filter(l => l !== label)) });
+	};
 
 	return (
 		<div>
@@ -22,7 +37,33 @@ export default function AssetDetail({ asset }) {
 			</div>
 			<div className="mt-4">
 				<h3 className="text-xl font-bold mb-2">Labels:</h3>
-				<p>{asset.labels ? JSON.parse(asset.labels).join(", ") : ""}</p>
+				<div>
+					<div className="flex items-center gap-2">
+						<input
+							type="text"
+							value={newLabel}
+							onChange={(e) => setNewLabel(e.target.value)}
+							placeholder="Add a label"
+							className="border rounded px-2 py-1"
+						/>
+						<button onClick={handleAddLabel} className="btn btn-primary btn-sm">
+							Add
+						</button>
+					</div>
+					<div className="mt-2">
+						{asset.labels && JSON.parse(asset.labels).map(label => (
+							<span key={label} className="inline-block bg-gray-700 text-gray-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+								{label}
+								<button
+									onClick={() => handleRemoveLabel(label)}
+									className="ml-2 text-red-500 hover:text-red-700"
+								>
+									&times;
+								</button>
+							</span>
+						))}
+					</div>
+				</div>
 			</div>
 			<div className="mt-4">
 				<h3 className="text-xl font-bold mb-2">Custom Fields:</h3>

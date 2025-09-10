@@ -139,6 +139,11 @@ textarea:focus {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
 .btn-primary {
   background-color: #58A6FF;
   color: #161B22;

@@ -8,6 +8,7 @@ import Scans from "./components/Scans";
 import Assets from "./components/Assets";
 import AssetGroups from "./components/AssetGroups";
 import OperationsTracker from "./components/OperationsTracker";
+import ScanLog from "./components/ScanLog";
 import "./modern.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
@@ -149,6 +150,12 @@ function App() {
 		if (devicesToConvert.length === 0) return;
 
 		for (const device of devicesToConvert) {
+			const existingAsset = assets.find(a => a.name === device.ip);
+			if (existingAsset) {
+				setStatusMsg(`Asset for ${device.ip} already exists.`);
+				continue;
+			}
+
 			const assetData = {
 				name: device.ip,
 				mac: device.mac,
@@ -205,6 +212,12 @@ function App() {
 
 		const name = prompt("Enter a name for the new asset group:");
 		if (!name) return;
+
+		const existingGroup = assetGroups.find(ag => ag.name === name);
+		if (existingGroup) {
+			setStatusMsg(`Asset group "${name}" already exists.`);
+			return;
+		}
 
 		const assetGroupData = {
 			name,
@@ -323,7 +336,8 @@ function App() {
 		if (!activeScan) return;
 		try {
 			await axios.post(`${API_BASE}/scan/${activeScan.id}/cancel`);
-			setStatusMsg("Scan cancellation requested.");
+			setStatusMsg("Scan cancelled.");
+			setActiveScan(null);
 		} catch (error) {
 			setStatusMsg("Failed to cancel scan.");
 		}
@@ -335,6 +349,7 @@ function App() {
 				<h1>DiscoverIT</h1>
 				<nav>
 					<a href="#" onClick={() => setPage("scans")} className={page === "scans" ? "active" : ""}>Scans</a>
+					<a href="#" onClick={() => setPage("scan_log")} className={page === "scan_log" ? "active" : ""}>Scans Log</a>
 					<a href="#" onClick={() => setPage("assets")} className={page === "assets" ? "active" : ""}>Assets</a>
 					<a href="#" onClick={() => setPage("asset_groups")} className={page === "asset_groups" ? "active" : ""}>Asset Groups</a>
 					<a href="#" onClick={() => setPage("operations")} className={page === "operations" ? "active" : ""}>Operations</a>
@@ -392,9 +407,10 @@ function App() {
 				)}
 				{page === "operations" && <Operations />}
 				{page === "operations_tracker" && <OperationsTracker />}
+				{page === "scan_log" && <ScanLog />}
 				{showAssetManager && (
 					<AssetManager
-						assets={assets}
+						assets={assets.filter(a => selectedAssets.includes(a.id))}
 						onUpdate={handleUpdateAsset}
 						onDelete={deleteAsset}
 						onClose={() => setShowAssetManager(false)}

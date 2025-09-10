@@ -91,6 +91,10 @@ def delete_scan(scan_id: int, db: Session = Depends(get_db)):
         db.commit()
     return
 
+@router.get("/scans", response_model=List[ScanTaskOut])
+def list_scans(db: Session = Depends(get_db)):
+    return db.query(models.ScanTask).all()
+
 @router.get("/devices/{device_id}/history", response_model=HistoryResponse)
 def device_history(device_id: int, page: int = 1, limit: int = 1, db: Session = Depends(get_db)):
     scans = db.query(models.Scan).filter(models.Scan.device_id==device_id)\

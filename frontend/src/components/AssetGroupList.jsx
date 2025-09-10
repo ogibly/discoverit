@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import ActionsDropdown from "./ActionsDropdown";
 
 export default function AssetGroupList({
 	assetGroups,
@@ -36,27 +35,17 @@ export default function AssetGroupList({
 		);
 	});
 
-	const totalPages = Math.ceil(filteredAssetGroups.length / itemsPerPage);
-	const paginatedAssetGroups = filteredAssetGroups.slice(
+	const sortedAssetGroups = [...filteredAssetGroups].sort((a, b) => a.name.localeCompare(b.name));
+	const totalPages = Math.ceil(sortedAssetGroups.length / itemsPerPage);
+	const paginatedAssetGroups = sortedAssetGroups.slice(
 		(currentPage - 1) * itemsPerPage,
 		currentPage * itemsPerPage
 	);
 
 	const allSelected = paginatedAssetGroups.length > 0 && paginatedAssetGroups.every(ag => selectedAssetGroups.includes(ag.id));
 
-	const actions = [
-		{
-			label: "Delete",
-			onClick: onDeleteSelected,
-			disabled: selectedAssetGroups.length === 0,
-		},
-	];
-
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex justify-between items-center mb-4">
-				<ActionsDropdown actions={actions} />
-			</div>
 			<input
 				type="text"
 				value={filter}
@@ -76,6 +65,7 @@ export default function AssetGroupList({
 				/>
 							</th>
 							<th>Name</th>
+							<th>Labels</th>
 							<th></th>
 						</tr>
 					</thead>
@@ -94,9 +84,16 @@ export default function AssetGroupList({
 									</td>
 									<td onClick={() => onSelect(group)} className="cursor-pointer">{group.name}</td>
 									<td>
+										{group.labels && JSON.parse(group.labels).map(label => (
+											<span key={label} className="inline-block bg-gray-700 text-gray-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+												{label}
+											</span>
+										))}
+									</td>
+									<td>
 										<button
 											onClick={() => onDelete(group.id)}
-											className="btn btn-danger"
+											className="btn btn-danger btn-sm"
 										>
 											Delete
 										</button>

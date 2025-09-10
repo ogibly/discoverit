@@ -78,12 +78,14 @@ export default function Operations() {
 										setShowModal(true);
 									}}
 									className="btn btn-secondary"
+									style={{ padding: '4px 8px', fontSize: '12px' }}
 								>
 									Edit
 								</button>
 								<button
 									onClick={() => handleDelete(op.id)}
 									className="btn btn-danger ml-2"
+									style={{ padding: '4px 8px', fontSize: '12px' }}
 								>
 									Delete
 								</button>

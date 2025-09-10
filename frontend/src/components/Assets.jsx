@@ -1,6 +1,7 @@
 import React from "react";
 import AssetList from "./AssetList";
 import AssetDetail from "./AssetDetail";
+import ActionsDropdown from "./ActionsDropdown";
 
 export default function Assets({
 	assets,
@@ -14,16 +15,29 @@ export default function Assets({
 	onDeleteSelectedAssets,
 	onCreateAssetGroup,
 }) {
+	const actions = [
+		{
+			label: "Create Asset Group",
+			onClick: onCreateAssetGroup,
+			disabled: selectedAssets.length === 0,
+		},
+		{
+			label: "Edit",
+			onClick: () => setShowAssetManager(true),
+			disabled: selectedAssets.length === 0,
+		},
+		{
+			label: "Delete",
+			onClick: onDeleteSelectedAssets,
+			disabled: selectedAssets.length === 0,
+		},
+	];
+
 	return (
 		<div className="flex flex-col h-full">
 			<div className="header">
 				<h2>Assets</h2>
-				<button
-					onClick={() => setShowAssetManager(true)}
-					className="btn btn-secondary"
-				>
-					Manage
-				</button>
+				<ActionsDropdown actions={actions} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3">

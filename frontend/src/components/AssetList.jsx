@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import ActionsDropdown from "./ActionsDropdown";
 
 export default function AssetList({
 	assets,
@@ -37,32 +36,17 @@ export default function AssetList({
 		);
 	});
 
-	const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
-	const paginatedAssets = filteredAssets.slice(
+	const sortedAssets = [...filteredAssets].sort((a, b) => a.name.localeCompare(b.name));
+	const totalPages = Math.ceil(sortedAssets.length / itemsPerPage);
+	const paginatedAssets = sortedAssets.slice(
 		(currentPage - 1) * itemsPerPage,
 		currentPage * itemsPerPage
 	);
 
 	const allSelected = paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.includes(a.id));
 
-	const actions = [
-		{
-			label: "Delete",
-			onClick: onDeleteSelected,
-			disabled: selectedAssets.length === 0,
-		},
-		{
-			label: "Create Asset Group",
-			onClick: onCreateAssetGroup,
-			disabled: selectedAssets.length === 0,
-		},
-	];
-
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex justify-between items-center mb-4">
-				<ActionsDropdown actions={actions} />
-			</div>
 			<input
 				type="text"
 				value={filter}
@@ -83,6 +67,7 @@ export default function AssetList({
 			</th>
 							<th>Name</th>
 							<th>MAC</th>
+							<th>Labels</th>
 							<th></th>
 						</tr>
 					</thead>
@@ -102,9 +87,16 @@ export default function AssetList({
 									<td onClick={() => onSelect(asset)} className="cursor-pointer">{asset.name}</td>
 									<td>{asset.mac}</td>
 									<td>
+										{asset.labels && JSON.parse(asset.labels).map(label => (
+											<span key={label} className="inline-block bg-gray-700 text-gray-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
+												{label}
+											</span>
+										))}
+									</td>
+									<td>
 										<button
 											onClick={() => onDelete(asset.id)}
-											className="btn btn-danger"
+											className="btn btn-danger btn-sm"
 										>
 											Delete
 										</button>

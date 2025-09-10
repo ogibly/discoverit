@@ -1,6 +1,7 @@
 import React from "react";
 import DeviceList from "./DeviceList";
 import DeviceDetail from "./DeviceDetail";
+import ActionsDropdown from "./ActionsDropdown";
 
 export default function Scans({
 	devices,
@@ -20,10 +21,24 @@ export default function Scans({
 	statusMsg,
 	deleteScan,
 }) {
+	const actions = [
+		{
+			label: "Create Asset",
+			onClick: handleCreateAsset,
+			disabled: selectedDevices.length === 0,
+		},
+		{
+			label: "Delete",
+			onClick: handleDeleteSelected,
+			disabled: selectedDevices.length === 0,
+		},
+	];
+
 	return (
 		<div className="flex flex-col h-full">
 			<div className="header">
 				<h2>Scans</h2>
+				<ActionsDropdown actions={actions} />
 			</div>
 			<div className="card mb-4 shrink-0">
 				<div className="flex items-center gap-2">

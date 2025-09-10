@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import ActionsDropdown from "./ActionsDropdown";
 
 export default function DeviceList({
 	devices,
@@ -27,32 +26,17 @@ export default function DeviceList({
 		}
 	}, [devices]);
 
-	const totalPages = Math.ceil(devices.length / itemsPerPage);
-	const paginatedDevices = devices.slice(
+	const sortedDevices = [...devices].sort((a, b) => a.ip.localeCompare(b.ip));
+	const totalPages = Math.ceil(sortedDevices.length / itemsPerPage);
+	const paginatedDevices = sortedDevices.slice(
 		(currentPage - 1) * itemsPerPage,
 		currentPage * itemsPerPage
 	);
 
 	const allSelected = paginatedDevices.length > 0 && paginatedDevices.every(d => selectedDevices.includes(d.id));
 
-	const actions = [
-		{
-			label: "Delete",
-			onClick: onDeleteSelected,
-			disabled: selectedDevices.length === 0,
-		},
-		{
-			label: "Create Asset",
-			onClick: onCreateAsset,
-			disabled: selectedDevices.length === 0,
-		},
-	];
-
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex justify-between items-center mb-4">
-				<ActionsDropdown actions={actions} />
-			</div>
 			<div className="scrollable-list">
 				<table className="w-full">
 					<thead>
@@ -87,7 +71,7 @@ export default function DeviceList({
 									<td>
 										<button
 											onClick={() => onDelete(device.id)}
-											className="btn btn-danger"
+											className="btn btn-danger btn-sm"
 										>
 											Delete
 										</button>

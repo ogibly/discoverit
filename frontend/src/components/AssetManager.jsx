@@ -27,12 +27,23 @@ export default function AssetManager({ assets, onUpdate, onDelete, onCreate, onC
 										<input
 											type="text"
 											defaultValue={asset.name}
-											onBlur={(e) => onUpdate(asset.id, { ...asset, name: e.target.value })}
+											onBlur={(e) =>
+												onUpdate(asset.id, {
+													...asset,
+													name: e.target.value,
+													labels: asset.labels.map((l) => l.id),
+												})
+											}
 											className="w-full bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 										/>
 										<LabelManager
 											selectedObject={asset}
-											onUpdate={(updatedAsset) => onUpdate(asset.id, updatedAsset)}
+											onUpdate={(updatedAsset) =>
+												onUpdate(asset.id, {
+													...updatedAsset,
+													labels: updatedAsset.labels.map((l) => l.id),
+												})
+											}
 										/>
 										<button
 											onClick={() => onDelete(asset.id)}

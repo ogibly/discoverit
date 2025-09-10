@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import LabelManager from "./LabelManager";
 
 function safeJsonParse(jsonString, fallback) {
 	if (typeof jsonString !== 'string' || !jsonString.trim()) {
@@ -17,21 +18,7 @@ export default function AssetDetail({ asset, onUpdate }) {
 		return <p className="text-gray-400">Select an asset to see details.</p>;
 	}
 
-	const [newLabel, setNewLabel] = useState('');
-
-	const labels = safeJsonParse(asset.labels, []);
 	const scanData = safeJsonParse(asset.scan_data, {});
-
-	const handleAddLabel = () => {
-		if (newLabel && !labels.includes(newLabel)) {
-			onUpdate(asset.id, { labels: JSON.stringify([...labels, newLabel]) });
-			setNewLabel('');
-		}
-	};
-
-	const handleRemoveLabel = (label) => {
-		onUpdate(asset.id, { labels: JSON.stringify(labels.filter(l => l !== label)) });
-	};
 
 	return (
 		<div className="text-slate-300">
@@ -52,33 +39,15 @@ export default function AssetDetail({ asset, onUpdate }) {
 			</div>
 			<div className="mt-6">
 				<h3 className="text-lg font-bold mb-2 text-white">Labels:</h3>
-				<div>
-					<div className="flex items-center gap-2">
-						<input
-							type="text"
-							value={newLabel}
-							onChange={(e) => setNewLabel(e.target.value)}
-							placeholder="Add a label"
-							className="bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-						/>
-						<button onClick={handleAddLabel} className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-500">
-							Add
-						</button>
-					</div>
-					<div className="mt-4 flex flex-wrap gap-2">
-						{labels.map(label => (
-							<span key={label} className="inline-flex items-center bg-slate-700 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-full">
-								{label}
-								<button
-									onClick={() => handleRemoveLabel(label)}
-									className="ml-2 text-red-500 hover:text-red-400"
-								>
-									&times;
-								</button>
-							</span>
-						))}
-					</div>
-				</div>
+				<LabelManager
+					selectedObject={asset}
+					onUpdate={(updatedAsset) =>
+						onUpdate(asset.id, {
+							...updatedAsset,
+							labels: updatedAsset.labels.map((l) => l.id),
+						})
+					}
+				/>
 			</div>
 			<div className="mt-6">
 				<h3 className="text-lg font-bold mb-2 text-white">Custom Fields:</h3>

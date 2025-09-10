@@ -1,4 +1,5 @@
 import React from "react";
+import LabelManager from "./LabelManager";
 
 function safeJsonParse(jsonString, fallback) {
 	if (typeof jsonString !== 'string' || !jsonString.trim()) {
@@ -12,9 +13,7 @@ function safeJsonParse(jsonString, fallback) {
 	}
 }
 
-export default function AssetGroupDetail({ assetGroup }) {
-	const labels = safeJsonParse(assetGroup.labels, []);
-
+export default function AssetGroupDetail({ assetGroup, onUpdate }) {
 	return (
 		<div className="text-slate-300">
 			<div className="flex justify-between items-center mb-6">
@@ -22,13 +21,16 @@ export default function AssetGroupDetail({ assetGroup }) {
 			</div>
 			<div className="mt-6">
 				<h3 className="text-lg font-bold mb-2 text-white">Labels:</h3>
-				<div className="flex flex-wrap gap-2">
-					{labels.map(label => (
-						<span key={label} className="inline-flex items-center bg-slate-700 text-slate-200 text-xs font-semibold px-2.5 py-1 rounded-full">
-							{label}
-						</span>
-					))}
-				</div>
+				<LabelManager
+					selectedObject={assetGroup}
+					onUpdate={(updatedAssetGroup) =>
+						onUpdate(assetGroup.id, {
+							name: updatedAssetGroup.name,
+							asset_ids: updatedAssetGroup.assets.map((a) => a.id),
+							labels: updatedAssetGroup.labels.map((l) => l.id),
+						})
+					}
+				/>
 			</div>
 			<div className="mt-6">
 				<h3 className="text-lg font-bold mb-2 text-white">Assets</h3>

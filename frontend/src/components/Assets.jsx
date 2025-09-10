@@ -9,6 +9,7 @@ export default function Assets({
 	selectedAsset,
 	setSelectedAsset,
 	deleteAsset,
+	onUpdate,
 	setShowAssetManager,
 	selectedAssets,
 	onSelectAsset,
@@ -41,16 +42,18 @@ export default function Assets({
 		<div className="flex flex-col h-full text-slate-300">
 			<div className="flex justify-between items-center mb-6">
 				<h2 className="text-3xl font-bold text-white">Assets</h2>
-				<button
-					onClick={() => setShowAssetManager(true)}
-					className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-500"
-				>
-					Create Asset
-				</button>
+				<div className="flex items-center gap-4">
+					<LabelFilter allLabels={allLabels} selectedLabels={selectedLabels} setSelectedLabels={setSelectedLabels} />
+					<button
+						onClick={() => setShowAssetManager(true)}
+						className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-500"
+					>
+						Create Asset
+					</button>
+				</div>
 			</div>
 			<div className="flex justify-between items-center mb-4">
 				<ActionsDropdown actions={actions} />
-				<LabelFilter allLabels={allLabels} selectedLabels={selectedLabels} setSelectedLabels={setSelectedLabels} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3 flex flex-col">
@@ -71,7 +74,7 @@ export default function Assets({
 				<div className="w-1/3">
 					<div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 h-full">
 						{selectedAsset ? (
-							<AssetDetail asset={selectedAsset} />
+							<AssetDetail asset={selectedAsset} onUpdate={onUpdate} />
 						) : (
 							<div className="flex items-center justify-center h-full">
 								<p className="text-slate-500">

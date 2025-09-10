@@ -9,6 +9,7 @@ export default function AssetGroups({
 	selectedAssetGroup,
 	setSelectedAssetGroup,
 	deleteAssetGroup,
+	updateAssetGroup,
 	setEditingAssetGroup,
 	setShowAssetGroupManager,
 	selectedAssetGroups,
@@ -48,10 +49,12 @@ export default function AssetGroups({
 		<div className="flex flex-col h-full text-slate-300">
 			<div className="flex justify-between items-center mb-6">
 				<h2 className="text-3xl font-bold text-white">Asset Groups</h2>
+				<div className="flex items-center gap-4">
+					<LabelFilter allLabels={allLabels} selectedLabels={selectedLabels} setSelectedLabels={setSelectedLabels} />
+				</div>
 			</div>
 			<div className="flex justify-between items-center mb-4">
 				<ActionsDropdown actions={actions} />
-				<LabelFilter allLabels={allLabels} selectedLabels={selectedLabels} setSelectedLabels={setSelectedLabels} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3 flex flex-col">
@@ -71,7 +74,7 @@ export default function AssetGroups({
 				<div className="w-1/3">
 					<div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6 h-full">
 						{selectedAssetGroup ? (
-							<AssetGroupDetail assetGroup={selectedAssetGroup} />
+							<AssetGroupDetail assetGroup={selectedAssetGroup} onUpdate={updateAssetGroup} />
 						) : (
 							<div className="flex items-center justify-center h-full">
 								<p className="text-slate-500">

@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from .database import SessionLocal
 from . import models, scan
-from datetime import datetime
 import json
 from typing import List, Optional
 from pydantic import BaseModel
@@ -279,16 +278,30 @@ def update_asset(asset_id: int, asset: schemas.AssetCreate, db: Session = Depend
     db_asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
     if not db_asset:
         return None
+
     update_data = asset.dict(exclude_unset=True)
+    relationship_keys = ['labels', 'ips']
+
     for key, value in update_data.items():
-        if key != 'labels':
+        if key not in relationship_keys:
             setattr(db_asset, key, value)
+
     if 'labels' in update_data:
         db_asset.labels = []
         for label_id in asset.labels:
             label = db.query(models.Label).filter(models.Label.id == label_id).first()
             if label:
                 db_asset.labels.append(label)
+
+    if 'ips' in update_data:
+        # Clear existing IPs
+        for ip in db_asset.ips:
+            db.delete(ip)
+        # Add new IPs
+        for ip_data in asset.ips:
+            db_ip = models.IPAddress(ip=ip_data.ip, asset_id=db_asset.id)
+            db.add(db_ip)
+
     db.commit()
     db.refresh(db_asset)
     return db_asset
@@ -336,17 +349,30 @@ def update_asset_group(asset_group_id: int, asset_group: schemas.AssetGroupCreat
     db_asset_group = db.query(models.AssetGroup).filter(models.AssetGroup.id == asset_group_id).first()
     if not db_asset_group:
         return None
-    db_asset_group.name = asset_group.name
-    db_asset_group.assets = []
-    for asset_id in asset_group.asset_ids:
-        asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
-        if asset:
-            db_asset_group.assets.append(asset)
-    db_asset_group.labels = []
-    for label_id in asset_group.labels:
-        label = db.query(models.Label).filter(models.Label.id == label_id).first()
-        if label:
-            db_asset_group.labels.append(label)
+
+    update_data = asset_group.dict(exclude_unset=True)
+    relationship_keys = ['asset_ids', 'labels']
+
+    # Update simple attributes
+    for key, value in update_data.items():
+        if key not in relationship_keys:
+            setattr(db_asset_group, key, value)
+
+    # Update relationships
+    if 'asset_ids' in update_data:
+        db_asset_group.assets = []
+        for asset_id in asset_group.asset_ids:
+            asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+            if asset:
+                db_asset_group.assets.append(asset)
+
+    if 'labels' in update_data:
+        db_asset_group.labels = []
+        for label_id in asset_group.labels:
+            label = db.query(models.Label).filter(models.Label.id == label_id).first()
+            if label:
+                db_asset_group.labels.append(label)
+
     db.commit()
     db.refresh(db_asset_group)
     return db_asset_group

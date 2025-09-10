@@ -43,11 +43,15 @@ function App() {
 	};
 
 	const fetchAssets = () => {
-		axios.get(`${API_BASE}/assets`).then(res => setAssets(res.data));
+		axios.get(`${API_BASE}/assets`).then(res => {
+			setAssets(res.data);
+		});
 	};
 
 	const fetchAssetGroups = () => {
-		axios.get(`${API_BASE}/asset_groups`).then(res => setAssetGroups(res.data));
+		axios.get(`${API_BASE}/asset_groups`).then(res => {
+			setAssetGroups(res.data);
+		});
 	};
 
 	useEffect(() => {
@@ -154,7 +158,7 @@ function App() {
 		}
 	};
 
-	const handleCreateAsset = async () => {
+	const createAssetsFromDevices = async () => {
 		const devicesToConvert = devices.filter((d) => selectedDevices.includes(d.id));
 		if (devicesToConvert.length === 0) return;
 
@@ -182,6 +186,15 @@ function App() {
 
 		setSelectedDevices([]);
 		fetchAssets();
+	};
+
+	const handleCreateAsset = async (assetData) => {
+		try {
+			await axios.post(`${API_BASE}/assets`, assetData);
+			fetchAssets();
+		} catch (error) {
+			setStatusMsg("Failed to create asset.");
+		}
 	};
 
 	const handleSelectAsset = (assetId) => {
@@ -276,10 +289,27 @@ function App() {
 
 	const handleUpdateAsset = async (assetId, updatedData) => {
 		try {
-			await axios.put(`${API_BASE}/assets/${assetId}`, updatedData);
-			fetchAssets();
+			const res = await axios.put(`${API_BASE}/assets/${assetId}`, updatedData);
+			const updatedAsset = res.data;
+			setAssets(assets.map(asset => asset.id === assetId ? updatedAsset : asset));
+			if (selectedAsset && selectedAsset.id === assetId) {
+				setSelectedAsset(updatedAsset);
+			}
 		} catch (error) {
 			setStatusMsg("Failed to update asset.");
+		}
+	};
+
+	const handleUpdateAssetGroup = async (assetGroupId, updatedData) => {
+		try {
+			const res = await axios.put(`${API_BASE}/asset_groups/${assetGroupId}`, updatedData);
+			const updatedGroup = res.data;
+			setAssetGroups(assetGroups.map(group => group.id === assetGroupId ? updatedGroup : group));
+			if (selectedAssetGroup && selectedAssetGroup.id === assetGroupId) {
+				setSelectedAssetGroup(updatedGroup);
+			}
+		} catch (error) {
+			setStatusMsg("Failed to update asset group.");
 		}
 	};
 
@@ -382,7 +412,7 @@ function App() {
 						handleSelectDevice={handleSelectDevice}
 						handleSelectAllDevices={handleSelectAllDevices}
 						handleDeleteSelected={handleDeleteSelected}
-						handleCreateAsset={handleCreateAsset}
+						handleCreateAsset={createAssetsFromDevices}
 						triggerScan={triggerScan}
 						activeScan={activeScan}
 						cancelScan={cancelScan}
@@ -398,6 +428,7 @@ function App() {
 						selectedAsset={selectedAsset}
 						setSelectedAsset={setSelectedAsset}
 						deleteAsset={deleteAsset}
+						onUpdate={handleUpdateAsset}
 						setShowAssetManager={setShowAssetManager}
 						selectedAssets={selectedAssets}
 						onSelectAsset={handleSelectAsset}
@@ -415,6 +446,7 @@ function App() {
 						selectedAssetGroup={selectedAssetGroup}
 						setSelectedAssetGroup={setSelectedAssetGroup}
 						deleteAssetGroup={deleteAssetGroup}
+						updateAssetGroup={handleUpdateAssetGroup}
 						setEditingAssetGroup={setEditingAssetGroup}
 						setShowAssetGroupManager={setShowAssetGroupManager}
 						selectedAssetGroups={selectedAssetGroups}

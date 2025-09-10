@@ -44,7 +44,6 @@ export default function AssetGroups({
 		<div className="flex flex-col h-full">
 			<div className="header">
 				<h2>Asset Groups</h2>
-				<ActionsDropdown actions={actions} />
 			</div>
 			<div className="flex gap-6 flex-grow min-h-0">
 				<div className="w-2/3">

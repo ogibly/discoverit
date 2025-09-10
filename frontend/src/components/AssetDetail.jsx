@@ -1,9 +1,20 @@
 import React from "react";
+import LabelManager from "./LabelManager";
 
-export default function AssetDetail({ asset }) {
+export default function AssetDetail({ asset, onUpdate }) {
 	if (!asset) {
 		return <p className="text-gray-400">Select an asset to see details.</p>;
 	}
+
+	const handleAddLabel = (label) => {
+		const labels = asset.labels ? JSON.parse(asset.labels) : [];
+		onUpdate(asset.id, { labels: JSON.stringify([...labels, label]) });
+	};
+
+	const handleRemoveLabel = (label) => {
+		const labels = asset.labels ? JSON.parse(asset.labels) : [];
+		onUpdate(asset.id, { labels: JSON.stringify(labels.filter(l => l !== label)) });
+	};
 
 	return (
 		<div>
@@ -22,7 +33,11 @@ export default function AssetDetail({ asset }) {
 			</div>
 			<div className="mt-4">
 				<h3 className="text-xl font-bold mb-2">Labels:</h3>
-				<p>{asset.labels ? JSON.parse(asset.labels).join(", ") : ""}</p>
+				<LabelManager
+					labels={asset.labels ? JSON.parse(asset.labels) : []}
+					onAdd={handleAddLabel}
+					onRemove={handleRemoveLabel}
+				/>
 			</div>
 			<div className="mt-4">
 				<h3 className="text-xl font-bold mb-2">Custom Fields:</h3>

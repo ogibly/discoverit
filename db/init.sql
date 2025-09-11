@@ -1,0 +1,14 @@
+-- CREATE TABLE devices (
+--     id SERIAL PRIMARY KEY,
+--     ip VARCHAR(255) UNIQUE NOT NULL,
+--     mac VARCHAR(255),
+--     vendor VARCHAR(255),
+--     last_seen TIMESTAMP
+-- );
+
+-- CREATE TABLE scans (
+--     id SERIAL PRIMARY KEY,
+--     device_id INTEGER REFERENCES devices(id),
+--     timestamp TIMESTAMP,
+--     scan_data TEXT
+-- );

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from .database import SessionLocal
 from . import models, scan
 import json
@@ -519,4 +519,4 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
 
 @router.get("/jobs", response_model=List[schemas.Job])
 def list_jobs(db: Session = Depends(get_db)):
-    return db.query(models.Job).all()
+    return db.query(models.Job).options(joinedload(models.Job.operation)).all()

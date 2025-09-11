@@ -88,6 +88,8 @@ class Operation(Base):
     api_headers = Column(String) # JSON serialized
     api_body = Column(String) # JSON serialized
 
+    jobs = relationship("Job", back_populates="operation")
+
 class Job(Base):
     __tablename__ = "jobs"
     id = Column(Integer, primary_key=True, index=True)
@@ -99,6 +101,8 @@ class Job(Base):
     start_time = Column(DateTime, default=datetime.utcnow)
     end_time = Column(DateTime, nullable=True)
     params = Column(String) # JSON serialized
+
+    operation = relationship("Operation", back_populates="jobs")
 
 class IPAddress(Base):
     __tablename__ = "ip_addresses"

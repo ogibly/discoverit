@@ -126,6 +126,7 @@ class Job(JobBase):
     id: int
     start_time: datetime
     end_time: Optional[datetime] = None
+    operation: Operation
 
     class Config:
         orm_mode = True

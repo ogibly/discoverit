@@ -5,32 +5,22 @@ const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function OperationsTracker() {
 	const [jobs, setJobs] = useState([]);
-	const [operations, setOperations] = useState([]);
 	const [assetGroups, setAssetGroups] = useState([]);
 
 	useEffect(() => {
 		const fetchJobs = () => {
 			axios.get(`${API_BASE}/jobs`).then((res) => setJobs(res.data));
 		};
-		const fetchOperations = () => {
-			axios.get(`${API_BASE}/operations`).then((res) => setOperations(res.data));
-		};
 		const fetchAssetGroups = () => {
 			axios.get(`${API_BASE}/asset_groups`).then((res) => setAssetGroups(res.data));
 		};
 
 		fetchJobs();
-		fetchOperations();
 		fetchAssetGroups();
 
 		const interval = setInterval(fetchJobs, 3000);
 		return () => clearInterval(interval);
 	}, []);
-
-	const getOperationName = (id) => {
-		const op = operations.find((o) => o.id === id);
-		return op ? op.name : id;
-	};
 
 	const getAssetGroupName = (id) => {
 		const group = assetGroups.find((g) => g.id === id);
@@ -59,7 +49,7 @@ export default function OperationsTracker() {
 							{jobs.map((job) => (
 								<tr key={job.id} className="border-b border-slate-800 transition-colors duration-150 hover:bg-slate-800/50">
 									<td className="px-6 py-4">{job.id}</td>
-									<td className="px-6 py-4">{getOperationName(job.operation_id)}</td>
+									<td className="px-6 py-4">{job.operation.name}</td>
 									<td className="px-6 py-4">{getAssetGroupName(job.asset_group_id)}</td>
 									<td className="px-6 py-4">{job.status}</td>
 									<td className="px-6 py-4">{new Date(job.start_time).toLocaleString()}</td>

@@ -22,6 +22,13 @@ class DeviceOut(BaseModel):
     mac: Optional[str]
     vendor: Optional[str]
     last_seen: datetime
+    hostname: Optional[str]
+    os_name: Optional[str]
+    os_family: Optional[str]
+    os_version: Optional[str]
+    manufacturer: Optional[str]
+    model: Optional[str]
+    scan_data: Optional[str]
     class Config:
         orm_mode = True
 

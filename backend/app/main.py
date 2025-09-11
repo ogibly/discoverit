@@ -12,6 +12,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+# DEV ONLY: drop and recreate tables on startup
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 app.include_router(router)
 

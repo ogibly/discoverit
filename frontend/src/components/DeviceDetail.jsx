@@ -34,6 +34,9 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 				<p><span className="font-semibold text-slate-400">IP:</span> {device.ip}</p>
 				{device.mac && <p><span className="font-semibold text-slate-400">MAC:</span> {device.mac}</p>}
 				{device.vendor && <p><span className="font-semibold text-slate-400">Vendor:</span> {device.vendor}</p>}
+				{device.hostname && <p><span className="font-semibold text-slate-400">Hostname:</span> {device.hostname}</p>}
+				{device.os_name && <p><span className="font-semibold text-slate-400">OS:</span> {device.os_name} {device.os_family} {device.os_version}</p>}
+				{device.manufacturer && <p><span className="font-semibold text-slate-400">Manufacturer:</span> {device.manufacturer}</p>}
 			</div>
 
 			<div className="mt-8">
@@ -63,9 +66,43 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 											</div>
 										)}
 										
+										{scan.dns_info && Object.keys(scan.dns_info).length > 0 && (
+											<div>
+												<p><span className="font-semibold text-slate-400">DNS Info:</span> {scan.dns_info[0]}</p>
+											</div>
+										)}
+
 										{scan.os_info && scan.os_info.os_name !== 'Unknown' && (
 											<div>
 												<p><span className="font-semibold text-slate-400">OS:</span> {scan.os_info.os_name} ({scan.os_info.os_accuracy}% accuracy)</p>
+												<p className="pl-4 text-slate-500">{scan.os_info.os_family} {scan.os_info.os_version}</p>
+											</div>
+										)}
+
+										{scan.device_info && scan.device_info.manufacturer !== 'Unknown' && (
+											<div>
+												<p><span className="font-semibold text-slate-400">Device Info:</span> {scan.device_info.manufacturer}</p>
+											</div>
+										)}
+
+										{scan.addresses && (
+											<div>
+												<p><span className="font-semibold text-slate-400">Addresses:</span></p>
+												<ul className="pl-4 space-y-1 text-slate-500">
+													{scan.addresses.ipv4 && <li>IPv4: {scan.addresses.ipv4}</li>}
+													{scan.addresses.ipv6 && <li>IPv6: {scan.addresses.ipv6}</li>}
+													{scan.addresses.mac && <li>MAC: {scan.addresses.mac}</li>}
+												</ul>
+											</div>
+										)}
+
+										{scan.open_ports && (
+											<div>
+												<p className="font-semibold text-slate-400 mb-2">Open Ports:</p>
+												<div className="pl-4 space-y-1">
+													{scan.open_ports.tcp.length > 0 && <p>TCP: {scan.open_ports.tcp.join(', ')}</p>}
+													{scan.open_ports.udp.length > 0 && <p>UDP: {scan.open_ports.udp.join(', ')}</p>}
+												</div>
 											</div>
 										)}
 										

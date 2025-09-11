@@ -107,16 +107,17 @@ def comprehensive_scan(ip: str) -> Dict:
     timestamp = datetime.utcnow().isoformat() + "Z"
     
     try:
-        # Aggressive scan with OS, version, script, traceroute, and SNMP detection
-        nm.scan(ip, arguments="-A -T4 -sU -p 161 --script snmp-info")
+        # Aggressive scan with OS, version, script, traceroute, and additional scripts for device info
+        nm.scan(ip, arguments="-A -T4 -sU -p 161 --script default,discovery,vuln")
         
         if ip not in nm.all_hosts():
             return {"timestamp": timestamp, "ip": ip, "error": "Host not responding.", "scan_type": "comprehensive"}
 
         host_data = nm[ip]
         
-        # Extract Hostname
+        # Extract Hostname and DNS info
         hostname = host_data.hostname() if host_data.hostname() else None
+        dns_info = socket.gethostbyaddr(ip) if hostname else {}
 
         # Extract OS Information
         os_info = {}
@@ -125,35 +126,48 @@ def comprehensive_scan(ip: str) -> Dict:
             os_info = {
                 "os_name": best_match.get('name', 'Unknown'),
                 "os_accuracy": best_match.get('accuracy', 0),
-                "os_family": best_match.get('osclass', [{}])[0].get('osfamily', 'Unknown') if best_match.get('osclass') else 'Unknown'
+                "os_family": best_match.get('osclass', [{}])[0].get('osfamily', 'Unknown') if best_match.get('osclass') else 'Unknown',
+                "os_version": best_match.get('osclass', [{}])[0].get('version', 'Unknown') if best_match.get('osclass') else 'Unknown'
             }
+
+        # Extract Device Info
+        vendor_data = host_data.get('vendor', {})
+        mac_address = host_data['addresses'].get('mac')
+        device_info = {
+            "manufacturer": vendor_data.get(mac_address, 'Unknown') if mac_address else 'Unknown',
+            "model": "Unknown",  # Nmap doesn't reliably provide model/serial
+            "serial_number": "Unknown"
+        }
+
+        # Extract IP and MAC addresses
+        addresses = {
+            "ipv4": host_data['addresses'].get('ipv4'),
+            "ipv6": host_data['addresses'].get('ipv6'),
+            "mac": mac_address
+        }
 
         # Extract Services and Ports
         services = []
-        ports = []
+        open_ports = {"tcp": [], "udp": []}
         if host_data.all_protocols():
             for proto in host_data.all_protocols():
+                if proto not in open_ports: continue
                 for port in host_data[proto].keys():
                     port_info = host_data[proto][port]
-                    service_detail = {
-                        "port": port,
-                        "proto": proto,
-                        "state": port_info.get("state", ""),
-                        "service": port_info.get("name", ""),
-                        "version": port_info.get("version", ""),
-                        "product": port_info.get("product", ""),
-                        "extrainfo": port_info.get("extrainfo", ""),
-                        "cpe": port_info.get("cpe", "")
-                    }
-                    services.append(service_detail)
-                    ports.append({
-                        "port": port,
-                        "proto": proto,
-                        "state": port_info.get("state", ""),
-                        "service": port_info.get("name", "")
-                    })
+                    if port_info.get("state") == "open":
+                        open_ports[proto].append(port)
+                        services.append({
+                            "port": port,
+                            "proto": proto,
+                            "state": port_info.get("state", ""),
+                            "service": port_info.get("name", ""),
+                            "version": port_info.get("version", ""),
+                            "product": port_info.get("product", ""),
+                            "extrainfo": port_info.get("extrainfo", ""),
+                            "cpe": port_info.get("cpe", "")
+                        })
 
-        # Extract Script Results
+        # Extract Script Results for more details
         script_results = host_data.get('script', {})
 
         # Combine all information
@@ -161,8 +175,11 @@ def comprehensive_scan(ip: str) -> Dict:
             "timestamp": timestamp,
             "ip": ip,
             "hostname": hostname,
+            "dns_info": dns_info,
             "os_info": os_info,
-            "ports": ports,
+            "device_info": device_info,
+            "addresses": addresses,
+            "open_ports": open_ports,
             "services": services,
             "script_results": script_results,
             "scan_type": "comprehensive"

@@ -10,17 +10,6 @@ from fastapi import BackgroundTasks
 from . import schemas
 from datetime import datetime
 
-class DeviceOut(BaseModel):
-    id: int
-    ip: str
-    mac: Optional[str] = None
-    vendor: Optional[str] = None
-    last_seen: datetime
-
-    class Config:
-        orm_mode = True
-
-
 class HistoryResponse(BaseModel):
     scan: Optional[dict]
     ports: List[dict]
@@ -54,11 +43,11 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/devices", response_model=List[DeviceOut])
+@router.get("/devices", response_model=List[schemas.DeviceOut])
 def list_devices(db: Session = Depends(get_db)):
     return db.query(models.Device).all()
 
-@router.post("/devices", response_model=DeviceOut)
+@router.post("/devices", response_model=schemas.DeviceOut)
 def create_device(payload: DeviceCreate, db: Session = Depends(get_db)):
     existing = db.query(models.Device).filter(models.Device.ip == payload.ip).first()
     if existing:
@@ -162,7 +151,20 @@ def run_background_scan(task_id: int):
                 scan_result = scan.run_scan(ip)
             else:
                 scan_result = scan.comprehensive_scan(ip)
-            
+                # Update device with comprehensive scan data
+                if "os_info" in scan_result:
+                    device.os_name = scan_result["os_info"].get("os_name")
+                    device.os_family = scan_result["os_info"].get("os_family")
+                    device.os_version = scan_result["os_info"].get("os_version")
+                if "device_info" in scan_result:
+                    device.manufacturer = scan_result["device_info"].get("manufacturer")
+                    device.model = scan_result["device_info"].get("model")
+                if "hostname" in scan_result:
+                    device.hostname = scan_result["hostname"]
+                
+                # Store the rest of the data in scan_data
+                device.scan_data = json.dumps(scan_result)
+
             db_scan = models.Scan(
                 device_id=device.id,
                 scan_task_id=task.id,

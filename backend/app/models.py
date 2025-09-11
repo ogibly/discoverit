@@ -33,6 +33,13 @@ class Device(Base):
     mac = Column(String, nullable=True)
     vendor = Column(String, nullable=True)
     last_seen = Column(DateTime)
+    hostname = Column(String, nullable=True)
+    os_name = Column(String, nullable=True)
+    os_family = Column(String, nullable=True)
+    os_version = Column(String, nullable=True)
+    manufacturer = Column(String, nullable=True)
+    model = Column(String, nullable=True)
+    scan_data = Column(String, nullable=True)  # JSON serialized for additional data
 
     scans = relationship("Scan", back_populates="device", cascade="all, delete-orphan")
 

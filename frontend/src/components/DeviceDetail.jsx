@@ -4,6 +4,7 @@ import axios from "axios";
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function DeviceDetail({ device, onDeleteScan }) {
+	console.log("Rendering DeviceDetail for device:", device.id);
 	const [history, setHistory] = useState([]);
 	const [page, setPage] = useState(1);
 	const [total, setTotal] = useState(0);
@@ -31,12 +32,12 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 		<div className="text-slate-300">
 			<h2 className="text-2xl font-bold mb-6 text-white">Device Details</h2>
 			<div className="space-y-2 text-sm">
-				<p><span className="font-semibold text-slate-400">IP:</span> {device.ip}</p>
-				{device.mac && <p><span className="font-semibold text-slate-400">MAC:</span> {device.mac}</p>}
-				{device.vendor && <p><span className="font-semibold text-slate-400">Vendor:</span> {device.vendor}</p>}
-				{device.hostname && <p><span className="font-semibold text-slate-400">Hostname:</span> {device.hostname}</p>}
-				{device.os_name && <p><span className="font-semibold text-slate-400">OS:</span> {device.os_name} {device.os_family} {device.os_version}</p>}
-				{device.manufacturer && <p><span className="font-semibold text-slate-400">Manufacturer:</span> {device.manufacturer}</p>}
+				<p key="device-ip"><span className="font-semibold text-slate-400">IP:</span> {device.ip}</p>
+				{device.mac && <p key="device-mac"><span className="font-semibold text-slate-400">MAC:</span> {device.mac}</p>}
+				{device.vendor && <p key="device-vendor"><span className="font-semibold text-slate-400">Vendor:</span> {device.vendor}</p>}
+				{device.hostname && <p key="device-hostname"><span className="font-semibold text-slate-400">Hostname:</span> {device.hostname}</p>}
+				{device.os_name && <p key="device-os"><span className="font-semibold text-slate-400">OS:</span> {device.os_name} {device.os_family} {device.os_version}</p>}
+				{device.manufacturer && <p key="device-manufacturer"><span className="font-semibold text-slate-400">Manufacturer:</span> {device.manufacturer}</p>}
 			</div>
 
 			<div className="mt-8">
@@ -44,8 +45,8 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 				{history.length > 0 ? (
 					<div className="bg-slate-900/70 border border-slate-800 rounded-lg">
 						<ul className="divide-y divide-slate-800">
-							{history.map((scan) => (
-								<li key={scan.id} className="p-6">
+							{history.map((scan, index) => (
+								<li key={scan.id || `${device.id}-scan-${index}`} className="p-6">
 									<div className="flex justify-between items-center mb-4">
 										<p className="text-xs text-slate-500">{new Date(scan.timestamp).toLocaleString()}</p>
 										<div className="flex items-center gap-2">
@@ -58,14 +59,14 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 											</button>
 										</div>
 									</div>
-									
+
 									<div className="space-y-4 text-sm">
 										{scan.hostname && (
 											<div>
 												<p><span className="font-semibold text-slate-400">Hostname:</span> {scan.hostname}</p>
 											</div>
 										)}
-										
+
 										{scan.dns_info && Object.keys(scan.dns_info).length > 0 && (
 											<div>
 												<p><span className="font-semibold text-slate-400">DNS Info:</span> {scan.dns_info[0]}</p>
@@ -89,10 +90,15 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 											<div>
 												<p><span className="font-semibold text-slate-400">Addresses:</span></p>
 												<ul className="pl-4 space-y-1 text-slate-500">
-													{scan.addresses.ipv4 && <li>IPv4: {scan.addresses.ipv4}</li>}
-													{scan.addresses.ipv6 && <li>IPv6: {scan.addresses.ipv6}</li>}
-													{scan.addresses.mac && <li>MAC: {scan.addresses.mac}</li>}
+													{['ipv4', 'ipv6', 'mac'].map((type) =>
+														scan.addresses[type] ? (
+															<li key={`${type}-${scan.id}`}>
+																{type.toUpperCase()}: {scan.addresses[type]}
+															</li>
+														) : null
+													)}
 												</ul>
+
 											</div>
 										)}
 
@@ -105,13 +111,13 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 												</div>
 											</div>
 										)}
-										
+
 										{scan.services && scan.services.length > 0 && (
 											<div>
 												<p className="font-semibold text-slate-400 mb-2">Services:</p>
 												<ul className="pl-4 space-y-1">
-													{scan.services.map((service, i) => (
-														<li key={i}>
+													{scan.services.map((service) => (
+														<li key={`${service.port}-${service.proto}`}>
 															<span className="font-semibold">{service.port}/{service.proto}</span> - {service.service}
 															{service.version && <span className="text-slate-500"> ({service.version})</span>}
 															{service.product && <span className="text-slate-500"> - {service.product}</span>}
@@ -120,26 +126,26 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 												</ul>
 											</div>
 										)}
-										
+
 										{scan.ports && scan.ports.length > 0 && (
 											<div>
 												<p className="font-semibold text-slate-400 mb-2">Open Ports:</p>
 												<ul className="pl-4 space-y-1">
-													{scan.ports.map((port, i) => (
-														<li key={i}>
+													{scan.ports.map((port) => (
+														<li key={`${port.port}-${port.proto}`}>
 															<span className="font-semibold">{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
 														</li>
 													))}
 												</ul>
 											</div>
 										)}
-										
+
 										{scan.script_results && Object.keys(scan.script_results).length > 0 && (
 											<div>
 												<p className="font-semibold text-slate-400 mb-2">Additional Info:</p>
 												<div className="pl-4 text-xs text-slate-500 space-y-1">
 													{Object.entries(scan.script_results).slice(0, 3).map(([script, result]) => (
-														<div key={script}>
+														<div key={`${scan.id}-${script}`}>
 															<span className="font-semibold">{script}:</span> {String(result)}
 														</div>
 													))}

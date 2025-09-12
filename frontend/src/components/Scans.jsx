@@ -70,11 +70,21 @@ export default function Scans({
 							)}
 						</div>
 						{(activeScan || statusMsg) && (
-							<div className="mt-4 text-sm text-slate-400">
+							<div className="mt-4">
 								{activeScan ? (
-									<span>{`Scanning ${activeScan.target} (${activeScan.scan_type})...`}</span>
+									<div className="space-y-2">
+										<div className="w-full bg-slate-700 rounded-full h-2.5">
+											<div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${activeScan.progress || 0}%` }}></div>
+										</div>
+										<div className="flex justify-between text-xs text-slate-400">
+											<span>{activeScan.current_ip ? `Scanning: ${activeScan.current_ip}` : 'Initializing...'}</span>
+											<span>{`${activeScan.progress || 0}% (${activeScan.total_ips ? Math.round((activeScan.progress || 0) / 100 * activeScan.total_ips) : 0}/${activeScan.total_ips || 0})`}</span>
+										</div>
+									</div>
 								) : (
-									<span>{statusMsg}</span>
+									<div className="text-sm text-slate-400">
+										<span>{statusMsg}</span>
+									</div>
 								)}
 							</div>
 						)}

@@ -68,34 +68,34 @@ def arp_scan(target: str):
 
 def discover_subnet(target: str):
     """
-    Discovers hosts in a subnet using a fast ping scan and ARP scan.
+    Discovers hosts in a subnet using a fast ping scan.
     """
-    ping_results = nmap.PortScanner().scan(hosts=target, arguments="-sn -T4")
-    arp_results = arp_scan(target)
-
-    hosts_by_ip = {}
-
-    for host in ping_results.get('scan', {}):
-        if ping_results['scan'][host].get('status', {}).get('state') == 'up':
-            addresses = ping_results['scan'][host].get('addresses', {})
-            mac = addresses.get('mac')
-            vendor = None
-            if mac:
-                vendor = ping_results['scan'][host].get('vendor', {}).get(mac)
-            hosts_by_ip[host] = {
-                "ip": host,
-                "mac": mac,
-                "vendor": vendor
-            }
-
-    for host in arp_results.get('hosts', []):
-        if host['ip'] not in hosts_by_ip:
-            hosts_by_ip[host['ip']] = host
-
-    return {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-        "hosts": list(hosts_by_ip.values())
-    }
+    nm = nmap.PortScanner()
+    try:
+        nm.scan(hosts=target, arguments="-sn -T4")
+        hosts = []
+        for host in nm.all_hosts():
+            if nm[host].state() == 'up':
+                addresses = nm[host].get('addresses', {})
+                mac = addresses.get('mac')
+                vendor = None
+                if mac:
+                    vendor = nm[host].get('vendor', {}).get(mac)
+                hosts.append({
+                    "ip": host,
+                    "mac": mac,
+                    "vendor": vendor
+                })
+        return {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "hosts": hosts
+        }
+    except Exception as e:
+        return {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "hosts": [],
+            "error": str(e)
+        }
 
 def comprehensive_scan(ip: str) -> Dict:
     """

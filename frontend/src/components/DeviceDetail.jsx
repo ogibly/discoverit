@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
-export default function DeviceDetail({ device, onDeleteScan }) {
+export default React.memo(function DeviceDetail({ device, onDeleteScan }) {
 	console.log("Rendering DeviceDetail for device:", device.id);
 	const [history, setHistory] = useState([]);
 	const [page, setPage] = useState(1);
@@ -184,4 +184,4 @@ export default function DeviceDetail({ device, onDeleteScan }) {
 			</div>
 		</div>
 	);
-}
+});

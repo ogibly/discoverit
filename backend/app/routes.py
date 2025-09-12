@@ -29,6 +29,7 @@ class ScanTaskOut(BaseModel):
     end_time: Optional[datetime] = None
     target: str
     scan_type: str
+    progress: Optional[int] = 0 # Include progress here
 
     class Config:
         orm_mode = True
@@ -79,9 +80,13 @@ def delete_scan(scan_id: int, db: Session = Depends(get_db)):
         db.commit()
     return
 
-@router.get("/scans", response_model=List[ScanTaskOut])
+@router.get("/scans", response_model=List[schemas.ScanTaskOut])
 def list_scans(db: Session = Depends(get_db)):
     return db.query(models.ScanTask).all()
+
+@router.get("/scan/active", response_model=Optional[schemas.ScanTaskOut])
+def get_active_scan(db: Session = Depends(get_db)):
+    return db.query(models.ScanTask).filter(models.ScanTask.status == "running").first()
 
 @router.get("/devices/{device_id}/history", response_model=HistoryResponse)
 def device_history(device_id: int, page: int = 1, limit: int = 1, db: Session = Depends(get_db)):
@@ -121,8 +126,11 @@ def run_background_scan(task_id: int):
         # Discover devices on subnet/range
         result = scan.discover_subnet(task.target)
         hosts = result.get("hosts", [])
+        total_hosts = len(hosts)
+        task.total_ips = total_hosts
+        db.commit()
         
-        for h in hosts:
+        for i, h in enumerate(hosts):
             # Check for cancellation
             db.refresh(task)
             if task.status == "cancelled":
@@ -131,6 +139,9 @@ def run_background_scan(task_id: int):
             ip = h.get("ip")
             if not ip:
                 continue
+            
+            task.current_ip = ip
+            db.commit()
             
             # Upsert device
             device = db.query(models.Device).filter(models.Device.ip == ip).first()
@@ -175,18 +186,24 @@ def run_background_scan(task_id: int):
             db.add(db_scan)
             db.commit()
 
+            # Update progress
+            if total_hosts > 0:
+                task.progress = int(((i + 1) / total_hosts) * 100)
+                if task.progress > 100: # Cap at 100%
+                    task.progress = 100
+                db.commit()
+
+
         # Update task status
         db.refresh(task)
         if task.status != "cancelled":
             task.status = "completed"
+            task.progress = 100 # Ensure 100% on completion
         task.end_time = datetime.utcnow()
         db.commit()
     finally:
         db.close()
 
-@router.get("/scan/active", response_model=Optional[ScanTaskOut])
-def get_active_scan(db: Session = Depends(get_db)):
-    return db.query(models.ScanTask).filter(models.ScanTask.status == "running").first()
 
 @router.post("/scan/{task_id}/cancel", status_code=200)
 def cancel_scan(task_id: int, db: Session = Depends(get_db)):

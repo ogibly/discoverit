@@ -118,6 +118,20 @@ class Operation(OperationBase):
     class Config:
         orm_mode = True
 
+class ScanTaskOut(BaseModel):
+    id: int
+    status: str
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    target: str
+    scan_type: str
+    progress: Optional[int] = 0
+    current_ip: Optional[str] = None
+    total_ips: Optional[int] = 0
+
+    class Config:
+        orm_mode = True
+
 class JobBase(BaseModel):
     operation_id: int
     asset_ids: Optional[str] = None

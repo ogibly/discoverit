@@ -51,6 +51,9 @@ class ScanTask(Base):
     target = Column(String)
     status = Column(String, default="running") # running, completed, cancelled, failed
     scan_type = Column(String)
+    progress = Column(Integer, default=0) # Percentage of completion
+    current_ip = Column(String, nullable=True) # IP being scanned
+    total_ips = Column(Integer, default=0) # Total IPs to scan
 
 class Scan(Base):
     __tablename__ = "scans"

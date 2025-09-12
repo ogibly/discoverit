@@ -358,10 +358,10 @@ function App() {
 		}
 	};
 
-	const deleteScan = async (scanId) => {
+	const deleteScan = React.useCallback(async (scanId) => {
 		if (window.confirm("Are you sure you want to delete this scan record?")) {
 			try {
-				await axios.delete(`${API__BASE}/scans/${scanId}`);
+				await axios.delete(`${API_BASE}/scans/${scanId}`);
 				// We need to force a re-fetch of the history for the selected device
 				// A simple way is to "deselect" and "reselect" the device
 				const currentDevice = selectedDevice;
@@ -371,7 +371,7 @@ function App() {
 				setStatusMsg("Failed to delete scan record.");
 			}
 		}
-	};
+	}, [selectedDevice]);
 
 	const cancelScan = async () => {
 		if (!activeScan) return;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ActionsDropdown from "./ActionsDropdown";
 
-export default function DeviceList({
+export default React.memo(function DeviceList({
 	devices,
 	selectedDevice,
 	onSelect,
@@ -82,7 +82,7 @@ export default function DeviceList({
 					>
 						Previous
 					</button>
-					<div className="flex items-center mx-2">
+					<div className="flex items-center mx-2 overflow-x-auto">
 						{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
 							<button
 								key={page}
@@ -104,4 +104,4 @@ export default function DeviceList({
 			</div>
 		</div>
 	);
-}
+});

@@ -44,6 +44,7 @@ export default function Scans({
 					<div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
 						<div className="flex items-center gap-4">
 							<input
+								id="scan-target"
 								value={target}
 								onChange={(e) => setTarget(e.target.value)}
 								className="flex-grow bg-slate-800 border border-slate-700 rounded-md px-4 py-2 text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -72,13 +73,13 @@ export default function Scans({
 						{(activeScan || statusMsg) && (
 							<div className="mt-4">
 								{activeScan ? (
-									<div className="space-y-2">
-										<div className="w-full bg-slate-700 rounded-full h-2.5">
-											<div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${activeScan.progress || 0}%` }}></div>
+									<div className="flex items-center space-x-4">
+										<div className="w-full bg-slate-700 rounded-full h-4 flex-grow">
+											<div className="bg-blue-600 h-4 rounded-full" style={{ width: `${activeScan.progress || 0}%` }}></div>
 										</div>
-										<div className="flex justify-between text-xs text-slate-400">
+										<div className="flex-shrink-0 text-xs text-slate-400">
 											<span>{activeScan.current_ip ? `Scanning: ${activeScan.current_ip}` : 'Initializing...'}</span>
-											<span>{`${activeScan.progress || 0}% (${activeScan.total_ips ? Math.round((activeScan.progress || 0) / 100 * activeScan.total_ips) : 0}/${activeScan.total_ips || 0})`}</span>
+											<span className="ml-2">{`${activeScan.progress || 0}% (${activeScan.completed_ips || 0}/${activeScan.total_ips || 0})`}</span>
 										</div>
 									</div>
 								) : (

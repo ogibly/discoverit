@@ -9,6 +9,7 @@ import socket
 from fastapi import BackgroundTasks
 from . import schemas
 from datetime import datetime
+import ipaddress
 
 class HistoryResponse(BaseModel):
     scan: Optional[dict]
@@ -29,7 +30,10 @@ class ScanTaskOut(BaseModel):
     end_time: Optional[datetime] = None
     target: str
     scan_type: str
-    progress: Optional[int] = 0 # Include progress here
+    progress: Optional[int] = 0
+    total_ips: Optional[int] = 0
+    completed_ips: Optional[int] = 0 # Include completed_ips here
+    current_ip: Optional[str] = None # Include current_ip here
 
     class Config:
         orm_mode = True
@@ -95,8 +99,16 @@ def device_history(device_id: int, page: int = 1, limit: int = 1, db: Session = 
     total = db.query(models.Scan).filter(models.Scan.device_id==device_id).count()
     if not scans:
         return {"scan": None, "ports": [], "page": page, "total": total}
-    scan_data = json.loads(scans[0].scan_data)
-    return {"scan": scan_data, "ports": scan_data["ports"], "page": page, "total": total}
+    
+    scan_data = {}
+    try:
+        scan_data = json.loads(scans[0].scan_data)
+    except json.JSONDecodeError:
+        # Handle cases where scan_data might be malformed JSON
+        print(f"Warning: Malformed scan_data for scan ID {scans[0].id}")
+        scan_data = {"ports": []} # Default to empty ports if data is bad
+
+    return {"scan": scan_data, "ports": scan_data.get("ports", []), "page": page, "total": total}
 
 
 @router.get("/suggest_subnet")
@@ -112,6 +124,13 @@ def suggest_subnet():
         pass
     return {"subnet": None}
 
+def get_ips_from_cidr(cidr):
+    try:
+        network = ipaddress.ip_network(cidr, strict=False)
+        return [str(ip) for ip in network]
+    except ValueError:
+        return []
+
 def run_background_scan(task_id: int):
     """
     This function runs in the background.
@@ -123,37 +142,25 @@ def run_background_scan(task_id: int):
         if not task:
             return
 
-        # Discover devices on subnet/range
-        result = scan.discover_subnet(task.target)
-        hosts = result.get("hosts", [])
-        total_hosts = len(hosts)
+        # Calculate all IPs in the CIDR range
+        ips_to_scan = get_ips_from_cidr(task.target)
+        total_hosts = len(ips_to_scan)
         task.total_ips = total_hosts
         db.commit()
         
-        for i, h in enumerate(hosts):
+        for i, ip in enumerate(ips_to_scan):
             # Check for cancellation
             db.refresh(task)
             if task.status == "cancelled":
                 break
-
-            ip = h.get("ip")
-            if not ip:
-                continue
-            
-            task.current_ip = ip
-            db.commit()
             
             # Upsert device
             device = db.query(models.Device).filter(models.Device.ip == ip).first()
             now_ts = datetime.utcnow()
             if device:
-                if h.get("mac"):
-                    device.mac = h["mac"]
-                if h.get("vendor"):
-                    device.vendor = h["vendor"]
                 device.last_seen = now_ts
             else:
-                device = models.Device(ip=ip, mac=h.get("mac"), vendor=h.get("vendor"), last_seen=now_ts)
+                device = models.Device(ip=ip, last_seen=now_ts)
                 db.add(device)
                 db.flush()
             
@@ -172,10 +179,9 @@ def run_background_scan(task_id: int):
                     device.model = scan_result["device_info"].get("model")
                 if "hostname" in scan_result:
                     device.hostname = scan_result["hostname"]
+                if "mac_address" in scan_result:
+                    device.mac = scan_result["mac_address"]
                 
-                # Store the rest of the data in scan_data
-                device.scan_data = json.dumps(scan_result)
-
             db_scan = models.Scan(
                 device_id=device.id,
                 scan_task_id=task.id,
@@ -186,11 +192,13 @@ def run_background_scan(task_id: int):
             db.add(db_scan)
             db.commit()
 
-            # Update progress
+            # Update progress and current_ip AFTER the scan for this IP is complete
             if total_hosts > 0:
                 task.progress = int(((i + 1) / total_hosts) * 100)
                 if task.progress > 100: # Cap at 100%
                     task.progress = 100
+                task.current_ip = ip # Set current_ip to the one just scanned
+                task.completed_ips = i + 1 # Set completed_ips
                 db.commit()
 
 

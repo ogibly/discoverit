@@ -75,7 +75,7 @@ function App() {
 			axios.get(`${API_BASE}/scan/active`).then(res => {
 				setActiveScan(res.data);
 			}).catch(() => setActiveScan(null));
-		}, 3000);
+		}, 1000);
 
 		return () => {
 			clearInterval(deviceInterval);
@@ -119,7 +119,7 @@ function App() {
 		if (window.confirm("Are you sure you want to delete this device and all its scan history?")) {
 			try {
 				await axios.delete(`${API_BASE}/devices/${deviceId}`);
-				fetchDevices();
+				setDevices((prevDevices) => prevDevices.filter((device) => device.id !== deviceId));
 				if (selectedDevice && selectedDevice.id === deviceId) {
 					setSelectedDevice(null);
 				}
@@ -152,7 +152,9 @@ function App() {
 				await Promise.all(
 					selectedDevices.map((id) => axios.delete(`${API_BASE}/devices/${id}`))
 				);
-				fetchDevices();
+				setDevices((prevDevices) =>
+					prevDevices.filter((device) => !selectedDevices.includes(device.id))
+				);
 				setSelectedDevices([]);
 			} catch (error) {
 				setStatusMsg("Failed to delete devices.");

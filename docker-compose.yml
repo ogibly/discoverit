@@ -45,6 +45,18 @@ services:
     volumes:
       - ./backend:/app
 
+  scanmanager:
+    build: ./scanmanager
+    container_name: discoverit-scanmanager
+    restart: always
+    ports:
+      - "8002:8002"
+    networks:
+      - discoverit-net
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
   scanner:
     build: ./scanner
     container_name: discoverit-scanner

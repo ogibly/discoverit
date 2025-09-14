@@ -141,11 +141,15 @@ def run_background_scan(task_id: int):
     It creates its own database session.
     """
     db = SessionLocal()
-    scanner_base_url = "http://scanner:8001"
+    scanmanager_base_url = "http://scanmanager:8002"
     try:
         task = db.query(models.ScanTask).filter(models.ScanTask.id == task_id).first()
         if not task:
             return
+
+        # Get subnet from settings
+        settings = db.query(models.Settings).first()
+        configured_subnet = settings.subnet if settings and settings.subnet else None
 
         # Calculate all IPs in the CIDR range
         ips_to_scan = get_ips_from_cidr(task.target)
@@ -172,35 +176,35 @@ def run_background_scan(task_id: int):
             # Run the specified scan type
             scan_result = {}
             try:
-                if task.scan_type == "quick":
-                    response = requests.post(f"{scanner_base_url}/scan/quick", params={"ip": ip})
-                    response.raise_for_status()
-                    scan_result = response.json()
-                else:
-                    response = requests.post(f"{scanner_base_url}/scan/comprehensive", params={"ip": ip})
-                    response.raise_for_status()
-                    scan_result = response.json()
-                    # Update device with comprehensive scan data
-                    if "os_info" in scan_result:
-                        device.os_name = scan_result["os_info"].get("os_name")
-                        device.os_family = scan_result["os_info"].get("os_family")
-                        device.os_version = scan_result["os_info"].get("os_version")
-                    if "device_info" in scan_result:
-                        device.manufacturer = scan_result["device_info"].get("manufacturer")
-                        device.model = scan_result["device_info"].get("model")
-                    if "hostname" in scan_result:
-                        device.hostname = scan_result["hostname"]
-                    if "addresses" in scan_result and "mac" in scan_result["addresses"]:
-                        device.mac = scan_result["addresses"]["mac"]
+                scan_request = {
+                    "ip": ip,
+                    "scan_type": task.scan_type,
+                    "subnet": configured_subnet
+                }
+                response = requests.post(f"{scanmanager_base_url}/scan", json=scan_request)
+                response.raise_for_status()
+                scan_result = response.json()
+                # Update device with comprehensive scan data
+                if "os_info" in scan_result:
+                    device.os_name = scan_result["os_info"].get("os_name")
+                    device.os_family = scan_result["os_info"].get("os_family")
+                    device.os_version = scan_result["os_info"].get("os_version")
+                if "device_info" in scan_result:
+                    device.manufacturer = scan_result["device_info"].get("manufacturer")
+                    device.model = scan_result["device_info"].get("model")
+                if "hostname" in scan_result:
+                    device.hostname = scan_result["hostname"]
+                if "addresses" in scan_result and "mac" in scan_result["addresses"]:
+                    device.mac = scan_result["addresses"]["mac"]
             except requests.exceptions.RequestException as e:
-                scan_result = {"error": str(e)}
+                scan_result = {"error": str(e), "timestamp": now_ts.isoformat() + "Z"}
 
             db_scan = models.Scan(
                 device_id=device.id,
                 scan_task_id=task.id,
                 timestamp=now_ts,
                 scan_data=json.dumps(scan_result),
-                status="completed"
+                status="completed" if "error" not in scan_result else "failed"
             )
             db.add(db_scan)
             db.commit()
@@ -268,6 +272,25 @@ def trigger_scan(
 
     background_tasks.add_task(run_background_scan, new_task.id)
     return new_task
+
+@router.get("/settings")
+def get_settings(db: Session = Depends(get_db)):
+    settings = db.query(models.Settings).first()
+    if not settings:
+        return {"subnet": ""}
+    return settings
+
+@router.post("/settings")
+def save_settings(payload: schemas.SettingsCreate, db: Session = Depends(get_db)):
+    settings = db.query(models.Settings).first()
+    if not settings:
+        settings = models.Settings(subnet=payload.subnet)
+        db.add(settings)
+    else:
+        settings.subnet = payload.subnet
+    db.commit()
+    db.refresh(settings)
+    return settings
 
 @router.post("/labels", response_model=schemas.Label)
 def create_label(label: schemas.LabelCreate, db: Session = Depends(get_db)):

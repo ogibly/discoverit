@@ -151,3 +151,15 @@ class Job(JobBase):
 
     class Config:
         orm_mode = True
+
+class SettingsBase(BaseModel):
+    subnet: str
+
+class SettingsCreate(SettingsBase):
+    pass
+
+class Settings(SettingsBase):
+    id: int
+
+    class Config:
+        orm_mode = True

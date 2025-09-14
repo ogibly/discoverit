@@ -121,3 +121,8 @@ class IPAddress(Base):
     asset_id = Column(Integer, ForeignKey("assets.id"))
 
     asset = relationship("Asset", back_populates="ips")
+
+class Settings(Base):
+    __tablename__ = "settings"
+    id = Column(Integer, primary_key=True, index=True)
+    subnet = Column(String, nullable=True)

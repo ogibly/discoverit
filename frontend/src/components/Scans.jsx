@@ -55,14 +55,22 @@ export default function Scans({
 								disabled={!!activeScan || (!target.trim() && selectedDevices.length === 0)}
 								className="px-4 py-2 text-sm font-semibold text-white bg-slate-700 rounded-md hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								{activeScan ? "Scanning..." : "Quick Scan"}
+								{activeScan
+									? "Scanning..."
+									: selectedDevices.length > 0
+									? `Quick Scan ${selectedDevices.length} Devices`
+									: "Quick Scan"}
 							</button>
 							<button
 								onClick={() => triggerScan("comprehensive")}
 								disabled={!!activeScan || (!target.trim() && selectedDevices.length === 0)}
 								className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								{activeScan ? "Scanning..." : "Comprehensive Scan"}
+								{activeScan
+									? "Scanning..."
+									: selectedDevices.length > 0
+									? `Comprehensive Scan ${selectedDevices.length} Devices`
+									: "Comprehensive Scan"}
 							</button>
 							{activeScan && (
 								<button onClick={cancelScan} className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-500">

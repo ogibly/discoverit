@@ -179,8 +179,8 @@ def run_background_scan(task_id: int):
                     device.model = scan_result["device_info"].get("model")
                 if "hostname" in scan_result:
                     device.hostname = scan_result["hostname"]
-                if "mac_address" in scan_result:
-                    device.mac = scan_result["mac_address"]
+                if "addresses" in scan_result and "mac" in scan_result["addresses"]:
+                    device.mac = scan_result["addresses"]["mac"]
                 
             db_scan = models.Scan(
                 device_id=device.id,

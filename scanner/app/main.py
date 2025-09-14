@@ -1,10 +1,14 @@
+from fastapi import FastAPI, HTTPException
 import nmap
 from datetime import datetime
 import json
 from typing import List, Dict
 import socket
 
-def run_scan(ip: str):
+app = FastAPI()
+
+@app.post("/scan/quick")
+def quick_scan(ip: str):
     """
     Runs a quick scan on the top ports.
     """
@@ -28,14 +32,10 @@ def run_scan(ip: str):
             "scan_type": "quick"
         }
     except Exception as e:
-        return {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "ports": [],
-            "error": str(e),
-            "scan_type": "quick"
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-def arp_scan(target: str):
+@app.post("/scan/arp")
+def arp_scan_endpoint(target: str):
     """
     Discovers hosts in a subnet using an ARP scan.
     """
@@ -60,13 +60,10 @@ def arp_scan(target: str):
             "hosts": hosts
         }
     except Exception as e:
-        return {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "hosts": [],
-            "error": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-def discover_subnet(target: str):
+@app.post("/scan/discover")
+def discover_subnet_endpoint(target: str):
     """
     Discovers hosts in a subnet using a fast ping scan.
     """
@@ -91,13 +88,10 @@ def discover_subnet(target: str):
             "hosts": hosts
         }
     except Exception as e:
-        return {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "hosts": [],
-            "error": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-def comprehensive_scan(ip: str) -> Dict:
+@app.post("/scan/comprehensive")
+def comprehensive_scan_endpoint(ip: str):
     """
     Runs a comprehensive, aggressive scan to gather maximum information.
     This uses the -A flag to enable OS detection, version detection,
@@ -111,7 +105,7 @@ def comprehensive_scan(ip: str) -> Dict:
         nm.scan(ip, arguments="-A -T4 -sU -p 161 --script default,discovery,vuln")
         
         if ip not in nm.all_hosts():
-            return {"timestamp": timestamp, "ip": ip, "error": "Host not responding.", "scan_type": "comprehensive"}
+            raise HTTPException(status_code=404, detail="Host not responding.")
 
         host_data = nm[ip]
         
@@ -188,9 +182,4 @@ def comprehensive_scan(ip: str) -> Dict:
         return result
 
     except Exception as e:
-        return {
-            "timestamp": timestamp,
-            "ip": ip,
-            "error": str(e),
-            "scan_type": "comprehensive"
-        }
+        raise HTTPException(status_code=500, detail=str(e))

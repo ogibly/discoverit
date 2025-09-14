@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session, joinedload
 from .database import SessionLocal
-from . import models, scan
+from . import models
 import json
+import requests
 from typing import List, Optional
 from pydantic import BaseModel
 import socket
@@ -100,13 +101,16 @@ def device_history(device_id: int, page: int = 1, limit: int = 1, db: Session = 
     if not scans:
         return {"scan": None, "ports": [], "page": page, "total": total}
     
+    scan_record = scans[0]
     scan_data = {}
     try:
-        scan_data = json.loads(scans[0].scan_data)
+        scan_data = json.loads(scan_record.scan_data)
     except json.JSONDecodeError:
         # Handle cases where scan_data might be malformed JSON
-        print(f"Warning: Malformed scan_data for scan ID {scans[0].id}")
+        print(f"Warning: Malformed scan_data for scan ID {scan_record.id}")
         scan_data = {"ports": []} # Default to empty ports if data is bad
+
+    scan_data['id'] = scan_record.id
 
     return {"scan": scan_data, "ports": scan_data.get("ports", []), "page": page, "total": total}
 
@@ -137,6 +141,7 @@ def run_background_scan(task_id: int):
     It creates its own database session.
     """
     db = SessionLocal()
+    scanner_base_url = "http://scanner:8001"
     try:
         task = db.query(models.ScanTask).filter(models.ScanTask.id == task_id).first()
         if not task:
@@ -165,23 +170,31 @@ def run_background_scan(task_id: int):
                 db.flush()
             
             # Run the specified scan type
-            if task.scan_type == "quick":
-                scan_result = scan.run_scan(ip)
-            else:
-                scan_result = scan.comprehensive_scan(ip)
-                # Update device with comprehensive scan data
-                if "os_info" in scan_result:
-                    device.os_name = scan_result["os_info"].get("os_name")
-                    device.os_family = scan_result["os_info"].get("os_family")
-                    device.os_version = scan_result["os_info"].get("os_version")
-                if "device_info" in scan_result:
-                    device.manufacturer = scan_result["device_info"].get("manufacturer")
-                    device.model = scan_result["device_info"].get("model")
-                if "hostname" in scan_result:
-                    device.hostname = scan_result["hostname"]
-                if "addresses" in scan_result and "mac" in scan_result["addresses"]:
-                    device.mac = scan_result["addresses"]["mac"]
-                
+            scan_result = {}
+            try:
+                if task.scan_type == "quick":
+                    response = requests.post(f"{scanner_base_url}/scan/quick", params={"ip": ip})
+                    response.raise_for_status()
+                    scan_result = response.json()
+                else:
+                    response = requests.post(f"{scanner_base_url}/scan/comprehensive", params={"ip": ip})
+                    response.raise_for_status()
+                    scan_result = response.json()
+                    # Update device with comprehensive scan data
+                    if "os_info" in scan_result:
+                        device.os_name = scan_result["os_info"].get("os_name")
+                        device.os_family = scan_result["os_info"].get("os_family")
+                        device.os_version = scan_result["os_info"].get("os_version")
+                    if "device_info" in scan_result:
+                        device.manufacturer = scan_result["device_info"].get("manufacturer")
+                        device.model = scan_result["device_info"].get("model")
+                    if "hostname" in scan_result:
+                        device.hostname = scan_result["hostname"]
+                    if "addresses" in scan_result and "mac" in scan_result["addresses"]:
+                        device.mac = scan_result["addresses"]["mac"]
+            except requests.exceptions.RequestException as e:
+                scan_result = {"error": str(e)}
+
             db_scan = models.Scan(
                 device_id=device.id,
                 scan_task_id=task.id,
@@ -233,10 +246,17 @@ def trigger_scan(
         # This part can be refactored or removed if not needed
         # For now, it remains a simple, non-task-based scan
         devices = db.query(models.Device).all()
+        scanner_base_url = "http://scanner:8001"
         for d in devices:
-            result = scan.run_scan(d.ip)
-            db_scan = models.Scan(device_id=d.id, timestamp=datetime.utcnow(), scan_data=json.dumps(result))
-            db.add(db_scan)
+            try:
+                response = requests.post(f"{scanner_base_url}/scan/quick", params={"ip": d.ip})
+                response.raise_for_status()
+                result = response.json()
+                db_scan = models.Scan(device_id=d.id, timestamp=datetime.utcnow(), scan_data=json.dumps(result))
+                db.add(db_scan)
+            except requests.exceptions.RequestException as e:
+                # Log the error or handle it as needed
+                print(f"Failed to scan device {d.ip}: {e}")
         db.commit()
         return {"message": "Simple scan completed for known devices", "count": len(devices)}
 

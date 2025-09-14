@@ -9,28 +9,58 @@ def run_scan(ip: str):
     Runs a quick scan on the top ports.
     """
     nm = nmap.PortScanner()
+    timestamp = datetime.utcnow().isoformat() + "Z"
     try:
-        # Fast scan: common ports, aggressive timing, no ping
-        nm.scan(ip, arguments="-sT -T4 -Pn -F")
+        # Quick scan: common ports, aggressive timing, OS detection, version detection, no ping
+        nm.scan(ip, arguments="-sT -sV -O -T4 -Pn -F")
+
+        if ip not in nm.all_hosts():
+            return {"timestamp": timestamp, "ip": ip, "error": "Host not responding.", "scan_type": "quick"}
+
+        host_data = nm[ip]
+
+        # Extract OS Information
+        os_info = {}
+        if 'osmatch' in host_data and host_data['osmatch']:
+            best_match = host_data['osmatch'][0]
+            os_info = {
+                "os_name": best_match.get('name', 'Unknown'),
+                "os_accuracy": best_match.get('accuracy', 0),
+                "os_family": best_match.get('osclass', [{}])[0].get('osfamily', 'Unknown') if best_match.get('osclass') else 'Unknown',
+                "os_version": best_match.get('osclass', [{}])[0].get('version', 'Unknown') if best_match.get('osclass') else 'Unknown'
+            }
+
+        # Extract MAC address
+        mac_address = host_data['addresses'].get('mac')
+
         ports = []
-        if ip in nm.all_hosts() and nm[ip].all_protocols():
-            for proto in nm[ip].all_protocols():
-                for port in nm[ip][proto].keys():
+        if host_data.all_protocols():
+            for proto in host_data.all_protocols():
+                for port in host_data[proto].keys():
+                    port_info = host_data[proto][port]
                     ports.append({
                         "port": port,
                         "proto": proto,
-                        "state": nm[ip][proto][port]["state"],
-                        "service": nm[ip][proto][port].get("name", "")
+                        "state": port_info.get("state", ""),
+                        "service": port_info.get("name", ""),
+                        "version": port_info.get("version", ""),
+                        "product": port_info.get("product", ""),
+                        "extrainfo": port_info.get("extrainfo", ""),
+                        "cpe": port_info.get("cpe", "")
                     })
         return {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": timestamp,
             "ports": ports,
+            "mac_address": mac_address,
+            "os_info": os_info,
             "scan_type": "quick"
         }
     except Exception as e:
         return {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": timestamp,
             "ports": [],
+            "mac_address": None,
+            "os_info": {},
             "error": str(e),
             "scan_type": "quick"
         }

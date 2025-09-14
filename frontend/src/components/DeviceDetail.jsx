@@ -127,18 +127,12 @@ export default React.memo(function DeviceDetail({ device, onDeleteScan }) {
 											</div>
 										)}
 
-										{scan.ports && scan.ports.length > 0 && (
+										{scan.mac_address && (
 											<div>
-												<p className="font-semibold text-slate-400 mb-2">Open Ports:</p>
-												<ul className="pl-4 space-y-1">
-													{scan.ports.map((port) => (
-														<li key={`${port.port}-${port.proto}`}>
-															<span className="font-semibold">{port.port}/{port.proto}</span> - {port.state} {port.service && `(${port.service})`}
-														</li>
-													))}
-												</ul>
+												<p><span className="font-semibold text-slate-400">MAC Address:</span> {scan.mac_address}</p>
 											</div>
 										)}
+
 
 										{scan.script_results && Object.keys(scan.script_results).length > 0 && (
 											<div>

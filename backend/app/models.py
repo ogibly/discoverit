@@ -125,4 +125,4 @@ class IPAddress(Base):
 class Settings(Base):
     __tablename__ = "settings"
     id = Column(Integer, primary_key=True, index=True)
-    subnet = Column(String, nullable=True)
+    scanners = Column(String, nullable=True) # JSON serialized list of scanner configs

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, useLocation } from 'react-router-dom';
 import axios from "axios";
 import AssetManager from "./components/AssetManager";
 import AssetGroupManager from "./components/AssetGroupManager";
@@ -17,7 +17,7 @@ import "./modern.css";
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 function App() {
-	const [page, setPage] = useState("scans");
+	const location = useLocation();
 	const [devices, setDevices] = useState([]);
 	const [selectedDevice, setSelectedDevice] = useState(null);
 	const [selectedDevices, setSelectedDevices] = useState([]);
@@ -393,117 +393,113 @@ function App() {
 	const inactiveLinkClasses = "text-slate-400 hover:bg-slate-800 hover:text-white";
 
 	return (
-		<Router>
-			<div className="flex h-screen bg-slate-900 text-slate-300">
-				<div className="flex flex-col w-64 bg-slate-900/70 border-r border-slate-800">
-					<div className="flex items-center justify-center h-16 border-b border-slate-800">
-						<h1 className="text-2xl font-bold text-white">DiscoverIT</h1>
-					</div>
-					<nav className="flex-grow p-4 space-y-2">
-						<Link to="/" className={`${navLinkClasses} ${page === "scans" ? activeLinkClasses : inactiveLinkClasses}`}>Scans</Link>
-						<Link to="/scan-log" className={`${navLinkClasses} ${page === "scan_log" ? activeLinkClasses : inactiveLinkClasses}`}>Scans Log</Link>
-						<Link to="/assets" className={`${navLinkClasses} ${page === "assets" ? activeLinkClasses : inactiveLinkClasses}`}>Assets</Link>
-						<Link to="/asset-groups" className={`${navLinkClasses} ${page === "asset_groups" ? activeLinkClasses : inactiveLinkClasses}`}>Asset Groups</Link>
-						<Link to="/operations" className={`${navLinkClasses} ${page === "operations" ? activeLinkClasses : inactiveLinkClasses}`}>Operations</Link>
-						<Link to="/operations-tracker" className={`${navLinkClasses} ${page === "operations_tracker" ? activeLinkClasses : inactiveLinkClasses}`}>Operations Tracker</Link>
-						<Link to="/settings" className={`${navLinkClasses} ${page === "settings" ? activeLinkClasses : inactiveLinkClasses}`}>Settings</Link>
-					</nav>
+		<div className="flex h-screen bg-slate-900 text-slate-300">
+			<div className="flex flex-col w-64 bg-slate-900/70 border-r border-slate-800">
+				<div className="flex items-center justify-center h-16 border-b border-slate-800">
+					<h1 className="text-2xl font-bold text-white">DiscoverIT</h1>
 				</div>
-				<div className="flex-grow p-6 overflow-y-auto">
-					<Routes>
-						<Route path="/" element={
-							<Scans
-								devices={devices}
-								selectedDevice={selectedDevice}
-								setSelectedDevice={setSelectedDevice}
-								deleteDevice={deleteDevice}
-								selectedDevices={selectedDevices}
-								handleSelectDevice={handleSelectDevice}
-								handleSelectAllDevices={handleSelectAllDevices}
-								handleDeleteSelected={handleDeleteSelected}
-								handleCreateAsset={createAssetsFromDevices}
-								triggerScan={triggerScan}
-								activeScan={activeScan}
-								cancelScan={cancelScan}
-								target={target}
-								setTarget={setTarget}
-								statusMsg={statusMsg}
-								deleteScan={deleteScan}
-							/>
-						} />
-						<Route path="/assets" element={
-							<Assets
-								assets={assets.filter(a => selectedLabels.length === 0 || a.labels.some(l => selectedLabels.map(sl => sl.id).includes(l.id)))}
-								selectedAsset={selectedAsset}
-								setSelectedAsset={setSelectedAsset}
-								deleteAsset={deleteAsset}
-								onUpdate={handleUpdateAsset}
-								setShowAssetManager={setShowAssetManager}
-								selectedAssets={selectedAssets}
-								onSelectAsset={handleSelectAsset}
-								onSelectAllAssets={handleSelectAllAssets}
-								onDeleteSelectedAssets={handleDeleteSelectedAssets}
-								onCreateAssetGroup={handleCreateAssetGroup}
-								setShowOperationModal={setShowOperationModal}
-								allLabels={allLabels}
-								selectedLabels={selectedLabels}
-								setSelectedLabels={setSelectedLabels}
-							/>
-						} />
-						<Route path="/asset-groups" element={
-							<AssetGroups
-								assetGroups={assetGroups.filter(ag => selectedLabels.length === 0 || ag.labels.some(l => selectedLabels.map(sl => sl.id).includes(l.id)))}
-								selectedAssetGroup={selectedAssetGroup}
-								setSelectedAssetGroup={setSelectedAssetGroup}
-								deleteAssetGroup={deleteAssetGroup}
-								updateAssetGroup={handleUpdateAssetGroup}
-								setEditingAssetGroup={setEditingAssetGroup}
-								setShowAssetGroupManager={setShowAssetGroupManager}
-								selectedAssetGroups={selectedAssetGroups}
-								onSelectAssetGroup={handleSelectAssetGroup}
-								onSelectAllAssetGroups={handleSelectAllAssetGroups}
-								onDeleteSelectedAssetGroups={handleDeleteSelectedAssetGroups}
-								setShowOperationModal={setShowOperationModal}
-								allLabels={allLabels}
-								selectedLabels={selectedLabels}
-								setSelectedLabels={setSelectedLabels}
-							/>
-						} />
-						<Route path="/operations" element={<Operations />} />
-						<Route path="/operations-tracker" element={<OperationsTracker />} />
-						<Route path="/scan-log" element={<ScanLog />} />
-						<Route path="/settings" element={<Settings />} />
-					</Routes>
-					{showAssetManager && (
-						<AssetManager
-							assets={selectedAssets.length > 0 ? assets.filter(a => selectedAssets.includes(a.id)) : []}
-							onUpdate={handleUpdateAsset}
-							onDelete={deleteAsset}
-							onCreate={handleCreateAsset}
-							onClose={() => setShowAssetManager(false)}
-						/>
-					)}
-					{showAssetGroupManager && (
-						<AssetGroupManager
-							assets={assets}
-							assetGroup={editingAssetGroup}
-							onSave={handleSaveAssetGroup}
-							onClose={() => {
-								setShowAssetGroupManager(false);
-								setEditingAssetGroup(null);
-							}}
-						/>
-					)}
-					{showOperationModal && (
-						<RunOperationModal
-							assets={assets.filter(a => selectedAssets.includes(a.id))}
-							assetGroups={assetGroups.filter(ag => selectedAssetGroups.includes(ag.id))}
-							onClose={() => setShowOperationModal(false)}
-						/>
-					)}
-				</div>
+				<nav className="flex-grow p-4 space-y-2">
+					<Link to="/" className={`${navLinkClasses} ${location.pathname === "/" ? activeLinkClasses : inactiveLinkClasses}`}>Scans</Link>
+					<Link to="/scan-log" className={`${navLinkClasses} ${location.pathname === "/scan-log" ? activeLinkClasses : inactiveLinkClasses}`}>Scans Log</Link>
+					<Link to="/assets" className={`${navLinkClasses} ${location.pathname === "/assets" ? activeLinkClasses : inactiveLinkClasses}`}>Assets</Link>
+					<Link to="/asset-groups" className={`${navLinkClasses} ${location.pathname === "/asset-groups" ? activeLinkClasses : inactiveLinkClasses}`}>Asset Groups</Link>
+					<Link to="/operations-tracker" className={`${navLinkClasses} ${location.pathname === "/operations-tracker" ? activeLinkClasses : inactiveLinkClasses}`}>Operations Tracker</Link>
+					<Link to="/settings" className={`${navLinkClasses} ${location.pathname === "/settings" ? activeLinkClasses : inactiveLinkClasses}`}>Settings</Link>
+				</nav>
 			</div>
-		</Router>
+			<div className="flex-grow p-6 overflow-y-auto">
+				<Routes>
+					<Route path="/" element={
+						<Scans
+							devices={devices}
+							selectedDevice={selectedDevice}
+							setSelectedDevice={setSelectedDevice}
+							deleteDevice={deleteDevice}
+							selectedDevices={selectedDevices}
+							handleSelectDevice={handleSelectDevice}
+							handleSelectAllDevices={handleSelectAllDevices}
+							handleDeleteSelected={handleDeleteSelected}
+							handleCreateAsset={createAssetsFromDevices}
+							triggerScan={triggerScan}
+							activeScan={activeScan}
+							cancelScan={cancelScan}
+							target={target}
+							setTarget={setTarget}
+							statusMsg={statusMsg}
+							deleteScan={deleteScan}
+						/>
+					} />
+					<Route path="/assets" element={
+						<Assets
+							assets={assets.filter(a => selectedLabels.length === 0 || a.labels.some(l => selectedLabels.map(sl => sl.id).includes(l.id)))}
+							selectedAsset={selectedAsset}
+							setSelectedAsset={setSelectedAsset}
+							deleteAsset={deleteAsset}
+							onUpdate={handleUpdateAsset}
+							setShowAssetManager={setShowAssetManager}
+							selectedAssets={selectedAssets}
+							onSelectAsset={handleSelectAsset}
+							onSelectAllAssets={handleSelectAllAssets}
+							onDeleteSelectedAssets={handleDeleteSelectedAssets}
+							onCreateAssetGroup={handleCreateAssetGroup}
+							setShowOperationModal={setShowOperationModal}
+							allLabels={allLabels}
+							selectedLabels={selectedLabels}
+							setSelectedLabels={setSelectedLabels}
+						/>
+					} />
+					<Route path="/asset-groups" element={
+						<AssetGroups
+							assetGroups={assetGroups.filter(ag => selectedLabels.length === 0 || ag.labels.some(l => selectedLabels.map(sl => sl.id).includes(l.id)))}
+							selectedAssetGroup={selectedAssetGroup}
+							setSelectedAssetGroup={setSelectedAssetGroup}
+							deleteAssetGroup={deleteAssetGroup}
+							updateAssetGroup={handleUpdateAssetGroup}
+							setEditingAssetGroup={setEditingAssetGroup}
+							setShowAssetGroupManager={setShowAssetGroupManager}
+							selectedAssetGroups={selectedAssetGroups}
+							onSelectAssetGroup={handleSelectAssetGroup}
+							onSelectAllAssetGroups={handleSelectAllAssetGroups}
+							onDeleteSelectedAssetGroups={handleDeleteSelectedAssetGroups}
+							setShowOperationModal={setShowOperationModal}
+							allLabels={allLabels}
+							selectedLabels={selectedLabels}
+							setSelectedLabels={setSelectedLabels}
+						/>
+					} />
+					<Route path="/operations-tracker" element={<OperationsTracker />} />
+					<Route path="/scan-log" element={<ScanLog />} />
+					<Route path="/settings" element={<Settings />} />
+				</Routes>
+				{showAssetManager && (
+					<AssetManager
+						assets={selectedAssets.length > 0 ? assets.filter(a => selectedAssets.includes(a.id)) : []}
+						onUpdate={handleUpdateAsset}
+						onDelete={deleteAsset}
+						onCreate={handleCreateAsset}
+						onClose={() => setShowAssetManager(false)}
+					/>
+				)}
+				{showAssetGroupManager && (
+					<AssetGroupManager
+						assets={assets}
+						assetGroup={editingAssetGroup}
+						onSave={handleSaveAssetGroup}
+						onClose={() => {
+							setShowAssetGroupManager(false);
+							setEditingAssetGroup(null);
+						}}
+					/>
+				)}
+				{showOperationModal && (
+					<RunOperationModal
+						assets={assets.filter(a => selectedAssets.includes(a.id))}
+						assetGroups={assetGroups.filter(ag => selectedAssetGroups.includes(ag.id))}
+						onClose={() => setShowOperationModal(false)}
+					/>
+				)}
+			</div>
+		</div>
 	);
 }
 

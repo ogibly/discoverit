@@ -152,8 +152,13 @@ class Job(JobBase):
     class Config:
         orm_mode = True
 
+class ScannerConfig(BaseModel):
+    name: str
+    url: str
+    subnets: str
+
 class SettingsBase(BaseModel):
-    subnet: str
+    scanners: List[ScannerConfig]
 
 class SettingsCreate(SettingsBase):
     pass

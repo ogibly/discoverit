@@ -69,6 +69,18 @@ services:
       - NET_ADMIN
       - NET_RAW
 
+  scanner2:
+    build: ./scanner
+    container_name: discoverit-scanner2
+    restart: always
+    ports:
+      - "8003:8001"
+    networks:
+      - discoverit-net
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
   frontend:
     build: ./frontend
     container_name: discoverit-frontend

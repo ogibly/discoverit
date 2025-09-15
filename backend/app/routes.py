@@ -277,20 +277,20 @@ def trigger_scan(
 def get_settings(db: Session = Depends(get_db)):
     settings = db.query(models.Settings).first()
     if not settings:
-        return {"subnet": ""}
-    return settings
+        return {"scanners": []}
+    return {"scanners": json.loads(settings.scanners)}
 
 @router.post("/settings")
 def save_settings(payload: schemas.SettingsCreate, db: Session = Depends(get_db)):
     settings = db.query(models.Settings).first()
     if not settings:
-        settings = models.Settings(subnet=payload.subnet)
+        settings = models.Settings(scanners=json.dumps([scanner.dict() for scanner in payload.scanners]))
         db.add(settings)
     else:
-        settings.subnet = payload.subnet
+        settings.scanners = json.dumps([scanner.dict() for scanner in payload.scanners])
     db.commit()
     db.refresh(settings)
-    return settings
+    return {"scanners": json.loads(settings.scanners)}
 
 @router.post("/labels", response_model=schemas.Label)
 def create_label(label: schemas.LabelCreate, db: Session = Depends(get_db)):

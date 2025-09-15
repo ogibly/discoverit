@@ -6,9 +6,6 @@ from .routes import router
 
 app = FastAPI()
 
-@app.on_event("startup")
-def on_startup():
-    Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,

@@ -37,7 +37,7 @@ class ScanTaskOut(BaseModel):
     current_ip: Optional[str] = None # Include current_ip here
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 router = APIRouter()
@@ -49,31 +49,32 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/devices", response_model=List[schemas.DeviceOut])
+@router.get("/devices", response_model=List[schemas.Asset])
 def list_devices(db: Session = Depends(get_db)):
-    return db.query(models.Device).all()
+    return db.query(models.Asset).all()
 
-@router.post("/devices", response_model=schemas.DeviceOut)
+@router.post("/devices", response_model=schemas.Asset)
 def create_device(payload: DeviceCreate, db: Session = Depends(get_db)):
-    existing = db.query(models.Device).filter(models.Device.ip == payload.ip).first()
+    existing = db.query(models.Asset).filter(models.Asset.primary_ip == payload.ip).first()
     if existing:
         return existing
-    device = models.Device(
-        ip=payload.ip,
-        mac=payload.mac,
-        vendor=payload.vendor,
+    asset = models.Asset(
+        name=payload.ip,
+        primary_ip=payload.ip,
+        mac_address=payload.mac,
+        manufacturer=payload.vendor,
         last_seen=datetime.utcnow(),
     )
-    db.add(device)
+    db.add(asset)
     db.commit()
-    db.refresh(device)
-    return device
+    db.refresh(asset)
+    return asset
 
 @router.delete("/devices/{device_id}", status_code=204)
 def delete_device(device_id: int, db: Session = Depends(get_db)):
-    device = db.query(models.Device).filter(models.Device.id == device_id).first()
-    if device:
-        db.delete(device)
+    asset = db.query(models.Asset).filter(models.Asset.id == device_id).first()
+    if asset:
+        db.delete(asset)
         db.commit()
     return
 
@@ -95,9 +96,9 @@ def get_active_scan(db: Session = Depends(get_db)):
 
 @router.get("/devices/{device_id}/history", response_model=HistoryResponse)
 def device_history(device_id: int, page: int = 1, limit: int = 1, db: Session = Depends(get_db)):
-    scans = db.query(models.Scan).filter(models.Scan.device_id==device_id)\
+    scans = db.query(models.Scan).filter(models.Scan.asset_id==device_id)\
         .order_by(models.Scan.timestamp.desc()).offset((page-1)*limit).limit(limit).all()
-    total = db.query(models.Scan).filter(models.Scan.device_id==device_id).count()
+    total = db.query(models.Scan).filter(models.Scan.asset_id==device_id).count()
     if not scans:
         return {"scan": None, "ports": [], "page": page, "total": total}
     
@@ -163,14 +164,14 @@ def run_background_scan(task_id: int):
             if task.status == "cancelled":
                 break
             
-            # Upsert device
-            device = db.query(models.Device).filter(models.Device.ip == ip).first()
+            # Upsert asset
+            asset = db.query(models.Asset).filter(models.Asset.primary_ip == ip).first()
             now_ts = datetime.utcnow()
-            if device:
-                device.last_seen = now_ts
+            if asset:
+                asset.last_seen = now_ts
             else:
-                device = models.Device(ip=ip, last_seen=now_ts)
-                db.add(device)
+                asset = models.Asset(name=ip, primary_ip=ip, last_seen=now_ts)
+                db.add(asset)
                 db.flush()
             
             # Run the specified scan type
@@ -186,21 +187,21 @@ def run_background_scan(task_id: int):
                 scan_result = response.json()
                 # Update device with comprehensive scan data
                 if "os_info" in scan_result:
-                    device.os_name = scan_result["os_info"].get("os_name")
-                    device.os_family = scan_result["os_info"].get("os_family")
-                    device.os_version = scan_result["os_info"].get("os_version")
+                    asset.os_name = scan_result["os_info"].get("os_name")
+                    asset.os_family = scan_result["os_info"].get("os_family")
+                    asset.os_version = scan_result["os_info"].get("os_version")
                 if "device_info" in scan_result:
-                    device.manufacturer = scan_result["device_info"].get("manufacturer")
-                    device.model = scan_result["device_info"].get("model")
+                    asset.manufacturer = scan_result["device_info"].get("manufacturer")
+                    asset.model = scan_result["device_info"].get("model")
                 if "hostname" in scan_result:
-                    device.hostname = scan_result["hostname"]
+                    asset.hostname = scan_result["hostname"]
                 if "addresses" in scan_result and "mac" in scan_result["addresses"]:
-                    device.mac = scan_result["addresses"]["mac"]
+                    asset.mac_address = scan_result["addresses"]["mac"]
             except requests.exceptions.RequestException as e:
                 scan_result = {"error": str(e), "timestamp": now_ts.isoformat() + "Z"}
 
             db_scan = models.Scan(
-                device_id=device.id,
+                asset_id=asset.id,
                 scan_task_id=task.id,
                 timestamp=now_ts,
                 scan_data=json.dumps(scan_result),
@@ -249,20 +250,20 @@ def trigger_scan(
     if not target:
         # This part can be refactored or removed if not needed
         # For now, it remains a simple, non-task-based scan
-        devices = db.query(models.Device).all()
+        assets = db.query(models.Asset).all()
         scanner_base_url = "http://scanner:8001"
-        for d in devices:
+        for asset in assets:
             try:
-                response = requests.post(f"{scanner_base_url}/scan/quick", params={"ip": d.ip})
+                response = requests.post(f"{scanner_base_url}/scan/quick", params={"ip": asset.primary_ip})
                 response.raise_for_status()
                 result = response.json()
-                db_scan = models.Scan(device_id=d.id, timestamp=datetime.utcnow(), scan_data=json.dumps(result))
+                db_scan = models.Scan(asset_id=asset.id, timestamp=datetime.utcnow(), scan_data=json.dumps(result))
                 db.add(db_scan)
             except requests.exceptions.RequestException as e:
                 # Log the error or handle it as needed
-                print(f"Failed to scan device {d.ip}: {e}")
+                print(f"Failed to scan asset {asset.primary_ip}: {e}")
         db.commit()
-        return {"message": "Simple scan completed for known devices", "count": len(devices)}
+        return {"message": "Simple scan completed for known assets", "count": len(assets)}
 
     # Create a new scan task
     new_task = models.ScanTask(target=target, scan_type=scan_type)

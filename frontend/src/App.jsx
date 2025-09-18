@@ -4,14 +4,15 @@ import { AppProvider, useApp } from './contexts/AppContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
+import WorkflowDashboard from './components/WorkflowDashboard';
+import AssetDiscovery from './components/AssetDiscovery';
+import AssetManagement from './components/AssetManagement';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
-import ScanManager from './components/ScanManager';
 import OperationsEnhanced from './components/OperationsEnhanced';
 import Settings from './components/Settings';
 import CredentialsManager from './components/CredentialsManager';
 import ScannerManager from './components/ScannerManager';
-import AssetDiscovery from './components/AssetDiscovery';
 import UserManagement from './components/UserManagement';
 import WorkflowGuide from './components/WorkflowGuide';
 import { cn } from './utils/cn';
@@ -23,8 +24,9 @@ const Navigation = () => {
   const { user, logout, hasPermission } = useAuth();
 
   const navItems = [
-    { path: '/', label: 'Assets', icon: '🏠', permission: 'assets:read', description: 'View and manage discovered assets' },
+    { path: '/', label: 'Dashboard', icon: '🏠', permission: 'assets:read', description: 'Workflow dashboard and overview' },
     { path: '/discovery', label: 'Discovery', icon: '🔍', permission: 'discovery:read', description: 'Discover network devices and create assets' },
+    { path: '/assets', label: 'Assets', icon: '💻', permission: 'assets:read', description: 'Manage discovered assets and create groups' },
     { path: '/operations', label: 'Operations', icon: '⚙️', permission: 'operations:read', description: 'Run operations on assets and groups' },
     { path: '/credentials', label: 'Credentials', icon: '🔐', permission: 'credentials:read', description: 'Manage authentication credentials' },
     { path: '/scanners', label: 'Scanners', icon: '🖥️', permission: 'scanners:read', description: 'Manage scanner service instances' },
@@ -110,77 +112,6 @@ const Navigation = () => {
   );
 };
 
-// Assets page component
-const AssetsPage = () => {
-  const { selectedAsset, setSelectedAsset } = useApp();
-
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-grow flex gap-6 p-6 min-h-0">
-        <div className="flex-grow">
-          <AssetList />
-        </div>
-        <div className="w-1/3">
-          <AssetDetail asset={selectedAsset} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Discovery page component
-const DiscoveryPage = () => {
-  return (
-    <div className="p-6">
-      <AssetDiscovery />
-    </div>
-  );
-};
-
-// Scans page component
-const ScansPage = () => {
-  return (
-    <div className="p-6">
-      <ScanManager />
-    </div>
-  );
-};
-
-// Operations page component
-const OperationsPage = () => {
-  return (
-    <div className="p-6">
-      <OperationsEnhanced />
-    </div>
-  );
-};
-
-// Credentials page component
-const CredentialsPage = () => {
-  return (
-    <div className="p-6">
-      <CredentialsManager />
-    </div>
-  );
-};
-
-// Scanners page component
-const ScannersPage = () => {
-  return (
-    <div className="p-6">
-      <ScannerManager />
-    </div>
-  );
-};
-
-// Settings page component
-const SettingsPage = () => {
-  return (
-    <div className="p-6">
-      <Settings />
-    </div>
-  );
-};
 
 // Main App component
 const AppContent = () => {
@@ -202,30 +133,40 @@ const AppContent = () => {
     <div className="flex h-screen bg-slate-50">
       <Navigation />
       <div className="flex-grow overflow-hidden">
-				<Routes>
+        <Routes>
           <Route path="/" element={
             <ProtectedRoute requiredPermission="assets:read">
-              <AssetsPage />
+              <WorkflowDashboard />
             </ProtectedRoute>
           } />
           <Route path="/discovery" element={
             <ProtectedRoute requiredPermission="discovery:read">
-              <DiscoveryPage />
+              <AssetDiscovery />
+            </ProtectedRoute>
+          } />
+          <Route path="/assets" element={
+            <ProtectedRoute requiredPermission="assets:read">
+              <AssetManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/assets/:id" element={
+            <ProtectedRoute requiredPermission="assets:read">
+              <AssetDetail />
             </ProtectedRoute>
           } />
           <Route path="/operations" element={
             <ProtectedRoute requiredPermission="operations:read">
-              <OperationsPage />
+              <OperationsEnhanced />
             </ProtectedRoute>
           } />
           <Route path="/credentials" element={
             <ProtectedRoute requiredPermission="credentials:read">
-              <CredentialsPage />
+              <CredentialsManager />
             </ProtectedRoute>
           } />
           <Route path="/scanners" element={
             <ProtectedRoute requiredPermission="scanners:read">
-              <ScannersPage />
+              <ScannerManager />
             </ProtectedRoute>
           } />
           <Route path="/users" element={
@@ -235,11 +176,11 @@ const AppContent = () => {
           } />
           <Route path="/settings" element={
             <ProtectedRoute requiredPermission="settings:read">
-              <SettingsPage />
+              <Settings />
             </ProtectedRoute>
           } />
           <Route path="/workflow" element={<WorkflowGuide />} />
-				</Routes>
+        </Routes>
 			</div>
 		</div>
 	);

@@ -182,29 +182,89 @@ class ScanService:
             self.db.commit()
 
     def _perform_scan(self, ip: str, scan_type: str) -> Dict[str, Any]:
-        """Perform a scan on a single IP."""
-        scanmanager_base_url = "http://scanmanager:8002"
+        """Perform a scan on a single IP address using local nmap."""
+        import subprocess
+        import json
+        import re
         
         try:
-            scan_request = {
+            # Build nmap command based on scan type
+            if scan_type == "quick":
+                cmd = ["nmap", "-sn", ip]  # Ping scan only
+            elif scan_type == "comprehensive":
+                cmd = ["nmap", "-sS", "-O", "-sV", "-A", ip]
+            elif scan_type == "snmp":
+                cmd = ["nmap", "-sU", "-p", "161", "--script", "snmp-info", ip]
+            elif scan_type == "arp":
+                cmd = ["nmap", "-sn", "-PR", ip]  # ARP ping scan
+            else:
+                cmd = ["nmap", "-sn", ip]  # Default to ping scan
+            
+            # Run nmap
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            # Parse nmap output
+            scan_result = {
                 "ip": ip,
-                "scan_type": scan_type
+                "scan_type": scan_type,
+                "timestamp": datetime.utcnow().isoformat(),
+                "status": "completed" if result.returncode == 0 else "failed",
+                "raw_output": result.stdout,
+                "ports": [],
+                "os_info": {},
+                "device_info": {},
+                "hostname": None,
+                "addresses": {"mac": None}
             }
             
-            response = requests.post(
-                f"{scanmanager_base_url}/scan", 
-                json=scan_request,
-                timeout=300
-            )
-            response.raise_for_status()
-            return response.json()
+            # Extract hostname
+            hostname_match = re.search(r'for (\S+)', result.stdout)
+            if hostname_match:
+                scan_result["hostname"] = hostname_match.group(1)
             
-        except requests.exceptions.RequestException as e:
+            # Extract MAC address
+            mac_match = re.search(r'MAC Address: ([0-9A-Fa-f:]{17})', result.stdout)
+            if mac_match:
+                scan_result["addresses"]["mac"] = mac_match.group(1)
+            
+            # Extract OS information
+            os_match = re.search(r'Running: ([^,]+)', result.stdout)
+            if os_match:
+                scan_result["os_info"]["os_name"] = os_match.group(1).strip()
+            
+            # Extract open ports
+            port_matches = re.findall(r'(\d+)/(\w+)\s+open\s+(\w+)', result.stdout)
+            for port, protocol, service in port_matches:
+                scan_result["ports"].append({
+                    "port": int(port),
+                    "protocol": protocol,
+                    "service": service,
+                    "state": "open"
+                })
+            
+            return scan_result
+            
+        except subprocess.TimeoutExpired:
             return {
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat() + "Z",
                 "ip": ip,
-                "scan_type": scan_type
+                "scan_type": scan_type,
+                "timestamp": datetime.utcnow().isoformat(),
+                "status": "failed",
+                "error": "Scan timeout",
+                "ports": [],
+                "os_info": {},
+                "device_info": {}
+            }
+        except Exception as e:
+            return {
+                "ip": ip,
+                "scan_type": scan_type,
+                "timestamp": datetime.utcnow().isoformat(),
+                "status": "failed",
+                "error": str(e),
+                "ports": [],
+                "os_info": {},
+                "device_info": {}
             }
 
     def get_asset_scan_history(

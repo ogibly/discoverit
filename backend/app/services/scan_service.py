@@ -1,0 +1,240 @@
+"""
+Scan service for managing network scans and scan tasks.
+"""
+from typing import List, Optional, Dict, Any
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import and_, desc
+from ..models import ScanTask, Scan, Asset
+from ..schemas import ScanTaskCreate, ScanTaskUpdate
+from .asset_service import AssetService
+import ipaddress
+import requests
+import json
+from datetime import datetime
+import asyncio
+import concurrent.futures
+
+
+class ScanService:
+    def __init__(self, db: Session):
+        self.db = db
+        self.asset_service = AssetService(db)
+
+    def create_scan_task(self, task_data: ScanTaskCreate) -> ScanTask:
+        """Create a new scan task."""
+        task = ScanTask(
+            name=task_data.name,
+            target=task_data.target,
+            scan_type=task_data.scan_type,
+            created_by=task_data.created_by
+        )
+        
+        self.db.add(task)
+        self.db.commit()
+        self.db.refresh(task)
+        return task
+
+    def get_scan_task(self, task_id: int) -> Optional[ScanTask]:
+        """Get a scan task by ID."""
+        return self.db.query(ScanTask).options(
+            joinedload(ScanTask.scans)
+        ).filter(ScanTask.id == task_id).first()
+
+    def get_scan_tasks(
+        self, 
+        skip: int = 0, 
+        limit: int = 100,
+        status: Optional[str] = None
+    ) -> List[ScanTask]:
+        """Get scan tasks with optional filtering."""
+        query = self.db.query(ScanTask).options(
+            joinedload(ScanTask.scans)
+        )
+        
+        if status:
+            query = query.filter(ScanTask.status == status)
+        
+        return query.order_by(desc(ScanTask.start_time)).offset(skip).limit(limit).all()
+
+    def get_active_scan_task(self) -> Optional[ScanTask]:
+        """Get the currently active scan task."""
+        return self.db.query(ScanTask).filter(
+            ScanTask.status == "running"
+        ).first()
+
+    def update_scan_task(self, task_id: int, task_data: ScanTaskUpdate) -> Optional[ScanTask]:
+        """Update a scan task."""
+        task = self.get_scan_task(task_id)
+        if not task:
+            return None
+        
+        update_data = task_data.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(task, field, value)
+        
+        self.db.commit()
+        self.db.refresh(task)
+        return task
+
+    def cancel_scan_task(self, task_id: int) -> bool:
+        """Cancel a running scan task."""
+        task = self.get_scan_task(task_id)
+        if not task or task.status != "running":
+            return False
+        
+        task.status = "cancelled"
+        task.end_time = datetime.utcnow()
+        self.db.commit()
+        return True
+
+    def get_ips_from_target(self, target: str) -> List[str]:
+        """Parse target string and return list of IPs to scan."""
+        ips = []
+        
+        try:
+            # Handle CIDR notation
+            if '/' in target:
+                network = ipaddress.ip_network(target, strict=False)
+                ips = [str(ip) for ip in network]
+            # Handle IP range (e.g., 192.168.1.1-50)
+            elif '-' in target:
+                base_ip, end_range = target.rsplit('-', 1)
+                base_parts = base_ip.split('.')
+                if len(base_parts) == 4 and end_range.isdigit():
+                    start_ip = int(base_parts[3])
+                    end_ip = int(end_range)
+                    for i in range(start_ip, min(end_ip + 1, 256)):
+                        ips.append(f"{'.'.join(base_parts[:3])}.{i}")
+            # Handle comma-separated IPs
+            elif ',' in target:
+                ips = [ip.strip() for ip in target.split(',')]
+            # Single IP
+            else:
+                ips = [target]
+        except (ValueError, ipaddress.AddressValueError):
+            # If parsing fails, treat as single IP
+            ips = [target]
+        
+        return ips
+
+    def run_scan_task(self, task_id: int) -> None:
+        """Run a scan task in the background."""
+        task = self.get_scan_task(task_id)
+        if not task:
+            return
+        
+        try:
+            # Get IPs to scan
+            ips_to_scan = self.get_ips_from_target(task.target)
+            total_ips = len(ips_to_scan)
+            task.total_ips = total_ips
+            self.db.commit()
+            
+            # Update progress as we scan
+            for i, ip in enumerate(ips_to_scan):
+                # Check for cancellation
+                self.db.refresh(task)
+                if task.status == "cancelled":
+                    break
+                
+                # Update current IP and progress
+                task.current_ip = ip
+                task.completed_ips = i
+                task.progress = int((i / total_ips) * 100) if total_ips > 0 else 0
+                self.db.commit()
+                
+                # Perform the scan
+                scan_result = self._perform_scan(ip, task.scan_type)
+                
+                # Create or update asset
+                asset = self.asset_service.get_asset_by_ip(ip)
+                if asset:
+                    # Update existing asset
+                    self.asset_service.update_asset_from_scan(asset, scan_result)
+                else:
+                    # Create new asset
+                    asset = self.asset_service.create_asset_from_scan(scan_result, ip)
+                
+                # Create scan record
+                scan = Scan(
+                    asset_id=asset.id,
+                    scan_task_id=task.id,
+                    scan_data=scan_result,
+                    scan_type=task.scan_type,
+                    status="completed" if "error" not in scan_result else "failed"
+                )
+                self.db.add(scan)
+                self.db.commit()
+            
+            # Mark task as completed
+            if task.status != "cancelled":
+                task.status = "completed"
+                task.progress = 100
+                task.completed_ips = total_ips
+            task.end_time = datetime.utcnow()
+            self.db.commit()
+            
+        except Exception as e:
+            # Mark task as failed
+            task.status = "failed"
+            task.error_message = str(e)
+            task.end_time = datetime.utcnow()
+            self.db.commit()
+
+    def _perform_scan(self, ip: str, scan_type: str) -> Dict[str, Any]:
+        """Perform a scan on a single IP."""
+        scanmanager_base_url = "http://scanmanager:8002"
+        
+        try:
+            scan_request = {
+                "ip": ip,
+                "scan_type": scan_type
+            }
+            
+            response = requests.post(
+                f"{scanmanager_base_url}/scan", 
+                json=scan_request,
+                timeout=300
+            )
+            response.raise_for_status()
+            return response.json()
+            
+        except requests.exceptions.RequestException as e:
+            return {
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "ip": ip,
+                "scan_type": scan_type
+            }
+
+    def get_asset_scan_history(
+        self, 
+        asset_id: int, 
+        page: int = 1, 
+        limit: int = 10
+    ) -> Dict[str, Any]:
+        """Get scan history for an asset."""
+        offset = (page - 1) * limit
+        
+        scans = self.db.query(Scan).filter(
+            Scan.asset_id == asset_id
+        ).order_by(desc(Scan.timestamp)).offset(offset).limit(limit).all()
+        
+        total = self.db.query(Scan).filter(Scan.asset_id == asset_id).count()
+        
+        return {
+            "scans": scans,
+            "page": page,
+            "total": total,
+            "has_more": (offset + len(scans)) < total
+        }
+
+    def delete_scan(self, scan_id: int) -> bool:
+        """Delete a scan record."""
+        scan = self.db.query(Scan).filter(Scan.id == scan_id).first()
+        if not scan:
+            return False
+        
+        self.db.delete(scan)
+        self.db.commit()
+        return True

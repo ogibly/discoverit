@@ -370,7 +370,7 @@ class ScannerConfig(ScannerConfigBase):
 
 class SettingsBase(BaseModel):
     # Scanner configuration
-    scanners: Optional[List[ScannerConfig]] = None
+    scanners: Optional[List[Dict[str, Any]]] = None
     default_subnet: Optional[str] = None
     
     # AWX Tower configuration
@@ -395,7 +395,7 @@ class SettingsCreate(SettingsBase):
     pass
 
 class SettingsUpdate(BaseModel):
-    scanners: Optional[List[ScannerConfig]] = None
+    scanners: Optional[List[Dict[str, Any]]] = None
     default_subnet: Optional[str] = None
     awx_url: Optional[str] = None
     awx_username: Optional[str] = None

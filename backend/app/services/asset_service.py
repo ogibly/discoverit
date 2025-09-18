@@ -288,7 +288,20 @@ class AssetService:
 
     def create_default_settings(self) -> Settings:
         """Create default settings."""
+        # Create default scanner configurations
+        default_scanners = [
+            {
+                "name": "Default Scanner",
+                "url": "http://scanner:8001",
+                "subnets": ["172.18.0.0/16"],
+                "is_active": True,
+                "max_concurrent_scans": 3,
+                "timeout_seconds": 300
+            }
+        ]
+        
         settings = Settings(
+            scanners=default_scanners,
             default_subnet="192.168.1.0/24",
             scan_timeout=300,
             max_concurrent_scans=5,

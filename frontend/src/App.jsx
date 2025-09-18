@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, useLocation } from 'react-router-dom';
+import { Route, Routes, Link, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
@@ -132,9 +132,7 @@ const AppContent = () => {
 function App() {
   return (
     <AppProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <AppContent />
     </AppProvider>
 	);
 }

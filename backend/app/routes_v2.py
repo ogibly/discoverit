@@ -251,6 +251,108 @@ def cancel_job(job_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Job not found or not cancellable")
     return {"message": "Job cancelled successfully"}
 
+# Asset Group routes
+@router.get("/asset-groups", response_model=List[schemas.AssetGroup])
+def list_asset_groups(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    is_active: Optional[bool] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """List asset groups."""
+    service = AssetService(db)
+    return service.get_asset_groups(skip=skip, limit=limit, is_active=is_active)
+
+@router.post("/asset-groups", response_model=schemas.AssetGroup)
+def create_asset_group(group: schemas.AssetGroupCreate, db: Session = Depends(get_db)):
+    """Create a new asset group."""
+    service = AssetService(db)
+    return service.create_asset_group(group)
+
+@router.get("/asset-groups/{group_id}", response_model=schemas.AssetGroup)
+def get_asset_group(group_id: int, db: Session = Depends(get_db)):
+    """Get an asset group by ID."""
+    service = AssetService(db)
+    group = service.get_asset_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Asset group not found")
+    return group
+
+@router.put("/asset-groups/{group_id}", response_model=schemas.AssetGroup)
+def update_asset_group(group_id: int, group: schemas.AssetGroupUpdate, db: Session = Depends(get_db)):
+    """Update an asset group."""
+    service = AssetService(db)
+    updated_group = service.update_asset_group(group_id, group)
+    if not updated_group:
+        raise HTTPException(status_code=404, detail="Asset group not found")
+    return updated_group
+
+@router.delete("/asset-groups/{group_id}", status_code=204)
+def delete_asset_group(group_id: int, db: Session = Depends(get_db)):
+    """Delete an asset group."""
+    service = AssetService(db)
+    if not service.delete_asset_group(group_id):
+        raise HTTPException(status_code=404, detail="Asset group not found")
+
+# Label routes
+@router.get("/labels", response_model=List[schemas.Label])
+def list_labels(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_db)
+):
+    """List labels."""
+    service = AssetService(db)
+    return service.get_labels(skip=skip, limit=limit)
+
+@router.post("/labels", response_model=schemas.Label)
+def create_label(label: schemas.LabelBase, db: Session = Depends(get_db)):
+    """Create a new label."""
+    service = AssetService(db)
+    return service.create_label(label)
+
+@router.get("/labels/{label_id}", response_model=schemas.Label)
+def get_label(label_id: int, db: Session = Depends(get_db)):
+    """Get a label by ID."""
+    service = AssetService(db)
+    label = service.get_label(label_id)
+    if not label:
+        raise HTTPException(status_code=404, detail="Label not found")
+    return label
+
+@router.put("/labels/{label_id}", response_model=schemas.Label)
+def update_label(label_id: int, label: schemas.LabelUpdate, db: Session = Depends(get_db)):
+    """Update a label."""
+    service = AssetService(db)
+    updated_label = service.update_label(label_id, label)
+    if not updated_label:
+        raise HTTPException(status_code=404, detail="Label not found")
+    return updated_label
+
+@router.delete("/labels/{label_id}", status_code=204)
+def delete_label(label_id: int, db: Session = Depends(get_db)):
+    """Delete a label."""
+    service = AssetService(db)
+    if not service.delete_label(label_id):
+        raise HTTPException(status_code=404, detail="Label not found")
+
+# Settings routes
+@router.get("/settings", response_model=schemas.Settings)
+def get_settings(db: Session = Depends(get_db)):
+    """Get application settings."""
+    service = AssetService(db)
+    settings = service.get_settings()
+    if not settings:
+        # Create default settings if none exist
+        settings = service.create_default_settings()
+    return settings
+
+@router.put("/settings", response_model=schemas.Settings)
+def update_settings(settings: schemas.SettingsUpdate, db: Session = Depends(get_db)):
+    """Update application settings."""
+    service = AssetService(db)
+    return service.update_settings(settings)
+
 # Utility routes
 @router.get("/suggest-subnet")
 def suggest_subnet():

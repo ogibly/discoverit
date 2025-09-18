@@ -4,8 +4,8 @@ Asset service for managing assets and their relationships.
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_
-from ..models import Asset, IPAddress, Label, AssetGroup
-from ..schemas import AssetCreate, AssetUpdate
+from ..models import Asset, IPAddress, Label, AssetGroup, Settings
+from ..schemas import AssetCreate, AssetUpdate, AssetGroupCreate, AssetGroupUpdate, LabelBase, LabelUpdate, SettingsUpdate
 import ipaddress
 from datetime import datetime
 
@@ -138,6 +138,184 @@ class AssetService:
         self.db.commit()
         self.db.refresh(asset)
         return asset
+
+    # Asset Group methods
+    def get_asset_groups(
+        self, 
+        skip: int = 0, 
+        limit: int = 100,
+        is_active: Optional[bool] = None
+    ) -> List[AssetGroup]:
+        """Get asset groups with optional filtering."""
+        query = self.db.query(AssetGroup).options(
+            joinedload(AssetGroup.assets),
+            joinedload(AssetGroup.labels)
+        )
+        
+        if is_active is not None:
+            query = query.filter(AssetGroup.is_active == is_active)
+        
+        return query.offset(skip).limit(limit).all()
+
+    def create_asset_group(self, group_data: AssetGroupCreate) -> AssetGroup:
+        """Create a new asset group."""
+        group = AssetGroup(
+            name=group_data.name,
+            description=group_data.description,
+            default_username=group_data.default_username,
+            default_password=group_data.default_password,
+            default_ssh_key=group_data.default_ssh_key,
+            is_active=group_data.is_active,
+            custom_fields=group_data.custom_fields
+        )
+        
+        self.db.add(group)
+        self.db.flush()
+        
+        # Add assets
+        if group_data.asset_ids:
+            assets = self.db.query(Asset).filter(Asset.id.in_(group_data.asset_ids)).all()
+            group.assets.extend(assets)
+        
+        # Add labels
+        if group_data.labels:
+            labels = self.db.query(Label).filter(Label.id.in_(group_data.labels)).all()
+            group.labels.extend(labels)
+        
+        self.db.commit()
+        self.db.refresh(group)
+        return group
+
+    def get_asset_group(self, group_id: int) -> Optional[AssetGroup]:
+        """Get an asset group by ID."""
+        return self.db.query(AssetGroup).options(
+            joinedload(AssetGroup.assets),
+            joinedload(AssetGroup.labels)
+        ).filter(AssetGroup.id == group_id).first()
+
+    def update_asset_group(self, group_id: int, group_data: AssetGroupUpdate) -> Optional[AssetGroup]:
+        """Update an asset group."""
+        group = self.get_asset_group(group_id)
+        if not group:
+            return None
+        
+        # Update basic fields
+        update_data = group_data.dict(exclude_unset=True, exclude={'asset_ids', 'labels'})
+        for field, value in update_data.items():
+            setattr(group, field, value)
+        
+        # Update assets if provided
+        if group_data.asset_ids is not None:
+            group.assets.clear()
+            if group_data.asset_ids:
+                assets = self.db.query(Asset).filter(Asset.id.in_(group_data.asset_ids)).all()
+                group.assets.extend(assets)
+        
+        # Update labels if provided
+        if group_data.labels is not None:
+            group.labels.clear()
+            if group_data.labels:
+                labels = self.db.query(Label).filter(Label.id.in_(group_data.labels)).all()
+                group.labels.extend(labels)
+        
+        group.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(group)
+        return group
+
+    def delete_asset_group(self, group_id: int) -> bool:
+        """Delete an asset group."""
+        group = self.db.query(AssetGroup).filter(AssetGroup.id == group_id).first()
+        if not group:
+            return False
+        
+        self.db.delete(group)
+        self.db.commit()
+        return True
+
+    # Label methods
+    def get_labels(self, skip: int = 0, limit: int = 100) -> List[Label]:
+        """Get labels."""
+        return self.db.query(Label).offset(skip).limit(limit).all()
+
+    def create_label(self, label_data: LabelBase) -> Label:
+        """Create a new label."""
+        label = Label(
+            name=label_data.name,
+            description=label_data.description,
+            color=label_data.color
+        )
+        
+        self.db.add(label)
+        self.db.commit()
+        self.db.refresh(label)
+        return label
+
+    def get_label(self, label_id: int) -> Optional[Label]:
+        """Get a label by ID."""
+        return self.db.query(Label).filter(Label.id == label_id).first()
+
+    def update_label(self, label_id: int, label_data: LabelUpdate) -> Optional[Label]:
+        """Update a label."""
+        label = self.get_label(label_id)
+        if not label:
+            return None
+        
+        # Update fields
+        update_data = label_data.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(label, field, value)
+        
+        label.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(label)
+        return label
+
+    def delete_label(self, label_id: int) -> bool:
+        """Delete a label."""
+        label = self.db.query(Label).filter(Label.id == label_id).first()
+        if not label:
+            return False
+        
+        self.db.delete(label)
+        self.db.commit()
+        return True
+
+    # Settings methods
+    def get_settings(self) -> Optional[Settings]:
+        """Get application settings."""
+        return self.db.query(Settings).first()
+
+    def create_default_settings(self) -> Settings:
+        """Create default settings."""
+        settings = Settings(
+            default_subnet="192.168.1.0/24",
+            scan_timeout=300,
+            max_concurrent_scans=5,
+            auto_discovery_enabled=True,
+            email_notifications=False
+        )
+        
+        self.db.add(settings)
+        self.db.commit()
+        self.db.refresh(settings)
+        return settings
+
+    def update_settings(self, settings_data: SettingsUpdate) -> Settings:
+        """Update application settings."""
+        settings = self.get_settings()
+        if not settings:
+            settings = self.create_default_settings()
+        
+        # Update fields
+        update_data = settings_data.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(settings, field, value)
+        
+        settings.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(settings)
+        return settings
 
     def delete_asset(self, asset_id: int) -> bool:
         """Delete an asset."""

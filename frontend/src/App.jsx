@@ -7,6 +7,7 @@ import ScanManager from './components/ScanManager';
 import Operations from './components/Operations';
 import Settings from './components/Settings';
 import CredentialsManager from './components/CredentialsManager';
+import ScannerManager from './components/ScannerManager';
 import { cn } from './utils/cn';
 
 // Navigation component
@@ -19,6 +20,7 @@ const Navigation = () => {
     { path: '/scans', label: 'Scans', icon: '🔍' },
     { path: '/operations', label: 'Operations', icon: '⚙️' },
     { path: '/credentials', label: 'Credentials', icon: '🔐' },
+    { path: '/scanners', label: 'Scanners', icon: '🖥️' },
     { path: '/settings', label: 'Settings', icon: '🔧' }
   ];
 
@@ -113,6 +115,15 @@ const CredentialsPage = () => {
   );
 };
 
+// Scanners page component
+const ScannersPage = () => {
+  return (
+    <div className="p-6">
+      <ScannerManager />
+    </div>
+  );
+};
+
 // Settings page component
 const SettingsPage = () => {
   return (
@@ -133,6 +144,7 @@ const AppContent = () => {
           <Route path="/scans" element={<ScansPage />} />
           <Route path="/operations" element={<OperationsPage />} />
           <Route path="/credentials" element={<CredentialsPage />} />
+          <Route path="/scanners" element={<ScannersPage />} />
           <Route path="/settings" element={<SettingsPage />} />
 				</Routes>
 			</div>

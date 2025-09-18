@@ -9,6 +9,7 @@ from .services.asset_service import AssetService
 from .services.scan_service import ScanService
 from .services.operation_service import OperationService
 from .services.credential_service import CredentialService
+from .services.scanner_service import ScannerService
 from . import schemas
 import socket
 import ipaddress
@@ -368,6 +369,109 @@ def suggest_subnet():
     except Exception:
         pass
     return {"subnet": None}
+
+# Scanner management routes
+@router.get("/scanners", response_model=List[schemas.ScannerConfig])
+def list_scanner_configs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    is_active: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """List scanner configurations with optional filtering."""
+    service = ScannerService(db)
+    return service.get_scanner_configs(
+        skip=skip,
+        limit=limit,
+        is_active=is_active,
+        search=search
+    )
+
+@router.post("/scanners", response_model=schemas.ScannerConfig)
+def create_scanner_config(config: schemas.ScannerConfigCreate, db: Session = Depends(get_db)):
+    """Create a new scanner configuration."""
+    service = ScannerService(db)
+    try:
+        return service.create_scanner_config(config)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)
+def get_scanner_config(config_id: int, db: Session = Depends(get_db)):
+    """Get a scanner configuration by ID."""
+    service = ScannerService(db)
+    config = service.get_scanner_config(config_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="Scanner configuration not found")
+    return config
+
+@router.put("/scanners/{config_id}", response_model=schemas.ScannerConfig)
+def update_scanner_config(
+    config_id: int,
+    config: schemas.ScannerConfigUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update a scanner configuration."""
+    service = ScannerService(db)
+    try:
+        updated_config = service.update_scanner_config(config_id, config)
+        if not updated_config:
+            raise HTTPException(status_code=404, detail="Scanner configuration not found")
+        return updated_config
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/scanners/{config_id}")
+def delete_scanner_config(config_id: int, db: Session = Depends(get_db)):
+    """Delete a scanner configuration."""
+    service = ScannerService(db)
+    if not service.delete_scanner_config(config_id):
+        raise HTTPException(status_code=404, detail="Scanner configuration not found")
+    return {"message": "Scanner configuration deleted successfully"}
+
+@router.get("/scanners/{config_id}/health")
+def check_scanner_health(config_id: int, db: Session = Depends(get_db)):
+    """Check the health of a scanner configuration."""
+    service = ScannerService(db)
+    return service.check_scanner_health(config_id)
+
+@router.get("/scanners/health/all")
+def check_all_scanners_health(db: Session = Depends(get_db)):
+    """Check the health of all active scanner configurations."""
+    service = ScannerService(db)
+    return service.check_all_scanners_health()
+
+@router.get("/scanners/statistics")
+def get_scanner_statistics(db: Session = Depends(get_db)):
+    """Get statistics about scanner configurations."""
+    service = ScannerService(db)
+    return service.get_scanner_statistics()
+
+@router.post("/scanners/{config_id}/test")
+def test_scanner_connection(
+    config_id: int,
+    test_ip: str = Query("127.0.0.1"),
+    db: Session = Depends(get_db)
+):
+    """Test a scanner connection with a specific IP."""
+    service = ScannerService(db)
+    return service.test_scanner_connection(config_id, test_ip)
+
+@router.get("/scanners/for-ip/{ip}")
+def get_scanner_for_ip(ip: str, db: Session = Depends(get_db)):
+    """Get the appropriate scanner configuration for a given IP address."""
+    service = ScannerService(db)
+    config = service.get_scanner_for_ip(ip)
+    if not config:
+        raise HTTPException(status_code=404, detail="No suitable scanner found for this IP")
+    return config
+
+@router.post("/scanners/sync-settings")
+def sync_scanners_with_settings(db: Session = Depends(get_db)):
+    """Sync scanner configurations with the Settings table."""
+    service = ScannerService(db)
+    return service.sync_with_settings()
 
 # Credential routes
 @router.get("/credentials", response_model=List[schemas.Credential])

@@ -86,11 +86,11 @@ def delete_scan(scan_id: int, db: Session = Depends(get_db)):
         db.commit()
     return
 
-@router.get("/scans", response_model=List[schemas.ScanTaskOut])
+@router.get("/scans", response_model=List[schemas.ScanTask])
 def list_scans(db: Session = Depends(get_db)):
     return db.query(models.ScanTask).all()
 
-@router.get("/scan/active", response_model=Optional[schemas.ScanTaskOut])
+@router.get("/scan/active", response_model=Optional[schemas.ScanTask])
 def get_active_scan(db: Session = Depends(get_db)):
     return db.query(models.ScanTask).filter(models.ScanTask.status == "running").first()
 

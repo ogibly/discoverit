@@ -121,6 +121,12 @@ def get_active_scan_task(db: Session = Depends(get_db)):
     service = ScanService(db)
     return service.get_active_scan_task()
 
+@router.get("/scan-tasks/statistics")
+def get_scan_statistics(db: Session = Depends(get_db)):
+    """Get scan task statistics."""
+    service = ScanService(db)
+    return service.get_scan_statistics()
+
 @router.get("/scan-tasks/{task_id}", response_model=schemas.ScanTask)
 def get_scan_task(task_id: int, db: Session = Depends(get_db)):
     """Get a scan task by ID."""

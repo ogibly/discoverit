@@ -238,3 +238,31 @@ class ScanService:
         self.db.delete(scan)
         self.db.commit()
         return True
+
+    def get_scan_statistics(self) -> Dict[str, Any]:
+        """Get statistics about scan tasks."""
+        total_scans = self.db.query(ScanTask).count()
+        completed_scans = self.db.query(ScanTask).filter(ScanTask.status == "completed").count()
+        running_scans = self.db.query(ScanTask).filter(ScanTask.status == "running").count()
+        failed_scans = self.db.query(ScanTask).filter(ScanTask.status == "failed").count()
+        cancelled_scans = self.db.query(ScanTask).filter(ScanTask.status == "cancelled").count()
+        
+        # Get total assets discovered
+        total_assets = self.db.query(Asset).count()
+        
+        # Get recent scan activity (last 7 days)
+        from datetime import datetime, timedelta
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        recent_scans = self.db.query(ScanTask).filter(
+            ScanTask.start_time >= week_ago
+        ).count()
+        
+        return {
+            "total_scans": total_scans,
+            "completed_scans": completed_scans,
+            "running_scans": running_scans,
+            "failed_scans": failed_scans,
+            "cancelled_scans": cancelled_scans,
+            "total_assets": total_assets,
+            "recent_scans": recent_scans
+        }

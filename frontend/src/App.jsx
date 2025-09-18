@@ -8,6 +8,7 @@ import OperationsEnhanced from './components/OperationsEnhanced';
 import Settings from './components/Settings';
 import CredentialsManager from './components/CredentialsManager';
 import ScannerManager from './components/ScannerManager';
+import AssetDiscovery from './components/AssetDiscovery';
 import { cn } from './utils/cn';
 
 // Navigation component
@@ -17,7 +18,8 @@ const Navigation = () => {
 
   const navItems = [
     { path: '/', label: 'Assets', icon: '🏠' },
-    { path: '/scans', label: 'Scans', icon: '🔍' },
+    { path: '/discovery', label: 'Discovery', icon: '🔍' },
+    { path: '/scans', label: 'Scans', icon: '📊' },
     { path: '/operations', label: 'Operations', icon: '⚙️' },
     { path: '/credentials', label: 'Credentials', icon: '🔐' },
     { path: '/scanners', label: 'Scanners', icon: '🖥️' },
@@ -88,6 +90,15 @@ const AssetsPage = () => {
   );
 };
 
+// Discovery page component
+const DiscoveryPage = () => {
+  return (
+    <div className="p-6">
+      <AssetDiscovery />
+    </div>
+  );
+};
+
 // Scans page component
 const ScansPage = () => {
   return (
@@ -141,6 +152,7 @@ const AppContent = () => {
       <div className="flex-grow overflow-hidden">
 				<Routes>
           <Route path="/" element={<AssetsPage />} />
+          <Route path="/discovery" element={<DiscoveryPage />} />
           <Route path="/scans" element={<ScansPage />} />
           <Route path="/operations" element={<OperationsPage />} />
           <Route path="/credentials" element={<CredentialsPage />} />

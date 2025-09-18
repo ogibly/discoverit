@@ -13,6 +13,7 @@ import CredentialsManager from './components/CredentialsManager';
 import ScannerManager from './components/ScannerManager';
 import AssetDiscovery from './components/AssetDiscovery';
 import UserManagement from './components/UserManagement';
+import WorkflowGuide from './components/WorkflowGuide';
 import { cn } from './utils/cn';
 
 // Navigation component
@@ -22,14 +23,14 @@ const Navigation = () => {
   const { user, logout, hasPermission } = useAuth();
 
   const navItems = [
-    { path: '/', label: 'Assets', icon: '🏠', permission: 'assets:read' },
-    { path: '/discovery', label: 'Discovery', icon: '🔍', permission: 'discovery:read' },
-    { path: '/scans', label: 'Scans', icon: '📊', permission: 'discovery:read' },
-    { path: '/operations', label: 'Operations', icon: '⚙️', permission: 'operations:read' },
-    { path: '/credentials', label: 'Credentials', icon: '🔐', permission: 'credentials:read' },
-    { path: '/scanners', label: 'Scanners', icon: '🖥️', permission: 'scanners:read' },
-    { path: '/users', label: 'Users', icon: '👥', permission: 'users:read' },
-    { path: '/settings', label: 'Settings', icon: '🔧', permission: 'settings:read' }
+    { path: '/', label: 'Assets', icon: '🏠', permission: 'assets:read', description: 'View and manage discovered assets' },
+    { path: '/discovery', label: 'Discovery', icon: '🔍', permission: 'discovery:read', description: 'Discover network devices and create assets' },
+    { path: '/operations', label: 'Operations', icon: '⚙️', permission: 'operations:read', description: 'Run operations on assets and groups' },
+    { path: '/credentials', label: 'Credentials', icon: '🔐', permission: 'credentials:read', description: 'Manage authentication credentials' },
+    { path: '/scanners', label: 'Scanners', icon: '🖥️', permission: 'scanners:read', description: 'Manage scanner service instances' },
+    { path: '/users', label: 'Users', icon: '👥', permission: 'users:read', description: 'User and role management' },
+    { path: '/settings', label: 'Settings', icon: '🔧', permission: 'settings:read', description: 'Global system settings' },
+    { path: '/workflow', label: 'Workflow Guide', icon: '📖', permission: null, description: 'Complete workflow documentation' }
   ].filter(item => !item.permission || hasPermission(item.permission));
 
   return (
@@ -212,11 +213,6 @@ const AppContent = () => {
               <DiscoveryPage />
             </ProtectedRoute>
           } />
-          <Route path="/scans" element={
-            <ProtectedRoute requiredPermission="discovery:read">
-              <ScansPage />
-            </ProtectedRoute>
-          } />
           <Route path="/operations" element={
             <ProtectedRoute requiredPermission="operations:read">
               <OperationsPage />
@@ -242,6 +238,7 @@ const AppContent = () => {
               <SettingsPage />
             </ProtectedRoute>
           } />
+          <Route path="/workflow" element={<WorkflowGuide />} />
 				</Routes>
 			</div>
 		</div>

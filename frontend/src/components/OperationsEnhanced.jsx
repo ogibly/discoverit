@@ -37,6 +37,8 @@ const OperationsEnhanced = () => {
     awx_extra_vars: {},
     api_url: '',
     api_method: 'POST',
+    api_headers: {},
+    api_body: {},
     script_path: '',
     script_args: {}
   });
@@ -80,6 +82,8 @@ const OperationsEnhanced = () => {
         awx_extra_vars: {},
         api_url: '',
         api_method: 'POST',
+        api_headers: {},
+        api_body: {},
         script_path: '',
         script_args: {}
       });
@@ -204,8 +208,18 @@ const OperationsEnhanced = () => {
                 )}
                 
                 {operation.operation_type === 'api_call' && (
-                  <div className="text-sm">
-                    <span className="text-slate-500">URL:</span> {operation.api_url}
+                  <div className="text-sm space-y-1">
+                    <div>
+                      <span className="text-slate-500">URL:</span> {operation.api_url}
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Method:</span> {operation.api_method}
+                    </div>
+                    {operation.api_headers && Object.keys(operation.api_headers).length > 0 && (
+                      <div>
+                        <span className="text-slate-500">Headers:</span> {Object.keys(operation.api_headers).length} configured
+                      </div>
+                    )}
                   </div>
                 )}
                 
@@ -332,27 +346,66 @@ const OperationsEnhanced = () => {
           )}
 
           {operationData.operation_type === 'api_call' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">API URL</label>
+                  <Input
+                    value={operationData.api_url || ''}
+                    onChange={(e) => setOperationData({...operationData, api_url: e.target.value})}
+                    placeholder="https://api.example.com/endpoint"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Method</label>
+                  <select
+                    value={operationData.api_method || 'POST'}
+                    onChange={(e) => setOperationData({...operationData, api_method: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="PATCH">PATCH</option>
+                  </select>
+                </div>
+              </div>
+              
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">API URL</label>
-                <Input
-                  value={operationData.api_url}
-                  onChange={(e) => setOperationData({...operationData, api_url: e.target.value})}
-                  placeholder="https://api.example.com/endpoint"
+                <label className="block text-sm font-medium text-slate-700 mb-1">Headers (JSON)</label>
+                <textarea
+                  value={operationData.api_headers ? JSON.stringify(operationData.api_headers, null, 2) : '{}'}
+                  onChange={(e) => {
+                    try {
+                      const headers = JSON.parse(e.target.value);
+                      setOperationData({...operationData, api_headers: headers});
+                    } catch (error) {
+                      // Keep the text as is for editing
+                    }
+                  }}
+                  placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Method</label>
-                <select
-                  value={operationData.api_method}
-                  onChange={(e) => setOperationData({...operationData, api_method: e.target.value})}
+                <label className="block text-sm font-medium text-slate-700 mb-1">Request Body (JSON)</label>
+                <textarea
+                  value={operationData.api_body ? JSON.stringify(operationData.api_body, null, 2) : '{}'}
+                  onChange={(e) => {
+                    try {
+                      const body = JSON.parse(e.target.value);
+                      setOperationData({...operationData, api_body: body});
+                    } catch (error) {
+                      // Keep the text as is for editing
+                    }
+                  }}
+                  placeholder='{"key": "value", "data": "example"}'
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="GET">GET</option>
-                  <option value="POST">POST</option>
-                  <option value="PUT">PUT</option>
-                  <option value="DELETE">DELETE</option>
-                </select>
+                  rows={4}
+                />
               </div>
             </div>
           )}

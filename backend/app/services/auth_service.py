@@ -136,7 +136,7 @@ class AuthService:
             if user_id is None:
                 return None
             return int(user_id)
-        except jwt.PyJWTError:
+        except Exception:
             return None
 
     def create_session(self, user_id: int, ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> UserSession:

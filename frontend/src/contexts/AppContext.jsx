@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api/v2';
 
@@ -230,12 +231,23 @@ const AppContext = createContext();
 // Provider component
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const { token } = useAuth();
 
   // API helper functions
   const apiCall = useCallback(async (endpoint, options = {}) => {
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await axios({
         url: `${API_BASE}${endpoint}`,
+        headers,
         ...options
       });
       return response.data;
@@ -244,7 +256,7 @@ export function AppProvider({ children }) {
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.response?.data?.detail || error.message });
       throw error;
     }
-  }, []);
+  }, [token]);
 
   // Asset actions
   const fetchAssets = useCallback(async (filters = {}) => {
@@ -482,6 +494,14 @@ export function AppProvider({ children }) {
   const value = {
     // State
     ...state,
+    
+    // API
+    api: {
+      get: (endpoint) => apiCall(endpoint, { method: 'GET' }),
+      post: (endpoint, data) => apiCall(endpoint, { method: 'POST', data }),
+      put: (endpoint, data) => apiCall(endpoint, { method: 'PUT', data }),
+      delete: (endpoint) => apiCall(endpoint, { method: 'DELETE' })
+    },
     
     // Asset actions
     fetchAssets,

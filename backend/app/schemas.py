@@ -152,7 +152,7 @@ class IPAddress(IPAddressBase):
 class LabelBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
-    color: Optional[str] = Field(None, regex=r'^#[0-9A-Fa-f]{6}$')
+    color: Optional[str] = Field(None, pattern=r'^#[0-9A-Fa-f]{6}$')
 
 class LabelCreate(LabelBase):
     pass
@@ -160,7 +160,7 @@ class LabelCreate(LabelBase):
 class LabelUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
-    color: Optional[str] = Field(None, regex=r'^#[0-9A-Fa-f]{6}$')
+    color: Optional[str] = Field(None, pattern=r'^#[0-9A-Fa-f]{6}$')
 
 class Label(LabelBase):
     id: int
@@ -217,7 +217,7 @@ class OperationBase(BaseModel):
     
     # Generic API configuration
     api_url: Optional[str] = None
-    api_method: Optional[str] = Field(None, regex=r'^(GET|POST|PUT|DELETE|PATCH)$')
+    api_method: Optional[str] = Field(None, pattern=r'^(GET|POST|PUT|DELETE|PATCH)$')
     api_headers: Optional[Dict[str, str]] = None
     api_body: Optional[Dict[str, Any]] = None
     
@@ -242,7 +242,7 @@ class OperationUpdate(BaseModel):
     awx_playbook_name: Optional[str] = None
     awx_extra_vars: Optional[Dict[str, Any]] = None
     api_url: Optional[str] = None
-    api_method: Optional[str] = Field(None, regex=r'^(GET|POST|PUT|DELETE|PATCH)$')
+    api_method: Optional[str] = Field(None, pattern=r'^(GET|POST|PUT|DELETE|PATCH)$')
     api_headers: Optional[Dict[str, str]] = None
     api_body: Optional[Dict[str, Any]] = None
     script_path: Optional[str] = None
@@ -279,7 +279,7 @@ class ScanTaskCreate(ScanTaskBase):
 
 class ScanTaskUpdate(BaseModel):
     name: Optional[str] = None
-    status: Optional[str] = Field(None, regex=r'^(running|completed|cancelled|failed)$')
+    status: Optional[str] = Field(None, pattern=r'^(running|completed|cancelled|failed)$')
     progress: Optional[int] = Field(None, ge=0, le=100)
     current_ip: Optional[str] = None
     total_ips: Optional[int] = None
@@ -312,7 +312,7 @@ class JobCreate(JobBase):
     pass
 
 class JobUpdate(BaseModel):
-    status: Optional[str] = Field(None, regex=r'^(pending|running|completed|failed|cancelled)$')
+    status: Optional[str] = Field(None, pattern=r'^(pending|running|completed|failed|cancelled)$')
     progress: Optional[int] = Field(None, ge=0, le=100)
     current_asset: Optional[str] = None
     results: Optional[Dict[str, Any]] = None

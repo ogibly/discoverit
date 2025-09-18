@@ -420,6 +420,88 @@ class Settings(SettingsBase):
     class Config:
         from_attributes = True
 
+# Authentication schemas
+class RoleBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+    permissions: Optional[List[str]] = None
+    is_active: bool = True
+
+class RoleCreate(RoleBase):
+    pass
+
+class RoleUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    permissions: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+
+class Role(RoleBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=100)
+    email: str = Field(..., pattern=r'^[^@]+@[^@]+\.[^@]+$')
+    full_name: Optional[str] = Field(None, max_length=255)
+    is_active: bool = True
+    role_id: Optional[int] = None
+
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=8, max_length=100)
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=100)
+    email: Optional[str] = Field(None, pattern=r'^[^@]+@[^@]+\.[^@]+$')
+    full_name: Optional[str] = Field(None, max_length=255)
+    is_active: Optional[bool] = None
+    role_id: Optional[int] = None
+    preferences: Optional[Dict[str, Any]] = None
+
+class UserPasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8, max_length=100)
+
+class User(UserBase):
+    id: int
+    is_superuser: bool
+    last_login: Optional[datetime] = None
+    login_count: int
+    created_at: datetime
+    updated_at: datetime
+    role: Optional[Role] = None
+    preferences: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class UserSession(BaseModel):
+    id: int
+    user_id: int
+    session_token: str
+    created_at: datetime
+    expires_at: datetime
+    last_activity: datetime
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: User
+
 class CredentialBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
@@ -447,7 +529,7 @@ class CredentialBase(BaseModel):
     port: Optional[int] = Field(None, ge=1, le=65535)
     
     # Metadata
-    created_by: Optional[str] = Field(None, max_length=100)
+    created_by: Optional[int] = None  # User ID who created this credential
     is_active: bool = True
     tags: Optional[List[str]] = None
 

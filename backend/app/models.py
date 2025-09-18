@@ -266,6 +266,64 @@ class ScannerConfig(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+# User and Role models
+class Role(Base):
+    __tablename__ = "roles"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    
+    # Permissions as JSON array
+    permissions = Column(JSON, nullable=True)  # List of permission strings
+    
+    # Metadata
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), nullable=False, unique=True, index=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    full_name = Column(String(255), nullable=True)
+    
+    # Authentication
+    hashed_password = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_superuser = Column(Boolean, default=False)
+    
+    # Role relationship
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
+    role = relationship("Role")
+    
+    # Session management
+    last_login = Column(DateTime, nullable=True)
+    login_count = Column(Integer, default=0)
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # User preferences
+    preferences = Column(JSON, nullable=True)  # User-specific settings
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), nullable=False)
+    session_token = Column(String(500), nullable=False, unique=True, index=True)
+    
+    # Session metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    last_activity = Column(DateTime, default=datetime.utcnow)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    
+    # Relationships
+    user = relationship("User")
+
 class Credential(Base):
     __tablename__ = "credentials"
     id = Column(Integer, primary_key=True, index=True)
@@ -297,7 +355,7 @@ class Credential(Base):
     port = Column(Integer, nullable=True)  # For specific port credentials
     
     # Metadata
-    created_by = Column(String(100), nullable=True)  # User who created this credential
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # User who created this credential
     is_active = Column(Boolean, default=True)
     last_used = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -305,6 +363,9 @@ class Credential(Base):
     
     # Tags for organization
     tags = Column(JSON, nullable=True)  # List of tags for categorization
+    
+    # Relationships
+    creator = relationship("User")
 
 class Notification(Base):
     __tablename__ = "notifications"

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models
 from .database import engine, Base, SessionLocal
 from .routes_v2 import router
+from .services.auth_service import AuthService
 import json
 from datetime import datetime
 
@@ -20,9 +21,18 @@ def startup_event():
     # Create database tables
     Base.metadata.create_all(bind=engine)
     
-    # Initialize default settings
+    # Initialize authentication system
     db = SessionLocal()
     try:
+        auth_service = AuthService(db)
+        
+        # Initialize default roles
+        auth_service.initialize_default_roles()
+        
+        # Create default admin user
+        auth_service.create_default_admin()
+        
+        # Initialize default settings
         settings = db.query(models.Settings).first()
         if not settings:
             default_scanners = [

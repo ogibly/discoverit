@@ -1,7 +1,7 @@
 """
 Refactored API routes using service layer.
 """
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Request, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from .database import SessionLocal
@@ -10,7 +10,17 @@ from .services.scan_service import ScanService
 from .services.operation_service import OperationService
 from .services.credential_service import CredentialService
 from .services.scanner_service import ScannerService
+from .services.auth_service import AuthService
+from .auth import (
+    get_current_active_user, require_permission, require_permissions, require_admin,
+    require_assets_read, require_assets_write, require_discovery_read, require_discovery_write,
+    require_scanners_read, require_scanners_write, require_operations_read, require_operations_write,
+    require_operations_execute, require_credentials_read, require_credentials_write,
+    require_users_read, require_users_write, require_roles_read, require_roles_write,
+    require_settings_read, require_settings_write
+)
 from . import schemas
+from .models import User
 import socket
 import ipaddress
 
@@ -23,6 +33,223 @@ def get_db():
     finally:
         db.close()
 
+# Authentication routes
+@router.post("/auth/login", response_model=schemas.Token)
+def login(
+    user_credentials: schemas.UserLogin,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Login user and return access token."""
+    auth_service = AuthService(db)
+    
+    # Authenticate user
+    user = auth_service.authenticate_user(user_credentials.username, user_credentials.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Create access token
+    access_token = auth_service.create_access_token(user.id)
+    
+    # Create session
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+    session = auth_service.create_session(user.id, ip_address, user_agent)
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": 30 * 60,  # 30 minutes
+        "user": user
+    }
+
+@router.post("/auth/logout")
+def logout(
+    current_user: User = Depends(get_current_active_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Logout user and invalidate session."""
+    # In a real implementation, you would invalidate the specific session
+    # For now, we'll just return success
+    return {"message": "Successfully logged out"}
+
+@router.get("/auth/me", response_model=schemas.User)
+def get_current_user_info(current_user: User = Depends(get_current_active_user)):
+    """Get current user information."""
+    return current_user
+
+@router.get("/auth/permissions")
+def get_user_permissions(
+    current_user: User = Depends(get_current_active_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Get current user's permissions."""
+    permissions = auth_service.get_user_permissions(current_user)
+    return {"permissions": permissions}
+
+# User management routes
+@router.get("/users", response_model=List[schemas.User])
+def list_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    is_active: Optional[bool] = Query(None),
+    current_user: User = Depends(require_users_read),
+    db: Session = Depends(get_db)
+):
+    """List users (admin only)."""
+    auth_service = AuthService(db)
+    return auth_service.get_users(skip=skip, limit=limit, is_active=is_active)
+
+@router.post("/users", response_model=schemas.User)
+def create_user(
+    user_data: schemas.UserCreate,
+    current_user: User = Depends(require_users_write),
+    db: Session = Depends(get_db)
+):
+    """Create a new user (admin only)."""
+    auth_service = AuthService(db)
+    try:
+        return auth_service.create_user(user_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/users/{user_id}", response_model=schemas.User)
+def get_user(
+    user_id: int,
+    current_user: User = Depends(require_users_read),
+    db: Session = Depends(get_db)
+):
+    """Get user by ID (admin only)."""
+    auth_service = AuthService(db)
+    user = auth_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@router.put("/users/{user_id}", response_model=schemas.User)
+def update_user(
+    user_id: int,
+    user_data: schemas.UserUpdate,
+    current_user: User = Depends(require_users_write),
+    db: Session = Depends(get_db)
+):
+    """Update user (admin only)."""
+    auth_service = AuthService(db)
+    try:
+        updated_user = auth_service.update_user(user_id, user_data)
+        if not updated_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return updated_user
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    current_user: User = Depends(require_users_write),
+    db: Session = Depends(get_db)
+):
+    """Delete user (admin only)."""
+    auth_service = AuthService(db)
+    if not auth_service.delete_user(user_id):
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
+
+@router.post("/users/{user_id}/change-password")
+def change_password(
+    user_id: int,
+    password_data: schemas.UserPasswordUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Change user password."""
+    auth_service = AuthService(db)
+    
+    # Users can only change their own password unless they're admin
+    if current_user.id != user_id and not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Can only change your own password")
+    
+    try:
+        auth_service.change_password(user_id, password_data)
+        return {"message": "Password changed successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Role management routes
+@router.get("/roles", response_model=List[schemas.Role])
+def list_roles(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    is_active: Optional[bool] = Query(None),
+    current_user: User = Depends(require_roles_read),
+    db: Session = Depends(get_db)
+):
+    """List roles (admin only)."""
+    auth_service = AuthService(db)
+    return auth_service.get_roles(skip=skip, limit=limit, is_active=is_active)
+
+@router.post("/roles", response_model=schemas.Role)
+def create_role(
+    role_data: schemas.RoleCreate,
+    current_user: User = Depends(require_roles_write),
+    db: Session = Depends(get_db)
+):
+    """Create a new role (admin only)."""
+    auth_service = AuthService(db)
+    try:
+        return auth_service.create_role(role_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/roles/{role_id}", response_model=schemas.Role)
+def get_role(
+    role_id: int,
+    current_user: User = Depends(require_roles_read),
+    db: Session = Depends(get_db)
+):
+    """Get role by ID (admin only)."""
+    auth_service = AuthService(db)
+    role = auth_service.get_role(role_id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    return role
+
+@router.put("/roles/{role_id}", response_model=schemas.Role)
+def update_role(
+    role_id: int,
+    role_data: schemas.RoleUpdate,
+    current_user: User = Depends(require_roles_write),
+    db: Session = Depends(get_db)
+):
+    """Update role (admin only)."""
+    auth_service = AuthService(db)
+    try:
+        updated_role = auth_service.update_role(role_id, role_data)
+        if not updated_role:
+            raise HTTPException(status_code=404, detail="Role not found")
+        return updated_role
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/roles/{role_id}")
+def delete_role(
+    role_id: int,
+    current_user: User = Depends(require_roles_write),
+    db: Session = Depends(get_db)
+):
+    """Delete role (admin only)."""
+    auth_service = AuthService(db)
+    try:
+        if not auth_service.delete_role(role_id):
+            raise HTTPException(status_code=404, detail="Role not found")
+        return {"message": "Role deleted successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 # Asset routes
 @router.get("/assets", response_model=List[schemas.Asset])
 def list_assets(
@@ -31,6 +258,7 @@ def list_assets(
     label_ids: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     is_managed: Optional[bool] = Query(None),
+    current_user: User = Depends(require_assets_read),
     db: Session = Depends(get_db)
 ):
     """List assets with optional filtering."""

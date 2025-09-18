@@ -266,6 +266,46 @@ class ScannerConfig(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class Credential(Base):
+    __tablename__ = "credentials"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    
+    # Credential type
+    credential_type = Column(String(50), nullable=False)  # 'username_password', 'ssh_key', 'api_key', 'certificate'
+    
+    # Username/Password credentials
+    username = Column(String(100), nullable=True)
+    password = Column(String(500), nullable=True)  # Should be encrypted
+    
+    # SSH Key credentials
+    ssh_private_key = Column(Text, nullable=True)  # Should be encrypted
+    ssh_public_key = Column(Text, nullable=True)
+    ssh_passphrase = Column(String(500), nullable=True)  # Should be encrypted
+    
+    # API Key credentials
+    api_key = Column(String(500), nullable=True)  # Should be encrypted
+    api_secret = Column(String(500), nullable=True)  # Should be encrypted
+    
+    # Certificate credentials
+    certificate_data = Column(Text, nullable=True)  # Should be encrypted
+    private_key_data = Column(Text, nullable=True)  # Should be encrypted
+    
+    # Additional fields
+    domain = Column(String(255), nullable=True)  # For domain credentials
+    port = Column(Integer, nullable=True)  # For specific port credentials
+    
+    # Metadata
+    created_by = Column(String(100), nullable=True)  # User who created this credential
+    is_active = Column(Boolean, default=True)
+    last_used = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Tags for organization
+    tags = Column(JSON, nullable=True)  # List of tags for categorization
+
 class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)

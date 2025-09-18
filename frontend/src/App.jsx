@@ -6,6 +6,7 @@ import AssetDetail from './components/AssetDetail';
 import ScanManager from './components/ScanManager';
 import Operations from './components/Operations';
 import Settings from './components/Settings';
+import CredentialsManager from './components/CredentialsManager';
 import { cn } from './utils/cn';
 
 // Navigation component
@@ -17,6 +18,7 @@ const Navigation = () => {
     { path: '/', label: 'Assets', icon: '🏠' },
     { path: '/scans', label: 'Scans', icon: '🔍' },
     { path: '/operations', label: 'Operations', icon: '⚙️' },
+    { path: '/credentials', label: 'Credentials', icon: '🔐' },
     { path: '/settings', label: 'Settings', icon: '🔧' }
   ];
 
@@ -102,6 +104,15 @@ const OperationsPage = () => {
   );
 };
 
+// Credentials page component
+const CredentialsPage = () => {
+  return (
+    <div className="p-6">
+      <CredentialsManager />
+    </div>
+  );
+};
+
 // Settings page component
 const SettingsPage = () => {
   return (
@@ -121,6 +132,7 @@ const AppContent = () => {
           <Route path="/" element={<AssetsPage />} />
           <Route path="/scans" element={<ScansPage />} />
           <Route path="/operations" element={<OperationsPage />} />
+          <Route path="/credentials" element={<CredentialsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
 				</Routes>
 			</div>

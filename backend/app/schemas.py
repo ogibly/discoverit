@@ -418,6 +418,79 @@ class Settings(SettingsBase):
     class Config:
         from_attributes = True
 
+class CredentialBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    credential_type: str = Field(..., description="Type: username_password, ssh_key, api_key, certificate")
+    
+    # Username/Password fields
+    username: Optional[str] = Field(None, max_length=100)
+    password: Optional[str] = Field(None, max_length=500)
+    
+    # SSH Key fields
+    ssh_private_key: Optional[str] = None
+    ssh_public_key: Optional[str] = None
+    ssh_passphrase: Optional[str] = Field(None, max_length=500)
+    
+    # API Key fields
+    api_key: Optional[str] = Field(None, max_length=500)
+    api_secret: Optional[str] = Field(None, max_length=500)
+    
+    # Certificate fields
+    certificate_data: Optional[str] = None
+    private_key_data: Optional[str] = None
+    
+    # Additional fields
+    domain: Optional[str] = Field(None, max_length=255)
+    port: Optional[int] = Field(None, ge=1, le=65535)
+    
+    # Metadata
+    created_by: Optional[str] = Field(None, max_length=100)
+    is_active: bool = True
+    tags: Optional[List[str]] = None
+
+class CredentialCreate(CredentialBase):
+    pass
+
+class CredentialUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    credential_type: Optional[str] = None
+    
+    # Username/Password fields
+    username: Optional[str] = Field(None, max_length=100)
+    password: Optional[str] = Field(None, max_length=500)
+    
+    # SSH Key fields
+    ssh_private_key: Optional[str] = None
+    ssh_public_key: Optional[str] = None
+    ssh_passphrase: Optional[str] = Field(None, max_length=500)
+    
+    # API Key fields
+    api_key: Optional[str] = Field(None, max_length=500)
+    api_secret: Optional[str] = Field(None, max_length=500)
+    
+    # Certificate fields
+    certificate_data: Optional[str] = None
+    private_key_data: Optional[str] = None
+    
+    # Additional fields
+    domain: Optional[str] = Field(None, max_length=255)
+    port: Optional[int] = Field(None, ge=1, le=65535)
+    
+    # Metadata
+    is_active: Optional[bool] = None
+    tags: Optional[List[str]] = None
+
+class Credential(CredentialBase):
+    id: int
+    last_used: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
 class NotificationBase(BaseModel):
     type: str = Field(..., description="Notification type: scan_completed, operation_failed, etc.")
     title: str = Field(..., min_length=1, max_length=255)

@@ -8,6 +8,7 @@ from .database import SessionLocal
 from .services.asset_service import AssetService
 from .services.scan_service import ScanService
 from .services.operation_service import OperationService
+from .services.credential_service import CredentialService
 from . import schemas
 import socket
 import ipaddress
@@ -367,6 +368,103 @@ def suggest_subnet():
     except Exception:
         pass
     return {"subnet": None}
+
+# Credential routes
+@router.get("/credentials", response_model=List[schemas.Credential])
+def list_credentials(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    credential_type: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
+    tags: Optional[str] = Query(None),  # Comma-separated tags
+    db: Session = Depends(get_db)
+):
+    """List credentials with optional filtering."""
+    service = CredentialService(db)
+    tag_list = tags.split(',') if tags else None
+    return service.get_credentials(
+        skip=skip,
+        limit=limit,
+        credential_type=credential_type,
+        is_active=is_active,
+        search=search,
+        tags=tag_list
+    )
+
+@router.post("/credentials", response_model=schemas.Credential)
+def create_credential(credential: schemas.CredentialCreate, db: Session = Depends(get_db)):
+    """Create a new credential."""
+    service = CredentialService(db)
+    
+    # Validate credential data
+    errors = service.validate_credential_data(credential)
+    if errors:
+        raise HTTPException(status_code=400, detail=f"Validation errors: {', '.join(errors)}")
+    
+    try:
+        return service.create_credential(credential)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/credentials/{credential_id}", response_model=schemas.Credential)
+def get_credential(credential_id: int, db: Session = Depends(get_db)):
+    """Get a credential by ID."""
+    service = CredentialService(db)
+    credential = service.get_credential(credential_id)
+    if not credential:
+        raise HTTPException(status_code=404, detail="Credential not found")
+    return credential
+
+@router.put("/credentials/{credential_id}", response_model=schemas.Credential)
+def update_credential(
+    credential_id: int,
+    credential: schemas.CredentialUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update a credential."""
+    service = CredentialService(db)
+    try:
+        updated_credential = service.update_credential(credential_id, credential)
+        if not updated_credential:
+            raise HTTPException(status_code=404, detail="Credential not found")
+        return updated_credential
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/credentials/{credential_id}")
+def delete_credential(credential_id: int, db: Session = Depends(get_db)):
+    """Delete a credential."""
+    service = CredentialService(db)
+    if not service.delete_credential(credential_id):
+        raise HTTPException(status_code=404, detail="Credential not found")
+    return {"message": "Credential deleted successfully"}
+
+@router.get("/credentials/type/{credential_type}", response_model=List[schemas.Credential])
+def get_credentials_by_type(credential_type: str, db: Session = Depends(get_db)):
+    """Get credentials by type."""
+    service = CredentialService(db)
+    return service.get_credentials_by_type(credential_type)
+
+@router.get("/credentials/for-operation/{operation_type}", response_model=List[schemas.Credential])
+def get_credentials_for_operation(operation_type: str, db: Session = Depends(get_db)):
+    """Get appropriate credentials for a specific operation type."""
+    service = CredentialService(db)
+    return service.get_credentials_for_operation(operation_type)
+
+@router.get("/credentials/statistics")
+def get_credential_statistics(db: Session = Depends(get_db)):
+    """Get credential statistics."""
+    service = CredentialService(db)
+    return service.get_credential_statistics()
+
+@router.post("/credentials/{credential_id}/mark-used")
+def mark_credential_used(credential_id: int, db: Session = Depends(get_db)):
+    """Mark a credential as used."""
+    service = CredentialService(db)
+    if not service.mark_credential_used(credential_id):
+        raise HTTPException(status_code=404, detail="Credential not found")
+    return {"message": "Credential marked as used"}
 
 @router.get("/health")
 def health_check():

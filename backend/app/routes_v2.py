@@ -113,6 +113,12 @@ def create_scan_task(
     
     return scan_task
 
+@router.get("/scan-tasks/active", response_model=Optional[schemas.ScanTask])
+def get_active_scan_task(db: Session = Depends(get_db)):
+    """Get the currently active scan task."""
+    service = ScanService(db)
+    return service.get_active_scan_task()
+
 @router.get("/scan-tasks/{task_id}", response_model=schemas.ScanTask)
 def get_scan_task(task_id: int, db: Session = Depends(get_db)):
     """Get a scan task by ID."""
@@ -138,12 +144,6 @@ def cancel_scan_task(task_id: int, db: Session = Depends(get_db)):
     if not service.cancel_scan_task(task_id):
         raise HTTPException(status_code=404, detail="Scan task not found or not running")
     return {"message": "Scan task cancelled successfully"}
-
-@router.get("/scan-tasks/active", response_model=Optional[schemas.ScanTask])
-def get_active_scan_task(db: Session = Depends(get_db)):
-    """Get the currently active scan task."""
-    service = ScanService(db)
-    return service.get_active_scan_task()
 
 @router.get("/assets/{asset_id}/scans")
 def get_asset_scan_history(

@@ -17,7 +17,7 @@ from .auth import (
     require_scanners_read, require_scanners_write, require_operations_read, require_operations_write,
     require_operations_execute, require_credentials_read, require_credentials_write,
     require_users_read, require_users_write, require_roles_read, require_roles_write,
-    require_settings_read, require_settings_write
+    require_settings_read, require_settings_write, get_auth_service
 )
 from . import schemas
 from .models import User

@@ -9,7 +9,7 @@ from ..schemas import UserCreate, UserUpdate, UserPasswordUpdate, RoleCreate, Ro
 from datetime import datetime, timedelta
 import secrets
 import hashlib
-import jwt
+from jose import jwt
 from passlib.context import CryptContext
 
 # Password hashing

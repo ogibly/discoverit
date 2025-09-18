@@ -4,11 +4,13 @@ import { AppProvider, useApp } from './contexts/AppContext';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
 import ScanManager from './components/ScanManager';
+import Operations from './components/Operations';
+import Settings from './components/Settings';
 import { cn } from './utils/cn';
 
 // Navigation component
 const Navigation = () => {
-  const location = useLocation();
+	const location = useLocation();
   const { statusMessage, clearStatusMessage } = useApp();
 
   const navItems = [
@@ -95,9 +97,7 @@ const ScansPage = () => {
 const OperationsPage = () => {
   return (
     <div className="p-6">
-      <div className="text-center text-slate-500 py-8">
-        Operations management will be implemented here
-      </div>
+      <Operations />
     </div>
   );
 };
@@ -106,28 +106,26 @@ const OperationsPage = () => {
 const SettingsPage = () => {
   return (
     <div className="p-6">
-      <div className="text-center text-slate-500 py-8">
-        Settings will be implemented here
-      </div>
+      <Settings />
     </div>
   );
 };
 
 // Main App component
 const AppContent = () => {
-  return (
+	return (
     <div className="flex h-screen bg-slate-50">
       <Navigation />
       <div className="flex-grow overflow-hidden">
-        <Routes>
+				<Routes>
           <Route path="/" element={<AssetsPage />} />
           <Route path="/scans" element={<ScansPage />} />
           <Route path="/operations" element={<OperationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
-      </div>
-    </div>
-  );
+				</Routes>
+			</div>
+		</div>
+	);
 };
 
 // Root App component with provider
@@ -138,7 +136,7 @@ function App() {
         <AppContent />
       </Router>
     </AppProvider>
-  );
+	);
 }
 
 export default App;

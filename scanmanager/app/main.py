@@ -57,6 +57,12 @@ async def manage_scan(scan_request: ScanRequest):
             response = requests.post(f"{scanner.url}/scan/quick", params={"ip": scan_request.ip})
         elif scan_request.scan_type == "comprehensive":
             response = requests.post(f"{scanner.url}/scan/comprehensive", params={"ip": scan_request.ip})
+        elif scan_request.scan_type == "snmp":
+            response = requests.post(f"{scanner.url}/scan/snmp", params={"ip": scan_request.ip})
+        elif scan_request.scan_type == "arp":
+            response = requests.post(f"{scanner.url}/scan/arp", params={"target": scan_request.ip})
+        elif scan_request.scan_type == "arp_table":
+            response = requests.post(f"{scanner.url}/scan/arp-table")
         else:
             raise HTTPException(status_code=400, detail="Invalid scan type")
 

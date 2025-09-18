@@ -183,3 +183,101 @@ def comprehensive_scan_endpoint(ip: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/scan/snmp")
+def snmp_scan_endpoint(ip: str):
+    """
+    Performs SNMP scan to gather device information.
+    """
+    nm = nmap.PortScanner()
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    
+    try:
+        # SNMP scan with common community strings
+        nm.scan(ip, arguments="-sU -p 161 --script snmp-info,snmp-sysdescr,snmp-interfaces")
+        
+        if ip not in nm.all_hosts():
+            raise HTTPException(status_code=404, detail="Host not responding to SNMP.")
+
+        host_data = nm[ip]
+        snmp_info = {}
+        
+        # Extract SNMP information from script results
+        if 'script' in host_data:
+            script_results = host_data['script']
+            
+            # Parse SNMP system description
+            if 'snmp-sysdescr' in script_results:
+                sysdescr = script_results['snmp-sysdescr']
+                snmp_info['system_description'] = sysdescr
+            
+            # Parse SNMP system info
+            if 'snmp-info' in script_results:
+                info = script_results['snmp-info']
+                snmp_info['system_info'] = info
+            
+            # Parse SNMP interfaces
+            if 'snmp-interfaces' in script_results:
+                interfaces = script_results['snmp-interfaces']
+                snmp_info['interfaces'] = interfaces
+
+        result = {
+            "timestamp": timestamp,
+            "ip": ip,
+            "scan_type": "snmp",
+            "snmp_info": snmp_info,
+            "script_results": host_data.get('script', {})
+        }
+        
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/scan/arp-table")
+def arp_table_scan_endpoint():
+    """
+    Scans the local ARP table to discover devices on the network.
+    """
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    
+    try:
+        import subprocess
+        import re
+        
+        # Get ARP table
+        result = subprocess.run(['arp', '-a'], capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            raise HTTPException(status_code=500, detail="Failed to read ARP table")
+        
+        devices = []
+        arp_lines = result.stdout.strip().split('\n')
+        
+        for line in arp_lines:
+            # Parse ARP table entries
+            # Format: hostname (ip) at mac [ether] on interface
+            match = re.search(r'\((\d+\.\d+\.\d+\.\d+)\) at ([0-9a-fA-F:]{17})', line)
+            if match:
+                ip = match.group(1)
+                mac = match.group(2)
+                
+                # Extract hostname if available
+                hostname_match = re.search(r'^([^(]+)', line)
+                hostname = hostname_match.group(1).strip() if hostname_match else None
+                
+                devices.append({
+                    "ip": ip,
+                    "mac": mac,
+                    "hostname": hostname
+                })
+        
+        return {
+            "timestamp": timestamp,
+            "scan_type": "arp_table",
+            "devices": devices,
+            "total_devices": len(devices)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

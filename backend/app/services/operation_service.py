@@ -224,16 +224,72 @@ class OperationService:
 
     def _execute_awx_playbook(self, operation: Operation, asset: Asset, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Execute an AWX playbook on an asset."""
-        # This would integrate with AWX Tower API
-        # For now, return a mock response
-        return {
-            "asset_id": asset.id,
-            "asset_name": asset.name,
-            "status": "success",
-            "operation_type": "awx_playbook",
-            "playbook": operation.awx_playbook_name,
-            "response": "AWX playbook execution completed successfully"
-        }
+        try:
+            from .awx_service import AWXService
+            
+            # Get AWX settings from database
+            settings = self.db.query(models.Settings).first()
+            if not settings or not settings.awx_url:
+                raise ValueError("AWX Tower not configured")
+            
+            # Initialize AWX service
+            awx_service = AWXService(
+                awx_url=settings.awx_url,
+                username=settings.awx_username or "",
+                password=settings.awx_password or ""
+            )
+            
+            # Test connection
+            if not awx_service.test_connection():
+                raise Exception("Failed to connect to AWX Tower")
+            
+            # Prepare asset data
+            asset_data = {
+                "id": asset.id,
+                "name": asset.name,
+                "primary_ip": asset.primary_ip,
+                "hostname": asset.hostname,
+                "mac_address": asset.mac_address,
+                "username": asset.username,
+                "ssh_key": asset.ssh_key,
+                "os_name": asset.os_name,
+                "manufacturer": asset.manufacturer,
+                "model": asset.model
+            }
+            
+            # Merge extra vars
+            extra_vars = operation.awx_extra_vars or {}
+            if params:
+                extra_vars.update(params)
+            
+            # Run playbook
+            result = awx_service.run_playbook_on_assets(
+                playbook_name=operation.awx_playbook_name,
+                assets=[asset_data],
+                extra_vars=extra_vars,
+                job_name=f"{operation.name}_{asset.name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            )
+            
+            return {
+                "asset_id": asset.id,
+                "asset_name": asset.name,
+                "status": "success",
+                "operation_type": "awx_playbook",
+                "playbook": operation.awx_playbook_name,
+                "awx_job_id": result["job_id"],
+                "awx_job_url": result["job_url"],
+                "response": "AWX playbook launched successfully"
+            }
+            
+        except Exception as e:
+            return {
+                "asset_id": asset.id,
+                "asset_name": asset.name,
+                "status": "failed",
+                "operation_type": "awx_playbook",
+                "playbook": operation.awx_playbook_name,
+                "error": str(e)
+            }
 
     def _execute_api_call(self, operation: Operation, asset: Asset, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Execute an API call for an asset."""

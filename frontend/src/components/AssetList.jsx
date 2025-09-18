@@ -1,123 +1,250 @@
-import React, { useState, useEffect, useRef } from "react";
-import ActionsDropdown from "./ActionsDropdown";
+import React, { useState, useMemo } from 'react';
+import { useApp } from '../contexts/AppContext';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Input } from './ui/Input';
+import { cn } from '../utils/cn';
 
-export default function AssetList({
-	assets,
-	selectedAsset,
-	onSelect,
-	onDelete,
-	selectedAssets,
-	onSelectAsset,
-	onDeleteSelected,
-	onCreateAssetGroup,
-	onSelectAll,
-}) {
-	const [filter, setFilter] = useState("");
-	const [currentPage, setCurrentPage] = useState(1);
-	const [itemsPerPage, setItemsPerPage] = useState(10);
+const AssetList = () => {
+  const {
+    assets,
+    selectedAssets,
+    selectedAsset,
+    loading,
+    toggleAssetSelection,
+    selectAllAssets,
+    setSelectedAsset
+  } = useApp();
 
-	const filteredAssets = assets.filter((asset) => {
-		if (!filter) return true;
-		if (!asset.labels) return false;
-		return asset.labels.some((label) =>
-			label.name.toLowerCase().includes(filter.toLowerCase())
-		);
-	});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
-	const sortedAssets = [...filteredAssets].sort((a, b) => a.name.localeCompare(b.name));
-	const totalPages = Math.ceil(sortedAssets.length / itemsPerPage);
-	const paginatedAssets = sortedAssets.slice(
-		(currentPage - 1) * itemsPerPage,
-		currentPage * itemsPerPage
-	);
+  // Filter and search assets
+  const filteredAssets = useMemo(() => {
+    return assets.filter(asset => {
+      const matchesSearch = !searchTerm || 
+        asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.hostname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.primary_ip?.includes(searchTerm) ||
+        asset.mac_address?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesSearch;
+    });
+  }, [assets, searchTerm]);
 
-	const allSelected = paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.includes(a.id));
+  // Pagination
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-	return (
-		<div className="flex flex-col h-full">
-			<div className="flex flex-col flex-grow overflow-hidden border border-slate-800 rounded-lg bg-slate-900/50">
-				<div className="flex-grow overflow-y-auto">
-					<table className="w-full text-sm text-left text-slate-300">
-						<thead className="text-xs text-slate-400 uppercase bg-slate-800">
-							<tr>
-								<th scope="col" className="p-4">
-									<input
-										type="checkbox"
-										className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
-										checked={allSelected}
-										onChange={() => onSelectAll(paginatedAssets.map(a => a.id))}
-									/>
-								</th>
-								<th scope="col" className="px-6 py-3">Name</th>
-								<th scope="col" className="px-6 py-3">MAC</th>
-								<th scope="col" className="px-6 py-3">Labels</th>
-								<th scope="col" className="px-6 py-3"></th>
-							</tr>
-						</thead>
-						<tbody>
-							{paginatedAssets.map((asset) => (
-								<tr
-									key={asset.id}
-									className={`border-b border-slate-800 transition-colors duration-150 ${selectedAsset && selectedAsset.id === asset.id ? "bg-blue-600/20 hover:bg-blue-600/30" : "hover:bg-slate-800/50"}`}
-								>
-									<td className="w-4 p-4">
-										<input
-											type="checkbox"
-											className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
-											checked={selectedAssets.includes(asset.id)}
-											onChange={() => onSelectAsset(asset.id)}
-										/>
-									</td>
-									<td onClick={() => onSelect(asset)} className="px-6 py-4 cursor-pointer">{asset.name}</td>
-									<td className="px-6 py-4">{asset.mac}</td>
-									<td className="px-6 py-4">
-										{asset.labels && asset.labels.map(label => (
-											<span key={label.id} className="inline-block bg-slate-700 text-slate-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
-												{label.name}
-											</span>
-										))}
-									</td>
-									<td className="px-6 py-4">
-										<button
-											onClick={() => onDelete(asset.id)}
-											className="font-medium text-red-500 hover:underline"
-										>
-											Delete
-										</button>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-				<div className="flex items-center justify-center p-4 border-t border-slate-800">
-					<button
-						onClick={() => setCurrentPage(currentPage - 1)}
-						disabled={currentPage === 1}
-						className="px-3 py-1 text-sm font-medium text-slate-300 bg-slate-800 rounded-l-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						Previous
-					</button>
-					<div className="flex items-center mx-2">
-						{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-							<button
-								key={page}
-								onClick={() => setCurrentPage(page)}
-								className={`px-3 py-1 mx-1 text-sm font-medium rounded-md ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
-							>
-								{page}
-							</button>
-						))}
-					</div>
-					<button
-						onClick={() => setCurrentPage(currentPage + 1)}
-						disabled={currentPage === totalPages}
-						className="px-3 py-1 text-sm font-medium text-slate-300 bg-slate-800 rounded-r-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						Next
-					</button>
-				</div>
-			</div>
-		</div>
-	);
-}
+  const allSelected = paginatedAssets.length > 0 && 
+    paginatedAssets.every(asset => selectedAssets.includes(asset.id));
+
+  const handleSelectAll = () => {
+    const assetIds = paginatedAssets.map(asset => asset.id);
+    selectAllAssets(assetIds);
+  };
+
+  const getStatusBadge = (asset) => {
+    if (!asset.is_active) {
+      return <Badge variant="secondary">Inactive</Badge>;
+    }
+    if (asset.is_managed) {
+      return <Badge variant="default">Managed</Badge>;
+    }
+    return <Badge variant="outline">Discovered</Badge>;
+  };
+
+  const getLastSeenText = (lastSeen) => {
+    if (!lastSeen) return 'Never';
+    const date = new Date(lastSeen);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  if (loading.assets) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Assets ({filteredAssets.length})</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Input
+              placeholder="Search assets..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-64"
+            />
+            {selectedAssets.length > 0 && (
+              <Button variant="outline" size="sm">
+                {selectedAssets.length} selected
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {filteredAssets.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            {searchTerm ? 'No assets match your search' : 'No assets found'}
+          </div>
+        ) : (
+          <>
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="text-left p-3">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={handleSelectAll}
+                        className="rounded border-slate-300"
+                      />
+                    </th>
+                    <th className="text-left p-3 font-medium text-slate-600">Name</th>
+                    <th className="text-left p-3 font-medium text-slate-600">IP Address</th>
+                    <th className="text-left p-3 font-medium text-slate-600">Hostname</th>
+                    <th className="text-left p-3 font-medium text-slate-600">OS</th>
+                    <th className="text-left p-3 font-medium text-slate-600">Status</th>
+                    <th className="text-left p-3 font-medium text-slate-600">Last Seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedAssets.map((asset) => (
+                    <tr
+                      key={asset.id}
+                      className={cn(
+                        'border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors',
+                        selectedAsset?.id === asset.id && 'bg-blue-50'
+                      )}
+                      onClick={() => setSelectedAsset(asset)}
+                    >
+                      <td className="p-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedAssets.includes(asset.id)}
+                          onChange={() => toggleAssetSelection(asset.id)}
+                          className="rounded border-slate-300"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <div className="font-medium text-slate-900">{asset.name}</div>
+                        {asset.description && (
+                          <div className="text-sm text-slate-500">{asset.description}</div>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <div className="font-mono text-sm">{asset.primary_ip || 'N/A'}</div>
+                        {asset.mac_address && (
+                          <div className="text-xs text-slate-500">{asset.mac_address}</div>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <div className="text-sm">{asset.hostname || 'N/A'}</div>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-sm">
+                          {asset.os_name ? (
+                            <div>
+                              <div className="font-medium">{asset.os_name}</div>
+                              {asset.os_version && (
+                                <div className="text-xs text-slate-500">{asset.os_version}</div>
+                              )}
+                            </div>
+                          ) : (
+                            'Unknown'
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        {getStatusBadge(asset)}
+                      </td>
+                      <td className="p-3">
+                        <div className="text-sm text-slate-500">
+                          {getLastSeenText(asset.last_seen)}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-slate-500">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to{' '}
+                  {Math.min(currentPage * itemsPerPage, filteredAssets.length)} of{' '}
+                  {filteredAssets.length} assets
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const page = i + 1;
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default AssetList;

@@ -570,6 +570,65 @@ def mark_credential_used(credential_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Credential not found")
     return {"message": "Credential marked as used"}
 
+# Operation credential routes
+@router.get("/operations/{operation_id}/credentials", response_model=List[schemas.Credential])
+def get_credentials_for_operation(operation_id: int, db: Session = Depends(get_db)):
+    """Get appropriate credentials for a specific operation."""
+    operation_service = OperationService(db)
+    operation = operation_service.get_operation(operation_id)
+    if not operation:
+        raise HTTPException(status_code=404, detail="Operation not found")
+    
+    return operation_service.get_credentials_for_operation(operation.operation_type)
+
+@router.post("/operations/validate-credentials")
+def validate_operation_credentials(operation_run: schemas.OperationRun, db: Session = Depends(get_db)):
+    """Validate credentials for an operation run."""
+    operation_service = OperationService(db)
+    errors = operation_service.validate_operation_credentials(operation_run)
+    
+    if errors:
+        return {"valid": False, "errors": errors}
+    else:
+        return {"valid": True, "message": "Credentials are valid"}
+
+@router.post("/operations/{operation_id}/preview-inventory")
+def preview_ansible_inventory(
+    operation_id: int,
+    operation_run: schemas.OperationRun,
+    db: Session = Depends(get_db)
+):
+    """Preview the Ansible inventory that would be generated for an operation."""
+    operation_service = OperationService(db)
+    operation = operation_service.get_operation(operation_id)
+    if not operation:
+        raise HTTPException(status_code=404, detail="Operation not found")
+    
+    # Get target assets
+    assets = operation_service.get_target_assets(operation_run)
+    if not assets:
+        raise HTTPException(status_code=400, detail="No target assets found")
+    
+    # Prepare credentials
+    credentials = operation_service.prepare_credentials_for_assets(
+        assets, 
+        operation_run.credential_id, 
+        operation_run.override_credentials
+    )
+    
+    # Create inventory
+    inventory = operation_service.create_ansible_inventory_with_credentials(assets, credentials)
+    
+    return {
+        "inventory": inventory,
+        "asset_count": len(assets),
+        "credential_summary": {
+            "selected_credential_id": operation_run.credential_id,
+            "assets_with_credentials": len([a for a in assets if a.id in credentials and credentials[a.id]]),
+            "assets_without_credentials": len([a for a in assets if a.id not in credentials or not credentials[a.id]])
+        }
+    }
+
 @router.get("/health")
 def health_check():
     """Health check endpoint."""

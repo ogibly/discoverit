@@ -258,6 +258,8 @@ class OperationRun(BaseModel):
     asset_group_ids: List[int] = []
     target_labels: List[int] = []
     params: Optional[Dict[str, Any]] = None
+    credential_id: Optional[int] = None  # Selected credential for the operation
+    override_credentials: Optional[Dict[str, Any]] = None  # Override credentials for specific assets
 
 class Operation(OperationBase):
     id: int

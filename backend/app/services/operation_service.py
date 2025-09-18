@@ -4,7 +4,7 @@ Operation service for managing operations and jobs.
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc
-from ..models import Operation, Job, Asset, AssetGroup, Label
+from ..models import Operation, Job, Asset, AssetGroup, Label, Credential
 from ..schemas import OperationCreate, OperationUpdate, OperationRun, JobCreate
 import requests
 import json
@@ -364,3 +364,167 @@ class OperationService:
         job.end_time = datetime.utcnow()
         self.db.commit()
         return True
+
+    def get_credentials_for_operation(self, operation_type: str) -> List[Credential]:
+        """Get appropriate credentials for a specific operation type."""
+        # Map operation types to credential types
+        credential_type_mapping = {
+            'ansible': ['username_password', 'ssh_key'],
+            'ssh': ['username_password', 'ssh_key'],
+            'api': ['api_key', 'username_password'],
+            'script': ['username_password', 'ssh_key'],
+            'certificate': ['certificate', 'username_password']
+        }
+        
+        credential_types = credential_type_mapping.get(operation_type, ['username_password'])
+        
+        return self.db.query(Credential).filter(
+            Credential.credential_type.in_(credential_types),
+            Credential.is_active == True
+        ).order_by(Credential.name).all()
+
+    def get_credential_by_id(self, credential_id: int) -> Optional[Credential]:
+        """Get a credential by ID."""
+        return self.db.query(Credential).filter(Credential.id == credential_id).first()
+
+    def prepare_credentials_for_assets(self, assets: List[Asset], credential_id: Optional[int] = None, override_credentials: Optional[Dict[str, Any]] = None) -> Dict[int, Dict[str, Any]]:
+        """Prepare credentials for a list of assets."""
+        asset_credentials = {}
+        
+        # Get the selected credential if provided
+        selected_credential = None
+        if credential_id:
+            selected_credential = self.get_credential_by_id(credential_id)
+        
+        for asset in assets:
+            asset_cred = {}
+            
+            # Check for override credentials for this specific asset
+            if override_credentials and str(asset.id) in override_credentials:
+                asset_cred = override_credentials[str(asset.id)]
+            elif selected_credential:
+                # Use the selected credential
+                if selected_credential.credential_type == 'username_password':
+                    asset_cred = {
+                        'username': selected_credential.username,
+                        'password': selected_credential.password,
+                        'domain': selected_credential.domain,
+                        'port': selected_credential.port
+                    }
+                elif selected_credential.credential_type == 'ssh_key':
+                    asset_cred = {
+                        'ssh_private_key': selected_credential.ssh_private_key,
+                        'ssh_public_key': selected_credential.ssh_public_key,
+                        'ssh_passphrase': selected_credential.ssh_passphrase,
+                        'username': selected_credential.username,
+                        'port': selected_credential.port or 22
+                    }
+                elif selected_credential.credential_type == 'api_key':
+                    asset_cred = {
+                        'api_key': selected_credential.api_key,
+                        'api_secret': selected_credential.api_secret
+                    }
+                elif selected_credential.credential_type == 'certificate':
+                    asset_cred = {
+                        'certificate_data': selected_credential.certificate_data,
+                        'private_key_data': selected_credential.private_key_data
+                    }
+            else:
+                # Use asset's own credentials if available
+                if asset.username:
+                    asset_cred = {
+                        'username': asset.username,
+                        'password': asset.password,
+                        'ssh_key': asset.ssh_key
+                    }
+            
+            asset_credentials[asset.id] = asset_cred
+        
+        return asset_credentials
+
+    def create_ansible_inventory_with_credentials(self, assets: List[Asset], credentials: Dict[int, Dict[str, Any]]) -> Dict[str, Any]:
+        """Create an Ansible inventory with credentials for the assets."""
+        inventory = {
+            "all": {
+                "hosts": {},
+                "vars": {}
+            }
+        }
+        
+        for asset in assets:
+            host_vars = {
+                "ansible_host": asset.primary_ip,
+                "ansible_user": credentials.get(asset.id, {}).get('username', 'root'),
+                "hostname": asset.hostname or asset.name,
+                "asset_id": asset.id,
+                "asset_name": asset.name
+            }
+            
+            # Add credential-specific variables
+            asset_creds = credentials.get(asset.id, {})
+            if 'password' in asset_creds:
+                host_vars["ansible_password"] = asset_creds['password']
+            if 'ssh_private_key' in asset_creds:
+                host_vars["ansible_ssh_private_key_file"] = asset_creds['ssh_private_key']
+            if 'ssh_passphrase' in asset_creds:
+                host_vars["ansible_ssh_passphrase"] = asset_creds['ssh_passphrase']
+            if 'domain' in asset_creds:
+                host_vars["ansible_domain"] = asset_creds['domain']
+            if 'port' in asset_creds:
+                host_vars["ansible_port"] = asset_creds['port']
+            
+            # Add asset-specific information
+            if asset.os_name:
+                host_vars["os_name"] = asset.os_name
+            if asset.os_family:
+                host_vars["os_family"] = asset.os_family
+            if asset.manufacturer:
+                host_vars["manufacturer"] = asset.manufacturer
+            if asset.model:
+                host_vars["model"] = asset.model
+            if asset.location:
+                host_vars["location"] = asset.location
+            if asset.department:
+                host_vars["department"] = asset.department
+            
+            inventory["all"]["hosts"][asset.name] = host_vars
+        
+        return inventory
+
+    def validate_operation_credentials(self, operation_run: OperationRun) -> List[str]:
+        """Validate that the operation has appropriate credentials."""
+        errors = []
+        
+        # Get the operation
+        operation = None
+        if operation_run.operation_id:
+            operation = self.get_operation(operation_run.operation_id)
+        elif operation_run.operation_name:
+            operation = self.db.query(Operation).filter(Operation.name == operation_run.operation_name).first()
+        
+        if not operation:
+            errors.append("Operation not found")
+            return errors
+        
+        # Get target assets
+        assets = self.get_target_assets(operation_run)
+        if not assets:
+            errors.append("No target assets found")
+            return errors
+        
+        # Check if credentials are provided
+        if not operation_run.credential_id and not operation_run.override_credentials:
+            # Check if assets have their own credentials
+            assets_without_creds = [asset for asset in assets if not asset.username and not asset.ssh_key]
+            if assets_without_creds:
+                errors.append(f"Assets {[asset.name for asset in assets_without_creds]} have no credentials and no credential was selected")
+        
+        # Validate credential exists if provided
+        if operation_run.credential_id:
+            credential = self.get_credential_by_id(operation_run.credential_id)
+            if not credential:
+                errors.append(f"Credential with ID {operation_run.credential_id} not found")
+            elif not credential.is_active:
+                errors.append(f"Credential '{credential.name}' is not active")
+        
+        return errors

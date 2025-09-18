@@ -4,7 +4,7 @@ import { AppProvider, useApp } from './contexts/AppContext';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
 import ScanManager from './components/ScanManager';
-import Operations from './components/Operations';
+import OperationsEnhanced from './components/OperationsEnhanced';
 import Settings from './components/Settings';
 import CredentialsManager from './components/CredentialsManager';
 import ScannerManager from './components/ScannerManager';
@@ -101,7 +101,7 @@ const ScansPage = () => {
 const OperationsPage = () => {
   return (
     <div className="p-6">
-      <Operations />
+      <OperationsEnhanced />
     </div>
   );
 };

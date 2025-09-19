@@ -70,8 +70,10 @@ const UserManagement = () => {
       if (editingUser && !payload.password) {
         delete payload.password; // Don't update password if empty
       }
-      if (payload.role_id) {
+      if (payload.role_id && payload.role_id !== '') {
         payload.role_id = parseInt(payload.role_id);
+      } else {
+        payload.role_id = null; // Set to null if empty string
       }
 
       const response = await fetch(url, {
@@ -88,7 +90,10 @@ const UserManagement = () => {
         resetForm();
       } else {
         const error = await response.json();
-        alert(`Error: ${error.detail}`);
+        const errorMessage = Array.isArray(error.detail) 
+          ? error.detail.map(err => err.msg || err.message || JSON.stringify(err)).join(', ')
+          : error.detail || error.message || 'Unknown error occurred';
+        alert(`Error: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Failed to save user:', error);

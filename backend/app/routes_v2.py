@@ -649,6 +649,12 @@ def create_scanner_config(config: schemas.ScannerConfigCreate, db: Session = Dep
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/scanners/statistics")
+def get_scanner_statistics(db: Session = Depends(get_db)):
+    """Get statistics about scanner configurations."""
+    service = ScannerService(db)
+    return service.get_scanner_statistics()
+
 @router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)
 def get_scanner_config(config_id: int, db: Session = Depends(get_db)):
     """Get a scanner configuration by ID."""
@@ -693,12 +699,6 @@ def check_all_scanners_health(db: Session = Depends(get_db)):
     """Check the health of all active scanner configurations."""
     service = ScannerService(db)
     return service.check_all_scanners_health()
-
-@router.get("/scanners/statistics")
-def get_scanner_statistics(db: Session = Depends(get_db)):
-    """Get statistics about scanner configurations."""
-    service = ScannerService(db)
-    return service.get_scanner_statistics()
 
 @router.post("/scanners/{config_id}/test")
 def test_scanner_connection(

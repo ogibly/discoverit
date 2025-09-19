@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Card, Button, Input, Modal, Badge, Tabs, TabsContent, TabsList, TabsTrigger } from './ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Modal, Badge, Tabs, TabsContent, TabsList, TabsTrigger } from './ui';
 import { cn } from '../utils/cn';
 
 const ScannerManager = () => {

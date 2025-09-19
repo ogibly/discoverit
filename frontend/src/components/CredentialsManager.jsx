@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { Button, Input, Card, Modal, Badge, Tabs, TabsContent, TabsList, TabsTrigger } from './ui';
+import { Button, Input, Card, Modal, Badge } from './ui';
 
 const CredentialsManager = () => {
   const { api } = useApp();
@@ -11,7 +11,6 @@ const CredentialsManager = () => {
   const [editingCredential, setEditingCredential] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
-  const [activeTab, setActiveTab] = useState('list');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -20,23 +19,15 @@ const CredentialsManager = () => {
     username: '',
     password: '',
     ssh_private_key: '',
-    ssh_public_key: '',
     ssh_passphrase: '',
-    api_key: '',
-    api_secret: '',
-    certificate_data: '',
-    private_key_data: '',
     domain: '',
     port: '',
-    tags: [],
     is_active: true
   });
 
   const credentialTypes = [
     { value: 'username_password', label: 'Username/Password', icon: '🔑' },
-    { value: 'ssh_key', label: 'SSH Key', icon: '🔐' },
-    { value: 'api_key', label: 'API Key', icon: '🔌' },
-    { value: 'certificate', label: 'Certificate', icon: '📜' }
+    { value: 'ssh_key', label: 'SSH Private Key', icon: '🔐' }
   ];
 
   useEffect(() => {
@@ -47,9 +38,10 @@ const CredentialsManager = () => {
     try {
       setLoading(true);
       const response = await api.get('/credentials');
-      setCredentials(response.data);
+      setCredentials(response.data || []);
     } catch (error) {
       console.error('Failed to load credentials:', error);
+      setCredentials([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -66,16 +58,7 @@ const CredentialsManager = () => {
       }
       if (credentialData.credential_type !== 'ssh_key') {
         credentialData.ssh_private_key = null;
-        credentialData.ssh_public_key = null;
         credentialData.ssh_passphrase = null;
-      }
-      if (credentialData.credential_type !== 'api_key') {
-        credentialData.api_key = null;
-        credentialData.api_secret = null;
-      }
-      if (credentialData.credential_type !== 'certificate') {
-        credentialData.certificate_data = null;
-        credentialData.private_key_data = null;
       }
 
       await api.post('/credentials', credentialData);
@@ -133,20 +116,14 @@ const CredentialsManager = () => {
       username: '',
       password: '',
       ssh_private_key: '',
-      ssh_public_key: '',
       ssh_passphrase: '',
-      api_key: '',
-      api_secret: '',
-      certificate_data: '',
-      private_key_data: '',
       domain: '',
       port: '',
-      tags: [],
       is_active: true
     });
   };
 
-  const filteredCredentials = credentials.filter(credential => {
+  const filteredCredentials = (credentials || []).filter(credential => {
     const matchesSearch = !searchTerm || 
       credential.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       credential.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -246,85 +223,21 @@ const CredentialsManager = () => {
                 onChange={(e) => setFormData({...formData, ssh_private_key: e.target.value})}
                 placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                rows={6}
+                rows={8}
               />
+              <p className="text-xs text-slate-500 mt-1">
+                Paste your SSH private key content here. Include the full key with headers.
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                SSH Public Key
-              </label>
-              <textarea
-                value={formData.ssh_public_key}
-                onChange={(e) => setFormData({...formData, ssh_public_key: e.target.value})}
-                placeholder="ssh-rsa AAAAB3NzaC1yc2E..."
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                rows={3}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Passphrase
+                Passphrase (Optional)
               </label>
               <Input
                 type="password"
                 value={formData.ssh_passphrase}
                 onChange={(e) => setFormData({...formData, ssh_passphrase: e.target.value})}
-                placeholder="Enter passphrase (if any)"
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.credential_type === 'api_key' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                API Key *
-              </label>
-              <Input
-                value={formData.api_key}
-                onChange={(e) => setFormData({...formData, api_key: e.target.value})}
-                placeholder="Enter API key"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                API Secret
-              </label>
-              <Input
-                type="password"
-                value={formData.api_secret}
-                onChange={(e) => setFormData({...formData, api_secret: e.target.value})}
-                placeholder="Enter API secret"
-              />
-            </div>
-          </div>
-        )}
-
-        {formData.credential_type === 'certificate' && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Certificate Data *
-              </label>
-              <textarea
-                value={formData.certificate_data}
-                onChange={(e) => setFormData({...formData, certificate_data: e.target.value})}
-                placeholder="-----BEGIN CERTIFICATE-----"
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                rows={6}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Private Key Data
-              </label>
-              <textarea
-                value={formData.private_key_data}
-                onChange={(e) => setFormData({...formData, private_key_data: e.target.value})}
-                placeholder="-----BEGIN PRIVATE KEY-----"
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                rows={6}
+                placeholder="Enter passphrase if the key is encrypted"
               />
             </div>
           </div>
@@ -414,70 +327,63 @@ const CredentialsManager = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredCredentials.map(credential => {
-              const typeInfo = getCredentialTypeInfo(credential.credential_type);
-              return (
-                <Card key={credential.id} className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{typeInfo.icon}</span>
-                      <Badge variant={credential.is_active ? 'success' : 'secondary'}>
-                        {typeInfo.label}
-                      </Badge>
-                    </div>
-                    <div className="flex space-x-1">
-                      <button
-                        onClick={() => handleEdit(credential)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(credential.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <h3 className="font-semibold text-slate-900 mb-2">{credential.name}</h3>
-                  
-                  {credential.description && (
-                    <p className="text-sm text-slate-600 mb-3">{credential.description}</p>
-                  )}
-                  
-                  <div className="space-y-1 text-sm text-slate-500">
-                    {credential.username && (
-                      <div>User: {credential.username}</div>
-                    )}
-                    {credential.domain && (
-                      <div>Domain: {credential.domain}</div>
-                    )}
-                    {credential.port && (
-                      <div>Port: {credential.port}</div>
-                    )}
-                    {credential.tags && credential.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {credential.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+          <div className="max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCredentials.map(credential => {
+                const typeInfo = getCredentialTypeInfo(credential.credential_type);
+                return (
+                  <Card key={credential.id} className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg">{typeInfo.icon}</span>
+                        <Badge variant={credential.is_active ? 'success' : 'secondary'}>
+                          {typeInfo.label}
+                        </Badge>
                       </div>
+                      <div className="flex space-x-1">
+                        <button
+                          onClick={() => handleEdit(credential)}
+                          className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(credential.id)}
+                          className="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-semibold text-slate-900 mb-2">{credential.name}</h3>
+                    
+                    {credential.description && (
+                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">{credential.description}</p>
                     )}
-                  </div>
-                  
-                  <div className="mt-3 text-xs text-slate-400">
-                    Created: {new Date(credential.created_at).toLocaleDateString()}
-                    {credential.last_used && (
-                      <div>Last used: {new Date(credential.last_used).toLocaleDateString()}</div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
+                    
+                    <div className="space-y-1 text-sm text-slate-500">
+                      {credential.username && (
+                        <div>User: {credential.username}</div>
+                      )}
+                      {credential.domain && (
+                        <div>Domain: {credential.domain}</div>
+                      )}
+                      {credential.port && (
+                        <div>Port: {credential.port}</div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-3 text-xs text-slate-400">
+                      Created: {new Date(credential.created_at).toLocaleDateString()}
+                      {credential.last_used && (
+                        <div>Last used: {new Date(credential.last_used).toLocaleDateString()}</div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
 
           {filteredCredentials.length === 0 && (

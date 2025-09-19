@@ -473,17 +473,8 @@ export function AppProvider({ children }) {
 
   // Initial data fetch - only after authentication
   useEffect(() => {
-    // Only fetch data if we have a token (user is authenticated)
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchAssets();
-      fetchAssetGroups();
-      fetchLabels();
-      fetchScanTasks();
-      fetchOperations();
-      fetchJobs();
-      fetchActiveScanTask();
-    }
+    // Don't fetch data on initial load - wait for auth-changed event
+    // This prevents race conditions with token validation
   }, [fetchAssets, fetchAssetGroups, fetchLabels, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
 
   // Listen for authentication changes
@@ -499,7 +490,10 @@ export function AppProvider({ children }) {
     const handleAuthChange = () => {
       const token = localStorage.getItem('token');
       if (token) {
-        refreshAllData();
+        // Add a small delay to ensure token validation is complete
+        setTimeout(() => {
+          refreshAllData();
+        }, 100);
       }
     };
     

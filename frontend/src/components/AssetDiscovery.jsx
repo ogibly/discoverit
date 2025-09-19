@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Button, Input, Card, Modal, Badge, Progress, Tabs, TabsContent, TabsList, TabsTrigger } from './ui';
 
 const AssetDiscovery = () => {
   const { api, assets, activeScanTask, startScan, cancelScan } = useApp();
+  const { user } = useAuth();
   const [showDiscoveryModal, setShowDiscoveryModal] = useState(false);
   const [discoveryData, setDiscoveryData] = useState({
     target: '',
@@ -56,7 +58,7 @@ const AssetDiscovery = () => {
         name: discoveryData.name || `Discovery: ${discoveryData.target}`,
         target: discoveryData.target,
         scan_type: discoveryData.scanType,
-        created_by: 'user' // This would come from auth context
+        created_by: user?.id?.toString() || "1"
       };
 
       await startScan(scanData);

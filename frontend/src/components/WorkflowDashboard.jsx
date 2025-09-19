@@ -118,7 +118,7 @@ const WorkflowDashboard = () => {
         name: "Quick Network Discovery",
         target: "172.18.0.0/24", // Default Docker network
         scan_type: "quick",
-        created_by: user?.id || 1
+        created_by: user?.id?.toString() || "1"
       });
       setCurrentStep(1);
     } catch (error) {

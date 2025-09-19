@@ -23,17 +23,93 @@ const Navigation = () => {
   const { statusMessage, clearStatusMessage } = useApp();
   const { user, logout, hasPermission } = useAuth();
 
-  const navItems = [
-    { path: '/', label: 'Dashboard', icon: '🏠', permission: 'assets:read', description: 'Workflow dashboard and overview' },
-    { path: '/discovery', label: 'Discovery', icon: '🔍', permission: 'discovery:read', description: 'Discover network devices and create assets' },
-    { path: '/assets', label: 'Assets', icon: '💻', permission: 'assets:read', description: 'Manage discovered assets and create groups' },
-    { path: '/operations', label: 'Operations', icon: '⚙️', permission: 'operations:read', description: 'Run operations on assets and groups' },
-    { path: '/credentials', label: 'Credentials', icon: '🔐', permission: 'credentials:read', description: 'Manage authentication credentials' },
-    { path: '/scanners', label: 'Scanners', icon: '🖥️', permission: 'scanners:read', description: 'Manage scanner service instances' },
-    { path: '/users', label: 'Users', icon: '👥', permission: 'users:read', description: 'User and role management' },
-    { path: '/settings', label: 'Settings', icon: '🔧', permission: 'settings:read', description: 'Global system settings' },
-    { path: '/workflow', label: 'Workflow Guide', icon: '📖', permission: null, description: 'Complete workflow documentation' }
-  ].filter(item => !item.permission || hasPermission(item.permission));
+  const workflowSteps = [
+    { 
+      path: '/', 
+      label: 'Dashboard', 
+      icon: '🏠', 
+      permission: 'assets:read', 
+      description: 'Workflow overview and quick start',
+      step: 0,
+      category: 'workflow'
+    },
+    { 
+      path: '/discovery', 
+      label: 'Discovery', 
+      icon: '🔍', 
+      permission: 'discovery:read', 
+      description: 'Discover network devices',
+      step: 1,
+      category: 'workflow'
+    },
+    { 
+      path: '/assets', 
+      label: 'Assets', 
+      icon: '💻', 
+      permission: 'assets:read', 
+      description: 'Manage discovered assets',
+      step: 2,
+      category: 'workflow'
+    },
+    { 
+      path: '/operations', 
+      label: 'Operations', 
+      icon: '⚙️', 
+      permission: 'operations:read', 
+      description: 'Run operations on assets',
+      step: 3,
+      category: 'workflow'
+    }
+  ];
+
+  const managementItems = [
+    { 
+      path: '/credentials', 
+      label: 'Credentials', 
+      icon: '🔐', 
+      permission: 'credentials:read', 
+      description: 'Manage authentication credentials',
+      category: 'management'
+    },
+    { 
+      path: '/scanners', 
+      label: 'Scanners', 
+      icon: '🖥️', 
+      permission: 'scanners:read', 
+      description: 'Manage scanner services',
+      category: 'management'
+    },
+    { 
+      path: '/users', 
+      label: 'Users', 
+      icon: '👥', 
+      permission: 'users:read', 
+      description: 'User and role management',
+      category: 'management'
+    },
+    { 
+      path: '/settings', 
+      label: 'Settings', 
+      icon: '🔧', 
+      permission: 'settings:read', 
+      description: 'Global system settings',
+      category: 'management'
+    }
+  ];
+
+  const helpItems = [
+    { 
+      path: '/workflow', 
+      label: 'Workflow Guide', 
+      icon: '📖', 
+      permission: null, 
+      description: 'Complete workflow documentation',
+      category: 'help'
+    }
+  ];
+
+  const allNavItems = [...workflowSteps, ...managementItems, ...helpItems]
+    .filter(item => !item.permission || hasPermission(item.permission));
 
   return (
     <div className="flex flex-col w-64 bg-white border-r border-slate-200">
@@ -41,22 +117,100 @@ const Navigation = () => {
         <h1 className="text-2xl font-bold text-slate-900">DiscoverIT</h1>
       </div>
       
-      <nav className="flex-grow p-4 space-y-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              'flex items-center space-x-3 px-4 py-2 rounded-md text-sm font-medium transition-colors',
-              location.pathname === item.path
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-            )}
-          >
-            <span className="text-lg">{item.icon}</span>
-            <span>{item.label}</span>
-          </Link>
-        ))}
+      <nav className="flex-grow p-4 space-y-6">
+        {/* Workflow Steps */}
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            Workflow
+          </h3>
+          <div className="space-y-1">
+            {workflowSteps.filter(item => !item.permission || hasPermission(item.permission)).map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group",
+                  location.pathname === item.path
+                    ? "bg-blue-100 text-blue-700 border-l-4 border-blue-500"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                )}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <span>{item.label}</span>
+                    {item.step > 0 && (
+                      <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+                        {item.step}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-500 group-hover:text-slate-600">
+                    {item.description}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Management */}
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            Management
+          </h3>
+          <div className="space-y-1">
+            {managementItems.filter(item => !item.permission || hasPermission(item.permission)).map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group",
+                  location.pathname === item.path
+                    ? "bg-blue-100 text-blue-700 border-l-4 border-blue-500"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                )}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <div className="flex-1">
+                  <span>{item.label}</span>
+                  <div className="text-xs text-slate-500 group-hover:text-slate-600">
+                    {item.description}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Help */}
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            Help
+          </h3>
+          <div className="space-y-1">
+            {helpItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group",
+                  location.pathname === item.path
+                    ? "bg-blue-100 text-blue-700 border-l-4 border-blue-500"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                )}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <div className="flex-1">
+                  <span>{item.label}</span>
+                  <div className="text-xs text-slate-500 group-hover:text-slate-600">
+                    {item.description}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       </nav>
       
       {/* Status Message */}

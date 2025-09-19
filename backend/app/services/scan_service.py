@@ -124,6 +124,11 @@ class ScanService:
             return
         
         try:
+            # Initialize task status
+            task.status = "running"
+            task.start_time = datetime.utcnow()
+            self.db.commit()
+            
             # Get IPs to scan
             ips_to_scan = self.get_ips_from_target(task.target)
             total_ips = len(ips_to_scan)
@@ -210,12 +215,19 @@ class ScanService:
                 "timestamp": datetime.utcnow().isoformat(),
                 "status": "completed" if result.returncode == 0 else "failed",
                 "raw_output": result.stdout,
+                "stderr": result.stderr,
                 "ports": [],
                 "os_info": {},
                 "device_info": {},
                 "hostname": None,
                 "addresses": {"mac": None}
             }
+            
+            # Check if host is up
+            if "Host is up" not in result.stdout and "0 hosts up" in result.stdout:
+                scan_result["status"] = "failed"
+                scan_result["error"] = "Host is down or unreachable"
+                return scan_result
             
             # Extract hostname
             hostname_match = re.search(r'for (\S+)', result.stdout)

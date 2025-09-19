@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Check if user is authenticated on app load
   useEffect(() => {
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }) => {
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
+            setIsAuthenticated(true);
             
             // Get user permissions
             const permResponse = await fetch('/api/v2/auth/permissions', {
@@ -73,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         const data = await response.json();
         setToken(data.access_token);
         setUser(data.user);
+        setIsAuthenticated(true);
         setPermissions(data.user.role?.permissions || []);
         localStorage.setItem('token', data.access_token);
         return { success: true };
@@ -89,6 +92,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
+    setIsAuthenticated(false);
     setPermissions([]);
     localStorage.removeItem('token');
   };
@@ -114,7 +118,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     hasPermission,
     hasAnyPermission,
-    isAuthenticated: !!user,
+    isAuthenticated,
   };
 
   return (

@@ -444,6 +444,17 @@ export function AppProvider({ children }) {
     dispatch({ type: ActionTypes.CLEAR_STATUS_MESSAGE });
   }, []);
 
+  const refreshAllData = useCallback(() => {
+    // Refresh all data after authentication
+    fetchAssets();
+    fetchAssetGroups();
+    fetchLabels();
+    fetchScanTasks();
+    fetchOperations();
+    fetchJobs();
+    fetchActiveScanTask();
+  }, [fetchAssets, fetchAssetGroups, fetchLabels, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
+
   // Selection actions
   const toggleAssetSelection = useCallback((assetId) => {
     const newSelection = state.selectedAssets.includes(assetId)
@@ -460,16 +471,33 @@ export function AppProvider({ children }) {
     dispatch({ type: ActionTypes.SET_SELECTED_ASSETS, payload: newSelection });
   }, [state.selectedAssets]);
 
-  // Initial data fetch
+  // Initial data fetch - only after authentication
   useEffect(() => {
-    fetchAssets();
-    fetchAssetGroups();
-    fetchLabels();
-    fetchScanTasks();
-    fetchOperations();
-    fetchJobs();
-    fetchActiveScanTask();
+    // Only fetch data if we have a token (user is authenticated)
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchAssets();
+      fetchAssetGroups();
+      fetchLabels();
+      fetchScanTasks();
+      fetchOperations();
+      fetchJobs();
+      fetchActiveScanTask();
+    }
   }, [fetchAssets, fetchAssetGroups, fetchLabels, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
+
+  // Listen for authentication changes
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' && e.newValue) {
+        // Token was added, refresh data
+        refreshAllData();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshAllData]);
 
   // Poll for active scan updates
   useEffect(() => {
@@ -532,6 +560,7 @@ export function AppProvider({ children }) {
     setModal,
     closeModal,
     clearStatusMessage,
+    refreshAllData,
     
     // Selection actions
     toggleAssetSelection,

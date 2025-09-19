@@ -120,11 +120,11 @@ const AssetDiscovery = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen p-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Asset Discovery</h1>
-          <p className="text-slate-600">Discover and inventory network devices automatically</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Asset Discovery</h1>
+          <p className="text-slate-600 dark:text-slate-400">Discover and inventory network devices automatically</p>
         </div>
         <Button onClick={() => setShowDiscoveryModal(true)}>
           + Start Discovery

@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import WorkflowDashboard from './components/WorkflowDashboard';
 import AssetDiscovery from './components/AssetDiscovery';
+import UnifiedWorkflow from './components/UnifiedWorkflow';
 import AssetManagement from './components/AssetManagement';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
@@ -29,10 +30,10 @@ const Navigation = () => {
   const workflowSteps = [
     { 
       path: '/', 
-      label: 'Dashboard', 
+      label: 'Workflow', 
       icon: '🏠', 
       permission: 'assets:read', 
-      description: 'Workflow overview and quick start',
+      description: 'Unified discovery and asset management',
       step: 0,
       category: 'workflow'
     },
@@ -302,12 +303,12 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={
             <ProtectedRoute requiredPermission="assets:read">
-              <WorkflowDashboard />
+              <UnifiedWorkflow />
             </ProtectedRoute>
           } />
           <Route path="/discovery" element={
             <ProtectedRoute requiredPermission="discovery:read">
-              <AssetDiscovery />
+              <UnifiedWorkflow />
             </ProtectedRoute>
           } />
           <Route path="/assets" element={

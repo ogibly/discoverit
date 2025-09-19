@@ -49,14 +49,14 @@ const Modal = ({
       
       {/* Modal */}
       <div className={cn(
-        'relative w-full mx-4 bg-white rounded-lg shadow-xl',
+        'relative w-full mx-4 bg-white dark:bg-slate-900 rounded-lg shadow-xl',
         sizes[size],
         className
       )}>
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-slate-200">
-            <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
             {showCloseButton && (
               <Button
                 variant="ghost"

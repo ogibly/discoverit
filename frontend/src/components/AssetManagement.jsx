@@ -43,6 +43,11 @@ const AssetManagement = () => {
     is_managed: false
   });
 
+  const [groupForm, setGroupForm] = useState({
+    name: '',
+    description: ''
+  });
+
   // Filter and search assets
   const filteredAssets = useMemo(() => {
     return assets.filter(asset => {
@@ -86,6 +91,36 @@ const AssetManagement = () => {
       resetForm();
     } catch (error) {
       console.error('Failed to create asset:', error);
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!groupForm.name.trim()) {
+      alert('Please enter a group name');
+      return;
+    }
+    
+    if (selectedAssets.length === 0) {
+      alert('Please select at least one asset');
+      return;
+    }
+
+    try {
+      const groupData = {
+        name: groupForm.name,
+        description: groupForm.description,
+        asset_ids: selectedAssets.map(asset => asset.id)
+      };
+      
+      // This would need to be implemented in the AppContext
+      console.log('Creating group:', groupData);
+      alert('Group creation functionality needs to be implemented in the backend');
+      
+      setShowGroupModal(false);
+      setGroupForm({ name: '', description: '' });
+    } catch (error) {
+      console.error('Failed to create group:', error);
+      alert('Failed to create group: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -158,12 +193,12 @@ const AssetManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen p-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Asset Management</h1>
-          <p className="text-slate-600">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Asset Management</h1>
+          <p className="text-slate-600 dark:text-slate-400">
             Manage your discovered network devices and create asset groups
           </p>
         </div>
@@ -184,24 +219,24 @@ const AssetManagement = () => {
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4">
-          <div className="text-2xl font-bold text-blue-600">{assets.length}</div>
-          <div className="text-sm text-slate-600">Total Assets</div>
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{assets.length}</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Total Assets</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             {assets.filter(a => a.is_managed).length}
           </div>
-          <div className="text-sm text-slate-600">Managed</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Managed</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-yellow-600">
+          <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
             {assets.filter(a => !a.is_managed).length}
           </div>
-          <div className="text-sm text-slate-600">Unmanaged</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Unmanaged</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-purple-600">{selectedAssets.length}</div>
-          <div className="text-sm text-slate-600">Selected</div>
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{selectedAssets.length}</div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">Selected</div>
         </Card>
       </div>
 
@@ -622,22 +657,26 @@ const AssetManagement = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Group Name *
             </label>
             <Input
+              value={groupForm.name}
+              onChange={(e) => setGroupForm({...groupForm, name: e.target.value})}
               placeholder="Enter group name"
               className="w-full"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Description
             </label>
             <textarea
+              value={groupForm.description}
+              onChange={(e) => setGroupForm({...groupForm, description: e.target.value})}
               placeholder="Optional description"
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
             />
           </div>
@@ -650,6 +689,7 @@ const AssetManagement = () => {
               Cancel
             </Button>
             <Button 
+              onClick={handleCreateGroup}
               disabled={selectedAssets.length === 0}
             >
               Create Group

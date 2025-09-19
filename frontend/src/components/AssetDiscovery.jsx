@@ -147,7 +147,7 @@ const AssetDiscovery = () => {
             <div className="text-sm text-slate-600">Running</div>
           </Card>
           <Card className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{assets.length}</div>
+            <div className="text-2xl font-bold text-purple-600">{(assets || []).length}</div>
             <div className="text-sm text-slate-600">Discovered Assets</div>
           </Card>
         </div>
@@ -295,7 +295,7 @@ const AssetDiscovery = () => {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Discovery History</h3>
               <div className="space-y-3">
-                {discoveryHistory.map(scan => (
+                {(discoveryHistory || []).map(scan => (
                   <div key={scan.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
                     <div className="flex items-center space-x-4">
                       <span className="text-2xl">{getScanTypeInfo(scan.scan_type).icon}</span>
@@ -322,9 +322,9 @@ const AssetDiscovery = () => {
         <TabsContent value="assets" className="space-y-6">
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Discovered Assets ({assets.length})</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Discovered Assets ({(assets || []).length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {assets.slice(0, 12).map(asset => (
+                {(assets || []).slice(0, 12).map(asset => (
                   <Card key={asset.id} className="p-4">
                     <div className="flex items-center space-x-3 mb-2">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -342,10 +342,10 @@ const AssetDiscovery = () => {
                   </Card>
                 ))}
               </div>
-              {assets.length > 12 && (
+              {(assets || []).length > 12 && (
                 <div className="text-center mt-4">
                   <Button variant="secondary">
-                    View All Assets ({assets.length})
+                    View All Assets ({(assets || []).length})
                   </Button>
                 </div>
               )}
@@ -448,7 +448,7 @@ const AssetDiscovery = () => {
                 Auto-assign Labels
               </label>
               <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-md p-2">
-                {availableLabels.map(label => (
+                {(availableLabels || []).map(label => (
                   <label key={label.id} className="flex items-center space-x-2 py-1">
                     <input
                       type="checkbox"
@@ -472,7 +472,7 @@ const AssetDiscovery = () => {
                 Auto-assign Groups
               </label>
               <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-md p-2">
-                {availableGroups.map(group => (
+                {(availableGroups || []).map(group => (
                   <label key={group.id} className="flex items-center space-x-2 py-1">
                     <input
                       type="checkbox"

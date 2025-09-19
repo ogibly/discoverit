@@ -34,6 +34,9 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             setIsAuthenticated(true);
             
+            // Dispatch custom event to notify AppContext
+            window.dispatchEvent(new CustomEvent('auth-changed'));
+            
             // Get user permissions
             const permResponse = await fetch('/api/v2/auth/permissions', {
               headers: {
@@ -78,6 +81,10 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         setPermissions(data.user.role?.permissions || []);
         localStorage.setItem('token', data.access_token);
+        
+        // Dispatch custom event to notify AppContext
+        window.dispatchEvent(new CustomEvent('auth-changed'));
+        
         return { success: true };
       } else {
         const error = await response.json();

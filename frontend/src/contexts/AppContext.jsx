@@ -495,8 +495,21 @@ export function AppProvider({ children }) {
       }
     };
     
+    // Also listen for custom events
+    const handleAuthChange = () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        refreshAllData();
+      }
+    };
+    
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-changed', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-changed', handleAuthChange);
+    };
   }, [refreshAllData]);
 
   // Poll for active scan updates

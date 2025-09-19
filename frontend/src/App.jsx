@@ -2,6 +2,7 @@ import React from 'react';
 import { Route, Routes, Link, useLocation, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import WorkflowDashboard from './components/WorkflowDashboard';
@@ -16,6 +17,7 @@ import CredentialsManager from './components/CredentialsManager';
 import ScannerManager from './components/ScannerManager';
 import UserManagement from './components/UserManagement';
 import WorkflowGuide from './components/WorkflowGuide';
+import ThemeToggle from './components/ThemeToggle';
 import { cn } from './utils/cn';
 
 // Navigation component
@@ -121,15 +123,16 @@ const Navigation = () => {
     .filter(item => !item.permission || hasPermission(item.permission));
 
   return (
-    <div className="flex flex-col w-64 bg-white border-r border-slate-200">
-      <div className="flex items-center justify-center h-16 border-b border-slate-200">
-        <h1 className="text-2xl font-bold text-slate-900">DiscoverIT</h1>
+    <div className="flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-700">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">DiscoverIT</h1>
+        <ThemeToggle size="small" showLabel={false} />
       </div>
       
       <nav className="flex-grow p-4 space-y-6">
         {/* Workflow Steps */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <h3 className="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
             Workflow
           </h3>
           <div className="space-y-1">
@@ -165,7 +168,7 @@ const Navigation = () => {
 
         {/* Management */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <h3 className="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
             Management
           </h3>
           <div className="space-y-1">
@@ -194,7 +197,7 @@ const Navigation = () => {
 
         {/* Help */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <h3 className="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
             Help
           </h3>
           <div className="space-y-1">
@@ -293,9 +296,9 @@ const AppContent = () => {
   }
 
 	return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
       <Navigation />
-      <div className="flex-grow overflow-hidden">
+      <div className="flex-grow overflow-hidden bg-slate-50 dark:bg-slate-900">
         <Routes>
           <Route path="/" element={
             <ProtectedRoute requiredPermission="assets:read">
@@ -357,11 +360,13 @@ const AppContent = () => {
 // Root App component with provider
 function App() {
   return (
-    <AuthProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

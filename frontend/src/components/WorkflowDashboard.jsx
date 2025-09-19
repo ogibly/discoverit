@@ -138,20 +138,20 @@ const WorkflowDashboard = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-slate-50 dark:bg-slate-900 min-h-screen p-6">
       {/* Welcome Section */}
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-slate-900">
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100">
           Welcome to DiscoverIT
         </h1>
-        <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+        <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
           Your comprehensive network device discovery and management platform. 
           Follow the workflow below to discover, organize, and manage your network assets.
         </p>
         
         {/* Overall Progress */}
         <div className="max-w-md mx-auto">
-          <div className="flex justify-between text-sm text-slate-600 mb-2">
+          <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
             <span>Overall Progress</span>
             <span>{Math.round(calculateOverallProgress())}%</span>
           </div>

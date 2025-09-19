@@ -519,7 +519,9 @@ export function AppProvider({ children }) {
     fetchScanTasks,
     fetchActiveScanTask,
     createScanTask,
+    startScan: createScanTask, // Alias for backward compatibility
     cancelScanTask,
+    cancelScan: cancelScanTask, // Alias for backward compatibility
     
     // Operation actions
     fetchOperations,

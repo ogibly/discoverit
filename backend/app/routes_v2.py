@@ -442,13 +442,31 @@ def delete_operation(operation_id: int, db: Session = Depends(get_db)):
     if not service.delete_operation(operation_id):
         raise HTTPException(status_code=404, detail="Operation not found")
 
+@router.post("/operations/execute", response_model=schemas.Job)
+def execute_operation(
+    execution_data: schemas.OperationExecution,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_operations_execute),
+    db: Session = Depends(get_db)
+):
+    """Execute an operation on selected assets or asset groups with credential selection."""
+    service = OperationService(db)
+    
+    # Create and start the operation job with credentials
+    job = service.create_operation_job_with_credentials(execution_data, current_user.id)
+    
+    # Start the operation in the background
+    background_tasks.add_task(service.execute_job, job.id)
+    
+    return job
+
 @router.post("/operations/run", response_model=schemas.Job)
 def run_operation(
     operation_run: schemas.OperationRun,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """Run an operation on specified targets."""
+    """Run an operation on specified targets (legacy endpoint)."""
     service = OperationService(db)
     
     # Create and start the job

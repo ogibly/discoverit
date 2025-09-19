@@ -9,7 +9,8 @@ import AssetDiscovery from './components/AssetDiscovery';
 import AssetManagement from './components/AssetManagement';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
-import OperationsEnhanced from './components/OperationsEnhanced';
+import OperationsExecution from './components/OperationsExecution';
+import OperationsManagement from './components/OperationsManagement';
 import Settings from './components/Settings';
 import CredentialsManager from './components/CredentialsManager';
 import ScannerManager from './components/ScannerManager';
@@ -63,6 +64,14 @@ const Navigation = () => {
   ];
 
   const managementItems = [
+    { 
+      path: '/operations-management', 
+      label: 'Operations', 
+      icon: '⚙️', 
+      permission: 'admin', 
+      description: 'Manage automation integrations',
+      category: 'management'
+    },
     { 
       path: '/credentials', 
       label: 'Credentials', 
@@ -308,11 +317,16 @@ const AppContent = () => {
               <AssetDetail />
             </ProtectedRoute>
           } />
-          <Route path="/operations" element={
-            <ProtectedRoute requiredPermission="operations:read">
-              <OperationsEnhanced />
-            </ProtectedRoute>
-          } />
+                           <Route path="/operations" element={
+                               <ProtectedRoute requiredPermission="operations:read">
+                                   <OperationsExecution />
+                               </ProtectedRoute>
+                           } />
+                           <Route path="/operations-management" element={
+                               <ProtectedRoute requiredPermission="admin">
+                                   <OperationsManagement />
+                               </ProtectedRoute>
+                           } />
           <Route path="/credentials" element={
             <ProtectedRoute requiredPermission="credentials:read">
               <CredentialsManager />

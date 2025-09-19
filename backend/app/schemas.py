@@ -261,6 +261,15 @@ class OperationRun(BaseModel):
     credential_id: Optional[int] = None  # Selected credential for the operation
     override_credentials: Optional[Dict[str, Any]] = None  # Override credentials for specific assets
 
+class OperationExecution(BaseModel):
+    operation_id: int
+    asset_ids: Optional[List[int]] = None
+    asset_group_ids: Optional[List[int]] = None
+    credential_id: Optional[int] = None
+    custom_username: Optional[str] = None
+    custom_password: Optional[str] = None
+    extra_vars: Optional[Dict[str, Any]] = None
+
 class Operation(OperationBase):
     id: int
     created_at: datetime

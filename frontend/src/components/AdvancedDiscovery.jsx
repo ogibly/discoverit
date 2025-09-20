@@ -9,7 +9,7 @@ import { Modal } from './ui/Modal';
 import { Progress } from './ui/Progress';
 import { cn } from '../utils/cn';
 
-const EnhancedDiscoveryInterface = () => {
+const AdvancedDiscovery = () => {
   const {
     assets,
     activeScanTask,
@@ -944,5 +944,5 @@ const EnhancedDiscoveryInterface = () => {
   );
 };
 
-export default EnhancedDiscoveryInterface;
+export default AdvancedDiscovery;
 

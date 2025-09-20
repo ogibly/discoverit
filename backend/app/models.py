@@ -114,7 +114,7 @@ class ScanTask(Base):
 class Scan(Base):
     __tablename__ = "scans"
     id = Column(Integer, primary_key=True, index=True)
-    asset_id = Column(Integer, ForeignKey("assets.id", ondelete='CASCADE'), nullable=False)
+    asset_id = Column(Integer, ForeignKey("assets.id", ondelete='CASCADE'), nullable=True)
     scan_task_id = Column(Integer, ForeignKey("scan_tasks.id", ondelete='SET NULL'), nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     scan_data = Column(JSON, nullable=True)  # Structured scan results
@@ -242,6 +242,7 @@ class Settings(Base):
     scan_timeout = Column(Integer, default=300)  # Default scan timeout in seconds
     max_concurrent_scans = Column(Integer, default=5)
     auto_discovery_enabled = Column(Boolean, default=True)
+    max_discovery_depth = Column(Integer, default=3)  # Maximum network depth for LAN discovery
     
     # Notification settings
     email_notifications = Column(Boolean, default=False)
@@ -261,6 +262,7 @@ class ScannerConfig(Base):
     url = Column(String(500), nullable=False)
     subnets = Column(JSON, nullable=True)  # List of subnets this scanner handles
     is_active = Column(Boolean, default=True)
+    is_default = Column(Boolean, default=False)  # Default scanner for fallback
     max_concurrent_scans = Column(Integer, default=3)
     timeout_seconds = Column(Integer, default=300)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -151,18 +151,10 @@ class ScanService:
                 # Perform the scan
                 scan_result = self._perform_scan(ip, task.scan_type)
                 
-                # Create or update asset
-                asset = self.asset_service.get_asset_by_ip(ip)
-                if asset:
-                    # Update existing asset
-                    self.asset_service.update_asset_from_scan(asset, scan_result)
-                else:
-                    # Create new asset
-                    asset = self.asset_service.create_asset_from_scan(scan_result, ip)
-                
-                # Create scan record
+                # Store scan result without creating asset automatically
+                # Users can later convert discovered devices to assets manually
                 scan = Scan(
-                    asset_id=asset.id,
+                    asset_id=None,  # No asset created automatically
                     scan_task_id=task.id,
                     scan_data=scan_result,
                     scan_type=task.scan_type,
@@ -187,28 +179,33 @@ class ScanService:
             self.db.commit()
 
     def _perform_scan(self, ip: str, scan_type: str) -> Dict[str, Any]:
-        """Perform a scan on a single IP address using local nmap."""
+        """Perform a comprehensive scan on a single IP address using multiple tools."""
         import subprocess
         import json
         import re
+        import socket
         
         try:
-            # Build nmap command based on scan type
+            # Build comprehensive scan command based on scan type
             if scan_type == "quick":
-                cmd = ["nmap", "-sn", ip]  # Ping scan only
+                # Enhanced quick scan with more information
+                cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", ip]
             elif scan_type == "comprehensive":
-                cmd = ["nmap", "-sS", "-O", "-sV", "-A", ip]
+                cmd = ["nmap", "-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
             elif scan_type == "snmp":
-                cmd = ["nmap", "-sU", "-p", "161", "--script", "snmp-info", ip]
+                cmd = ["nmap", "-sU", "-p", "161", "--script", "snmp-info,snmp-brute", ip]
             elif scan_type == "arp":
                 cmd = ["nmap", "-sn", "-PR", ip]  # ARP ping scan
+            elif scan_type == "lan_discovery":
+                # LAN discovery with multiple techniques
+                cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", "-PR", ip]
             else:
-                cmd = ["nmap", "-sn", ip]  # Default to ping scan
+                cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", ip]
             
             # Run nmap
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             
-            # Parse nmap output
+            # Parse nmap output with enhanced information gathering
             scan_result = {
                 "ip": ip,
                 "scan_type": scan_type,
@@ -220,7 +217,14 @@ class ScanService:
                 "os_info": {},
                 "device_info": {},
                 "hostname": None,
-                "addresses": {"mac": None}
+                "addresses": {"mac": None},
+                "vendor": None,
+                "device_type": None,
+                "response_time": None,
+                "ttl": None,
+                "services": [],
+                "vulnerabilities": [],
+                "network_info": {}
             }
             
             # Check if host is up
@@ -234,25 +238,54 @@ class ScanService:
             if hostname_match:
                 scan_result["hostname"] = hostname_match.group(1)
             
-            # Extract MAC address
-            mac_match = re.search(r'MAC Address: ([0-9A-Fa-f:]{17})', result.stdout)
+            # Extract MAC address and vendor
+            mac_match = re.search(r'MAC Address: ([0-9A-Fa-f:]{17}) \(([^)]+)\)', result.stdout)
             if mac_match:
                 scan_result["addresses"]["mac"] = mac_match.group(1)
+                scan_result["vendor"] = mac_match.group(2)
+            
+            # Extract response time
+            response_time_match = re.search(r'(\d+\.\d+)s latency', result.stdout)
+            if response_time_match:
+                scan_result["response_time"] = float(response_time_match.group(1))
+            
+            # Extract TTL
+            ttl_match = re.search(r'TTL=(\d+)', result.stdout)
+            if ttl_match:
+                scan_result["ttl"] = int(ttl_match.group(1))
             
             # Extract OS information
             os_match = re.search(r'Running: ([^,]+)', result.stdout)
             if os_match:
                 scan_result["os_info"]["os_name"] = os_match.group(1).strip()
             
-            # Extract open ports
-            port_matches = re.findall(r'(\d+)/(\w+)\s+open\s+(\w+)', result.stdout)
-            for port, protocol, service in port_matches:
-                scan_result["ports"].append({
+            # Extract OS details
+            os_details_match = re.search(r'OS details: ([^,]+)', result.stdout)
+            if os_details_match:
+                scan_result["os_info"]["os_details"] = os_details_match.group(1).strip()
+            
+            # Extract open ports with enhanced information
+            port_matches = re.findall(r'(\d+)/(\w+)\s+open\s+(\w+)(?:\s+([^,]+))?', result.stdout)
+            for port, protocol, service, version in port_matches:
+                port_info = {
                     "port": int(port),
                     "protocol": protocol,
                     "service": service,
-                    "state": "open"
-                })
+                    "state": "open",
+                    "version": version.strip() if version else None
+                }
+                scan_result["ports"].append(port_info)
+                scan_result["services"].append(service)
+            
+            # Determine device type based on open ports and services
+            scan_result["device_type"] = self._determine_device_type(scan_result["ports"], scan_result["services"])
+            
+            # Try to get additional network information
+            try:
+                hostname = socket.gethostbyaddr(ip)[0] if not scan_result["hostname"] else scan_result["hostname"]
+                scan_result["network_info"]["reverse_dns"] = hostname
+            except:
+                pass
             
             return scan_result
             
@@ -338,3 +371,208 @@ class ScanService:
             "total_assets": total_assets,
             "recent_scans": recent_scans
         }
+
+    def _determine_device_type(self, ports: List[Dict], services: List[str]) -> str:
+        """Determine device type based on open ports and services."""
+        if not ports and not services:
+            return "Unknown"
+        
+        # Common service patterns for device identification
+        web_services = {'http', 'https', 'apache', 'nginx', 'iis'}
+        ssh_services = {'ssh', 'openssh'}
+        ftp_services = {'ftp', 'vsftpd', 'proftpd'}
+        smtp_services = {'smtp', 'postfix', 'sendmail'}
+        dns_services = {'dns', 'bind', 'named'}
+        database_services = {'mysql', 'postgresql', 'mongodb', 'redis'}
+        printer_services = {'ipp', 'lpd', 'cups'}
+        router_services = {'telnet', 'snmp'}
+        
+        service_set = set(services)
+        
+        if web_services.intersection(service_set):
+            return "Web Server"
+        elif ssh_services.intersection(service_set):
+            return "Server/Workstation"
+        elif ftp_services.intersection(service_set):
+            return "File Server"
+        elif smtp_services.intersection(service_set):
+            return "Mail Server"
+        elif dns_services.intersection(service_set):
+            return "DNS Server"
+        elif database_services.intersection(service_set):
+            return "Database Server"
+        elif printer_services.intersection(service_set):
+            return "Printer"
+        elif router_services.intersection(service_set):
+            return "Network Device"
+        elif any(port['port'] in [80, 443, 8080, 8443] for port in ports):
+            return "Web Server"
+        elif any(port['port'] == 22 for port in ports):
+            return "Server/Workstation"
+        elif any(port['port'] in [21, 20] for port in ports):
+            return "File Server"
+        elif any(port['port'] == 25 for port in ports):
+            return "Mail Server"
+        elif any(port['port'] == 53 for port in ports):
+            return "DNS Server"
+        else:
+            return "Network Device"
+
+    def discover_lan_network(self, max_depth: int = 2) -> Dict[str, Any]:
+        """Discover devices on the local network with configurable depth."""
+        import subprocess
+        import ipaddress
+        import socket
+        import concurrent.futures
+        import threading
+        
+        try:
+            # Get local network information
+            local_ip = self._get_local_ip()
+            network = self._get_local_network(local_ip)
+            
+            if not network:
+                return {"error": "Could not determine local network"}
+            
+            # Generate IP list based on depth (reduced scope for performance)
+            ips_to_scan = self._generate_network_ips_optimized(network, max_depth)
+            
+            # Perform discovery scan with concurrent processing
+            discovery_results = []
+            
+            # Use ThreadPoolExecutor for concurrent scanning
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                # Submit all scan tasks
+                future_to_ip = {
+                    executor.submit(self._perform_quick_scan, ip): ip 
+                    for ip in ips_to_scan
+                }
+                
+                # Collect results as they complete
+                for future in concurrent.futures.as_completed(future_to_ip, timeout=60):
+                    try:
+                        scan_result = future.result()
+                        if scan_result and scan_result.get("status") == "completed":
+                            discovery_results.append(scan_result)
+                    except Exception as e:
+                        # Skip failed scans
+                        continue
+            
+            return {
+                "network": str(network),
+                "local_ip": local_ip,
+                "max_depth": max_depth,
+                "total_ips_scanned": len(ips_to_scan),
+                "live_devices": len(discovery_results),
+                "devices": discovery_results,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+        except Exception as e:
+            return {"error": f"LAN discovery failed: {str(e)}"}
+
+    def _get_local_ip(self) -> str:
+        """Get the local IP address."""
+        try:
+            # Connect to a remote address to determine local IP
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            return local_ip
+        except:
+            return "127.0.0.1"
+
+    def _get_local_network(self, local_ip: str) -> Optional[ipaddress.IPv4Network]:
+        """Get the local network based on IP address."""
+        try:
+            # Assume /24 network for most cases
+            ip_obj = ipaddress.IPv4Address(local_ip)
+            network = ipaddress.IPv4Network(f"{ip_obj}/24", strict=False)
+            return network
+        except:
+            return None
+
+    def _generate_network_ips_optimized(self, network: ipaddress.IPv4Network, max_depth: int) -> List[str]:
+        """Generate IP addresses to scan based on network and depth (optimized for performance)."""
+        ips = []
+        
+        if max_depth == 1:
+            # Scan only the local subnet (sample every 4th IP for performance)
+            for i, ip in enumerate(network.hosts()):
+                if i % 4 == 0:  # Sample every 4th IP
+                    ips.append(str(ip))
+        elif max_depth == 2:
+            # Scan local subnet (sample every 2nd IP) and adjacent subnets (sample every 4th IP)
+            for i, ip in enumerate(network.hosts()):
+                if i % 2 == 0:  # Sample every 2nd IP
+                    ips.append(str(ip))
+            
+            # Add adjacent subnets (sampled)
+            try:
+                # Previous subnet
+                prev_network = ipaddress.IPv4Network(f"{network.network_address - 256}/24", strict=False)
+                for i, ip in enumerate(prev_network.hosts()):
+                    if i % 4 == 0:  # Sample every 4th IP
+                        ips.append(str(ip))
+                
+                # Next subnet
+                next_network = ipaddress.IPv4Network(f"{network.network_address + 256}/24", strict=False)
+                for i, ip in enumerate(next_network.hosts()):
+                    if i % 4 == 0:  # Sample every 4th IP
+                        ips.append(str(ip))
+            except:
+                pass
+        else:
+            # For higher depths, scan multiple subnets (heavily sampled)
+            base_network = ipaddress.IPv4Network(f"{network.network_address}/16", strict=False)
+            for i, ip in enumerate(base_network.hosts()):
+                if i % 16 == 0:  # Sample every 16th IP for performance
+                    ips.append(str(ip))
+        
+        return ips[:100]  # Limit to 100 IPs maximum for performance
+
+    def _perform_quick_scan(self, ip: str) -> Dict[str, Any]:
+        """Perform a quick ping scan on a single IP address."""
+        import subprocess
+        
+        try:
+            # Use ping for quick host discovery
+            result = subprocess.run(
+                ["ping", "-c", "1", "-W", "1", ip], 
+                capture_output=True, 
+                text=True, 
+                timeout=3
+            )
+            
+            if result.returncode == 0:
+                return {
+                    "ip": ip,
+                    "status": "completed",
+                    "hostname": None,
+                    "device_type": "Network Device",
+                    "response_time": None,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            else:
+                return {
+                    "ip": ip,
+                    "status": "failed",
+                    "error": "Host unreachable",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+        except subprocess.TimeoutExpired:
+            return {
+                "ip": ip,
+                "status": "failed",
+                "error": "Timeout",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        except Exception as e:
+            return {
+                "ip": ip,
+                "status": "failed",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }

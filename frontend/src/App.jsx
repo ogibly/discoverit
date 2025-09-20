@@ -5,9 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
-import WorkflowDashboard from './components/WorkflowDashboard';
-import AssetDiscovery from './components/AssetDiscovery';
-import UnifiedWorkflow from './components/UnifiedWorkflow';
+import DiscoveryDashboard from './components/DiscoveryDashboard';
 import AssetManagement from './components/AssetManagement';
 import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
@@ -15,7 +13,6 @@ import OperationsExecution from './components/OperationsExecution';
 import OperationsManagement from './components/OperationsManagement';
 import Settings from './components/Settings';
 import CredentialsManager from './components/CredentialsManager';
-import ScannerManager from './components/ScannerManager';
 import UserManagement from './components/UserManagement';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
@@ -30,19 +27,10 @@ const Navigation = () => {
   const workflowSteps = [
     { 
       path: '/', 
-      label: 'Workflow', 
-      icon: '🏠', 
-      permission: 'assets:read', 
-      description: 'Unified discovery and asset management',
-      step: 0,
-      category: 'workflow'
-    },
-    { 
-      path: '/discovery', 
       label: 'Discovery', 
       icon: '🔍', 
-      permission: 'discovery:read', 
-      description: 'Discover network devices',
+      permission: 'assets:read', 
+      description: 'Network discovery and asset management',
       step: 1,
       category: 'workflow'
     },
@@ -53,15 +41,6 @@ const Navigation = () => {
       permission: 'assets:read', 
       description: 'Manage discovered assets',
       step: 2,
-      category: 'workflow'
-    },
-    { 
-      path: '/operations', 
-      label: 'Operations', 
-      icon: '⚙️', 
-      permission: 'operations:read', 
-      description: 'Run operations on assets',
-      step: 3,
       category: 'workflow'
     }
   ];
@@ -81,14 +60,6 @@ const Navigation = () => {
       icon: '🔐', 
       permission: 'credentials:read', 
       description: 'Manage authentication credentials',
-      category: 'management'
-    },
-    { 
-      path: '/scanners', 
-      label: 'Scanners', 
-      icon: '🖥️', 
-      permission: 'scanners:read', 
-      description: 'Manage scanner services',
       category: 'management'
     },
     { 
@@ -303,12 +274,7 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={
             <ProtectedRoute requiredPermission="assets:read">
-              <UnifiedWorkflow />
-            </ProtectedRoute>
-          } />
-          <Route path="/discovery" element={
-            <ProtectedRoute requiredPermission="discovery:read">
-              <UnifiedWorkflow />
+              <DiscoveryDashboard />
             </ProtectedRoute>
           } />
           <Route path="/assets" element={
@@ -321,11 +287,6 @@ const AppContent = () => {
               <AssetDetail />
             </ProtectedRoute>
           } />
-                           <Route path="/operations" element={
-                               <ProtectedRoute requiredPermission="operations:read">
-                                   <OperationsExecution />
-                               </ProtectedRoute>
-                           } />
                            <Route path="/operations-management" element={
                                <ProtectedRoute requiredPermission="admin">
                                    <OperationsManagement />
@@ -334,11 +295,6 @@ const AppContent = () => {
           <Route path="/credentials" element={
             <ProtectedRoute requiredPermission="credentials:read">
               <CredentialsManager />
-            </ProtectedRoute>
-          } />
-          <Route path="/scanners" element={
-            <ProtectedRoute requiredPermission="scanners:read">
-              <ScannerManager />
             </ProtectedRoute>
           } />
           <Route path="/users" element={
@@ -351,6 +307,7 @@ const AppContent = () => {
               <Settings />
             </ProtectedRoute>
           } />
+          <Route path="/scanners" element={<Navigate to="/settings" replace />} />
           <Route path="/workflow" element={<WorkflowGuide />} />
         </Routes>
 			</div>

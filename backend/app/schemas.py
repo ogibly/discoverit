@@ -357,6 +357,7 @@ class ScannerConfigBase(BaseModel):
     url: str = Field(..., description="Scanner service URL")
     subnets: Optional[List[str]] = None
     is_active: bool = True
+    is_default: bool = False
     max_concurrent_scans: int = Field(3, ge=1, le=10)
     timeout_seconds: int = Field(300, ge=30, le=3600)
 
@@ -368,6 +369,7 @@ class ScannerConfigUpdate(BaseModel):
     url: Optional[str] = None
     subnets: Optional[List[str]] = None
     is_active: Optional[bool] = None
+    is_default: Optional[bool] = None
     max_concurrent_scans: Optional[int] = Field(None, ge=1, le=10)
     timeout_seconds: Optional[int] = Field(None, ge=30, le=3600)
 
@@ -394,6 +396,7 @@ class SettingsBase(BaseModel):
     scan_timeout: int = Field(300, ge=30, le=3600)
     max_concurrent_scans: int = Field(5, ge=1, le=20)
     auto_discovery_enabled: bool = True
+    max_discovery_depth: int = Field(3, ge=1, le=5)
     
     # Notification settings
     email_notifications: bool = False
@@ -415,6 +418,7 @@ class SettingsUpdate(BaseModel):
     scan_timeout: Optional[int] = Field(None, ge=30, le=3600)
     max_concurrent_scans: Optional[int] = Field(None, ge=1, le=20)
     auto_discovery_enabled: Optional[bool] = None
+    max_discovery_depth: Optional[int] = Field(None, ge=1, le=5)
     email_notifications: Optional[bool] = None
     email_smtp_server: Optional[str] = None
     email_smtp_port: Optional[int] = Field(None, ge=1, le=65535)

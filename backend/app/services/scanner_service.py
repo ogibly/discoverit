@@ -33,11 +33,18 @@ class ScannerService:
                 except ValueError:
                     raise ValueError(f"Invalid subnet format: {subnet}")
         
+        # If this is being set as default, unset any existing default
+        if config_data.is_default:
+            self.db.query(ScannerConfig).filter(ScannerConfig.is_default == True).update(
+                {"is_default": False}
+            )
+        
         config = ScannerConfig(
             name=config_data.name,
             url=config_data.url,
             subnets=config_data.subnets,
             is_active=config_data.is_active,
+            is_default=config_data.is_default,
             max_concurrent_scans=config_data.max_concurrent_scans,
             timeout_seconds=config_data.timeout_seconds
         )
@@ -54,6 +61,12 @@ class ScannerService:
     def get_scanner_config_by_name(self, name: str) -> Optional[ScannerConfig]:
         """Get a scanner configuration by name."""
         return self.db.query(ScannerConfig).filter(ScannerConfig.name == name).first()
+    
+    def get_default_scanner(self) -> Optional[ScannerConfig]:
+        """Get the default scanner configuration."""
+        return self.db.query(ScannerConfig).filter(
+            and_(ScannerConfig.is_default == True, ScannerConfig.is_active == True)
+        ).first()
 
     def get_scanner_configs(
         self,
@@ -98,6 +111,12 @@ class ScannerService:
                     ipaddress.ip_network(subnet, strict=False)
                 except ValueError:
                     raise ValueError(f"Invalid subnet format: {subnet}")
+        
+        # If this is being set as default, unset any existing default
+        if config_data.is_default and config_data.is_default != config.is_default:
+            self.db.query(ScannerConfig).filter(
+                and_(ScannerConfig.is_default == True, ScannerConfig.id != config_id)
+            ).update({"is_default": False})
         
         # Update fields
         update_data = config_data.dict(exclude_unset=True)
@@ -304,3 +323,39 @@ class ScannerService:
             "message": f"Synced {len(scanner_list)} scanner configurations to settings",
             "scanners": scanner_list
         }
+    
+    def get_best_scanner_for_target(self, target: str) -> Optional[ScannerConfig]:
+        """
+        Get the best scanner for a given target IP or subnet.
+        Returns the scanner that handles the specific subnet, or the default scanner as fallback.
+        """
+        try:
+            # Parse the target to get the network
+            if '/' in target:
+                target_network = ipaddress.ip_network(target, strict=False)
+            else:
+                # Single IP - get the /32 network
+                target_network = ipaddress.ip_network(f"{target}/32", strict=False)
+            
+            # First, try to find a scanner that handles this specific subnet
+            active_scanners = self.db.query(ScannerConfig).filter(
+                ScannerConfig.is_active == True
+            ).all()
+            
+            for scanner in active_scanners:
+                if scanner.subnets:
+                    for subnet_str in scanner.subnets:
+                        try:
+                            scanner_network = ipaddress.ip_network(subnet_str, strict=False)
+                            # Check if target network is contained within scanner's subnet
+                            if target_network.subnet_of(scanner_network) or target_network == scanner_network:
+                                return scanner
+                        except ValueError:
+                            continue
+            
+            # If no specific scanner found, return the default scanner
+            return self.get_default_scanner()
+            
+        except ValueError:
+            # Invalid target format, return default scanner
+            return self.get_default_scanner()

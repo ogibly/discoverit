@@ -14,7 +14,9 @@ const AssetList = () => {
     loading,
     toggleAssetSelection,
     selectAllAssets,
-    setSelectedAsset
+    setSelectedAsset,
+    deleteAsset,
+    bulkDeleteAssets
   } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +49,36 @@ const AssetList = () => {
   const handleSelectAll = () => {
     const assetIds = paginatedAssets.map(asset => asset.id);
     selectAllAssets(assetIds);
+  };
+
+  const handleDeleteAsset = async (assetId) => {
+    if (!confirm('Are you sure you want to delete this asset?')) return;
+    
+    try {
+      await deleteAsset(assetId);
+    } catch (error) {
+      console.error('Failed to delete asset:', error);
+      alert('Failed to delete asset: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedAssets.length === 0) {
+      alert('Please select assets to delete');
+      return;
+    }
+    
+    const confirmMessage = `Are you sure you want to delete ${selectedAssets.length} selected asset(s)? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) return;
+    
+    try {
+      await bulkDeleteAssets(selectedAssets);
+      // Clear selection after successful deletion
+      selectAllAssets([]);
+    } catch (error) {
+      console.error('Failed to delete assets:', error);
+      alert('Failed to delete assets: ' + (error.response?.data?.detail || error.message));
+    }
   };
 
   const getStatusBadge = (asset) => {
@@ -99,9 +131,19 @@ const AssetList = () => {
               className="w-64"
             />
             {selectedAssets.length > 0 && (
-              <Button variant="outline" size="sm">
-                {selectedAssets.length} selected
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm">
+                  {selectedAssets.length} selected
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Delete Selected
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -114,7 +156,7 @@ const AssetList = () => {
         ) : (
           <>
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200">
@@ -123,7 +165,7 @@ const AssetList = () => {
                         type="checkbox"
                         checked={allSelected}
                         onChange={handleSelectAll}
-                        className="rounded border-slate-300"
+                        className="rounded border-slate-300 dark:border-slate-600"
                       />
                     </th>
                     <th className="text-left p-3 font-medium text-slate-600">Name</th>
@@ -132,6 +174,7 @@ const AssetList = () => {
                     <th className="text-left p-3 font-medium text-slate-600">OS</th>
                     <th className="text-left p-3 font-medium text-slate-600">Status</th>
                     <th className="text-left p-3 font-medium text-slate-600">Last Seen</th>
+                    <th className="text-left p-3 font-medium text-slate-600">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -149,7 +192,7 @@ const AssetList = () => {
                           type="checkbox"
                           checked={selectedAssets.includes(asset.id)}
                           onChange={() => toggleAssetSelection(asset.id)}
-                          className="rounded border-slate-300"
+                          className="rounded border-slate-300 dark:border-slate-600"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </td>
@@ -189,6 +232,19 @@ const AssetList = () => {
                         <div className="text-sm text-slate-500">
                           {getLastSeenText(asset.last_seen)}
                         </div>
+                      </td>
+                      <td className="p-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteAsset(asset.id);
+                          }}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          Delete
+                        </Button>
                       </td>
                     </tr>
                   ))}

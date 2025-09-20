@@ -52,6 +52,7 @@ const UnifiedWorkflow = () => {
     autoAssignLabels: [],
     autoAssignGroups: []
   });
+  const [activeScan, setActiveScan] = useState(null);
 
   // Asset management state
   const [showAssetModal, setShowAssetModal] = useState(false);
@@ -96,9 +97,43 @@ const UnifiedWorkflow = () => {
       operations: operations.length > 0
     };
     setWorkflowProgress(progress);
+    
+    // Check for active scans
+    checkActiveScan();
+    
+    // Set up periodic check for active scans (every 5 seconds)
+    const interval = setInterval(checkActiveScan, 5000);
+    
+    return () => clearInterval(interval);
   }, [assets, assetGroups, operations, scanStatistics, activeScanTask]);
 
+  const checkActiveScan = async () => {
+    try {
+      const response = await fetch('/api/v2/scan-tasks/active', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const scanData = await response.json();
+        setActiveScan(scanData);
+      } else {
+        setActiveScan(null);
+      }
+    } catch (error) {
+      console.error('Failed to check active scan:', error);
+      setActiveScan(null);
+    }
+  };
+
   const handleStartDiscovery = async () => {
+    // Check if there's already an active scan
+    if (activeScan) {
+      alert(`Another scan is already running: "${activeScan.name}". Please wait for it to complete or cancel it first.`);
+      return;
+    }
+
     try {
       const scanData = {
         name: discoveryData.name || `Discovery: ${discoveryData.target}`,
@@ -111,9 +146,39 @@ const UnifiedWorkflow = () => {
       setShowDiscoveryModal(false);
       resetDiscoveryData();
       setCurrentStep(2); // Move to assets step
+      checkActiveScan(); // Refresh active scan status
     } catch (error) {
       console.error('Failed to start discovery:', error);
       alert('Failed to start discovery: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleCancelScan = async () => {
+    if (!activeScan) return;
+    
+    if (!confirm(`Are you sure you want to cancel the scan "${activeScan.name}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v2/scan-tasks/${activeScan.id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setActiveScan(null);
+        alert('Scan cancelled successfully');
+      } else {
+        const error = await response.json();
+        alert('Failed to cancel scan: ' + (error.detail || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Failed to cancel scan:', error);
+      alert('Failed to cancel scan: ' + error.message);
     }
   };
 
@@ -286,6 +351,45 @@ const UnifiedWorkflow = () => {
           <Progress value={calculateOverallProgress()} className="h-3" />
         </div>
       </div>
+
+      {/* Active Scan Status */}
+      {activeScan && (
+        <Card className="mb-6 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="text-2xl">🔍</div>
+                <div>
+                  <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+                    {activeScan.name}
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Target: {activeScan.target} • Progress: {activeScan.progress || 0}%
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  {activeScan.status === 'running' ? 'Running...' : activeScan.status}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelScan}
+                  className="border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800"
+                >
+                  Cancel Scan
+                </Button>
+              </div>
+            </div>
+            {activeScan.progress > 0 && (
+              <div className="mt-3">
+                <Progress value={activeScan.progress} className="h-2" />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {viewMode === 'workflow' ? (
         /* Workflow Steps */

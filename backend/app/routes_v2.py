@@ -20,7 +20,7 @@ from .auth import (
     require_settings_read, require_settings_write, get_auth_service
 )
 from . import schemas
-from .models import User
+from .models import User, Asset
 import socket
 import ipaddress
 
@@ -65,6 +65,22 @@ def login(
         "token_type": "bearer",
         "expires_in": 30 * 60,  # 30 minutes
         "user": user
+    }
+
+@router.post("/auth/refresh")
+def refresh_token(
+    current_user: User = Depends(get_current_active_user),
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """Refresh access token."""
+    # Create new access token
+    access_token = auth_service.create_access_token(current_user.id)
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "expires_in": 30 * 60,  # 30 minutes
+        "user": current_user
     }
 
 @router.post("/auth/logout")
@@ -381,6 +397,79 @@ def cancel_scan_task(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Scan task not found or not running")
     return {"message": "Scan task cancelled successfully"}
 
+@router.get("/scan-tasks/{task_id}/results")
+def get_scan_results(task_id: int, db: Session = Depends(get_db)):
+    """Get scan results for a completed scan task."""
+    service = ScanService(db)
+    task = service.get_scan_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Scan task not found")
+    
+    # Get scans for this task
+    from .models import Scan
+    scans = db.query(Scan).filter(Scan.scan_task_id == task_id).all()
+    
+    # Get assets from the scans
+    results = []
+    for scan in scans:
+        asset = scan.asset
+        if asset:
+            results.append({
+                "id": asset.id,
+                "ip": asset.primary_ip,
+                "hostname": asset.hostname,
+                "mac": asset.mac_address,
+                "os": asset.os_name,
+                "vendor": asset.manufacturer,
+                "device_type": asset.model,
+                "status": "up" if asset.is_active else "down",
+                "last_seen": asset.last_seen,
+                "discovered_at": asset.created_at,
+                "scan_timestamp": scan.timestamp,
+                "scan_status": scan.status
+            })
+    
+    return {
+        "scan_task_id": task_id,
+        "scan_name": task.name,
+        "scan_status": task.status,
+        "total_devices": len(results),
+        "results": results
+    }
+
+@router.post("/discovery/lan")
+async def discover_lan_network(
+    max_depth: int = Query(2, ge=1, le=5, description="Maximum network depth to scan"),
+    current_user: User = Depends(require_discovery_write),
+    db: Session = Depends(get_db)
+):
+    """Discover devices on the local network with configurable depth."""
+    import asyncio
+    import concurrent.futures
+    
+    def run_discovery():
+        service = ScanService(db)
+        return service.discover_lan_network(max_depth)
+    
+    try:
+        # Use asyncio.wait_for with a thread pool executor for timeout
+        loop = asyncio.get_event_loop()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            result = await asyncio.wait_for(
+                loop.run_in_executor(executor, run_discovery),
+                timeout=30.0
+            )
+        
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        
+        return result
+        
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=408, detail="LAN discovery operation timed out")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LAN discovery failed: {str(e)}")
+
 @router.get("/assets/{asset_id}/scans")
 def get_asset_scan_history(
     asset_id: int,
@@ -607,6 +696,47 @@ def update_settings(settings: schemas.SettingsUpdate, db: Session = Depends(get_
     service = AssetService(db)
     return service.update_settings(settings)
 
+@router.post("/awx/test-connection")
+def test_awx_connection(
+    awx_config: dict,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Test AWX Tower connection."""
+    try:
+        import requests
+        from requests.auth import HTTPBasicAuth
+        
+        awx_url = awx_config.get('awx_url', '').rstrip('/')
+        username = awx_config.get('awx_username', '')
+        password = awx_config.get('awx_password', '')
+        
+        if not awx_url or not username or not password:
+            raise HTTPException(status_code=400, detail="AWX URL, username, and password are required")
+        
+        # Test connection by making a simple API call
+        test_url = f"{awx_url}/api/v2/me/"
+        response = requests.get(
+            test_url,
+            auth=HTTPBasicAuth(username, password),
+            timeout=10,
+            verify=False  # In production, you might want to verify SSL
+        )
+        
+        if response.status_code == 200:
+            return {"success": True, "message": "AWX connection successful"}
+        else:
+            return {"success": False, "error": f"AWX returned status code: {response.status_code}"}
+            
+    except requests.exceptions.ConnectionError:
+        return {"success": False, "error": "Could not connect to AWX server"}
+    except requests.exceptions.Timeout:
+        return {"success": False, "error": "Connection timeout"}
+    except requests.exceptions.RequestException as e:
+        return {"success": False, "error": f"Request failed: {str(e)}"}
+    except Exception as e:
+        return {"success": False, "error": f"Unexpected error: {str(e)}"}
+
 # Utility routes
 @router.get("/suggest-subnet")
 def suggest_subnet():
@@ -654,6 +784,15 @@ def get_scanner_statistics(db: Session = Depends(get_db)):
     """Get statistics about scanner configurations."""
     service = ScannerService(db)
     return service.get_scanner_statistics()
+
+@router.get("/scanners/default", response_model=schemas.ScannerConfig)
+def get_default_scanner(db: Session = Depends(get_db)):
+    """Get the default scanner configuration."""
+    service = ScannerService(db)
+    config = service.get_default_scanner()
+    if not config:
+        raise HTTPException(status_code=404, detail="No default scanner configured")
+    return config
 
 @router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)
 def get_scanner_config(config_id: int, db: Session = Depends(get_db)):

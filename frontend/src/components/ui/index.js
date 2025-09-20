@@ -1,7 +1,11 @@
 export { Badge } from './Badge';
 export { Button } from './Button';
 export { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from './Card';
+export { CollapsibleGuidance } from './CollapsibleGuidance';
+export { HelpIcon } from './HelpIcon';
 export { Input } from './Input';
 export { Modal } from './Modal';
+export { ProgressiveDisclosure } from './ProgressiveDisclosure';
 export { Progress } from './Progress';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
+export { Tooltip } from './Tooltip';

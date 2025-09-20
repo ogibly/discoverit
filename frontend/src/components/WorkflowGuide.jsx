@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Badge } from './ui/Badge';
+import { HelpIcon, CollapsibleGuidance, ProgressiveDisclosure } from './ui';
 
 const WorkflowGuide = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  
   const workflowSteps = [
     {
       step: 1,
@@ -113,62 +116,61 @@ const WorkflowGuide = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">DiscoverIT Workflow Guide</h1>
-        <p className="text-slate-600">Complete workflow for network device discovery and management</p>
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+          DiscoverIT Workflow Guide
+          <HelpIcon 
+            content="This guide walks you through the complete workflow for network device discovery and management. Click on each step to learn more details."
+            className="ml-2"
+          />
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
+          Complete workflow for network device discovery and management
+        </p>
       </div>
 
-      {/* Workflow Steps */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {workflowSteps.map((step, index) => (
-          <Card key={step.step} className="relative">
-            <CardHeader>
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">{step.icon}</span>
-                </div>
-                <div>
-                  <CardTitle className="flex items-center space-x-2">
-                    <span>Step {step.step}</span>
-                    <Badge variant="outline">{step.screen}</Badge>
-                  </CardTitle>
-                  <p className="text-sm text-slate-600">{step.description}</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {step.details.map((detail, idx) => (
-                  <li key={idx} className="flex items-start space-x-2 text-sm">
-                    <span className="text-blue-500 mt-1">•</span>
-                    <span>{detail}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Compact Workflow Steps */}
+      <ProgressiveDisclosure
+        steps={workflowSteps.map(step => ({
+          title: `Step ${step.step}: ${step.title}`,
+          description: step.description,
+          icon: step.icon,
+          details: step.details,
+          action: () => {
+            // Navigate to the appropriate screen
+            console.log(`Navigate to ${step.screen}`);
+          },
+          actionText: `Go to ${step.screen}`
+        }))}
+        currentStep={currentStep}
+        onStepChange={setCurrentStep}
+        variant="primary"
+        showProgress={true}
+      />
 
       {/* Operation Types */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Operation Types</CardTitle>
-          <p className="text-slate-600">Different ways to execute operations on your assets</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <CollapsibleGuidance
+        title="Operation Types"
+        icon="⚙️"
+        variant="info"
+        defaultOpen={false}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Different ways to execute operations on your assets. Each type serves specific use cases:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {operationTypes.map((opType, index) => (
-              <div key={index} className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-2xl">{opType.icon}</span>
-                  <h3 className="font-semibold">{opType.type}</h3>
+              <div key={index} className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-lg">{opType.icon}</span>
+                  <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{opType.type}</h4>
                 </div>
-                <p className="text-sm text-slate-600">{opType.description}</p>
-                <ul className="space-y-1">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{opType.description}</p>
+                <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
                   {opType.details.map((detail, idx) => (
-                    <li key={idx} className="flex items-start space-x-2 text-xs">
-                      <span className="text-blue-500 mt-1">•</span>
+                    <li key={idx} className="flex items-start space-x-1">
+                      <span className="text-blue-500 mt-0.5">•</span>
                       <span>{detail}</span>
                     </li>
                   ))}
@@ -176,63 +178,69 @@ const WorkflowGuide = () => {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGuidance>
 
       {/* Screen Clarifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Screen Clarifications</CardTitle>
-          <p className="text-slate-600">Understanding the differences between similar screens</p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {screenClarifications.map((clarification, index) => (
-              <div key={index} className="border-l-4 border-blue-500 pl-4">
-                <h3 className="font-semibold text-slate-900">{clarification.screen}</h3>
-                <p className="text-sm text-slate-600 mt-1">{clarification.clarification}</p>
-                <div className="mt-2 p-2 bg-blue-50 rounded">
-                  <p className="text-xs text-blue-800">
-                    <strong>Recommendation:</strong> {clarification.recommendation}
-                  </p>
-                </div>
+      <CollapsibleGuidance
+        title="Screen Clarifications"
+        icon="💡"
+        variant="warning"
+        defaultOpen={false}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Understanding the differences between similar screens to avoid confusion:
+          </p>
+          {screenClarifications.map((clarification, index) => (
+            <div key={index} className="border-l-4 border-yellow-500 pl-4 py-2">
+              <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{clarification.screen}</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{clarification.clarification}</p>
+              <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
+                <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                  <strong>Recommendation:</strong> {clarification.recommendation}
+                </p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          ))}
+        </div>
+      </CollapsibleGuidance>
 
       {/* Quick Start */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Start</CardTitle>
-          <p className="text-slate-600">Get started with DiscoverIT in 4 simple steps</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl mb-2">🔍</div>
-              <h3 className="font-semibold mb-1">1. Discover</h3>
-              <p className="text-xs text-slate-600">Scan your network to find devices</p>
+      <CollapsibleGuidance
+        title="Quick Start Guide"
+        icon="🚀"
+        variant="success"
+        defaultOpen={true}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Get started with DiscoverIT in 4 simple steps:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-xl mb-1">🔍</div>
+              <h4 className="font-semibold mb-1 text-sm">1. Discover</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Scan your network to find devices</p>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl mb-2">🏠</div>
-              <h3 className="font-semibold mb-1">2. Review</h3>
-              <p className="text-xs text-slate-600">Check discovered assets</p>
+            <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="text-xl mb-1">🏠</div>
+              <h4 className="font-semibold mb-1 text-sm">2. Review</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Check discovered assets</p>
             </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl mb-2">📁</div>
-              <h3 className="font-semibold mb-1">3. Group</h3>
-              <p className="text-xs text-slate-600">Organize assets into groups</p>
+            <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <div className="text-xl mb-1">📁</div>
+              <h4 className="font-semibold mb-1 text-sm">3. Group</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Organize assets into groups</p>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl mb-2">⚙️</div>
-              <h3 className="font-semibold mb-1">4. Operate</h3>
-              <p className="text-xs text-slate-600">Run operations on assets</p>
+            <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <div className="text-xl mb-1">⚙️</div>
+              <h4 className="font-semibold mb-1 text-sm">4. Operate</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Run operations on assets</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleGuidance>
     </div>
   );
 };

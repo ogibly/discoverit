@@ -98,7 +98,7 @@ const OperationsExecution = () => {
   const activeOperations = operations.filter(op => op.is_active);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-screen overflow-y-auto p-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

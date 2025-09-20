@@ -1,0 +1,680 @@
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Input } from './ui/Input';
+import { Modal } from './ui/Modal';
+import { Progress } from './ui/Progress';
+import { HelpIcon, CollapsibleGuidance } from './ui';
+import { cn } from '../utils/cn';
+
+const DiscoveryInterface = () => {
+  const {
+    assets,
+    activeScanTask,
+    fetchAssets,
+    createScanTask,
+    cancelScanTask,
+    updateAsset,
+    selectedAssets,
+    toggleAssetSelection,
+    selectAllAssets
+  } = useApp();
+  
+  const { user } = useAuth();
+  
+  // State management
+  const [viewMode, setViewMode] = useState('devices'); // 'devices' or 'scan'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all'); // 'all', 'devices', 'assets'
+  const [sortBy, setSortBy] = useState('last_seen'); // 'last_seen', 'ip', 'hostname'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [showDeviceModal, setShowDeviceModal] = useState(false);
+  const [showScanModal, setShowScanModal] = useState(false);
+  
+  // Scan configuration
+  const [scanConfig, setScanConfig] = useState({
+    target: '',
+    scanType: 'comprehensive',
+    name: '',
+    description: ''
+  });
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
+
+  // Filter and sort devices
+  const filteredDevices = React.useMemo(() => {
+    let filtered = assets || [];
+    
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(device => 
+        device.hostname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.primary_ip?.includes(searchTerm) ||
+        device.mac_address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.os_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply type filter
+    if (filterType === 'devices') {
+      filtered = filtered.filter(device => !device.is_managed);
+    } else if (filterType === 'assets') {
+      filtered = filtered.filter(device => device.is_managed);
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'ip':
+          aValue = a.primary_ip || '';
+          bValue = b.primary_ip || '';
+          break;
+        case 'hostname':
+          aValue = a.hostname || '';
+          bValue = b.hostname || '';
+          break;
+        case 'last_seen':
+        default:
+          aValue = new Date(a.last_seen || a.created_at);
+          bValue = new Date(b.last_seen || b.created_at);
+          break;
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+    
+    return filtered;
+  }, [assets, searchTerm, filterType, sortBy, sortOrder]);
+
+  const handleStartScan = async () => {
+    if (!scanConfig.target.trim()) {
+      alert('Please enter a target IP range or subnet');
+      return;
+    }
+
+    try {
+      const scanData = {
+        name: scanConfig.name || `Scan ${new Date().toLocaleString()}`,
+        description: scanConfig.description || `Network scan of ${scanConfig.target}`,
+        target: scanConfig.target,
+        scan_type: scanConfig.scanType,
+        auto_create_assets: true
+      };
+
+      await createScanTask(scanData);
+      setShowScanModal(false);
+      setScanConfig({ target: '', scanType: 'comprehensive', name: '', description: '' });
+    } catch (error) {
+      console.error('Failed to start scan:', error);
+      alert('Failed to start scan: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleCancelScan = async () => {
+    if (!activeScanTask) return;
+    
+    if (!confirm(`Are you sure you want to cancel the scan "${activeScanTask.name}"?`)) {
+      return;
+    }
+
+    try {
+      await cancelScanTask(activeScanTask.id);
+    } catch (error) {
+      console.error('Failed to cancel scan:', error);
+      alert('Failed to cancel scan: ' + error.message);
+    }
+  };
+
+  const handleConvertToAsset = async (device) => {
+    try {
+      await updateAsset(device.id, { ...device, is_managed: true });
+      alert('Device converted to managed asset successfully!');
+    } catch (error) {
+      console.error('Failed to convert device to asset:', error);
+      alert('Failed to convert device to asset: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleViewDevice = (device) => {
+    setSelectedDevice(device);
+    setShowDeviceModal(true);
+  };
+
+  const getStatusColor = (device) => {
+    if (device.is_managed) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+  };
+
+  const getStatusText = (device) => {
+    return device.is_managed ? 'Managed Asset' : 'Discovered Device';
+  };
+
+  const formatLastSeen = (dateString) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  return (
+    <div className="space-y-6 p-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+            Network Discovery
+            <HelpIcon 
+              content="Use this interface to discover network devices and convert them to managed assets. Start with a scan, then review and organize your findings."
+              className="ml-2"
+            />
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
+            Discover and manage network devices and assets
+          </p>
+        </div>
+        <div className="flex space-x-3">
+          <Button
+            variant={viewMode === 'devices' ? 'default' : 'outline'}
+            onClick={() => setViewMode('devices')}
+          >
+            📱 Devices
+          </Button>
+          <Button
+            variant={viewMode === 'scan' ? 'default' : 'outline'}
+            onClick={() => setViewMode('scan')}
+          >
+            🔍 Scan
+          </Button>
+        </div>
+      </div>
+
+      {/* Compact Workflow Guidance */}
+      <CollapsibleGuidance
+        title="Discovery Workflow"
+        icon="🔄"
+        variant="primary"
+        defaultOpen={false}
+      >
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+            <div className="flex items-center space-x-2">
+              <span className="text-blue-500 font-bold">1.</span>
+              <span>Run network scan to discover devices</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-blue-500 font-bold">2.</span>
+              <span>Review discovered devices in the list</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-blue-500 font-bold">3.</span>
+              <span>Convert devices to managed assets</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-blue-500 font-bold">4.</span>
+              <span>Organize assets into groups for operations</span>
+            </div>
+          </div>
+        </div>
+      </CollapsibleGuidance>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Devices</p>
+                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{assets?.length || 0}</p>
+              </div>
+              <div className="text-3xl">📱</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">Managed Assets</p>
+                <p className="text-3xl font-bold text-green-900 dark:text-green-100">
+                  {assets?.filter(a => a.is_managed).length || 0}
+                </p>
+              </div>
+              <div className="text-3xl">✅</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-700">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Discovered Devices</p>
+                <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">
+                  {assets?.filter(a => !a.is_managed).length || 0}
+                </p>
+              </div>
+              <div className="text-3xl">🔍</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Active Scans</p>
+                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                  {activeScanTask ? 1 : 0}
+                </p>
+              </div>
+              <div className="text-3xl">⚡</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active Scan Status */}
+      {activeScanTask && (
+        <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="text-4xl animate-spin">🔄</div>
+                <div>
+                  <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100">
+                    {activeScanTask.name}
+                  </h3>
+                  <p className="text-blue-700 dark:text-blue-300">
+                    Target: {activeScanTask.target} • Status: {activeScanTask.status}
+                  </p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    Started: {new Date(activeScanTask.start_time).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelScan}
+                className="border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800"
+              >
+                Cancel Scan
+              </Button>
+            </div>
+            {activeScanTask.progress > 0 && (
+              <div className="mt-4">
+                <Progress value={activeScanTask.progress} className="h-3" />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {viewMode === 'devices' ? (
+        /* Devices View */
+        <div className="space-y-6">
+          {/* Controls */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search devices by IP, hostname, MAC, or OS..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="devices">Discovered Devices</option>
+                    <option value="assets">Managed Assets</option>
+                  </select>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="last_seen">Last Seen</option>
+                    <option value="ip">IP Address</option>
+                    <option value="hostname">Hostname</option>
+                  </select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  >
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Devices Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredDevices.map((device) => (
+              <Card key={device.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                        {device.hostname || device.primary_ip || 'Unknown Device'}
+                      </h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {device.primary_ip}
+                      </p>
+                    </div>
+                    <Badge className={getStatusColor(device)}>
+                      {getStatusText(device)}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    {device.mac_address && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">MAC:</span>
+                        <span className="text-slate-900 dark:text-slate-100 font-mono">
+                          {device.mac_address}
+                        </span>
+                      </div>
+                    )}
+                    {device.os_name && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">OS:</span>
+                        <span className="text-slate-900 dark:text-slate-100">
+                          {device.os_name}
+                        </span>
+                      </div>
+                    )}
+                    {device.manufacturer && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">Vendor:</span>
+                        <span className="text-slate-900 dark:text-slate-100">
+                          {device.manufacturer}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Last Seen:</span>
+                      <span className="text-slate-900 dark:text-slate-100">
+                        {formatLastSeen(device.last_seen)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDevice(device)}
+                      className="flex-1"
+                    >
+                      View Details
+                    </Button>
+                    {!device.is_managed && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleConvertToAsset(device)}
+                        className="flex-1"
+                      >
+                        Convert to Asset
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredDevices.length === 0 && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  No devices found
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                  {searchTerm || filterType !== 'all' 
+                    ? 'Try adjusting your search or filter criteria'
+                    : 'Start by running a network scan to discover devices'
+                  }
+                </p>
+                <Button onClick={() => setViewMode('scan')}>
+                  Start Network Scan
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ) : (
+        /* Scan View */
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-slate-900 dark:text-slate-100">Network Scan Configuration</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center">
+                  Target IP Range or Subnet *
+                  <HelpIcon 
+                    content="Enter IP ranges (192.168.1.0/24), ranges (10.0.0.1-10.0.0.100), or individual IPs (192.168.1.1). Use CIDR notation for subnets."
+                    className="ml-1"
+                    size="xs"
+                  />
+                </label>
+                <Input
+                  placeholder="e.g., 192.168.1.0/24, 10.0.0.1-10.0.0.100, or 192.168.1.1"
+                  value={scanConfig.target}
+                  onChange={(e) => setScanConfig({ ...scanConfig, target: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center">
+                  Scan Type
+                  <HelpIcon 
+                    content="Quick: Fast ping and port scan. Comprehensive: Includes OS detection and service identification. Deep: Full service enumeration and vulnerability scanning."
+                    className="ml-1"
+                    size="xs"
+                  />
+                </label>
+                <select
+                  value={scanConfig.scanType}
+                  onChange={(e) => setScanConfig({ ...scanConfig, scanType: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="quick">Quick Scan (Ping + Port Scan)</option>
+                  <option value="comprehensive">Comprehensive (OS Detection + Services)</option>
+                  <option value="deep">Deep Scan (Full Service Enumeration)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Scan Name
+                </label>
+                <Input
+                  placeholder="Optional: Give this scan a name"
+                  value={scanConfig.name}
+                  onChange={(e) => setScanConfig({ ...scanConfig, name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Optional: Describe this scan"
+                  value={scanConfig.description}
+                  onChange={(e) => setScanConfig({ ...scanConfig, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleStartScan}
+                  disabled={!scanConfig.target.trim() || activeScanTask}
+                  className="flex-1"
+                >
+                  {activeScanTask ? 'Scan in Progress...' : 'Start Network Scan'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setViewMode('devices')}
+                >
+                  View Devices
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Device Details Modal */}
+      <Modal
+        isOpen={showDeviceModal}
+        onClose={() => setShowDeviceModal(false)}
+        title="Device Details"
+        size="lg"
+      >
+        {selectedDevice && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Hostname
+                </label>
+                <p className="text-slate-900 dark:text-slate-100">
+                  {selectedDevice.hostname || 'Unknown'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  IP Address
+                </label>
+                <p className="text-slate-900 dark:text-slate-100 font-mono">
+                  {selectedDevice.primary_ip}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  MAC Address
+                </label>
+                <p className="text-slate-900 dark:text-slate-100 font-mono">
+                  {selectedDevice.mac_address || 'Unknown'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Operating System
+                </label>
+                <p className="text-slate-900 dark:text-slate-100">
+                  {selectedDevice.os_name || 'Unknown'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Manufacturer
+                </label>
+                <p className="text-slate-900 dark:text-slate-100">
+                  {selectedDevice.manufacturer || 'Unknown'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Model
+                </label>
+                <p className="text-slate-900 dark:text-slate-100">
+                  {selectedDevice.model || 'Unknown'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Status
+                </label>
+                <Badge className={getStatusColor(selectedDevice)}>
+                  {getStatusText(selectedDevice)}
+                </Badge>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Last Seen
+                </label>
+                <p className="text-slate-900 dark:text-slate-100">
+                  {formatLastSeen(selectedDevice.last_seen)}
+                </p>
+              </div>
+            </div>
+
+            {selectedDevice.description && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Description
+                </label>
+                <p className="text-slate-900 dark:text-slate-100">
+                  {selectedDevice.description}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+              {!selectedDevice.is_managed && (
+                <Button
+                  onClick={() => {
+                    handleConvertToAsset(selectedDevice);
+                    setShowDeviceModal(false);
+                  }}
+                  className="flex-1"
+                >
+                  Convert to Managed Asset
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => setShowDeviceModal(false)}
+                className="flex-1"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+};
+
+export default DiscoveryInterface;
+

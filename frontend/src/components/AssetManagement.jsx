@@ -19,6 +19,8 @@ const AssetManagement = () => {
     createAsset,
     updateAsset,
     deleteAsset,
+    bulkDeleteAssets,
+    createAssetGroup,
     fetchAssets
   } = useApp();
 
@@ -112,12 +114,11 @@ const AssetManagement = () => {
         asset_ids: selectedAssets.map(asset => asset.id)
       };
       
-      // This would need to be implemented in the AppContext
-      console.log('Creating group:', groupData);
-      alert('Group creation functionality needs to be implemented in the backend');
+      await createAssetGroup(groupData);
       
       setShowGroupModal(false);
       setGroupForm({ name: '', description: '' });
+      selectAllAssets([]);
     } catch (error) {
       console.error('Failed to create group:', error);
       alert('Failed to create group: ' + (error.response?.data?.detail || error.message));
@@ -142,6 +143,24 @@ const AssetManagement = () => {
       await deleteAsset(assetId);
     } catch (error) {
       console.error('Failed to delete asset:', error);
+    }
+  };
+
+  const handleBulkDeleteAssets = async () => {
+    if (selectedAssets.length === 0) {
+      alert('Please select assets to delete');
+      return;
+    }
+    
+    const confirmMessage = `Are you sure you want to delete ${selectedAssets.length} selected asset(s)? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) return;
+    
+    try {
+      await bulkDeleteAssets(selectedAssets);
+      selectAllAssets([]);
+    } catch (error) {
+      console.error('Failed to delete assets:', error);
+      alert('Failed to delete assets: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -182,80 +201,192 @@ const AssetManagement = () => {
   };
 
   const getOSIcon = (osName) => {
-    if (!osName) return '💻';
+    if (!osName) return (
+      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+        <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
     const os = osName.toLowerCase();
-    if (os.includes('windows')) return '🪟';
-    if (os.includes('linux')) return '🐧';
-    if (os.includes('mac')) return '🍎';
-    if (os.includes('ios')) return '📱';
-    if (os.includes('android')) return '🤖';
-    return '💻';
+    if (os.includes('windows')) return (
+      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+    if (os.includes('linux')) return (
+      <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+    if (os.includes('mac')) return (
+      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+        <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+    if (os.includes('ios') || os.includes('android')) return (
+      <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
+    return (
+      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+        <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
+        </svg>
+      </div>
+    );
   };
 
   return (
-    <div className="space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Asset Management</h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Manage your discovered network devices and create asset groups
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Button 
-            variant="outline"
-            onClick={() => setShowGroupModal(true)}
-            disabled={selectedAssets.length === 0}
-          >
-            Create Group ({selectedAssets.length})
-          </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
-            + Add Asset
-          </Button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      {/* Modern Header */}
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-700/60 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+                Asset Management
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm font-medium">
+                Professional asset inventory and management platform
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline"
+                onClick={() => setShowGroupModal(true)}
+                disabled={selectedAssets.length === 0}
+                className="px-4 py-2 font-medium transition-all duration-200 border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Create Group ({selectedAssets.length})
+              </Button>
+              {selectedAssets.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={handleBulkDeleteAssets}
+                  className="px-4 py-2 font-medium transition-all duration-200 border-red-300 dark:border-red-600 bg-red-50/80 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Selected ({selectedAssets.length})
+                </Button>
+              )}
+              <Button 
+                onClick={() => setShowCreateModal(true)}
+                className="px-4 py-2 font-medium transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Asset
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{assets.length}</div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Total Assets</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {assets.filter(a => a.is_managed).length}
-          </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Managed</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-            {assets.filter(a => !a.is_managed).length}
-          </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Unmanaged</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{selectedAssets.length}</div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Selected</div>
-        </Card>
-      </div>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-4 space-y-6">
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
+        {/* Modern Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl border border-slate-200/60 dark:border-slate-700/60 p-6 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Assets</p>
+                <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-2">{assets.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl border border-slate-200/60 dark:border-slate-700/60 p-6 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Managed</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
+                  {assets.filter(a => a.is_managed).length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl border border-slate-200/60 dark:border-slate-700/60 p-6 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Unmanaged</p>
+                <p className="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-2">
+                  {assets.filter(a => !a.is_managed).length}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl border border-slate-200/60 dark:border-slate-700/60 p-6 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Selected</p>
+                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">{selectedAssets.length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modern Filters */}
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl border border-slate-200/60 dark:border-slate-700/60 p-6 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
-              <Input
-                placeholder="Search assets by name, IP, hostname, or MAC..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <Input
+                  placeholder="Search assets by name, IP, hostname, or MAC..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
               >
                 <option value="all">All Assets</option>
                 <option value="managed">Managed Only</option>
@@ -263,109 +394,171 @@ const AssetManagement = () => {
               </select>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Asset List */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Assets ({filteredAssets.length})</CardTitle>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={handleSelectAll}
-                className="rounded border-slate-300"
-              />
-              <span className="text-sm text-slate-600">Select All</span>
+        {/* Modern Asset List */}
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+          <div className="p-6 border-b border-slate-200/60 dark:border-slate-700/60">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Assets</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{filteredAssets.length} assets found</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={handleSelectAll}
+                  className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Select All</span>
+              </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading.assets ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-slate-600 mt-2">Loading assets...</p>
-            </div>
-          ) : paginatedAssets.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <div className="text-4xl mb-2">🔍</div>
-              <p>No assets found. Start with network discovery!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {paginatedAssets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className={cn(
-                    "flex items-center space-x-4 p-4 border rounded-lg transition-colors",
-                    selectedAssets.includes(asset.id) 
-                      ? "border-blue-500 bg-blue-50" 
-                      : "border-slate-200 hover:border-slate-300"
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedAssets.includes(asset.id)}
-                    onChange={() => toggleAssetSelection(asset.id)}
-                    className="rounded border-slate-300"
-                  />
-                  
-                  <div className="text-2xl">
-                    {getOSIcon(asset.os_name)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold text-slate-900 truncate">
-                        {asset.name || asset.hostname || asset.primary_ip}
-                      </h3>
-                      <Badge className={getStatusColor(asset.is_managed)}>
-                        {asset.is_managed ? 'Managed' : 'Unmanaged'}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-slate-600 space-y-1">
-                      <div className="flex items-center space-x-4">
-                        <span>IP: {asset.primary_ip}</span>
-                        {asset.hostname && <span>Host: {asset.hostname}</span>}
-                        {asset.mac_address && <span>MAC: {asset.mac_address}</span>}
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        {asset.os_name && <span>OS: {asset.os_name}</span>}
-                        {asset.manufacturer && <span>Make: {asset.manufacturer}</span>}
-                        {asset.model && <span>Model: {asset.model}</span>}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditAsset(asset)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedAsset(asset)}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteAsset(asset.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      Delete
-                    </Button>
-                  </div>
+          
+          <div className="p-6 max-h-[calc(100vh-400px)] overflow-y-auto">
+            {loading.assets ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-slate-600 dark:text-slate-400 mt-4 font-medium">Loading assets...</p>
+              </div>
+            ) : paginatedAssets.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
-              ))}
-            </div>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">No assets found</h3>
+                <p className="text-slate-600 dark:text-slate-400">Start with network discovery to find devices!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {paginatedAssets.map((asset) => (
+                  <div
+                    key={asset.id}
+                    className={cn(
+                      "group relative bg-white dark:bg-slate-800 border rounded-xl transition-all duration-200 hover:shadow-md",
+                      selectedAssets.includes(asset.id) 
+                        ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/10 shadow-md" 
+                        : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                    )}
+                  >
+                    <div className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedAssets.includes(asset.id)}
+                          onChange={() => toggleAssetSelection(asset.id)}
+                          className="mt-1 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                        />
+                        
+                        <div className="flex-shrink-0">
+                          {getOSIcon(asset.os_name)}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">
+                                {asset.name || asset.hostname || asset.primary_ip}
+                              </h3>
+                              <Badge className={cn(
+                                "px-2 py-1 text-xs font-medium rounded-full",
+                                asset.is_managed 
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300" 
+                                  : "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+                              )}>
+                                {asset.is_managed ? 'Managed' : 'Unmanaged'}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditAsset(asset)}
+                                className="px-3 py-1.5 text-xs font-medium border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300"
+                              >
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedAsset(asset)}
+                                className="px-3 py-1.5 text-xs font-medium border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300"
+                              >
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteAsset(asset.id)}
+                                className="px-3 py-1.5 text-xs font-medium border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300"
+                              >
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div className="flex items-center space-x-2 text-sm">
+                              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                              <span className="text-slate-600 dark:text-slate-400">IP:</span>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{asset.primary_ip}</span>
+                            </div>
+                            {asset.hostname && (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span className="text-slate-600 dark:text-slate-400">Host:</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100">{asset.hostname}</span>
+                              </div>
+                            )}
+                            {asset.mac_address && (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                                <span className="text-slate-600 dark:text-slate-400">MAC:</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100">{asset.mac_address}</span>
+                              </div>
+                            )}
+                            {asset.os_name && (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                                <span className="text-slate-600 dark:text-slate-400">OS:</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100">{asset.os_name}</span>
+                              </div>
+                            )}
+                            {asset.manufacturer && (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                                <span className="text-slate-600 dark:text-slate-400">Make:</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100">{asset.manufacturer}</span>
+                              </div>
+                            )}
+                            {asset.model && (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+                                <span className="text-slate-600 dark:text-slate-400">Model:</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-100">{asset.model}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
           )}
           
           {/* Pagination */}
@@ -392,8 +585,9 @@ const AssetManagement = () => {
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
 
       {/* Create Asset Modal */}
       <Modal

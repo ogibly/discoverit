@@ -241,8 +241,12 @@ export function AppProvider({ children }) {
         ...options.headers
       };
       
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      // Get token from localStorage to ensure it's always current
+      const currentToken = localStorage.getItem('token');
+      if (currentToken) {
+        headers['Authorization'] = `Bearer ${currentToken}`;
+      } else {
+        console.warn('No authentication token found for API call to:', endpoint);
       }
       
       const response = await axios({
@@ -253,10 +257,55 @@ export function AppProvider({ children }) {
       return response.data;
     } catch (error) {
       console.error('API Error:', error);
+      console.error('Request URL:', `${API_BASE}${endpoint}`);
+      console.error('Request headers:', headers);
+      
+      if (error.response?.status === 401) {
+        // Token expired or invalid
+        console.warn('Token expired or invalid, redirecting to login');
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      } else if (error.response?.status === 403) {
+        console.error('403 Forbidden - Check authentication token and permissions');
+        // Try to refresh the token first
+        const currentToken = localStorage.getItem('token');
+        if (currentToken) {
+          try {
+            console.log('Attempting to refresh token...');
+            const refreshResponse = await axios.post(`${API_BASE}/auth/refresh`, {}, {
+              headers: {
+                'Authorization': `Bearer ${currentToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (refreshResponse.data.access_token) {
+              console.log('Token refreshed successfully');
+              localStorage.setItem('token', refreshResponse.data.access_token);
+              // Retry the original request with the new token
+              const retryResponse = await axios({
+                url: `${API_BASE}${endpoint}`,
+                headers: {
+                  ...headers,
+                  'Authorization': `Bearer ${refreshResponse.data.access_token}`
+                },
+                ...options
+              });
+              return retryResponse.data;
+            }
+          } catch (refreshError) {
+            console.warn('Token refresh failed, redirecting to login');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            return;
+          }
+        }
+      }
+      
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.response?.data?.detail || error.message });
       throw error;
     }
-  }, [token]);
+  }, []);
 
   // Asset actions
   const fetchAssets = useCallback(async (filters = {}) => {
@@ -313,6 +362,72 @@ export function AppProvider({ children }) {
       dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Asset deleted successfully' });
     } catch (error) {
       dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to delete asset' });
+      throw error;
+    }
+  }, [apiCall]);
+
+  const bulkDeleteAssets = useCallback(async (assetIds) => {
+    try {
+      // Delete assets one by one (backend doesn't have bulk delete endpoint yet)
+      const deletePromises = assetIds.map(assetId => 
+        apiCall(`/assets/${assetId}`, { method: 'DELETE' })
+      );
+      await Promise.all(deletePromises);
+      
+      // Remove all deleted assets from state
+      assetIds.forEach(assetId => {
+        dispatch({ type: ActionTypes.DELETE_ASSET, payload: assetId });
+      });
+      
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: `${assetIds.length} assets deleted successfully` });
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to delete some assets' });
+      throw error;
+    }
+  }, [apiCall]);
+
+  const createAssetGroup = useCallback(async (groupData) => {
+    try {
+      const response = await apiCall('/asset-groups', {
+        method: 'POST',
+        body: JSON.stringify(groupData)
+      });
+      
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Asset group created successfully' });
+      return response;
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to create asset group' });
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteDevice = useCallback(async (deviceId) => {
+    try {
+      await apiCall(`/assets/${deviceId}`, { method: 'DELETE' });
+      dispatch({ type: ActionTypes.DELETE_ASSET, payload: deviceId });
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Device deleted successfully' });
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to delete device' });
+      throw error;
+    }
+  }, [apiCall]);
+
+  const bulkDeleteDevices = useCallback(async (deviceIds) => {
+    try {
+      // Delete devices one by one (backend doesn't have bulk delete endpoint yet)
+      const deletePromises = deviceIds.map(deviceId => 
+        apiCall(`/assets/${deviceId}`, { method: 'DELETE' })
+      );
+      await Promise.all(deletePromises);
+      
+      // Remove all deleted devices from state
+      deviceIds.forEach(deviceId => {
+        dispatch({ type: ActionTypes.DELETE_ASSET, payload: deviceId });
+      });
+      
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: `${deviceIds.length} devices deleted successfully` });
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to delete some devices' });
       throw error;
     }
   }, [apiCall]);
@@ -543,9 +658,15 @@ export function AppProvider({ children }) {
     createAsset,
     updateAsset,
     deleteAsset,
+    bulkDeleteAssets,
+    
+    // Device actions
+    deleteDevice,
+    bulkDeleteDevices,
     
     // Asset Group actions
     fetchAssetGroups,
+    createAssetGroup,
     
     // Label actions
     fetchLabels,

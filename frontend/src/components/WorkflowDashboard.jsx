@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
+import { HelpIcon, ProgressiveDisclosure } from './ui';
 import { cn } from '../utils/cn';
 
 const WorkflowDashboard = () => {
@@ -141,8 +142,12 @@ const WorkflowDashboard = () => {
     <div className="space-y-8 bg-slate-50 dark:bg-slate-900 min-h-screen p-6">
       {/* Welcome Section */}
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100">
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 flex items-center justify-center">
           Welcome to DiscoverIT
+          <HelpIcon 
+            content="This dashboard guides you through the complete workflow for network device discovery and management. Follow the steps below to get started."
+            className="ml-3"
+          />
         </h1>
         <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
           Your comprehensive network device discovery and management platform. 
@@ -215,93 +220,26 @@ const WorkflowDashboard = () => {
         </Card>
       )}
 
-      {/* Workflow Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {workflowSteps.map((step) => {
-          const status = getStepStatus(step);
-          const isClickable = status === "current" || status === "completed";
-          
-          return (
-            <Card 
-              key={step.id}
-              className={cn(
-                "relative transition-all duration-200",
-                isClickable ? "cursor-pointer hover:shadow-lg" : "opacity-60",
-                status === "current" && "ring-2 ring-blue-500",
-                status === "completed" && "border-green-200 bg-green-50"
-              )}
-              onClick={() => isClickable && handleStepAction(step)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold",
-                      getStatusColor(status)
-                    )}>
-                      {getStatusIcon(status)}
-                    </div>
-                    <div className="text-2xl">{step.icon}</div>
-                  </div>
-                  <Badge 
-                    variant={status === "completed" ? "default" : "secondary"}
-                    className={cn(
-                      status === "completed" && "bg-green-100 text-green-800",
-                      status === "current" && "bg-blue-100 text-blue-800"
-                    )}
-                  >
-                    Step {step.id}
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <h3 className="font-semibold text-slate-900 mb-2">
-                  {step.title}
-                </h3>
-                <p className="text-sm text-slate-600 mb-4">
-                  {step.description}
-                </p>
-                
-                {/* Step-specific stats */}
-                {step.id === 1 && (
-                  <div className="text-xs text-slate-500">
-                    {assets.length} devices discovered
-                  </div>
-                )}
-                {step.id === 2 && (
-                  <div className="text-xs text-slate-500">
-                    {assets.length} assets managed
-                  </div>
-                )}
-                {step.id === 3 && (
-                  <div className="text-xs text-slate-500">
-                    {assetGroups.length} groups created
-                  </div>
-                )}
-                {step.id === 4 && (
-                  <div className="text-xs text-slate-500">
-                    {operations.length} operations available
-                  </div>
-                )}
-                
-                {status === "current" && (
-                  <Button 
-                    size="sm" 
-                    className="w-full mt-3"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStepAction(step);
-                    }}
-                  >
-                    {step.action}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Compact Workflow Steps */}
+      <ProgressiveDisclosure
+        steps={workflowSteps.map(step => ({
+          title: step.title,
+          description: step.description,
+          icon: step.icon,
+          details: [
+            step.id === 1 && `${assets.length} devices discovered`,
+            step.id === 2 && `${assets.length} assets managed`,
+            step.id === 3 && `${assetGroups.length} groups created`,
+            step.id === 4 && `${operations.length} operations available`
+          ].filter(Boolean),
+          action: () => handleStepAction(step),
+          actionText: step.action
+        }))}
+        currentStep={currentStep - 1}
+        onStepChange={(stepIndex) => setCurrentStep(stepIndex + 1)}
+        variant="primary"
+        showProgress={true}
+      />
 
       {/* Recent Activity */}
       <Card>
@@ -366,7 +304,13 @@ const WorkflowDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 text-center">
-            <div className="text-3xl mb-3">🔍</div>
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <div className="text-3xl">🔍</div>
+              <HelpIcon 
+                content="Start a quick network discovery scan to find devices on your network. This will scan the default Docker network range."
+                size="sm"
+              />
+            </div>
             <h3 className="font-semibold mb-2">Quick Discovery</h3>
             <p className="text-sm text-slate-600 mb-4">
               Start a quick network scan
@@ -384,7 +328,13 @@ const WorkflowDashboard = () => {
         
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 text-center">
-            <div className="text-3xl mb-3">📊</div>
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <div className="text-3xl">📊</div>
+              <HelpIcon 
+                content="View detailed statistics about your network discovery activities, asset counts, and system performance."
+                size="sm"
+              />
+            </div>
             <h3 className="font-semibold mb-2">View Statistics</h3>
             <p className="text-sm text-slate-600 mb-4">
               See discovery and asset statistics
@@ -397,7 +347,13 @@ const WorkflowDashboard = () => {
         
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 text-center">
-            <div className="text-3xl mb-3">📖</div>
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <div className="text-3xl">📖</div>
+              <HelpIcon 
+                content="Access the complete workflow guide with detailed instructions for each step of the discovery and management process."
+                size="sm"
+              />
+            </div>
             <h3 className="font-semibold mb-2">Workflow Guide</h3>
             <p className="text-sm text-slate-600 mb-4">
               Learn about the complete workflow

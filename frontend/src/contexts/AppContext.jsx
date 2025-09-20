@@ -390,7 +390,7 @@ export function AppProvider({ children }) {
     try {
       const response = await apiCall('/asset-groups', {
         method: 'POST',
-        body: JSON.stringify(groupData)
+        data: groupData
       });
       
       dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Asset group created successfully' });

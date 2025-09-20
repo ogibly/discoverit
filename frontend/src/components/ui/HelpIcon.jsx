@@ -55,4 +55,5 @@ const HelpIcon = ({
   );
 };
 
+export { HelpIcon };
 export default HelpIcon;

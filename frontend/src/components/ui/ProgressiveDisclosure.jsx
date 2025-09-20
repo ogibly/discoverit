@@ -170,4 +170,5 @@ const ProgressiveDisclosure = ({
   );
 };
 
+export { ProgressiveDisclosure };
 export default ProgressiveDisclosure;

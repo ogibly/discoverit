@@ -92,4 +92,5 @@ const CollapsibleGuidance = ({
   );
 };
 
+export { CollapsibleGuidance };
 export default CollapsibleGuidance;

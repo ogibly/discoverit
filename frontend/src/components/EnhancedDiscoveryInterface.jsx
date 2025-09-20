@@ -251,45 +251,79 @@ const EnhancedDiscoveryInterface = () => {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Network Discovery</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Discover and manage network devices with advanced scanning capabilities
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Button
-            variant={viewMode === 'devices' ? 'default' : 'outline'}
-            onClick={() => setViewMode('devices')}
-            className="flex items-center space-x-2"
-          >
-            <span>📱</span>
-            <span>Devices</span>
-          </Button>
-          <Button
-            variant={viewMode === 'scan' ? 'default' : 'outline'}
-            onClick={() => setViewMode('scan')}
-            className="flex items-center space-x-2"
-          >
-            <span>🔍</span>
-            <span>Custom Scan</span>
-          </Button>
-          <Button
-            variant={viewMode === 'lan-discovery' ? 'default' : 'outline'}
-            onClick={() => setViewMode('lan-discovery')}
-            className="flex items-center space-x-2"
-          >
-            <span>🌐</span>
-            <span>LAN Discovery</span>
-          </Button>
+    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+      {/* Compact Header */}
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div className="px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Network Discovery</h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Discover and manage network devices with advanced scanning capabilities
+              </p>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant={viewMode === 'devices' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('devices')}
+                className="text-sm"
+              >
+                <span className="mr-1">📱</span>
+                Devices
+              </Button>
+              <Button
+                variant={viewMode === 'scan' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('scan')}
+                className="text-sm"
+              >
+                <span className="mr-1">🔍</span>
+                Custom Scan
+              </Button>
+              <Button
+                variant={viewMode === 'lan-discovery' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('lan-discovery')}
+                className="text-sm"
+              >
+                <span className="mr-1">🌐</span>
+                LAN Discovery
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Enhanced Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Compact Stats */}
+          <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-6 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">Total Devices:</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{assets?.length || 0}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">Active:</span>
+                  <span className="font-semibold text-green-600 dark:text-green-400">{assets?.filter(a => a.is_active !== false).length || 0}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">Scans:</span>
+                  <span className="font-semibold text-amber-600 dark:text-amber-400">{activeScanTask ? 1 : 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-7xl mx-auto">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">

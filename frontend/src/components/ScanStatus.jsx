@@ -112,25 +112,34 @@ const ScanStatus = () => {
   });
 
   return (
-    <div className="space-y-6 p-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-            Scan Status & History
-            <HelpIcon 
-              content="Monitor active scans and view scan history. Active scans are tracked globally and persist across page navigation."
-              className="ml-2"
-            />
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Track running scans and view historical scan results
-          </p>
+    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+      {/* Compact Header */}
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                Scan Status & History
+                <HelpIcon 
+                  content="Monitor active scans and view scan history. Active scans are tracked globally and persist across page navigation."
+                  className="ml-2"
+                  size="sm"
+                />
+              </h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Track running scans and view historical scan results
+              </p>
+            </div>
+            <Button onClick={loadScanData} disabled={loading} size="sm">
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          </div>
         </div>
-        <Button onClick={loadScanData} disabled={loading}>
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </Button>
       </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
 
       {/* Active Scans */}
       {activeScans.length > 0 && (
@@ -265,6 +274,8 @@ const ScanStatus = () => {
           )}
         </CardContent>
       </Card>
+        </div>
+      </div>
     </div>
   );
 };

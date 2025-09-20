@@ -178,68 +178,103 @@ const DiscoveryInterface = () => {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-slate-50 dark:bg-slate-900 min-h-screen">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-            Network Discovery
-            <HelpIcon 
-              content="Use this interface to discover network devices and convert them to managed assets. Start with a scan, then review and organize your findings."
-              className="ml-2"
-            />
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Discover and manage network devices and assets
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Button
-            variant={viewMode === 'devices' ? 'default' : 'outline'}
-            onClick={() => setViewMode('devices')}
-          >
-            📱 Devices
-          </Button>
-          <Button
-            variant={viewMode === 'scan' ? 'default' : 'outline'}
-            onClick={() => setViewMode('scan')}
-          >
-            🔍 Scan
-          </Button>
-        </div>
-      </div>
-
-      {/* Compact Workflow Guidance */}
-      <CollapsibleGuidance
-        title="Discovery Workflow"
-        icon="🔄"
-        variant="primary"
-        defaultOpen={false}
-      >
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-500 font-bold">1.</span>
-              <span>Run network scan to discover devices</span>
+    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+      {/* Compact Header */}
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div className="px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+                Network Discovery
+                <HelpIcon 
+                  content="Use this interface to discover network devices and convert them to managed assets. Start with a scan, then review and organize your findings."
+                  className="ml-2"
+                  size="sm"
+                />
+              </h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Discover and manage network devices and assets
+              </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-500 font-bold">2.</span>
-              <span>Review discovered devices in the list</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-500 font-bold">3.</span>
-              <span>Convert devices to managed assets</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-500 font-bold">4.</span>
-              <span>Organize assets into groups for operations</span>
+            <div className="flex space-x-2">
+              <Button
+                variant={viewMode === 'devices' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('devices')}
+                className="text-sm"
+              >
+                <span className="mr-1">📱</span>
+                Devices
+              </Button>
+              <Button
+                variant={viewMode === 'scan' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('scan')}
+                className="text-sm"
+              >
+                <span className="mr-1">🔍</span>
+                Scan
+              </Button>
             </div>
           </div>
         </div>
-      </CollapsibleGuidance>
+      </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Compact Stats and Guidance */}
+          <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-6 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">Total Devices:</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{assets?.length || 0}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">Active:</span>
+                  <span className="font-semibold text-green-600 dark:text-green-400">{assets?.filter(a => a.is_active !== false).length || 0}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <span className="text-slate-600 dark:text-slate-400">Selected:</span>
+                  <span className="font-semibold text-amber-600 dark:text-amber-400">{selectedAssets.length}</span>
+                </div>
+              </div>
+              <CollapsibleGuidance
+                title="Discovery Workflow"
+                icon="🔄"
+                variant="primary"
+                defaultOpen={false}
+                compact={true}
+              >
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <span className="text-blue-500 font-bold">1.</span>
+                    <span>Run scan</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-blue-500 font-bold">2.</span>
+                    <span>Review devices</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-blue-500 font-bold">3.</span>
+                    <span>Convert to assets</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-blue-500 font-bold">4.</span>
+                    <span>Organize groups</span>
+                  </div>
+                </div>
+              </CollapsibleGuidance>
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-7xl mx-auto">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">

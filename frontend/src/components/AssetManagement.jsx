@@ -5,6 +5,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
+import PageHeader from './PageHeader';
 import { cn } from '../utils/cn';
 
 const AssetManagement = () => {
@@ -246,81 +247,70 @@ const AssetManagement = () => {
     );
   };
 
+  const headerActions = [
+    {
+      label: `Group (${selectedAssets.length})`,
+      variant: "outline",
+      size: "sm",
+      onClick: () => setShowGroupModal(true),
+      disabled: selectedAssets.length === 0,
+      className: "text-xs"
+    },
+    ...(selectedAssets.length > 0 ? [{
+      label: `Delete (${selectedAssets.length})`,
+      variant: "outline",
+      size: "sm",
+      onClick: handleBulkDeleteAssets,
+      className: "text-xs border-red-300 text-red-700 hover:bg-red-50"
+    }] : []),
+    {
+      label: "Add Asset",
+      size: "sm",
+      onClick: () => setShowCreateModal(true),
+      className: "text-xs bg-blue-600 hover:bg-blue-700 text-white"
+    }
+  ];
+
   return (
     <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
-      {/* Compact Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                Asset Management
-              </h1>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                {assets.length} assets • {selectedAssets.length} selected
-              </p>
+      <PageHeader
+        title="Asset Management"
+        subtitle={`${assets.length} assets • ${selectedAssets.length} selected`}
+        actions={headerActions}
+        searchPlaceholder="Search assets..."
+        onSearch={setSearchTerm}
+        searchValue={searchTerm}
+      />
+
+      {/* Stats and Filters */}
+      <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6 text-sm">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="text-slate-600 dark:text-slate-400">Total:</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{assets.length}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => setShowGroupModal(true)}
-                disabled={selectedAssets.length === 0}
-                className="text-xs"
-              >
-                Group ({selectedAssets.length})
-              </Button>
-              {selectedAssets.length > 0 && (
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={handleBulkDeleteAssets}
-                  className="text-xs border-red-300 text-red-700 hover:bg-red-50"
-                >
-                  Delete ({selectedAssets.length})
-                </Button>
-              )}
-              <Button 
-                size="sm"
-                onClick={() => setShowCreateModal(true)}
-                className="text-xs bg-blue-600 hover:bg-blue-700"
-              >
-                Add Asset
-              </Button>
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span className="text-slate-600 dark:text-slate-400">Managed:</span>
+              <span className="font-semibold text-green-600 dark:text-green-400">{assets.filter(a => a.is_managed).length}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+              <span className="text-slate-600 dark:text-slate-400">Unmanaged:</span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400">{assets.filter(a => !a.is_managed).length}</span>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Compact Stats and Filters */}
-      <div className="px-4 py-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 text-sm">
-            <span className="text-slate-600 dark:text-slate-400">
-              Total: <span className="font-semibold text-slate-900 dark:text-slate-100">{assets.length}</span>
-            </span>
-            <span className="text-green-600 dark:text-green-400">
-              Managed: <span className="font-semibold">{assets.filter(a => a.is_managed).length}</span>
-            </span>
-            <span className="text-amber-600 dark:text-amber-400">
-              Unmanaged: <span className="font-semibold">{assets.filter(a => !a.is_managed).length}</span>
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Input
-              placeholder="Search assets..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64 text-sm"
-            />
+          <div className="flex items-center space-x-3">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded"
+              className="px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">All</option>
-              <option value="managed">Managed</option>
-              <option value="unmanaged">Unmanaged</option>
+              <option value="all">All Assets</option>
+              <option value="managed">Managed Only</option>
+              <option value="unmanaged">Unmanaged Only</option>
             </select>
           </div>
         </div>
@@ -329,19 +319,21 @@ const AssetManagement = () => {
       {/* Asset List */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
-          <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+          <div className="px-6 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                {filteredAssets.length} assets found
-              </span>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={handleSelectAll}
-                  className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-xs text-slate-600 dark:text-slate-400">Select All</span>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Assets ({filteredAssets.length})
+                </span>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={handleSelectAll}
+                    className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Select All</span>
+                </div>
               </div>
             </div>
           </div>

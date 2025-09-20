@@ -235,20 +235,20 @@ export function AppProvider({ children }) {
 
   // API helper functions
   const apiCall = useCallback(async (endpoint, options = {}) => {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+    
+    // Get token from localStorage to ensure it's always current
+    const currentToken = localStorage.getItem('token');
+    if (currentToken) {
+      headers['Authorization'] = `Bearer ${currentToken}`;
+    } else {
+      console.warn('No authentication token found for API call to:', endpoint);
+    }
+    
     try {
-      const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-      };
-      
-      // Get token from localStorage to ensure it's always current
-      const currentToken = localStorage.getItem('token');
-      if (currentToken) {
-        headers['Authorization'] = `Bearer ${currentToken}`;
-      } else {
-        console.warn('No authentication token found for API call to:', endpoint);
-      }
-      
       const response = await axios({
         url: `${API_BASE}${endpoint}`,
         headers,

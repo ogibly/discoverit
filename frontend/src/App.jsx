@@ -16,6 +16,8 @@ import CredentialsManager from './components/CredentialsManager';
 import UserManagement from './components/UserManagement';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
+import ScanStatusTracker from './components/ScanStatusTracker';
+import ScanStatus from './components/ScanStatus';
 import { cn } from './utils/cn';
 
 // Navigation component
@@ -76,6 +78,14 @@ const Navigation = () => {
       icon: '🔧', 
       permission: 'settings:read', 
       description: 'Global system settings',
+      category: 'management'
+    },
+    { 
+      path: '/scan-status', 
+      label: 'Scan Status', 
+      icon: '📊', 
+      permission: 'assets:read', 
+      description: 'Monitor active scans and history',
       category: 'management'
     }
   ];
@@ -271,6 +281,8 @@ const AppContent = () => {
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
       <Navigation />
       <div className="flex-grow overflow-hidden bg-slate-50 dark:bg-slate-900">
+        {/* Global Scan Status Tracker */}
+        <ScanStatusTracker position="top-right" compact={true} />
         <Routes>
           <Route path="/" element={
             <ProtectedRoute requiredPermission="assets:read">
@@ -309,6 +321,11 @@ const AppContent = () => {
           } />
           <Route path="/scanners" element={<Navigate to="/settings" replace />} />
           <Route path="/workflow" element={<WorkflowGuide />} />
+          <Route path="/scan-status" element={
+            <ProtectedRoute requiredPermission="assets:read">
+              <ScanStatus />
+            </ProtectedRoute>
+          } />
         </Routes>
 			</div>
 		</div>

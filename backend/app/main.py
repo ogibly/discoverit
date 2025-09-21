@@ -4,7 +4,6 @@ from . import models
 from .database import engine, Base, SessionLocal
 from .routes_v2 import router
 from .services.auth_service import AuthService
-import json
 from datetime import datetime
 
 app = FastAPI(
@@ -77,9 +76,7 @@ app.add_middleware(
 # Include API routes
 app.include_router(router, prefix="/api/v2", tags=["v2"])
 
-# Legacy routes for backward compatibility
-from .routes import router as legacy_router
-app.include_router(legacy_router, prefix="/api/v1", tags=["v1"])
+# Legacy routes removed - only v2 API is used
 
 @app.get("/")
 def read_root():
@@ -88,7 +85,6 @@ def read_root():
         "message": "DiscoverIT API",
         "version": "2.0.0",
         "docs": "/docs",
-        "api_v1": "/api/v1",
         "api_v2": "/api/v2"
     }
 

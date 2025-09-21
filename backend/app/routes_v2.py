@@ -4,7 +4,7 @@ Refactored API routes using service layer.
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Request, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from .database import SessionLocal
+from .db_utils import get_db
 from .services.asset_service import AssetService
 from .services.scan_service import ScanService
 from .services.operation_service import OperationService
@@ -26,12 +26,6 @@ import ipaddress
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # Authentication routes
 @router.post("/auth/login", response_model=schemas.Token)

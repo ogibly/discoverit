@@ -7,13 +7,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import DiscoveryDashboard from './components/DiscoveryDashboard';
 import AssetManagement from './components/AssetManagement';
-import AssetList from './components/AssetList';
 import AssetDetail from './components/AssetDetail';
-import OperationsExecution from './components/OperationsExecution';
 import OperationsManagement from './components/OperationsManagement';
-import Settings from './components/Settings';
 import CredentialsManager from './components/CredentialsManager';
-import UserManagement from './components/UserManagement';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
 import ScanStatusTracker from './components/ScanStatusTracker';
@@ -21,185 +17,139 @@ import ScanStatus from './components/ScanStatus';
 import AdminSettings from './components/AdminSettings';
 import { cn } from './utils/cn';
 
-// Navigation component
+// Sophisticated Navigation Component
 const Navigation = () => {
-	const location = useLocation();
+  const location = useLocation();
   const { statusMessage, clearStatusMessage } = useApp();
   const { user, logout, hasPermission } = useAuth();
 
-  const workflowSteps = [
+  const navigationItems = [
     { 
       path: '/', 
       label: 'Discovery', 
-      icon: '🔍', 
-      permission: 'assets:read', 
-      description: 'Network discovery and asset management',
-      step: 1,
-      category: 'workflow'
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ), 
+      permission: 'assets:read'
     },
     { 
       path: '/assets', 
       label: 'Assets', 
-      icon: '💻', 
-      permission: 'assets:read', 
-      description: 'Manage discovered assets',
-      step: 2,
-      category: 'workflow'
-    }
-  ];
-
-  const managementItems = [
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+        </svg>
+      ), 
+      permission: 'assets:read'
+    },
     { 
       path: '/operations-management', 
       label: 'Operations', 
-      icon: '⚙️', 
-      permission: 'admin', 
-      description: 'Manage automation integrations',
-      category: 'management'
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ), 
+      permission: 'admin'
     },
     { 
       path: '/credentials', 
       label: 'Credentials', 
-      icon: '🔐', 
-      permission: 'credentials:read', 
-      description: 'Manage authentication credentials',
-      category: 'management'
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+        </svg>
+      ), 
+      permission: 'credentials:read'
     },
     { 
       path: '/scan-status', 
       label: 'Scan Status', 
-      icon: '📊', 
-      permission: 'assets:read', 
-      description: 'Monitor active scans and history',
-      category: 'management'
-    }
-  ];
-
-  const helpItems = [
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ), 
+      permission: 'assets:read'
+    },
     { 
       path: '/workflow', 
-      label: 'Workflow Guide', 
-      icon: '📖', 
-      permission: null, 
-      description: 'Complete workflow documentation',
-      category: 'help'
+      label: 'Guide', 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ), 
+      permission: null
     }
   ];
 
-  const allNavItems = [...workflowSteps, ...managementItems, ...helpItems]
-    .filter(item => !item.permission || hasPermission(item.permission));
+  const filteredItems = navigationItems.filter(item => 
+    !item.permission || hasPermission(item.permission)
+  );
 
   return (
-      <div className="flex flex-col w-64 bg-slate-900 border-r border-slate-700">
-        {/* Professional Header */}
-        <div className="px-6 py-4 border-b border-slate-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">D</span>
-              </div>
-              <h1 className="text-lg font-semibold text-slate-100">DiscoverIT</h1>
+    <div className="flex flex-col w-64 bg-background border-r border-border">
+      {/* Sophisticated Header */}
+      <div className="px-6 py-5 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">D</span>
             </div>
-            {hasPermission('admin') && (
-              <Link
-                to="/admin-settings"
-                className={cn(
-                  "p-2 rounded-lg transition-all duration-200 group",
-                  location.pathname === '/admin-settings'
-                    ? "bg-blue-600/20 text-blue-300 border border-blue-600/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border-slate-700/50 border border-transparent"
-                )}
-                title="Admin Settings"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </Link>
-            )}
+            <h1 className="text-lg font-semibold text-foreground">DiscoverIT</h1>
           </div>
+          {hasPermission('admin') && (
+            <Link
+              to="/admin-settings"
+              className={cn(
+                "p-2 rounded-md transition-all duration-200",
+                location.pathname === '/admin-settings'
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              )}
+              title="Admin Settings"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </Link>
+          )}
         </div>
+      </div>
       
-      <nav className="flex-grow px-4 py-4 space-y-6">
-        {/* Main Navigation */}
-        <div>
-          <div className="space-y-1">
-            {workflowSteps.filter(item => !item.permission || hasPermission(item.permission)).map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group border",
-                  location.pathname === item.path
-                    ? "bg-blue-600/20 text-blue-200 border-blue-600/30 shadow-sm"
-                    : "text-slate-300 hover:bg-slate-800/50 hover:text-slate-100 border-transparent hover:border-slate-700/30"
-                )}
-              >
-                <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Management Section */}
-        <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            MANAGE
-          </h3>
-          <div className="space-y-1">
-            {managementItems.filter(item => !item.permission || hasPermission(item.permission)).map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group border",
-                  location.pathname === item.path
-                    ? "bg-blue-600/20 text-blue-200 border-blue-600/30 shadow-sm"
-                    : "text-slate-300 hover:bg-slate-800/50 hover:text-slate-100 border-transparent hover:border-slate-700/30"
-                )}
-              >
-                <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Help Section */}
-        <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            MORE
-          </h3>
-          <div className="space-y-1">
-            {helpItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group border",
-                  location.pathname === item.path
-                    ? "bg-blue-600/20 text-blue-200 border-blue-600/30 shadow-sm"
-                    : "text-slate-300 hover:bg-slate-800/50 hover:text-slate-100 border-transparent hover:border-slate-700/30"
-                )}
-              >
-                <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
+      {/* Elegant Navigation */}
+      <nav className="flex-grow px-4 py-6 space-y-1">
+        {filteredItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={cn(
+              "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+              location.pathname === item.path
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+            )}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </Link>
+        ))}
       </nav>
       
       {/* Status Message */}
       {statusMessage && (
-        <div className="p-4 border-t border-slate-700">
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">
+        <div className="px-4 py-3 border-t border-border">
+          <div className="bg-card border border-border rounded-md p-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-200">{statusMessage}</span>
+              <span className="text-sm text-card-foreground">{statusMessage}</span>
               <button
                 onClick={clearStatusMessage}
-                className="text-blue-300 hover:text-blue-100 transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -211,19 +161,19 @@ const Navigation = () => {
       )}
 
       {/* Sophisticated Footer */}
-      <div className="px-4 py-4 border-t border-slate-700 bg-slate-800">
+      <div className="px-4 py-4 border-t border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-              <span className="text-xs font-bold text-white">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-xs font-bold text-primary-foreground">
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-100">
+              <p className="text-sm font-medium text-foreground">
                 {user?.full_name || user?.username || 'User'}
               </p>
-              <p className="text-xs text-slate-400 font-medium">
+              <p className="text-xs text-muted-foreground">
                 {user?.role?.name || 'Admin'}
               </p>
             </div>
@@ -232,7 +182,7 @@ const Navigation = () => {
             <ThemeToggle size="small" showLabel={false} />
             <button
               onClick={logout}
-              className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
+              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200"
               title="Logout"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -246,17 +196,16 @@ const Navigation = () => {
   );
 };
 
-
-// Main App component
+// Main App Content
 const AppContent = () => {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-blue-500 border-r-blue-600 border-b-blue-700 border-l-blue-800"></div>
-          <div className="text-slate-300 font-medium">Loading DiscoverIT...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-border border-t-primary"></div>
+          <div className="text-muted-foreground font-medium">Loading DiscoverIT...</div>
         </div>
       </div>
     );
@@ -266,10 +215,10 @@ const AppContent = () => {
     return <Login />;
   }
 
-	return (
-    <div className="flex h-screen bg-slate-900">
+  return (
+    <div className="flex h-screen bg-background">
       <Navigation />
-      <div className="flex-grow overflow-hidden bg-slate-900">
+      <div className="flex-grow overflow-hidden bg-background">
         {/* Global Scan Status Tracker */}
         <ScanStatusTracker position="top-right" compact={true} />
         <Routes>
@@ -288,11 +237,11 @@ const AppContent = () => {
               <AssetDetail />
             </ProtectedRoute>
           } />
-                           <Route path="/operations-management" element={
-                               <ProtectedRoute requiredPermission="admin">
-                                   <OperationsManagement />
-                               </ProtectedRoute>
-                           } />
+          <Route path="/operations-management" element={
+            <ProtectedRoute requiredPermission="admin">
+              <OperationsManagement />
+            </ProtectedRoute>
+          } />
           <Route path="/credentials" element={
             <ProtectedRoute requiredPermission="credentials:read">
               <CredentialsManager />
@@ -313,12 +262,12 @@ const AppContent = () => {
             </ProtectedRoute>
           } />
         </Routes>
-			</div>
-		</div>
-	);
+      </div>
+    </div>
+  );
 };
 
-// Root App component with provider
+// Root App Component
 function App() {
   return (
     <ThemeProvider>

@@ -5,20 +5,13 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import Optional, List
-from .database import SessionLocal
+from .db_utils import get_db
 from .services.auth_service import AuthService
 from .models import User
 
 # Security scheme
 security = HTTPBearer()
 
-def get_db():
-    """Get database session."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     """Get authentication service."""

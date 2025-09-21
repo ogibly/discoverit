@@ -612,6 +612,99 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  // Admin/Settings API functions
+  const fetchSettings = useCallback(async () => {
+    try {
+      const settings = await apiCall('/settings');
+      return settings;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const updateSettings = useCallback(async (settingsData) => {
+    try {
+      const settings = await apiCall('/settings', {
+        method: 'PUT',
+        data: settingsData
+      });
+      return settings;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const users = await apiCall('/users');
+      return users;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const createUser = useCallback(async (userData) => {
+    try {
+      const user = await apiCall('/users', {
+        method: 'POST',
+        data: userData
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const updateUser = useCallback(async (userId, userData) => {
+    try {
+      const user = await apiCall(`/users/${userId}`, {
+        method: 'PUT',
+        data: userData
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteUser = useCallback(async (userId) => {
+    try {
+      await apiCall(`/users/${userId}`, { method: 'DELETE' });
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const fetchRoles = useCallback(async () => {
+    try {
+      const roles = await apiCall('/roles');
+      return roles;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const fetchScannerConfigs = useCallback(async () => {
+    try {
+      const configs = await apiCall('/scanner-configs');
+      return configs;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const runLanDiscovery = useCallback(async (config) => {
+    try {
+      const result = await apiCall(`/discovery/lan?max_depth=${config.maxDepth}`, {
+        method: 'POST',
+        data: config
+      });
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
   // UI actions
   const setModal = useCallback((name, value) => {
     dispatch({ type: ActionTypes.SET_MODAL, payload: { name, value } });
@@ -769,6 +862,17 @@ export function AppProvider({ children }) {
     fetchOperations,
     fetchJobs,
     runOperation,
+    
+    // Admin/Settings actions
+    fetchSettings,
+    updateSettings,
+    fetchUsers,
+    createUser,
+    updateUser,
+    deleteUser,
+    fetchRoles,
+    fetchScannerConfigs,
+    runLanDiscovery,
     
     // UI actions
     setModal,

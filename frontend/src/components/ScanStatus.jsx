@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useApp } from '../contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Progress } from './ui/Progress';
@@ -8,8 +9,14 @@ import { HelpIcon } from './ui';
 import { cn } from '../utils/cn';
 
 const ScanStatus = () => {
-  const [activeScans, setActiveScans] = useState([]);
-  const [scanHistory, setScanHistory] = useState([]);
+  const { 
+    scanTasks, 
+    activeScanTask, 
+    fetchScanTasks, 
+    fetchActiveScanTask, 
+    cancelScanTask 
+  } = useApp();
+  
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -26,32 +33,12 @@ const ScanStatus = () => {
   const loadScanData = async () => {
     try {
       setLoading(true);
-      const [activeResponse, historyResponse] = await Promise.all([
-        fetch('/api/v2/scan-tasks/active', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch('/api/v2/scan-tasks?limit=50', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json',
-          },
-        })
+      await Promise.all([
+        fetchActiveScanTask(),
+        fetchScanTasks()
       ]);
-
-      if (activeResponse.ok) {
-        const activeData = await activeResponse.json();
-        setActiveScans(activeData ? [activeData] : []);
-      }
-
-      if (historyResponse.ok) {
-        const historyData = await historyResponse.json();
-        setScanHistory(historyData || []);
-      }
     } catch (error) {
-      console.error('Failed to load scan data:', error);
+      console.error('Error loading scan data:', error);
     } finally {
       setLoading(false);
     }
@@ -59,222 +46,234 @@ const ScanStatus = () => {
 
   const handleCancelScan = async (scanId) => {
     try {
-      const response = await fetch(`/api/v2/scan-tasks/${scanId}/cancel`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        loadScanData(); // Refresh data
-      } else {
-        const error = await response.json();
-        alert('Failed to cancel scan: ' + (error.detail || 'Unknown error'));
-      }
+      await cancelScanTask(scanId);
+      loadScanData();
     } catch (error) {
-      console.error('Failed to cancel scan:', error);
-      alert('Failed to cancel scan: ' + error.message);
+      console.error('Error canceling scan:', error);
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'pending': 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/20',
-      'running': 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/20',
-      'completed': 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20',
-      'failed': 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20',
-      'cancelled': 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900/20'
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      'running': { color: 'bg-blue-900 text-blue-200', text: 'Running' },
+      'completed': { color: 'bg-green-900 text-green-200', text: 'Completed' },
+      'failed': { color: 'bg-red-900 text-red-200', text: 'Failed' },
+      'cancelled': { color: 'bg-gray-900 text-gray-200', text: 'Cancelled' },
+      'pending': { color: 'bg-yellow-900 text-yellow-200', text: 'Pending' }
     };
-    return colors[status] || 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900/20';
+    
+    const config = statusConfig[status] || statusConfig['pending'];
+    return <Badge className={config.color}>{config.text}</Badge>;
   };
 
-  const getStatusIcon = (status) => {
-    const icons = {
-      'pending': '⏳',
-      'running': '🔄',
-      'completed': '✅',
-      'failed': '❌',
-      'cancelled': '⏹️'
-    };
-    return icons[status] || '❓';
+  const formatDuration = (startTime, endTime) => {
+    if (!startTime) return 'N/A';
+    
+    const start = new Date(startTime);
+    const end = endTime ? new Date(endTime) : new Date();
+    const duration = Math.floor((end - start) / 1000);
+    
+    if (duration < 60) return `${duration}s`;
+    if (duration < 3600) return `${Math.floor(duration / 60)}m ${duration % 60}s`;
+    return `${Math.floor(duration / 3600)}h ${Math.floor((duration % 3600) / 60)}m`;
   };
 
-  const filteredHistory = scanHistory.filter(scan => {
-    const matchesSearch = !searchTerm || 
-      scan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      scan.target.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterStatus === 'all' || scan.status === filterStatus;
-    
-    return matchesSearch && matchesFilter;
+  const filteredScans = scanTasks.filter(scan => {
+    const matchesSearch = scan.target?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         scan.scan_type?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || scan.status === filterStatus;
+    return matchesSearch && matchesStatus;
   });
 
+  const activeScans = activeScanTask ? [activeScanTask] : [];
+
   return (
-    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
-      {/* Compact Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-                Scan Status & History
-                <HelpIcon 
-                  content="Monitor active scans and view scan history. Active scans are tracked globally and persist across page navigation."
-                  className="ml-2"
-                  size="sm"
-                />
-              </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Track running scans and view historical scan results
-              </p>
-            </div>
-            <Button onClick={loadScanData} disabled={loading} size="sm">
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </Button>
+    <div className="h-screen bg-slate-900 flex flex-col">
+      {/* Header */}
+      <div className="px-6 py-4 bg-slate-800 border-b border-slate-700 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-100">
+              Scan Status & History
+            </h1>
+            <p className="text-sm text-slate-400">
+              Monitor active scans and view scan history
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <HelpIcon 
+              content="View active scans and scan history. Active scans are automatically refreshed every 5 seconds."
+              size="sm"
+            />
           </div>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+      {/* Filters */}
+      <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700 flex-shrink-0">
+        <div className="flex items-center space-x-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search scans..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Status</option>
+            <option value="running">Running</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+      </div>
 
-      {/* Active Scans */}
-      {activeScans.length > 0 && (
-        <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-          <CardHeader>
-            <CardTitle className="text-blue-900 dark:text-blue-100 flex items-center">
-              <span className="mr-2">🔄</span>
-              Active Scans ({activeScans.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Active Scans */}
+        {activeScans.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>Active Scans</span>
+                <Badge className="bg-blue-900 text-blue-200">
+                  {activeScans.length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               {activeScans.map((scan) => (
-                <div key={scan.id} className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-3xl animate-spin">🔄</div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                          {scan.name}
-                        </h3>
-                        <p className="text-slate-600 dark:text-slate-400">
-                          Target: <span className="font-mono">{scan.target}</span>
-                        </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-500">
-                          Started: {new Date(scan.start_time).toLocaleString()}
-                        </p>
-                      </div>
+                <div key={scan.id} className="p-4 bg-slate-800 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="font-medium text-slate-100">{scan.target}</h3>
+                      <p className="text-sm text-slate-400">
+                        {scan.scan_type} • Started {new Date(scan.start_time).toLocaleString()}
+                      </p>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Badge className={getStatusColor(scan.status)}>
-                        {scan.status}
-                      </Badge>
+                    <div className="flex items-center space-x-2">
+                      {getStatusBadge(scan.status)}
                       <Button
-                        variant="outline"
+                        variant="destructive"
+                        size="sm"
                         onClick={() => handleCancelScan(scan.id)}
-                        className="border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800"
                       >
-                        Cancel Scan
+                        Cancel
                       </Button>
                     </div>
                   </div>
-                  {scan.progress > 0 && (
-                    <div className="mt-4">
-                      <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
-                        <span>Progress</span>
-                        <span>{scan.progress}%</span>
+                  
+                  {scan.progress !== undefined && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-slate-400">
+                        <span>Progress: {scan.progress}%</span>
+                        <span>
+                          {scan.completed_ips || 0} / {scan.total_ips || 0} IPs
+                        </span>
                       </div>
-                      <Progress value={scan.progress} className="h-3" />
+                      <Progress value={scan.progress} className="h-2" />
+                      {scan.current_ip && (
+                        <p className="text-xs text-slate-500">
+                          Currently scanning: {scan.current_ip}
+                        </p>
+                      )}
                     </div>
                   )}
+                  
+                  <div className="mt-3 text-sm text-slate-400">
+                    Duration: {formatDuration(scan.start_time, scan.end_time)}
+                  </div>
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Scan History */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <span className="mr-2">📊</span>
-              Scan History ({filteredHistory.length})
+        {/* Scan History */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <span>Scan History</span>
+              <Badge className="bg-slate-700 text-slate-200">
+                {filteredScans.length}
+              </Badge>
             </CardTitle>
-            <div className="flex space-x-3">
-              <Input
-                placeholder="Search scans..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64"
-              />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : filteredHistory.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <div className="text-4xl mb-2">📊</div>
-              <p>No scan history found</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredHistory.map((scan) => (
-                <div
-                  key={scan.id}
-                  className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="text-2xl">{getStatusIcon(scan.status)}</div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-slate-100">
-                        {scan.name}
-                      </h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Target: {scan.target} • Type: {scan.scan_type}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-500">
-                        {new Date(scan.start_time).toLocaleString()}
-                        {scan.end_time && ` - ${new Date(scan.end_time).toLocaleString()}`}
-                      </p>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <span className="ml-2 text-slate-400">Loading...</span>
+              </div>
+            ) : filteredScans.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">📊</div>
+                <h3 className="text-lg font-medium text-slate-100 mb-2">
+                  No scans found
+                </h3>
+                <p className="text-slate-400">
+                  {searchTerm || filterStatus !== 'all' 
+                    ? 'Try adjusting your search or filter criteria.'
+                    : 'No scans have been run yet. Start a scan from the Discovery page.'
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredScans.map((scan) => (
+                  <div key={scan.id} className="flex items-center justify-between p-4 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3">
+                        <h3 className="font-medium text-slate-100">{scan.target}</h3>
+                        {getStatusBadge(scan.status)}
+                      </div>
+                      <div className="mt-1 text-sm text-slate-400">
+                        <span>{scan.scan_type}</span>
+                        <span className="mx-2">•</span>
+                        <span>Started: {new Date(scan.start_time).toLocaleString()}</span>
+                        {scan.end_time && (
+                          <>
+                            <span className="mx-2">•</span>
+                            <span>Duration: {formatDuration(scan.start_time, scan.end_time)}</span>
+                          </>
+                        )}
+                      </div>
+                      {scan.progress !== undefined && (
+                        <div className="mt-2">
+                          <div className="flex justify-between text-xs text-slate-500 mb-1">
+                            <span>Progress: {scan.progress}%</span>
+                            <span>
+                              {scan.completed_ips || 0} / {scan.total_ips || 0} IPs
+                            </span>
+                          </div>
+                          <Progress value={scan.progress} className="h-1" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {scan.status === 'running' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleCancelScan(scan.id)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <Badge className={getStatusColor(scan.status)}>
-                      {scan.status}
-                    </Badge>
-                    {scan.progress > 0 && (
-                      <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {scan.progress}%
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

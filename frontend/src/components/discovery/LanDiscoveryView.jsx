@@ -16,45 +16,45 @@ const LanDiscoveryView = ({
     <div className="space-y-6 max-h-[calc(100vh-180px)] overflow-y-auto pr-2">
       {/* LAN Discovery Results */}
       {lanDiscoveryResults && (
-        <Card className="border-0 shadow-lg bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20">
+        <Card className="border-0 shadow-lg bg-green-900/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <h3 className="text-xl font-bold text-slate-100">
                   LAN Discovery Results
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400">
+                <p className="text-slate-400">
                   Network: <span className="font-mono font-semibold">{lanDiscoveryResults.network}</span> • 
-                  Found <span className="font-bold text-emerald-600 dark:text-emerald-400">{lanDiscoveryResults.live_devices}</span> live devices
+                  Found <span className="font-bold text-green-400">{lanDiscoveryResults.live_devices}</span> live devices
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onSetLanDiscoveryResults(null)}
-                className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                className="border-slate-600 text-slate-300"
               >
                 Close
               </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-white/60 dark:bg-slate-800/60 rounded-lg">
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="text-center p-4 bg-slate-800/60 rounded-lg">
+                <p className="text-2xl font-bold text-slate-100">
                   {lanDiscoveryResults.total_ips_scanned}
                 </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">IPs Scanned</p>
+                <p className="text-sm text-slate-400">IPs Scanned</p>
               </div>
-              <div className="text-center p-4 bg-white/60 dark:bg-slate-800/60 rounded-lg">
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="text-center p-4 bg-slate-800/60 rounded-lg">
+                <p className="text-2xl font-bold text-slate-100">
                   {lanDiscoveryResults.live_devices}
                 </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Live Devices</p>
+                <p className="text-sm text-slate-400">Live Devices</p>
               </div>
-              <div className="text-center p-4 bg-white/60 dark:bg-slate-800/60 rounded-lg">
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              <div className="text-center p-4 bg-slate-800/60 rounded-lg">
+                <p className="text-2xl font-bold text-slate-100">
                   {lanDiscoveryResults.max_depth}
                 </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Scan Depth</p>
+                <p className="text-sm text-slate-400">Scan Depth</p>
               </div>
             </div>
           </CardContent>

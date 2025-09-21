@@ -299,9 +299,9 @@ const DiscoveryInterface = () => {
 
           {/* Content Area */}
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-7xl mx-auto">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
-          <CardContent className="p-6">
+            <div className="h-full">
+        <Card className="h-full">
+          <CardContent className="p-6 h-full">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Devices</p>
@@ -477,18 +477,18 @@ const DiscoveryInterface = () => {
                 </thead>
                 <tbody className="bg-slate-800/30 divide-y divide-slate-700/50">
                   {filteredDevices.map((device) => (
-                    <tr key={device.id} className="hover:bg-gradient-to-r hover:from-slate-700/30 hover:to-slate-600/20 transition-all duration-200 group">
+                    <tr key={device.id} className="hover:bg-slate-700/30 transition-all duration-200 group">
                       <td className="px-4 py-4">
                         <input
                           type="checkbox"
                           checked={selectedDevices.includes(device.id)}
                           onChange={() => toggleDeviceSelection(device.id)}
-                          className="rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700/50"
+                          className="rounded border-slate-600 text-blue-500 focus:ring-blue-500 bg-slate-700/50"
                         />
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center ring-1 ring-violet-500/30">
+                          <div className="w-8 h-8 rounded-lg bg-blue-900/20 flex items-center justify-center ring-1 ring-blue-500/30">
                             <span className="text-sm">{getDeviceTypeIcon(device)}</span>
                           </div>
                           <div>

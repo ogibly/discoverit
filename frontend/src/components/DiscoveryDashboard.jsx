@@ -300,7 +300,7 @@ const DiscoveryDashboard = () => {
     <div className="min-h-screen bg-slate-900 overflow-y-auto">
       {/* Professional Header */}
       <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-slate-100">
@@ -365,7 +365,7 @@ const DiscoveryDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-4 pb-20 min-h-[calc(100vh-140px)]">
+      <div className="px-6 py-4 pb-20 min-h-[calc(100vh-140px)]">
         {viewMode === 'overview' && (
           <OverviewView 
             assets={assets}

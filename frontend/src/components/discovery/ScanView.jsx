@@ -16,22 +16,22 @@ const ScanView = ({
     <div className="space-y-6 max-h-[calc(100vh-180px)] overflow-y-auto pr-2">
       {/* Active Scan Status */}
       {activeScanTask && (
-        <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+        <Card className="border-0 shadow-lg bg-blue-900/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <h3 className="text-xl font-bold text-slate-100">
                     {activeScanTask.name}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400">
+                  <p className="text-slate-400">
                     Target: <span className="font-mono font-semibold">{activeScanTask.target}</span> • 
-                    Status: <span className="font-semibold text-blue-600 dark:text-blue-400">{activeScanTask.status}</span>
+                    Status: <span className="font-semibold text-blue-400">{activeScanTask.status}</span>
                   </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-500">
+                  <p className="text-sm text-slate-500">
                     Started: {new Date(activeScanTask.start_time).toLocaleString()}
                   </p>
                 </div>
@@ -40,14 +40,14 @@ const ScanView = ({
                 variant="outline"
                 size="sm"
                 onClick={onCancelScan}
-                className="border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="border-red-600 text-red-400 hover:bg-red-900/20"
               >
                 Cancel Scan
               </Button>
             </div>
             {activeScanTask.progress > 0 && (
               <div className="mt-4">
-                <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
+                <div className="flex justify-between text-sm text-slate-400 mb-2">
                   <span>Progress</span>
                   <span>{activeScanTask.progress}%</span>
                 </div>

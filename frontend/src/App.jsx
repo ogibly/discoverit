@@ -7,6 +7,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import DiscoveryDashboard from './components/DiscoveryDashboard';
+import DiscoveryInterface from './components/DiscoveryInterface';
+import Discovery from './components/Discovery';
 import AssetManagement from './components/AssetManagement';
 import AssetDetail from './components/AssetDetail';
 import OperationsManagement from './components/OperationsManagement';
@@ -47,6 +49,16 @@ const Navigation = () => {
       permission: 'assets:read'
     },
     { 
+      path: '/devices', 
+      label: 'Devices', 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ), 
+      permission: 'assets:read'
+    },
+    { 
       path: '/assets', 
       label: 'Assets', 
       icon: (
@@ -57,22 +69,11 @@ const Navigation = () => {
       permission: 'assets:read'
     },
     { 
-      path: '/operations-management', 
-      label: 'Operations', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ), 
-      permission: 'admin'
-    },
-    { 
       path: '/credentials', 
       label: 'Credentials', 
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
         </svg>
       ), 
       permission: 'credentials:read'
@@ -259,7 +260,12 @@ const AppContent = () => {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/discovery" element={
             <ProtectedRoute requiredPermission="assets:read">
-              <DiscoveryDashboard />
+              <Discovery />
+            </ProtectedRoute>
+          } />
+          <Route path="/devices" element={
+            <ProtectedRoute requiredPermission="assets:read">
+              <DiscoveryInterface />
             </ProtectedRoute>
           } />
           <Route path="/assets" element={
@@ -270,11 +276,6 @@ const AppContent = () => {
           <Route path="/assets/:id" element={
             <ProtectedRoute requiredPermission="assets:read">
               <AssetDetail />
-            </ProtectedRoute>
-          } />
-          <Route path="/operations-management" element={
-            <ProtectedRoute requiredPermission="admin">
-              <OperationsManagement />
             </ProtectedRoute>
           } />
           <Route path="/credentials" element={
@@ -290,6 +291,7 @@ const AppContent = () => {
           <Route path="/users" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/settings" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/scanners" element={<Navigate to="/admin-settings" replace />} />
+          <Route path="/operations-management" element={<Navigate to="/admin-settings?tab=operations" replace />} />
           <Route path="/workflow" element={<WorkflowGuide />} />
           <Route path="/scan-status" element={
             <ProtectedRoute requiredPermission="assets:read">

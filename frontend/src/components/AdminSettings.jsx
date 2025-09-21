@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
@@ -7,6 +8,7 @@ import { Input } from './ui/Input';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
+import OperationsManagement from './OperationsManagement';
 import { cn } from '../utils/cn';
 
 const AdminSettings = () => {
@@ -23,6 +25,7 @@ const AdminSettings = () => {
     fetchScannerConfigs: fetchScannerConfigsAPI
   } = useApp();
   const { hasPermission } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('system');
   
   // System Settings State
@@ -81,6 +84,20 @@ const AdminSettings = () => {
       fetchScannerConfigs();
     }
   }, [hasPermission]);
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['system', 'users', 'scanners', 'operations'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  // Update URL when tab changes
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    setSearchParams({ tab: newTab });
+  };
 
   // Check if user has admin permissions
   if (!hasPermission('admin')) {
@@ -292,11 +309,12 @@ const AdminSettings = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="system">System Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
+            <TabsTrigger value="operations">Operations</TabsTrigger>
           </TabsList>
 
           {/* System Settings Tab */}
@@ -524,6 +542,11 @@ const AdminSettings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Operations Tab */}
+          <TabsContent value="operations" className="space-y-6">
+            <OperationsManagement />
           </TabsContent>
         </Tabs>
       </div>

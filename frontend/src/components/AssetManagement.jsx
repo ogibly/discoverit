@@ -272,7 +272,7 @@ const AssetManagement = () => {
   ];
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+    <div className="h-screen bg-gradient-to-br from-black via-gray-900 to-black flex flex-col">
       <PageHeader
         title="Asset Management"
         subtitle={`${assets.length} assets • ${selectedAssets.length} selected`}
@@ -283,23 +283,23 @@ const AssetManagement = () => {
       />
 
       {/* Sophisticated Stats and Filters */}
-      <div className="px-6 py-4 bg-gradient-to-r from-slate-800/40 to-slate-700/30 border-b border-slate-700/50 flex-shrink-0 backdrop-blur-sm">
+      <div className="px-6 py-4 bg-gradient-to-r from-gray-800/40 to-gray-700/30 border-b border-red-900/50 flex-shrink-0 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8 text-sm">
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/50"></div>
-              <span className="text-slate-300 font-medium">Total:</span>
-              <span className="font-bold text-violet-300">{assets.length}</span>
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/50"></div>
+              <span className="text-gray-300 font-medium">Total:</span>
+              <span className="font-bold text-red-300">{assets.length}</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 shadow-lg shadow-emerald-500/50"></div>
-              <span className="text-slate-300 font-medium">Managed:</span>
-              <span className="font-bold text-emerald-300">{assets.filter(a => a.is_managed).length}</span>
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 shadow-lg shadow-orange-500/50"></div>
+              <span className="text-gray-300 font-medium">Managed:</span>
+              <span className="font-bold text-orange-300">{assets.filter(a => a.is_managed).length}</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg shadow-amber-500/50"></div>
-              <span className="text-slate-300 font-medium">Unmanaged:</span>
-              <span className="font-bold text-amber-300">{assets.filter(a => !a.is_managed).length}</span>
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50"></div>
+              <span className="text-gray-300 font-medium">Unmanaged:</span>
+              <span className="font-bold text-blue-300">{assets.filter(a => !a.is_managed).length}</span>
             </div>
           </div>
           <div className="flex items-center space-x-3">

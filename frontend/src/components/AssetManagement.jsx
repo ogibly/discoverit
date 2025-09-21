@@ -24,7 +24,9 @@ const AssetManagement = () => {
     deleteAsset,
     bulkDeleteAssets,
     createAssetGroup,
-    fetchAssets
+    fetchAssets,
+    fetchAssetGroups,
+    fetchOperations
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('assets');
@@ -391,43 +393,39 @@ const AssetManagement = () => {
         searchValue={searchTerm}
       />
 
-      {/* Sophisticated Stats and Filters */}
+      {/* Tabs Navigation */}
       <div className="px-6 py-4 bg-card border-b border-border flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-8 text-sm">
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-primary"></div>
-              <span className="text-muted-foreground font-medium">Total:</span>
-              <span className="font-bold text-primary">{assets.length}</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-success"></div>
-              <span className="text-muted-foreground font-medium">Managed:</span>
-              <span className="font-bold text-success">{assets.filter(a => a && a.is_managed).length}</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-warning"></div>
-              <span className="text-muted-foreground font-medium">Unmanaged:</span>
-              <span className="font-bold text-warning">{assets.filter(a => a && !a.is_managed).length}</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
-              <option value="all">All Assets</option>
-              <option value="managed">Managed Only</option>
-              <option value="unmanaged">Unmanaged Only</option>
-            </select>
-          </div>
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="assets" className="flex items-center space-x-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              <span>Assets ({assets.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="flex items-center space-x-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>Groups ({assetGroups.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="operations" className="flex items-center space-x-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Operations ({operations.length})</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {/* Asset List */}
+      {/* Tab Content */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          {/* Assets Tab */}
+          <TabsContent value="assets" className="flex-1 flex flex-col m-0">
+            <div className="h-full flex flex-col">
           <div className="px-6 py-4 bg-muted/30 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -443,6 +441,17 @@ const AssetManagement = () => {
                   />
                   <span className="text-body text-muted-foreground font-medium">Select All</span>
                 </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                >
+                  <option value="all">All Assets</option>
+                  <option value="managed">Managed Only</option>
+                  <option value="unmanaged">Unmanaged Only</option>
+                </select>
               </div>
             </div>
           </div>
@@ -590,7 +599,197 @@ const AssetManagement = () => {
             </div>
           )}
           </div>
-        </div>
+            </div>
+          </TabsContent>
+
+          {/* Asset Groups Tab */}
+          <TabsContent value="groups" className="flex-1 flex flex-col m-0">
+            <div className="h-full flex flex-col">
+              <div className="px-6 py-4 bg-muted/30 border-b border-border flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-subheading text-foreground">
+                      Asset Groups ({assetGroups.length})
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                {loading.assetGroups ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="text-body text-muted-foreground mt-2">Loading groups...</p>
+                    </div>
+                  </div>
+                ) : assetGroups.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                        <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-subheading text-foreground mb-1">No asset groups found</h3>
+                      <p className="text-body text-muted-foreground">Create your first asset group to organize your assets!</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {assetGroups.map((group) => (
+                      <div
+                        key={group.id}
+                        className="group relative bg-background transition-all duration-200 hover:bg-muted/30"
+                      >
+                        <div className="px-6 py-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 rounded-md bg-primary/20 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                              </div>
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3 min-w-0">
+                                  <h3 className="text-subheading text-foreground truncate">
+                                    {group.name}
+                                  </h3>
+                                  <Badge className="bg-info text-info-foreground">
+                                    {group.assets?.length || 0} assets
+                                  </Badge>
+                                </div>
+                                
+                                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditGroup(group)}
+                                    className="text-xs"
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteGroup(group.id)}
+                                    className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+                                  >
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              {group.description && (
+                                <p className="text-body text-muted-foreground mt-2">
+                                  {group.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Operations Tab */}
+          <TabsContent value="operations" className="flex-1 flex flex-col m-0">
+            <div className="h-full flex flex-col">
+              <div className="px-6 py-4 bg-muted/30 border-b border-border flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-subheading text-foreground">
+                      Available Operations ({operations.length})
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                {loading.operations ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                      <p className="text-body text-muted-foreground mt-2">Loading operations...</p>
+                    </div>
+                  </div>
+                ) : operations.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                        <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-subheading text-foreground mb-1">No operations available</h3>
+                      <p className="text-body text-muted-foreground">Contact your administrator to set up operations!</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {operations.map((operation) => (
+                      <div
+                        key={operation.id}
+                        className="group relative bg-background transition-all duration-200 hover:bg-muted/30"
+                      >
+                        <div className="px-6 py-4">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 rounded-md bg-warning/20 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </div>
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3 min-w-0">
+                                  <h3 className="text-subheading text-foreground truncate">
+                                    {operation.name}
+                                  </h3>
+                                  <Badge className={cn(
+                                    "text-xs",
+                                    operation.is_active 
+                                      ? "bg-success text-success-foreground" 
+                                      : "bg-muted text-muted-foreground"
+                                  )}>
+                                    {operation.is_active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    {operation.operation_type}
+                                  </Badge>
+                                </div>
+                              </div>
+                              
+                              {operation.description && (
+                                <p className="text-body text-muted-foreground mt-2">
+                                  {operation.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Create Asset Modal */}
@@ -891,6 +1090,120 @@ const AssetManagement = () => {
               disabled={selectedAssets.length === 0}
             >
               Create Group
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Group Modal */}
+      <Modal
+        isOpen={showEditGroupModal}
+        onClose={() => setShowEditGroupModal(false)}
+        title="Edit Asset Group"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Group Name *
+            </label>
+            <Input
+              value={groupForm.name}
+              onChange={(e) => setGroupForm({...groupForm, name: e.target.value})}
+              placeholder="Enter group name"
+              className="w-full"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Description
+            </label>
+            <textarea
+              value={groupForm.description}
+              onChange={(e) => setGroupForm({...groupForm, description: e.target.value})}
+              placeholder="Optional description"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
+              rows={3}
+            />
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button 
+              variant="secondary" 
+              onClick={() => setShowEditGroupModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateGroup}>
+              Update Group
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Run Operation Modal */}
+      <Modal
+        isOpen={showOperationModal}
+        onClose={() => setShowOperationModal(false)}
+        title="Run Operation"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Select Operation *
+            </label>
+            <select
+              value={operationForm.operation_id}
+              onChange={(e) => setOperationForm({...operationForm, operation_id: e.target.value})}
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+            >
+              <option value="">Choose an operation...</option>
+              {operations.filter(op => op.is_active).map(operation => (
+                <option key={operation.id} value={operation.id}>
+                  {operation.name} ({operation.operation_type})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Target Type
+            </label>
+            <select
+              value={operationForm.target_type}
+              onChange={(e) => setOperationForm({...operationForm, target_type: e.target.value})}
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+            >
+              <option value="assets">Assets ({selectedAssets.length} selected)</option>
+              <option value="groups">Asset Groups ({selectedAssetGroups.length} selected)</option>
+            </select>
+          </div>
+
+          <div className="p-4 bg-info/10 rounded-md border border-info/20">
+            <h3 className="text-subheading text-foreground mb-2">
+              Selected Targets
+            </h3>
+            <div className="text-body text-muted-foreground">
+              {operationForm.target_type === 'assets' 
+                ? `${selectedAssets.length} assets selected`
+                : `${selectedAssetGroups.length} groups selected`
+              }
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button 
+              variant="secondary" 
+              onClick={() => setShowOperationModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRunOperation}
+              disabled={!operationForm.operation_id || (selectedAssets.length === 0 && selectedAssetGroups.length === 0)}
+            >
+              Run Operation
             </Button>
           </div>
         </div>

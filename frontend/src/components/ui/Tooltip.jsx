@@ -49,10 +49,10 @@ const Tooltip = ({
 
   const getArrowClasses = () => {
     const arrows = {
-      top: 'top-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-slate-800',
-      bottom: 'bottom-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-slate-800',
-      left: 'left-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-slate-800',
-      right: 'right-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-slate-800'
+      top: 'top-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-popover',
+      bottom: 'bottom-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-popover',
+      left: 'left-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-popover',
+      right: 'right-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-popover'
     };
     return arrows[position] || arrows.top;
   };
@@ -72,7 +72,7 @@ const Tooltip = ({
         <div
           ref={tooltipRef}
           className={cn(
-            'absolute z-50 px-3 py-2 text-sm text-white bg-slate-800 rounded-lg shadow-lg',
+            'absolute z-50 px-3 py-2 text-sm text-popover-foreground bg-popover rounded-lg shadow-lg border border-border',
             'animate-in fade-in-0 zoom-in-95 duration-200',
             getPositionClasses(),
             className

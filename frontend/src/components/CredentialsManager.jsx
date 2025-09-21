@@ -197,7 +197,7 @@ const CredentialsManager = () => {
             <select
               value={formData.credential_type}
               onChange={(e) => setFormData({...formData, credential_type: e.target.value})}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               {credentialTypes.map(type => (
                 <option key={type.value} value={type.value}>
@@ -360,7 +360,7 @@ const CredentialsManager = () => {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="px-3 py-2 border border-input bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               >
                 <option value="">All Types</option>
                 {credentialTypes.map(type => (

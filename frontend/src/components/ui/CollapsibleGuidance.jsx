@@ -13,19 +13,19 @@ const CollapsibleGuidance = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const variantClasses = {
-    default: 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
-    primary: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700',
-    success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700',
-    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700',
-    info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
+    default: 'bg-muted border-border',
+    primary: 'bg-primary/10 border-primary/20',
+    success: 'bg-success/10 border-success/20',
+    warning: 'bg-warning/10 border-warning/20',
+    info: 'bg-info/10 border-info/20'
   };
 
   const textVariantClasses = {
-    default: 'text-slate-700 dark:text-slate-300',
-    primary: 'text-blue-700 dark:text-blue-300',
-    success: 'text-green-700 dark:text-green-300',
-    warning: 'text-yellow-700 dark:text-yellow-300',
-    info: 'text-blue-700 dark:text-blue-300'
+    default: 'text-foreground',
+    primary: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    info: 'text-info'
   };
 
   return (
@@ -43,7 +43,7 @@ const CollapsibleGuidance = ({
         className={cn(
           'w-full px-4 py-3 flex items-center justify-between text-left',
           'hover:bg-opacity-80 transition-colors duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset'
+          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset'
         )}
         aria-expanded={isOpen}
         aria-controls="guidance-content"
@@ -77,7 +77,7 @@ const CollapsibleGuidance = ({
           className={cn(
             'px-4 pb-4 border-t border-opacity-50',
             'animate-in slide-in-from-top-2 duration-200',
-            variant === 'default' ? 'border-slate-200 dark:border-slate-700' : 'border-current'
+            'border-border'
           )}
         >
           <div className={cn(

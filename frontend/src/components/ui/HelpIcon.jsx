@@ -18,11 +18,11 @@ const HelpIcon = ({
   };
 
   const variantClasses = {
-    default: 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300',
-    primary: 'text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300',
-    success: 'text-green-400 hover:text-green-600 dark:text-green-500 dark:hover:text-green-300',
-    warning: 'text-yellow-400 hover:text-yellow-600 dark:text-yellow-500 dark:hover:text-yellow-300',
-    danger: 'text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-300'
+    default: 'text-muted-foreground hover:text-foreground',
+    primary: 'text-primary hover:text-primary/80',
+    success: 'text-success hover:text-success/80',
+    warning: 'text-warning hover:text-warning/80',
+    danger: 'text-error hover:text-error/80'
   };
 
   return (
@@ -31,7 +31,7 @@ const HelpIcon = ({
         type="button"
         className={cn(
           'inline-flex items-center justify-center rounded-full transition-colors duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1',
+          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
           sizeClasses[size],
           variantClasses[variant],
           className

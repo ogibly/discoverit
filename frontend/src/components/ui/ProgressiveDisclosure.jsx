@@ -13,9 +13,9 @@ const ProgressiveDisclosure = ({
   const [expandedStep, setExpandedStep] = useState(currentStep);
 
   const variantClasses = {
-    default: 'border-slate-200 dark:border-slate-700',
-    primary: 'border-blue-200 dark:border-blue-700',
-    success: 'border-green-200 dark:border-green-700'
+    default: 'border-border',
+    primary: 'border-primary/20',
+    success: 'border-success/20'
   };
 
   const getStepStatus = (stepIndex) => {
@@ -35,10 +35,10 @@ const ProgressiveDisclosure = ({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20';
-      case 'current': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20';
-      case 'pending': return 'text-slate-400 bg-slate-100 dark:text-slate-500 dark:bg-slate-800';
-      default: return 'text-slate-400 bg-slate-100 dark:text-slate-500 dark:bg-slate-800';
+      case 'completed': return 'text-success bg-success/10';
+      case 'current': return 'text-primary bg-primary/10';
+      case 'pending': return 'text-muted-foreground bg-muted';
+      default: return 'text-muted-foreground bg-muted';
     }
   };
 
@@ -54,13 +54,13 @@ const ProgressiveDisclosure = ({
     >
       {showProgress && (
         <div className="mb-6">
-          <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
+          <div className="flex justify-between text-body text-muted-foreground mb-2">
             <span>Progress</span>
             <span>{Math.round(progressPercentage)}%</span>
           </div>
-          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-2">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+              className="bg-primary h-2 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -77,11 +77,11 @@ const ProgressiveDisclosure = ({
             <div
               key={index}
               className={cn(
-                'border rounded-lg transition-all duration-200',
+                'border rounded-lg transition-all duration-200 bg-card',
                 variantClasses[variant],
                 isClickable && 'hover:shadow-md cursor-pointer',
-                status === 'current' && 'ring-2 ring-blue-500 ring-opacity-50',
-                status === 'completed' && 'bg-green-50 dark:bg-green-900/10'
+                status === 'current' && 'ring-2 ring-primary/50',
+                status === 'completed' && 'bg-success/5'
               )}
               onClick={() => {
                 if (isClickable) {
@@ -100,10 +100,10 @@ const ProgressiveDisclosure = ({
                       {getStatusIcon(status)}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                      <h3 className="font-semibold text-foreground">
                         {step.title}
                       </h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                      <p className="text-body text-muted-foreground">
                         {step.description}
                       </p>
                     </div>
@@ -117,7 +117,7 @@ const ProgressiveDisclosure = ({
                       className={cn(
                         'w-5 h-5 transition-transform duration-200',
                         isExpanded ? 'rotate-180' : 'rotate-0',
-                        'text-slate-400'
+                        'text-muted-foreground'
                       )}
                       fill="none"
                       stroke="currentColor"
@@ -129,15 +129,15 @@ const ProgressiveDisclosure = ({
                 </div>
 
                 {isExpanded && step.details && (
-                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <div className="text-sm text-slate-700 dark:text-slate-300">
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <div className="text-body text-foreground">
                       {typeof step.details === 'string' ? (
                         <p>{step.details}</p>
                       ) : (
                         <ul className="space-y-2">
                           {step.details.map((detail, detailIndex) => (
                             <li key={detailIndex} className="flex items-start space-x-2">
-                              <span className="text-blue-500 mt-1">•</span>
+                              <span className="text-primary mt-1">•</span>
                               <span>{detail}</span>
                             </li>
                           ))}
@@ -149,7 +149,7 @@ const ProgressiveDisclosure = ({
                       <div className="mt-4">
                         <button
                           type="button"
-                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
+                          className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors duration-200"
                           onClick={(e) => {
                             e.stopPropagation();
                             step.action();

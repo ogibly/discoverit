@@ -164,15 +164,7 @@ def run_background_scan(task_id: int):
             if task.status == "cancelled":
                 break
             
-            # Upsert asset
-            asset = db.query(models.Asset).filter(models.Asset.primary_ip == ip).first()
             now_ts = datetime.utcnow()
-            if asset:
-                asset.last_seen = now_ts
-            else:
-                asset = models.Asset(name=ip, primary_ip=ip, last_seen=now_ts)
-                db.add(asset)
-                db.flush()
             
             # Run the specified scan type
             scan_result = {}
@@ -185,27 +177,22 @@ def run_background_scan(task_id: int):
                 response = requests.post(f"{scanmanager_base_url}/scan", json=scan_request)
                 response.raise_for_status()
                 scan_result = response.json()
-                # Update device with comprehensive scan data
-                if "os_info" in scan_result:
-                    asset.os_name = scan_result["os_info"].get("os_name")
-                    asset.os_family = scan_result["os_info"].get("os_family")
-                    asset.os_version = scan_result["os_info"].get("os_version")
-                if "device_info" in scan_result:
-                    asset.manufacturer = scan_result["device_info"].get("manufacturer")
-                    asset.model = scan_result["device_info"].get("model")
-                if "hostname" in scan_result:
-                    asset.hostname = scan_result["hostname"]
-                if "addresses" in scan_result and "mac" in scan_result["addresses"]:
-                    asset.mac_address = scan_result["addresses"]["mac"]
+                
+                # Add IP address to scan result for device identification
+                scan_result["ip_address"] = ip
+                
             except requests.exceptions.RequestException as e:
-                scan_result = {"error": str(e), "timestamp": now_ts.isoformat() + "Z"}
+                scan_result = {"error": str(e), "timestamp": now_ts.isoformat() + "Z", "ip_address": ip}
 
+            # Create scan record without linking to asset
+            # Users can later convert discovered devices to assets manually
             db_scan = models.Scan(
-                asset_id=asset.id,
+                asset_id=None,  # No asset created automatically
                 scan_task_id=task.id,
                 timestamp=now_ts,
                 scan_data=json.dumps(scan_result),
-                status="completed" if "error" not in scan_result else "failed"
+                status="completed" if "error" not in scan_result else "failed",
+                scan_type=task.scan_type
             )
             db.add(db_scan)
             db.commit()

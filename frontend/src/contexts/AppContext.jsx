@@ -11,6 +11,11 @@ const initialState = {
   selectedAssets: [],
   selectedAsset: null,
   
+  // Discovered Devices (from scans, not yet converted to assets)
+  discoveredDevices: [],
+  selectedDevices: [],
+  selectedDevice: null,
+  
   // Asset Groups
   assetGroups: [],
   selectedAssetGroups: [],
@@ -31,6 +36,7 @@ const initialState = {
   // UI State
   loading: {
     assets: false,
+    discoveredDevices: false,
     assetGroups: false,
     labels: false,
     scanTasks: false,
@@ -58,6 +64,12 @@ const ActionTypes = {
   ADD_ASSET: 'ADD_ASSET',
   UPDATE_ASSET: 'UPDATE_ASSET',
   DELETE_ASSET: 'DELETE_ASSET',
+  
+  // Discovered Devices
+  SET_DISCOVERED_DEVICES: 'SET_DISCOVERED_DEVICES',
+  SET_SELECTED_DEVICES: 'SET_SELECTED_DEVICES',
+  SET_SELECTED_DEVICE: 'SET_SELECTED_DEVICE',
+  REMOVE_DISCOVERED_DEVICE: 'REMOVE_DISCOVERED_DEVICE',
   
   // Asset Groups
   SET_ASSET_GROUPS: 'SET_ASSET_GROUPS',
@@ -122,6 +134,21 @@ function appReducer(state, action) {
         assets: state.assets.filter(asset => asset.id !== action.payload),
         selectedAsset: state.selectedAsset?.id === action.payload ? null : state.selectedAsset,
         selectedAssets: state.selectedAssets.filter(id => id !== action.payload)
+      };
+    
+    // Discovered Devices
+    case ActionTypes.SET_DISCOVERED_DEVICES:
+      return { ...state, discoveredDevices: action.payload };
+    case ActionTypes.SET_SELECTED_DEVICES:
+      return { ...state, selectedDevices: action.payload };
+    case ActionTypes.SET_SELECTED_DEVICE:
+      return { ...state, selectedDevice: action.payload };
+    case ActionTypes.REMOVE_DISCOVERED_DEVICE:
+      return {
+        ...state,
+        discoveredDevices: state.discoveredDevices.filter(device => device.id !== action.payload),
+        selectedDevice: state.selectedDevice?.id === action.payload ? null : state.selectedDevice,
+        selectedDevices: state.selectedDevices.filter(id => id !== action.payload)
       };
     
     // Asset Groups
@@ -386,6 +413,45 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  // Discovered Devices actions
+  const fetchDiscoveredDevices = useCallback(async (filters = {}) => {
+    dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'discoveredDevices', value: true } });
+    try {
+      const params = new URLSearchParams();
+      if (filters.search) params.append('search', filters.search);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.skip) params.append('skip', filters.skip);
+      if (filters.limit) params.append('limit', filters.limit);
+      
+      const response = await apiCall(`/devices?${params.toString()}`);
+      dispatch({ type: ActionTypes.SET_DISCOVERED_DEVICES, payload: response.devices || [] });
+      return response;
+    } catch (error) {
+      // Error already handled in apiCall
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'discoveredDevices', value: false } });
+    }
+  }, [apiCall]);
+
+  const convertDeviceToAsset = useCallback(async (deviceId, assetData) => {
+    try {
+      const asset = await apiCall(`/devices/${deviceId}/convert-to-asset`, {
+        method: 'POST',
+        data: assetData
+      });
+      
+      // Remove the device from discovered devices and add to assets
+      dispatch({ type: ActionTypes.REMOVE_DISCOVERED_DEVICE, payload: deviceId });
+      dispatch({ type: ActionTypes.ADD_ASSET, payload: asset });
+      
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Device converted to asset successfully' });
+      return asset;
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to convert device to asset' });
+      throw error;
+    }
+  }, [apiCall]);
+
   const createAssetGroup = useCallback(async (groupData) => {
     try {
       const response = await apiCall('/asset-groups', {
@@ -586,6 +652,22 @@ export function AppProvider({ children }) {
     dispatch({ type: ActionTypes.SET_SELECTED_ASSETS, payload: newSelection });
   }, [state.selectedAssets]);
 
+  // Device selection actions
+  const toggleDeviceSelection = useCallback((deviceId) => {
+    const newSelection = state.selectedDevices.includes(deviceId)
+      ? state.selectedDevices.filter(id => id !== deviceId)
+      : [...state.selectedDevices, deviceId];
+    dispatch({ type: ActionTypes.SET_SELECTED_DEVICES, payload: newSelection });
+  }, [state.selectedDevices]);
+
+  const selectAllDevices = useCallback((deviceIds) => {
+    const allSelected = deviceIds.every(id => state.selectedDevices.includes(id));
+    const newSelection = allSelected
+      ? state.selectedDevices.filter(id => !deviceIds.includes(id))
+      : [...new Set([...state.selectedDevices, ...deviceIds])];
+    dispatch({ type: ActionTypes.SET_SELECTED_DEVICES, payload: newSelection });
+  }, [state.selectedDevices]);
+
   // Initial data fetch - only after authentication
   useEffect(() => {
     // Don't fetch data on initial load - wait for auth-changed event
@@ -660,6 +742,10 @@ export function AppProvider({ children }) {
     deleteAsset,
     bulkDeleteAssets,
     
+    // Discovered Devices actions
+    fetchDiscoveredDevices,
+    convertDeviceToAsset,
+    
     // Device actions
     deleteDevice,
     bulkDeleteDevices,
@@ -693,6 +779,8 @@ export function AppProvider({ children }) {
     // Selection actions
     toggleAssetSelection,
     selectAllAssets,
+    toggleDeviceSelection,
+    selectAllDevices,
     
     // Direct dispatch for complex actions
     dispatch

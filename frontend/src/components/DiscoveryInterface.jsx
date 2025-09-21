@@ -12,15 +12,17 @@ import { cn } from '../utils/cn';
 
 const DiscoveryInterface = () => {
   const {
+    discoveredDevices,
     assets,
     activeScanTask,
+    fetchDiscoveredDevices,
     fetchAssets,
     createScanTask,
     cancelScanTask,
-    updateAsset,
-    selectedAssets,
-    toggleAssetSelection,
-    selectAllAssets
+    convertDeviceToAsset,
+    selectedDevices,
+    toggleDeviceSelection,
+    selectAllDevices
   } = useApp();
   
   const { user } = useAuth();
@@ -45,12 +47,13 @@ const DiscoveryInterface = () => {
 
   // Load data on component mount
   useEffect(() => {
+    fetchDiscoveredDevices();
     fetchAssets();
-  }, [fetchAssets]);
+  }, [fetchDiscoveredDevices, fetchAssets]);
 
   // Filter and sort devices
   const filteredDevices = React.useMemo(() => {
-    let filtered = assets || [];
+    let filtered = discoveredDevices || [];
     
     // Apply search filter
     if (searchTerm) {
@@ -60,13 +63,6 @@ const DiscoveryInterface = () => {
         device.mac_address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         device.os_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }
-    
-    // Apply type filter
-    if (filterType === 'devices') {
-      filtered = filtered.filter(device => !device.is_managed);
-    } else if (filterType === 'assets') {
-      filtered = filtered.filter(device => device.is_managed);
     }
     
     // Apply sorting
@@ -97,7 +93,12 @@ const DiscoveryInterface = () => {
     });
     
     return filtered;
-  }, [assets, searchTerm, filterType, sortBy, sortOrder]);
+  }, [discoveredDevices, searchTerm, sortBy, sortOrder]);
+
+  const handleSelectAll = () => {
+    const deviceIds = filteredDevices.map(device => device.id);
+    selectAllDevices(deviceIds);
+  };
 
   const handleStartScan = async () => {
     if (!scanConfig.target.trim()) {
@@ -140,7 +141,21 @@ const DiscoveryInterface = () => {
 
   const handleConvertToAsset = async (device) => {
     try {
-      await updateAsset(device.id, { ...device, is_managed: true });
+      // Create asset data from device
+      const assetData = {
+        name: device.hostname || device.primary_ip,
+        primary_ip: device.primary_ip,
+        mac_address: device.mac_address,
+        hostname: device.hostname,
+        os_name: device.os_name,
+        os_family: device.os_family,
+        os_version: device.os_version,
+        manufacturer: device.manufacturer,
+        model: device.model,
+        is_managed: true
+      };
+      
+      await convertDeviceToAsset(device.id, assetData);
       alert('Device converted to managed asset successfully!');
     } catch (error) {
       console.error('Failed to convert device to asset:', error);
@@ -154,12 +169,12 @@ const DiscoveryInterface = () => {
   };
 
   const getStatusColor = (device) => {
-    if (device.is_managed) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    // All discovered devices are unmanaged until converted
     return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
   };
 
   const getStatusText = (device) => {
-    return device.is_managed ? 'Managed Asset' : 'Discovered Device';
+    return 'Discovered Device';
   };
 
   const formatLastSeen = (dateString) => {
@@ -422,7 +437,7 @@ const DiscoveryInterface = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       <input
                         type="checkbox"
-                        checked={selectedAssets.length === filteredDevices.length && filteredDevices.length > 0}
+                        checked={selectedDevices.length === filteredDevices.length && filteredDevices.length > 0}
                         onChange={handleSelectAll}
                         className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
                       />
@@ -456,8 +471,8 @@ const DiscoveryInterface = () => {
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
-                          checked={selectedAssets.includes(device.id)}
-                          onChange={() => toggleAssetSelection(device.id)}
+                          checked={selectedDevices.includes(device.id)}
+                          onChange={() => toggleDeviceSelection(device.id)}
                           className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
                         />
                       </td>
@@ -522,15 +537,13 @@ const DiscoveryInterface = () => {
                           >
                             View
                           </Button>
-                          {!device.is_managed && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleConvertToAsset(device)}
-                              className="text-xs h-7 px-2"
-                            >
-                              Convert
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleConvertToAsset(device)}
+                            className="text-xs h-7 px-2"
+                          >
+                            Convert
+                          </Button>
                         </div>
                       </td>
                     </tr>

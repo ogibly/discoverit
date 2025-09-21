@@ -437,6 +437,132 @@ def get_scan_results(task_id: int, db: Session = Depends(get_db)):
         "results": results
     }
 
+@router.get("/devices")
+def get_discovered_devices(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    search: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    current_user: User = Depends(require_assets_read),
+    db: Session = Depends(get_db)
+):
+    """Get discovered devices (scans without assets) that can be converted to assets."""
+    from .models import Scan
+    import json
+    
+    # Query scans that don't have an associated asset
+    query = db.query(Scan).filter(Scan.asset_id.is_(None))
+    
+    # Apply filters
+    if status:
+        query = query.filter(Scan.status == status)
+    
+    # Apply search
+    if search:
+        query = query.filter(Scan.scan_data.contains(search))
+    
+    # Get total count
+    total = query.count()
+    
+    # Apply pagination
+    scans = query.order_by(Scan.timestamp.desc()).offset(skip).limit(limit).all()
+    
+    # Format results
+    devices = []
+    for scan in scans:
+        try:
+            scan_data = json.loads(scan.scan_data) if isinstance(scan.scan_data, str) else scan.scan_data
+            ip_address = scan_data.get("ip_address", "Unknown")
+            
+            # Extract device information from scan data
+            hostname = scan_data.get("hostname")
+            os_info = scan_data.get("os_info", {})
+            device_info = scan_data.get("device_info", {})
+            addresses = scan_data.get("addresses", {})
+            
+            devices.append({
+                "id": scan.id,  # Use scan ID as device ID
+                "primary_ip": ip_address,
+                "hostname": hostname,
+                "mac_address": addresses.get("mac"),
+                "os_name": os_info.get("os_name"),
+                "os_family": os_info.get("os_family"),
+                "os_version": os_info.get("os_version"),
+                "manufacturer": device_info.get("manufacturer"),
+                "model": device_info.get("model"),
+                "is_managed": False,  # Devices are not managed until converted to assets
+                "last_seen": scan.timestamp,
+                "created_at": scan.timestamp,
+                "updated_at": scan.timestamp,
+                "scan_data": scan_data,
+                "scan_status": scan.status,
+                "scan_type": scan.scan_type
+            })
+        except (json.JSONDecodeError, KeyError) as e:
+            # Skip malformed scan data
+            continue
+    
+    return {
+        "devices": devices,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+@router.post("/devices/{device_id}/convert-to-asset")
+def convert_device_to_asset(
+    device_id: int,
+    asset_data: schemas.AssetCreate,
+    current_user: User = Depends(require_assets_write),
+    db: Session = Depends(get_db)
+):
+    """Convert a discovered device (scan) to an asset."""
+    from .models import Scan
+    import json
+    
+    # Get the scan/device
+    scan = db.query(Scan).filter(Scan.id == device_id, Scan.asset_id.is_(None)).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Device not found or already converted")
+    
+    try:
+        scan_data = json.loads(scan.scan_data) if isinstance(scan.scan_data, str) else scan.scan_data
+        ip_address = scan_data.get("ip_address", "Unknown")
+        
+        # Check if an asset with this IP already exists
+        existing_asset = db.query(models.Asset).filter(models.Asset.primary_ip == ip_address).first()
+        if existing_asset:
+            raise HTTPException(status_code=400, detail=f"Asset with IP {ip_address} already exists")
+        
+        # Create the asset
+        asset = models.Asset(
+            name=asset_data.name,
+            primary_ip=ip_address,
+            mac_address=asset_data.mac_address,
+            hostname=asset_data.hostname,
+            os_name=asset_data.os_name,
+            os_family=asset_data.os_family,
+            os_version=asset_data.os_version,
+            manufacturer=asset_data.manufacturer,
+            model=asset_data.model,
+            is_managed=asset_data.is_managed,
+            scan_data=scan_data,
+            last_seen=scan.timestamp
+        )
+        
+        db.add(asset)
+        db.flush()  # Get the asset ID
+        
+        # Link the scan to the new asset
+        scan.asset_id = asset.id
+        db.commit()
+        db.refresh(asset)
+        
+        return asset
+        
+    except (json.JSONDecodeError, KeyError) as e:
+        raise HTTPException(status_code=400, detail="Invalid device data")
+
 @router.post("/discovery/lan")
 async def discover_lan_network(
     max_depth: int = Query(2, ge=1, le=5, description="Maximum network depth to scan"),

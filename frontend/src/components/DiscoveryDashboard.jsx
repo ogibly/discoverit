@@ -297,28 +297,28 @@ const DiscoveryDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 overflow-y-auto">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black overflow-y-auto">
       {/* Professional Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-700/60 sticky top-0 z-40">
+      <div className="bg-gray-900/80 backdrop-blur-xl border-b border-gray-700/60 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-200 to-red-300 bg-clip-text text-transparent">
                 Network Discovery
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 mt-0.5 text-xs font-medium">
+              <p className="text-gray-400 mt-0.5 text-xs font-medium">
                 Professional network device discovery and management platform
               </p>
             </div>
-            <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+            <div className="flex items-center space-x-1 bg-gray-800 p-1 rounded-lg">
               <Button
                 variant="ghost"
                 onClick={() => setViewMode('overview')}
                 className={cn(
                   "px-4 py-2 font-medium transition-all duration-200 rounded-md",
                   viewMode === 'overview' 
-                    ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-600/50"
+                    ? "bg-gray-700 text-gray-100 shadow-sm" 
+                    : "text-gray-400 hover:text-gray-100 hover:bg-gray-700/50"
                 )}
               >
                 Dashboard
@@ -329,8 +329,8 @@ const DiscoveryDashboard = () => {
                 className={cn(
                   "px-4 py-2 font-medium transition-all duration-200 rounded-md",
                   viewMode === 'devices' 
-                    ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-600/50"
+                    ? "bg-gray-700 text-gray-100 shadow-sm" 
+                    : "text-gray-400 hover:text-gray-100 hover:bg-gray-700/50"
                 )}
               >
                 Discovered Devices
@@ -341,8 +341,8 @@ const DiscoveryDashboard = () => {
                 className={cn(
                   "px-4 py-2 font-medium transition-all duration-200 rounded-md",
                   viewMode === 'scan' 
-                    ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-600/50"
+                    ? "bg-gray-700 text-gray-100 shadow-sm" 
+                    : "text-gray-400 hover:text-gray-100 hover:bg-gray-700/50"
                 )}
               >
                 Custom Scan
@@ -353,8 +353,8 @@ const DiscoveryDashboard = () => {
                 className={cn(
                   "px-4 py-2 font-medium transition-all duration-200 rounded-md",
                   viewMode === 'lan-discovery' 
-                    ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-600/50"
+                    ? "bg-gray-700 text-gray-100 shadow-sm" 
+                    : "text-gray-400 hover:text-gray-100 hover:bg-gray-700/50"
                 )}
               >
                 Network Discovery

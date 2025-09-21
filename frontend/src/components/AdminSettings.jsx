@@ -74,14 +74,14 @@ const AdminSettings = () => {
   // Check if user has admin permissions
   if (!hasPermission('admin')) {
     return (
-      <div className="h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="h-screen bg-black flex items-center justify-center">
         <Card className="w-96">
           <CardContent className="p-8 text-center">
             <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            <h2 className="text-xl font-bold text-gray-100 mb-2">
               Access Denied
             </h2>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-gray-400">
               You need administrator privileges to access this page.
             </p>
           </CardContent>
@@ -314,21 +314,21 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+    <div className="h-screen bg-black flex flex-col">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+      <div className="bg-gray-900 border-b border-gray-700 flex-shrink-0">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+              <h1 className="text-xl font-bold text-gray-100 flex items-center">
                 <span className="mr-2">⚙️</span>
                 Admin Settings
               </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-gray-400">
                 System configuration and user management
               </p>
             </div>
-            <Badge className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
+            <Badge className="bg-red-900 text-red-200">
               Admin Only
             </Badge>
           </div>

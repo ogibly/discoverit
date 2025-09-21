@@ -203,44 +203,44 @@ const AssetManagement = () => {
 
   const getOSIcon = (osName) => {
     if (!osName) return (
-      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-        <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
+        <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     const os = osName.toLowerCase();
     if (os.includes('windows')) return (
-      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-lg bg-blue-900/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     if (os.includes('linux')) return (
-      <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
-        <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-lg bg-orange-900/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     if (os.includes('mac')) return (
-      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-        <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
+        <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     if (os.includes('ios') || os.includes('android')) return (
-      <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-lg bg-green-900/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     return (
-      <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-        <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
+        <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
@@ -272,7 +272,7 @@ const AssetManagement = () => {
   ];
 
   return (
-    <div className="h-screen bg-gradient-to-br from-black via-gray-900 to-black flex flex-col">
+    <div className="h-screen bg-slate-900 flex flex-col">
       <PageHeader
         title="Asset Management"
         subtitle={`${assets.length} assets • ${selectedAssets.length} selected`}
@@ -282,24 +282,24 @@ const AssetManagement = () => {
         searchValue={searchTerm}
       />
 
-      {/* Sophisticated Stats and Filters */}
-      <div className="px-6 py-4 bg-gradient-to-r from-gray-800/40 to-gray-700/30 border-b border-red-900/50 flex-shrink-0 backdrop-blur-sm">
+      {/* Professional Stats and Filters */}
+      <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8 text-sm">
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/50"></div>
-              <span className="text-gray-300 font-medium">Total:</span>
-              <span className="font-bold text-red-300">{assets.length}</span>
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span className="text-slate-300 font-medium">Total:</span>
+              <span className="font-bold text-blue-300">{assets.length}</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 shadow-lg shadow-orange-500/50"></div>
-              <span className="text-gray-300 font-medium">Managed:</span>
-              <span className="font-bold text-orange-300">{assets.filter(a => a.is_managed).length}</span>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span className="text-slate-300 font-medium">Managed:</span>
+              <span className="font-bold text-green-300">{assets.filter(a => a.is_managed).length}</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50"></div>
-              <span className="text-gray-300 font-medium">Unmanaged:</span>
-              <span className="font-bold text-blue-300">{assets.filter(a => !a.is_managed).length}</span>
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <span className="text-slate-300 font-medium">Unmanaged:</span>
+              <span className="font-bold text-purple-300">{assets.filter(a => !a.is_managed).length}</span>
             </div>
           </div>
           <div className="flex items-center space-x-3">

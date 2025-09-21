@@ -320,35 +320,73 @@ const AssetManagement = () => {
     );
   };
 
-  const headerActions = [
-    {
-      label: `Group (${selectedAssets.length})`,
-      variant: "outline",
-      size: "sm",
-      onClick: () => setShowGroupModal(true),
-      disabled: selectedAssets.length === 0,
-    },
-    ...(selectedAssets.length > 0 ? [{
-      label: `Delete (${selectedAssets.length})`,
-      variant: "outline",
-      size: "sm",
-      onClick: handleBulkDeleteAssets,
-      className: "text-error hover:text-error hover:bg-error/10 border-error/20"
-    }] : []),
-    {
-      label: "Add Asset",
-      size: "sm",
-      onClick: () => setShowCreateModal(true),
+  const getHeaderActions = () => {
+    switch (activeTab) {
+      case 'assets':
+        return [
+          {
+            label: `Group (${selectedAssets.length})`,
+            variant: "outline",
+            size: "sm",
+            onClick: () => setShowGroupModal(true),
+            disabled: selectedAssets.length === 0,
+          },
+          ...(selectedAssets.length > 0 ? [{
+            label: `Delete (${selectedAssets.length})`,
+            variant: "outline",
+            size: "sm",
+            onClick: handleBulkDeleteAssets,
+            className: "text-error hover:text-error hover:bg-error/10 border-error/20"
+          }] : []),
+          {
+            label: "Add Asset",
+            size: "sm",
+            onClick: () => setShowCreateModal(true),
+          }
+        ];
+      case 'groups':
+        return [
+          {
+            label: "Add Group",
+            size: "sm",
+            onClick: () => setShowGroupModal(true),
+          }
+        ];
+      case 'operations':
+        return [
+          {
+            label: `Run Operation (${selectedAssets.length + selectedAssetGroups.length})`,
+            variant: "outline",
+            size: "sm",
+            onClick: () => setShowOperationModal(true),
+            disabled: selectedAssets.length === 0 && selectedAssetGroups.length === 0,
+          }
+        ];
+      default:
+        return [];
     }
-  ];
+  };
+
+  const getSubtitle = () => {
+    switch (activeTab) {
+      case 'assets':
+        return `${assets.length} assets • ${selectedAssets.length} selected`;
+      case 'groups':
+        return `${assetGroups.length} groups • ${selectedAssetGroups.length} selected`;
+      case 'operations':
+        return `${operations.length} operations • ${selectedAssets.length + selectedAssetGroups.length} targets selected`;
+      default:
+        return '';
+    }
+  };
 
   return (
     <div className="h-screen bg-background flex flex-col">
       <PageHeader
         title="Asset Management"
-        subtitle={`${assets.length} assets • ${selectedAssets.length} selected`}
-        actions={headerActions}
-        searchPlaceholder="Search assets..."
+        subtitle={getSubtitle()}
+        actions={getHeaderActions()}
+        searchPlaceholder={`Search ${activeTab}...`}
         onSearch={setSearchTerm}
         searchValue={searchTerm}
       />

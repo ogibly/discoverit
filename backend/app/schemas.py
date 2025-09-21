@@ -121,7 +121,8 @@ class Asset(AssetBase):
     scan_data: Optional[ScanData] = None
     ip_addresses: List['IPAddress'] = []
     labels: List['Label'] = []
-    groups: List['AssetGroup'] = []
+    # Remove groups to prevent circular reference
+    # groups: List['AssetGroup'] = []
     
     class Config:
         from_attributes = True
@@ -198,11 +199,19 @@ class AssetGroup(AssetGroupBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    assets: List[Asset] = []
+    # Remove assets to prevent circular reference
+    # assets: List[Asset] = []
     labels: List[Label] = []
     
     class Config:
         from_attributes = True
+
+# Separate schemas for when we need to include relationships
+class AssetWithGroups(Asset):
+    groups: List[AssetGroup] = []
+
+class AssetGroupWithAssets(AssetGroup):
+    assets: List[Asset] = []
 
 class OperationBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)

@@ -413,96 +413,151 @@ const DiscoveryInterface = () => {
             </CardContent>
           </Card>
 
-          {/* Devices Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredDevices.map((device) => (
-              <Card key={device.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                        {device.hostname || device.primary_ip || 'Unknown Device'}
-                      </h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {device.primary_ip}
-                      </p>
-                    </div>
-                    <Badge className={getStatusColor(device)}>
-                      {getStatusText(device)}
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    {device.mac_address && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">MAC:</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-mono">
-                          {device.mac_address}
+          {/* Professional Devices Table */}
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      <input
+                        type="checkbox"
+                        checked={selectedAssets.length === filteredDevices.length && filteredDevices.length > 0}
+                        onChange={handleSelectAll}
+                        className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Device
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      IP Address
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      MAC Address
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      OS / Vendor
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Last Seen
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                  {filteredDevices.map((device) => (
+                    <tr key={device.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedAssets.includes(device.id)}
+                          onChange={() => toggleAssetSelection(device.id)}
+                          className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                            <span className="text-xs">{getDeviceTypeIcon(device)}</span>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                              {device.hostname || 'Unknown Device'}
+                            </div>
+                            {device.model && (
+                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                                {device.model}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-mono text-slate-900 dark:text-slate-100">
+                          {device.primary_ip}
                         </span>
-                      </div>
-                    )}
-                    {device.os_name && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">OS:</span>
-                        <span className="text-slate-900 dark:text-slate-100">
-                          {device.os_name}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                          {device.mac_address || '—'}
                         </span>
-                      </div>
-                    )}
-                    {device.manufacturer && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 dark:text-slate-400">Vendor:</span>
-                        <span className="text-slate-900 dark:text-slate-100">
-                          {device.manufacturer}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm">
+                          {device.os_name && (
+                            <div className="text-slate-900 dark:text-slate-100">
+                              {device.os_name}
+                            </div>
+                          )}
+                          {device.manufacturer && (
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              {device.manufacturer}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={cn("text-xs", getStatusColor(device))}>
+                          {getStatusText(device)}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          {formatLastSeen(device.last_seen)}
                         </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">Last Seen:</span>
-                      <span className="text-slate-900 dark:text-slate-100">
-                        {formatLastSeen(device.last_seen)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewDevice(device)}
-                      className="flex-1"
-                    >
-                      View Details
-                    </Button>
-                    {!device.is_managed && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleConvertToAsset(device)}
-                        className="flex-1"
-                      >
-                        Convert to Asset
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDevice(device)}
+                            className="text-xs h-7 px-2"
+                          >
+                            View
+                          </Button>
+                          {!device.is_managed && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleConvertToAsset(device)}
+                              className="text-xs h-7 px-2"
+                            >
+                              Convert
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
 
           {filteredDevices.length === 0 && (
             <Card>
-              <CardContent className="p-12 text-center">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
                   No devices found
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-6">
+                <p className="text-slate-600 dark:text-slate-400 mb-4">
                   {searchTerm || filterType !== 'all' 
                     ? 'Try adjusting your search or filter criteria'
                     : 'Start by running a network scan to discover devices'
                   }
                 </p>
-                <Button onClick={() => setViewMode('scan')}>
+                <Button onClick={() => setViewMode('scan')} size="sm">
                   Start Network Scan
                 </Button>
               </CardContent>

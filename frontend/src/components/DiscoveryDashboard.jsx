@@ -297,16 +297,16 @@ const DiscoveryDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 overflow-y-auto">
-      {/* Professional Header */}
-      <div className="bg-slate-800 border-b border-slate-700 sticky top-0 z-40">
-        <div className="px-6 py-4">
+    <div className="h-screen bg-slate-900 flex flex-col">
+      {/* Compact Header */}
+      <div className="bg-slate-800 border-b border-slate-700 flex-shrink-0">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-100">
+              <h1 className="text-lg font-semibold text-slate-100">
                 Network Discovery
               </h1>
-              <p className="text-slate-400 mt-1 text-sm">
+              <p className="text-xs text-slate-400 mt-1">
                 Professional network device discovery and management platform
               </p>
             </div>
@@ -315,7 +315,7 @@ const DiscoveryDashboard = () => {
                 variant="ghost"
                 onClick={() => setViewMode('overview')}
                 className={cn(
-                  "px-3 py-2 text-sm font-medium transition-all duration-200 rounded-md",
+                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
                   viewMode === 'overview' 
                     ? "bg-slate-600 text-slate-100 shadow-sm" 
                     : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
@@ -327,19 +327,19 @@ const DiscoveryDashboard = () => {
                 variant="ghost"
                 onClick={() => setViewMode('devices')}
                 className={cn(
-                  "px-3 py-2 text-sm font-medium transition-all duration-200 rounded-md",
+                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
                   viewMode === 'devices' 
                     ? "bg-slate-600 text-slate-100 shadow-sm" 
                     : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
                 )}
               >
-                Discovered Devices
+                Devices
               </Button>
               <Button
                 variant="ghost"
                 onClick={() => setViewMode('scan')}
                 className={cn(
-                  "px-3 py-2 text-sm font-medium transition-all duration-200 rounded-md",
+                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
                   viewMode === 'scan' 
                     ? "bg-slate-600 text-slate-100 shadow-sm" 
                     : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
@@ -351,13 +351,13 @@ const DiscoveryDashboard = () => {
                 variant="ghost"
                 onClick={() => setViewMode('lan-discovery')}
                 className={cn(
-                  "px-3 py-2 text-sm font-medium transition-all duration-200 rounded-md",
+                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
                   viewMode === 'lan-discovery' 
                     ? "bg-slate-600 text-slate-100 shadow-sm" 
                     : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
                 )}
               >
-                Network Discovery
+                LAN Discovery
               </Button>
             </div>
           </div>
@@ -365,7 +365,7 @@ const DiscoveryDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 py-4 pb-20 min-h-[calc(100vh-140px)]">
+      <div className="flex-1 overflow-y-auto p-4">
         {viewMode === 'overview' && (
           <OverviewView 
             assets={assets}

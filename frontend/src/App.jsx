@@ -90,35 +90,35 @@ const Navigation = () => {
     .filter(item => !item.permission || hasPermission(item.permission));
 
   return (
-    <div className="flex flex-col w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">
-      {/* Clean Header */}
-      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">D</span>
+      <div className="flex flex-col w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50">
+        {/* Sophisticated Header */}
+        <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-purple-900/20 to-pink-900/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-sm">D</span>
+              </div>
+              <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-200 to-pink-200 bg-clip-text text-transparent">DiscoverIT</h1>
             </div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">DiscoverIT</h1>
+            {hasPermission('admin') && (
+              <Link
+                to="/admin-settings"
+                className={cn(
+                  "p-2 rounded-lg transition-all duration-200 group",
+                  location.pathname === '/admin-settings'
+                    ? "bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-300 border border-red-500/30"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 hover:border-slate-600/50 border border-transparent"
+                )}
+                title="Admin Settings"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </Link>
+            )}
           </div>
-          {hasPermission('admin') && (
-            <Link
-              to="/admin-settings"
-              className={cn(
-                "p-2 rounded-lg transition-all duration-200 group",
-                location.pathname === '/admin-settings'
-                  ? "bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400"
-                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              )}
-              title="Admin Settings"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </Link>
-          )}
         </div>
-      </div>
       
       <nav className="flex-grow px-4 py-4 space-y-6">
         {/* Main Navigation */}
@@ -129,10 +129,10 @@ const Navigation = () => {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group border",
                   location.pathname === item.path
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
+                    ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 border-purple-500/30 shadow-lg shadow-purple-500/10"
+                    : "text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-transparent hover:border-slate-600/30"
                 )}
               >
                 <span className="text-base">{item.icon}</span>
@@ -144,7 +144,7 @@ const Navigation = () => {
 
         {/* Management Section */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+          <h3 className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
             MANAGE
           </h3>
           <div className="space-y-1">
@@ -153,10 +153,10 @@ const Navigation = () => {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group border",
                   location.pathname === item.path
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
+                    ? "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-200 border-blue-500/30 shadow-lg shadow-blue-500/10"
+                    : "text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-transparent hover:border-slate-600/30"
                 )}
               >
                 <span className="text-base">{item.icon}</span>
@@ -168,7 +168,7 @@ const Navigation = () => {
 
         {/* Help Section */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+          <h3 className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
             MORE
           </h3>
           <div className="space-y-1">
@@ -177,10 +177,10 @@ const Navigation = () => {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                  "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group border",
                   location.pathname === item.path
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
+                    ? "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-200 border-green-500/30 shadow-lg shadow-green-500/10"
+                    : "text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-transparent hover:border-slate-600/30"
                 )}
               >
                 <span className="text-base">{item.icon}</span>
@@ -193,13 +193,13 @@ const Navigation = () => {
       
       {/* Status Message */}
       {statusMessage && (
-        <div className="p-4 border-t border-slate-200">
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+        <div className="p-4 border-t border-slate-700/50">
+          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-md p-3 backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-blue-800">{statusMessage}</span>
+              <span className="text-sm text-blue-200">{statusMessage}</span>
               <button
                 onClick={clearStatusMessage}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-300 hover:text-blue-100 transition-colors"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -210,20 +210,20 @@ const Navigation = () => {
         </div>
       )}
 
-      {/* Clean Footer */}
-      <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
+      {/* Sophisticated Footer */}
+      <div className="px-4 py-4 border-t border-slate-700/50 bg-gradient-to-r from-slate-800/30 to-slate-700/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg ring-2 ring-violet-500/20">
+              <span className="text-xs font-bold text-white">
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </span>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-900 dark:text-slate-100">
+              <p className="text-sm font-semibold text-slate-100">
                 {user?.full_name || user?.username || 'User'}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-400 font-medium">
                 {user?.role?.name || 'Admin'}
               </p>
             </div>
@@ -232,7 +232,7 @@ const Navigation = () => {
             <ThemeToggle size="small" showLabel={false} />
             <button
               onClick={logout}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-gradient-to-r hover:from-rose-500/10 hover:to-pink-500/10 transition-all duration-200 group"
               title="Logout"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,8 +253,11 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-violet-500 border-r-purple-500 border-b-pink-500 border-l-blue-500"></div>
+          <div className="text-slate-300 font-medium">Loading DiscoverIT...</div>
+        </div>
       </div>
     );
   }
@@ -264,9 +267,9 @@ const AppContent = () => {
   }
 
 	return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <Navigation />
-      <div className="flex-grow overflow-hidden bg-slate-50 dark:bg-slate-900">
+      <div className="flex-grow overflow-hidden bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95 backdrop-blur-sm">
         {/* Global Scan Status Tracker */}
         <ScanStatusTracker position="top-right" compact={true} />
         <Routes>

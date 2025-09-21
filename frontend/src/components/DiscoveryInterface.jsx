@@ -193,41 +193,51 @@ const DiscoveryInterface = () => {
   };
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
-      {/* Compact Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-        <div className="px-6 py-4">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+      {/* Sophisticated Header */}
+      <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/60 border-b border-slate-700/50 flex-shrink-0 backdrop-blur-sm">
+        <div className="px-6 py-5">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-200 via-purple-200 to-pink-200 bg-clip-text text-transparent flex items-center">
                 Network Discovery
                 <HelpIcon 
                   content="Use this interface to discover network devices and convert them to managed assets. Start with a scan, then review and organize your findings."
-                  className="ml-2"
+                  className="ml-3"
                   size="sm"
                 />
               </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-slate-300 font-medium mt-1">
                 Discover and manage network devices and assets
               </p>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               <Button
                 variant={viewMode === 'devices' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('devices')}
-                className="text-sm"
+                className={cn(
+                  "text-sm font-medium transition-all duration-200",
+                  viewMode === 'devices' 
+                    ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25" 
+                    : "border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-violet-500/50"
+                )}
               >
-                <span className="mr-1">📱</span>
+                <span className="mr-2">📱</span>
                 Devices
               </Button>
               <Button
                 variant={viewMode === 'scan' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('scan')}
-                className="text-sm"
+                className={cn(
+                  "text-sm font-medium transition-all duration-200",
+                  viewMode === 'scan' 
+                    ? "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-500/25" 
+                    : "border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-blue-500/50"
+                )}
               >
-                <span className="mr-1">🔍</span>
+                <span className="mr-2">🔍</span>
                 Scan
               </Button>
             </div>
@@ -238,24 +248,24 @@ const DiscoveryInterface = () => {
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
-          {/* Compact Stats and Guidance */}
-          <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+          {/* Sophisticated Stats and Guidance */}
+          <div className="px-6 py-4 bg-gradient-to-r from-slate-800/40 to-slate-700/30 border-b border-slate-700/50 flex-shrink-0 backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-6 text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                  <span className="text-slate-600 dark:text-slate-400">Total Devices:</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{assets?.length || 0}</span>
+              <div className="flex items-center space-x-8 text-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/50"></div>
+                  <span className="text-slate-300 font-medium">Total Devices:</span>
+                  <span className="font-bold text-violet-300">{discoveredDevices?.length || 0}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="text-slate-600 dark:text-slate-400">Active:</span>
-                  <span className="font-semibold text-green-600 dark:text-green-400">{assets?.filter(a => a.is_active !== false).length || 0}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 shadow-lg shadow-emerald-500/50"></div>
+                  <span className="text-slate-300 font-medium">Active Scans:</span>
+                  <span className="font-bold text-emerald-300">{activeScanTask ? 1 : 0}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                  <span className="text-slate-600 dark:text-slate-400">Selected:</span>
-                  <span className="font-semibold text-amber-600 dark:text-amber-400">{selectedAssets.length}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 shadow-lg shadow-cyan-500/50"></div>
+                  <span className="text-slate-300 font-medium">Selected:</span>
+                  <span className="font-bold text-cyan-300">{selectedDevices.length}</span>
                 </div>
               </div>
               <CollapsibleGuidance
@@ -428,119 +438,119 @@ const DiscoveryInterface = () => {
             </CardContent>
           </Card>
 
-          {/* Professional Devices Table */}
-          <Card className="overflow-hidden">
+          {/* Sophisticated Devices Table */}
+          <Card className="overflow-hidden bg-gradient-to-br from-slate-800/50 to-slate-700/30 border-slate-700/50 backdrop-blur-sm">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-gradient-to-r from-slate-800/80 to-slate-700/60 border-b border-slate-700/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       <input
                         type="checkbox"
                         checked={selectedDevices.length === filteredDevices.length && filteredDevices.length > 0}
                         onChange={handleSelectAll}
-                        className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700/50"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       Device
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       IP Address
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       MAC Address
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       OS / Vendor
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       Last Seen
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                <tbody className="bg-slate-800/30 divide-y divide-slate-700/50">
                   {filteredDevices.map((device) => (
-                    <tr key={device.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                      <td className="px-4 py-3">
+                    <tr key={device.id} className="hover:bg-gradient-to-r hover:from-slate-700/30 hover:to-slate-600/20 transition-all duration-200 group">
+                      <td className="px-4 py-4">
                         <input
                           type="checkbox"
                           checked={selectedDevices.includes(device.id)}
                           onChange={() => toggleDeviceSelection(device.id)}
-                          className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700/50"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                            <span className="text-xs">{getDeviceTypeIcon(device)}</span>
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center ring-1 ring-violet-500/30">
+                            <span className="text-sm">{getDeviceTypeIcon(device)}</span>
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                            <div className="text-sm font-semibold text-slate-100">
                               {device.hostname || 'Unknown Device'}
                             </div>
                             {device.model && (
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                              <div className="text-xs text-slate-400 font-medium">
                                 {device.model}
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-mono text-slate-900 dark:text-slate-100">
+                      <td className="px-4 py-4">
+                        <span className="text-sm font-mono text-cyan-300 bg-slate-700/50 px-2 py-1 rounded">
                           {device.primary_ip}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                      <td className="px-4 py-4">
+                        <span className="text-sm font-mono text-slate-300">
                           {device.mac_address || '—'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="text-sm">
                           {device.os_name && (
-                            <div className="text-slate-900 dark:text-slate-100">
+                            <div className="text-slate-100 font-medium">
                               {device.os_name}
                             </div>
                           )}
                           {device.manufacturer && (
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                            <div className="text-xs text-slate-400">
                               {device.manufacturer}
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <Badge className={cn("text-xs", getStatusColor(device))}>
+                      <td className="px-4 py-4">
+                        <Badge className="bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-medium">
                           {getStatusText(device)}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                      <td className="px-4 py-4">
+                        <span className="text-sm text-slate-300">
                           {formatLastSeen(device.last_seen)}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewDevice(device)}
-                            className="text-xs h-7 px-2"
+                            className="text-xs h-8 px-3 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-violet-500/50 hover:text-violet-300 transition-all duration-200"
                           >
                             View
                           </Button>
                           <Button
                             size="sm"
                             onClick={() => handleConvertToAsset(device)}
-                            className="text-xs h-7 px-2"
+                            className="text-xs h-8 px-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-violet-500/25 transition-all duration-200"
                           >
                             Convert
                           </Button>

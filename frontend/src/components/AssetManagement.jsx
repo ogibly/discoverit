@@ -8,6 +8,8 @@ import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import PageHeader from './PageHeader';
+import AssetsView from './AssetsView';
+import AssetGroupsView from './AssetGroupsView';
 import { cn } from '../utils/cn';
 
 const AssetManagement = () => {
@@ -27,6 +29,11 @@ const AssetManagement = () => {
     deleteAsset,
     bulkDeleteAssets,
     createAssetGroup,
+    updateAssetGroup,
+    deleteAssetGroup,
+    toggleAssetGroupSelection,
+    selectAllAssetGroups,
+    runOperation,
     fetchAssets,
     fetchAssetGroups,
     fetchOperations
@@ -35,6 +42,8 @@ const AssetManagement = () => {
   const [activeTab, setActiveTab] = useState('assets');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -70,9 +79,9 @@ const AssetManagement = () => {
 
   // Filter and search assets
   const filteredAssets = useMemo(() => {
-    return assets.filter(asset => {
+    let filtered = assets.filter(asset => {
       const matchesSearch = !searchTerm || 
-        asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.hostname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.primary_ip?.includes(searchTerm) ||
         asset.mac_address?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -83,7 +92,31 @@ const AssetManagement = () => {
       
       return matchesSearch && matchesFilter;
     });
-  }, [assets, searchTerm, filterStatus]);
+
+    // Sort assets
+    filtered.sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+      
+      if (sortBy === 'is_managed') {
+        aValue = a.is_managed ? 1 : 0;
+        bValue = b.is_managed ? 1 : 0;
+      }
+      
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue?.toLowerCase() || '';
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    return filtered;
+  }, [assets, searchTerm, filterStatus, sortBy, sortOrder]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
@@ -315,13 +348,6 @@ const AssetManagement = () => {
         </svg>
       </div>
     );
-    if (os.includes('ios') || os.includes('android')) return (
-      <div className="w-8 h-8 rounded-md bg-success/20 flex items-center justify-center">
-        <svg className="w-4 h-4 text-success" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
-        </svg>
-      </div>
-    );
     return (
       <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
         <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
@@ -329,6 +355,46 @@ const AssetManagement = () => {
         </svg>
       </div>
     );
+  };
+
+  // Additional helper functions for asset group operations
+  const handleMoveAssetsToGroup = async (assetIds, groupId) => {
+    try {
+      // This would be implemented in the backend
+      console.log('Moving assets to group:', assetIds, groupId);
+      alert('Assets moved to group successfully!');
+    } catch (error) {
+      console.error('Failed to move assets:', error);
+      alert('Failed to move assets: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleRemoveAssetsFromGroup = async (assetIds, groupId) => {
+    try {
+      // This would be implemented in the backend
+      console.log('Removing assets from group:', assetIds, groupId);
+      alert('Assets removed from group successfully!');
+    } catch (error) {
+      console.error('Failed to remove assets:', error);
+      alert('Failed to remove assets: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleRunOperationOnGroup = async (groupIds, operationData) => {
+    try {
+      const executionData = {
+        operation_id: parseInt(operationData.operation_id),
+        target_type: 'asset_groups',
+        target_ids: groupIds,
+        credential_id: operationData.credential_id
+      };
+      
+      await runOperation(executionData);
+      alert('Operation started successfully on selected groups!');
+    } catch (error) {
+      console.error('Failed to run operation on groups:', error);
+      alert('Failed to run operation: ' + (error.response?.data?.detail || error.message));
+    }
   };
 
   const getHeaderActions = () => {

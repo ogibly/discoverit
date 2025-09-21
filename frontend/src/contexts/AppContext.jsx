@@ -511,6 +511,25 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  const updateAssetGroup = useCallback(async (groupId, groupData) => {
+    try {
+      const updatedGroup = await apiCall(`/asset-groups/${groupId}`, { method: 'PUT', data: groupData });
+      dispatch({ type: ActionTypes.UPDATE_ASSET_GROUP, payload: updatedGroup });
+      return updatedGroup;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteAssetGroup = useCallback(async (groupId) => {
+    try {
+      await apiCall(`/asset-groups/${groupId}`, { method: 'DELETE' });
+      dispatch({ type: ActionTypes.DELETE_ASSET_GROUP, payload: groupId });
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
   // Label actions
   const fetchLabels = useCallback(async () => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'labels', value: true } });
@@ -846,6 +865,8 @@ export function AppProvider({ children }) {
     // Asset Group actions
     fetchAssetGroups,
     createAssetGroup,
+    updateAssetGroup,
+    deleteAssetGroup,
     
     // Label actions
     fetchLabels,

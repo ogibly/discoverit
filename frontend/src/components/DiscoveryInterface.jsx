@@ -55,6 +55,9 @@ const DiscoveryInterface = () => {
   const filteredDevices = React.useMemo(() => {
     let filtered = discoveredDevices || [];
     
+    // Filter out any null/undefined devices
+    filtered = filtered.filter(device => device != null);
+    
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(device => 
@@ -169,10 +172,12 @@ const DiscoveryInterface = () => {
   };
 
   const getStatusColor = (device) => {
+    if (!device) return 'bg-error text-error-foreground';
     return 'bg-info text-info-foreground';
   };
 
   const getStatusText = (device) => {
+    if (!device) return 'Unknown';
     return 'Discovered Device';
   };
 
@@ -385,7 +390,7 @@ const DiscoveryInterface = () => {
                                   <div className="text-xs font-semibold text-foreground">
                                     {device.hostname || 'Unknown Device'}
                                   </div>
-                                  {device.model && (
+                                  {device?.model && (
                                     <div className="text-xs text-muted-foreground">
                                       {device.model}
                                     </div>
@@ -654,7 +659,7 @@ const DiscoveryInterface = () => {
                   Model
                 </label>
                 <p className="text-sm text-foreground">
-                  {selectedDevice.model || 'Unknown'}
+                  {selectedDevice?.model || 'Unknown'}
                 </p>
               </div>
               <div>

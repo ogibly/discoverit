@@ -109,199 +109,209 @@ const WorkflowGuide = () => {
   ];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-display text-foreground mb-2">Workflow Guide</h1>
-        <p className="text-body text-muted-foreground max-w-2xl mx-auto">
-          Learn how to effectively use DiscoverIT to discover, manage, and automate operations on your network assets.
-        </p>
+    <div className="h-screen bg-background flex flex-col">
+      {/* Sophisticated Header */}
+      <div className="bg-card border-b border-border flex-shrink-0">
+        <div className="px-6 py-4">
+          <div className="text-center">
+            <h1 className="text-heading text-foreground">Workflow Guide</h1>
+            <p className="text-caption text-muted-foreground mt-1 max-w-2xl mx-auto">
+              Learn how to effectively use DiscoverIT to discover, manage, and automate operations on your network assets.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Quick Start Guide */}
-      <Card className="surface-elevated">
-        <CardHeader>
-          <CardTitle className="text-heading text-foreground flex items-center space-x-2">
-            <span>🚀</span>
-            <span>Quick Start Guide</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {workflowSteps.map((step, index) => (
-              <div
-                key={step.id}
-                className={cn(
-                  'p-4 rounded-lg border border-border transition-all cursor-pointer',
-                  activeStep === index 
-                    ? 'bg-primary/10 border-primary' 
-                    : 'bg-card hover:bg-muted/50'
-                )}
-                onClick={() => setActiveStep(index)}
-              >
-                <div className="text-center">
-                  <div className="text-2xl mb-2">{step.icon}</div>
-                  <h3 className="text-subheading text-foreground font-medium mb-1">
-                    {step.title}
-                  </h3>
-                  <p className="text-caption text-muted-foreground">
-                    {step.description}
-                  </p>
-                  <div className="mt-2">
-                    <Badge 
-                      className={cn(
-                        'text-xs',
-                        activeStep === index 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
-                      )}
-                    >
-                      Step {index + 1}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Step Details */}
-          <div className="p-6 bg-muted/30 rounded-lg border border-border">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="text-2xl">{workflowSteps[activeStep].icon}</div>
-              <div>
-                <h3 className="text-heading text-foreground">
-                  {workflowSteps[activeStep].title}
-                </h3>
-                <p className="text-body text-muted-foreground">
-                  {workflowSteps[activeStep].description}
-                </p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {workflowSteps[activeStep].details.map((detail, index) => (
-                <div key={index} className="flex items-start space-x-2">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                  <span className="text-body text-foreground">{detail}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Operation Types */}
-      <Card className="surface-elevated">
-        <CardHeader>
-          <CardTitle className="text-heading text-foreground flex items-center space-x-2">
-            <span>⚡</span>
-            <span>Operation Types</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {operationTypes.map((type, index) => (
-              <div
-                key={index}
-                className="p-4 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-start space-x-3">
-                  <div className="text-2xl flex-shrink-0">{type.icon}</div>
-                  <div className="flex-1">
-                    <h3 className="text-subheading text-foreground font-medium mb-1">
-                      {type.name}
-                    </h3>
-                    <p className="text-body text-muted-foreground mb-3">
-                      {type.description}
-                    </p>
-                    <div className="space-y-1">
-                      {type.examples.map((example, idx) => (
-                        <div key={idx} className="flex items-center space-x-2">
-                          <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                          <span className="text-caption text-muted-foreground">
-                            {example}
-                          </span>
-                        </div>
-                      ))}
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
+          {/* Quick Start Guide */}
+          <Card className="surface-elevated">
+            <CardHeader>
+              <CardTitle className="text-subheading text-foreground flex items-center space-x-2">
+                <span>🚀</span>
+                <span>Quick Start Guide</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                {workflowSteps.map((step, index) => (
+                  <div
+                    key={step.id}
+                    className={cn(
+                      'p-4 rounded-lg border border-border transition-all cursor-pointer',
+                      activeStep === index 
+                        ? 'bg-primary/10 border-primary' 
+                        : 'bg-card hover:bg-muted/50'
+                    )}
+                    onClick={() => setActiveStep(index)}
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">{step.icon}</div>
+                      <h3 className="text-subheading text-foreground font-medium mb-1">
+                        {step.title}
+                      </h3>
+                      <p className="text-caption text-muted-foreground">
+                        {step.description}
+                      </p>
+                      <div className="mt-2">
+                        <Badge 
+                          className={cn(
+                            'text-xs',
+                            activeStep === index 
+                              ? 'badge-primary' 
+                              : 'badge-default'
+                          )}
+                        >
+                          Step {index + 1}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Step Details */}
+              <div className="p-6 bg-muted/30 rounded-lg border border-border">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="text-2xl">{workflowSteps[activeStep].icon}</div>
+                  <div>
+                    <h3 className="text-subheading text-foreground">
+                      {workflowSteps[activeStep].title}
+                    </h3>
+                    <p className="text-body text-muted-foreground">
+                      {workflowSteps[activeStep].description}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {workflowSteps[activeStep].details.map((detail, index) => (
+                    <div key={index} className="flex items-start space-x-2">
+                      <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                      <span className="text-body text-foreground">{detail}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Best Practices */}
-      <Card className="surface-elevated">
-        <CardHeader>
-          <CardTitle className="text-heading text-foreground flex items-center space-x-2">
-            <span>💡</span>
-            <span>Best Practices</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {bestPractices.map((practice, index) => (
-              <div
-                key={index}
-                className="p-4 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
-              >
-                <h3 className="text-subheading text-foreground font-medium mb-2">
-                  {practice.title}
-                </h3>
-                <p className="text-body text-muted-foreground mb-3">
-                  {practice.description}
-                </p>
-                <div className="p-2 bg-primary/10 border border-primary/20 rounded text-caption text-primary">
-                  💡 {practice.tip}
-                </div>
+          {/* Operation Types */}
+          <Card className="surface-elevated">
+            <CardHeader>
+              <CardTitle className="text-subheading text-foreground flex items-center space-x-2">
+                <span>⚡</span>
+                <span>Operation Types</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {operationTypes.map((type, index) => (
+                  <div
+                    key={index}
+                    className="p-4 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="text-2xl flex-shrink-0">{type.icon}</div>
+                      <div className="flex-1">
+                        <h3 className="text-subheading text-foreground font-medium mb-1">
+                          {type.name}
+                        </h3>
+                        <p className="text-body text-muted-foreground mb-3">
+                          {type.description}
+                        </p>
+                        <div className="space-y-1">
+                          {type.examples.map((example, idx) => (
+                            <div key={idx} className="flex items-center space-x-2">
+                              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+                              <span className="text-caption text-muted-foreground">
+                                {example}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Getting Started Actions */}
-      <Card className="surface-elevated">
-        <CardHeader>
-          <CardTitle className="text-heading text-foreground flex items-center space-x-2">
-            <span>🎯</span>
-            <span>Ready to Get Started?</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => window.location.href = '/discovery'}
-            >
-              <span className="text-xl">🔍</span>
-              <span>Start Discovery</span>
-              <span className="text-xs opacity-75">Begin network scanning</span>
-            </Button>
-            
-            <Button 
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => window.location.href = '/assets'}
-            >
-              <span className="text-xl">📋</span>
-              <span>Manage Assets</span>
-              <span className="text-xs opacity-75">Organize your inventory</span>
-            </Button>
-            
-            <Button 
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => window.location.href = '/operations'}
-            >
-              <span className="text-xl">⚙️</span>
-              <span>Set Up Operations</span>
-              <span className="text-xs opacity-75">Configure automation</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          {/* Best Practices */}
+          <Card className="surface-elevated">
+            <CardHeader>
+              <CardTitle className="text-subheading text-foreground flex items-center space-x-2">
+                <span>💡</span>
+                <span>Best Practices</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {bestPractices.map((practice, index) => (
+                  <div
+                    key={index}
+                    className="p-4 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
+                  >
+                    <h3 className="text-subheading text-foreground font-medium mb-2">
+                      {practice.title}
+                    </h3>
+                    <p className="text-body text-muted-foreground mb-3">
+                      {practice.description}
+                    </p>
+                    <div className="p-2 bg-primary/10 border border-primary/20 rounded text-caption text-primary">
+                      💡 {practice.tip}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Getting Started Actions */}
+          <Card className="surface-elevated">
+            <CardHeader>
+              <CardTitle className="text-subheading text-foreground flex items-center space-x-2">
+                <span>🎯</span>
+                <span>Ready to Get Started?</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button 
+                  className="h-auto p-4 flex flex-col items-center space-y-2"
+                  onClick={() => window.location.href = '/discovery'}
+                >
+                  <span className="text-xl">🔍</span>
+                  <span>Start Discovery</span>
+                  <span className="text-xs opacity-75">Begin network scanning</span>
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center space-y-2"
+                  onClick={() => window.location.href = '/assets'}
+                >
+                  <span className="text-xl">📋</span>
+                  <span>Manage Assets</span>
+                  <span className="text-xs opacity-75">Organize your inventory</span>
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center space-y-2"
+                  onClick={() => window.location.href = '/operations'}
+                >
+                  <span className="text-xl">⚙️</span>
+                  <span>Set Up Operations</span>
+                  <span className="text-xs opacity-75">Configure automation</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };

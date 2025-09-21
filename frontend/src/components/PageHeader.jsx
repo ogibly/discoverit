@@ -13,15 +13,15 @@ const PageHeader = ({
   className = ""
 }) => {
   return (
-    <div className={cn("bg-gray-900 border-b border-gray-700", className)}>
+    <div className={cn("bg-card border-b border-border", className)}>
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-100">
+            <h1 className="text-heading text-foreground">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-caption text-muted-foreground mt-1">
                 {subtitle}
               </p>
             )}
@@ -31,7 +31,7 @@ const PageHeader = ({
             {searchPlaceholder && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -39,7 +39,7 @@ const PageHeader = ({
                   placeholder={searchPlaceholder}
                   value={searchValue}
                   onChange={(e) => onSearch?.(e.target.value)}
-                  className="pl-10 w-64 text-sm"
+                  className="pl-10 w-64 text-body"
                 />
               </div>
             )}

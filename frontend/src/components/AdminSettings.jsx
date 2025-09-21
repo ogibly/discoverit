@@ -418,6 +418,7 @@ const AdminSettings = () => {
                       type="password"
                       value={settings.awx_password}
                       onChange={(e) => setSettings({...settings, awx_password: e.target.value})}
+                      autoComplete="new-password"
                       placeholder="••••••••"
                     />
                   </div>
@@ -573,6 +574,7 @@ const AdminSettings = () => {
               type="password"
               value={userForm.password}
               onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+              autoComplete="new-password"
               placeholder="Enter password"
             />
           </div>

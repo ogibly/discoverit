@@ -242,6 +242,7 @@ const CredentialsManager = () => {
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 placeholder="Enter password"
+                autoComplete="new-password"
               />
             </div>
           </div>
@@ -273,6 +274,7 @@ const CredentialsManager = () => {
                 value={formData.ssh_passphrase}
                 onChange={(e) => setFormData({...formData, ssh_passphrase: e.target.value})}
                 placeholder="Enter passphrase if the key is encrypted"
+                autoComplete="new-password"
               />
             </div>
           </div>

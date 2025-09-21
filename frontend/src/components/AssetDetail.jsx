@@ -276,7 +276,7 @@ const AssetDetail = ({ asset }) => {
                 <label className="block text-caption font-medium text-foreground mb-1">
                   Model
                 </label>
-                <div className="text-body text-foreground">{asset.model || 'N/A'}</div>
+                <div className="text-body text-foreground">{asset?.model || 'N/A'}</div>
               </div>
             </div>
             
@@ -325,6 +325,7 @@ const AssetDetail = ({ asset }) => {
                     type="password"
                     value={editData.password}
                     onChange={(e) => setEditData({...editData, password: e.target.value})}
+                    autoComplete="new-password"
                   />
                 ) : (
                   <div className="text-body text-foreground">{asset.password ? '••••••••' : 'N/A'}</div>

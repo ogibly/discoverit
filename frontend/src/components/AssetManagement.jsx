@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import PageHeader from './PageHeader';
 import { cn } from '../utils/cn';
 
@@ -25,12 +27,16 @@ const AssetManagement = () => {
     fetchAssets
   } = useApp();
 
+  const [activeTab, setActiveTab] = useState('assets');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [showOperationModal, setShowOperationModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
+  const [editingGroup, setEditingGroup] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
@@ -61,8 +67,8 @@ const AssetManagement = () => {
         asset.mac_address?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesFilter = filterStatus === 'all' || 
-        (filterStatus === 'managed' && asset.is_managed) ||
-        (filterStatus === 'unmanaged' && !asset.is_managed);
+        (filterStatus === 'managed' && asset && asset.is_managed) ||
+        (filterStatus === 'unmanaged' && asset && !asset.is_managed);
       
       return matchesSearch && matchesFilter;
     });
@@ -80,7 +86,9 @@ const AssetManagement = () => {
 
   useEffect(() => {
     fetchAssets();
-  }, [fetchAssets]);
+    fetchAssetGroups();
+    fetchOperations();
+  }, [fetchAssets, fetchAssetGroups, fetchOperations]);
 
   const handleSelectAll = () => {
     const assetIds = paginatedAssets.map(asset => asset.id);
@@ -195,6 +203,71 @@ const AssetManagement = () => {
     });
   };
 
+  const handleEditGroup = (group) => {
+    setEditingGroup(group);
+    setGroupForm({
+      name: group.name || '',
+      description: group.description || ''
+    });
+    setShowEditGroupModal(true);
+  };
+
+  const handleUpdateGroup = async () => {
+    try {
+      await updateAssetGroup(editingGroup.id, groupForm);
+      setShowEditGroupModal(false);
+      setEditingGroup(null);
+      setGroupForm({ name: '', description: '' });
+    } catch (error) {
+      console.error('Failed to update group:', error);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId) => {
+    if (!confirm('Are you sure you want to delete this asset group?')) return;
+    
+    try {
+      await deleteAssetGroup(groupId);
+    } catch (error) {
+      console.error('Failed to delete group:', error);
+    }
+  };
+
+  const handleRunOperation = async () => {
+    if (!operationForm.operation_id) {
+      alert('Please select an operation');
+      return;
+    }
+
+    const targetIds = operationForm.target_type === 'assets' ? selectedAssets : selectedAssetGroups;
+    if (targetIds.length === 0) {
+      alert(`Please select ${operationForm.target_type} to run the operation on`);
+      return;
+    }
+
+    try {
+      const executionData = {
+        operation_id: parseInt(operationForm.operation_id),
+        target_type: operationForm.target_type,
+        target_ids: targetIds,
+        credential_id: operationForm.credential_id
+      };
+      
+      await runOperation(executionData);
+      setShowOperationModal(false);
+      setOperationForm({
+        operation_id: '',
+        target_type: 'assets',
+        target_ids: [],
+        credential_id: null
+      });
+      alert('Operation started successfully!');
+    } catch (error) {
+      console.error('Failed to run operation:', error);
+      alert('Failed to run operation: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
   const getStatusColor = (isManaged) => {
     return isManaged 
       ? 'bg-success text-success-foreground' 
@@ -292,12 +365,12 @@ const AssetManagement = () => {
             <div className="flex items-center space-x-3">
               <div className="w-3 h-3 rounded-full bg-success"></div>
               <span className="text-muted-foreground font-medium">Managed:</span>
-              <span className="font-bold text-success">{assets.filter(a => a.is_managed).length}</span>
+              <span className="font-bold text-success">{assets.filter(a => a && a.is_managed).length}</span>
             </div>
             <div className="flex items-center space-x-3">
               <div className="w-3 h-3 rounded-full bg-warning"></div>
               <span className="text-muted-foreground font-medium">Unmanaged:</span>
-              <span className="font-bold text-warning">{assets.filter(a => !a.is_managed).length}</span>
+              <span className="font-bold text-warning">{assets.filter(a => a && !a.is_managed).length}</span>
             </div>
           </div>
           <div className="flex items-center space-x-3">

@@ -74,7 +74,7 @@ const DeviceDetailsModal = ({
             Device Type
           </label>
           <p className="text-body text-foreground font-medium">
-            {device.model || 'Unknown'}
+            {device?.model || 'Unknown'}
           </p>
         </div>
         <div>

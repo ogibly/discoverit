@@ -13,9 +13,9 @@ const OverviewView = ({
   onViewDevices 
 }) => {
   const totalDevices = assets?.length || 0;
-  const managedAssets = assets?.filter(a => a.is_managed).length || 0;
-  const discoveredDevices = assets?.filter(a => !a.is_managed).length || 0;
-  const deviceTypes = new Set(assets?.map(a => a.model).filter(Boolean)).size || 0;
+  const managedAssets = assets?.filter(a => a && a.is_managed).length || 0;
+  const discoveredDevices = assets?.filter(a => a && !a.is_managed).length || 0;
+  const deviceTypes = new Set(assets?.map(a => a?.model).filter(Boolean)).size || 0;
 
   const stats = [
     {

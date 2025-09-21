@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/Login';
+import Dashboard from './components/Dashboard';
 import DiscoveryDashboard from './components/DiscoveryDashboard';
 import AssetManagement from './components/AssetManagement';
 import AssetDetail from './components/AssetDetail';
@@ -25,7 +26,18 @@ const Navigation = () => {
 
   const navigationItems = [
     { 
-      path: '/', 
+      path: '/dashboard', 
+      label: 'Dashboard', 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+        </svg>
+      ), 
+      permission: 'assets:read'
+    },
+    { 
+      path: '/discovery', 
       label: 'Discovery', 
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +72,7 @@ const Navigation = () => {
       label: 'Credentials', 
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z" />
         </svg>
       ), 
       permission: 'credentials:read'
@@ -74,18 +86,19 @@ const Navigation = () => {
         </svg>
       ), 
       permission: 'assets:read'
-    },
-    { 
-      path: '/workflow', 
-      label: 'Guide', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ), 
-      permission: null
     }
   ];
+
+  const guideItem = { 
+    path: '/workflow', 
+    label: 'Guide', 
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    ), 
+    permission: null
+  };
 
   const filteredItems = navigationItems.filter(item => 
     !item.permission || hasPermission(item.permission)
@@ -139,6 +152,22 @@ const Navigation = () => {
             <span>{item.label}</span>
           </Link>
         ))}
+        
+        {/* Guide section at the bottom */}
+        <div className="pt-4 border-t border-border">
+          <Link
+            to={guideItem.path}
+            className={cn(
+              "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+              location.pathname === guideItem.path
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+            )}
+          >
+            {guideItem.icon}
+            <span>{guideItem.label}</span>
+          </Link>
+        </div>
       </nav>
       
       {/* Status Message */}
@@ -222,7 +251,13 @@ const AppContent = () => {
         {/* Global Scan Status Tracker */}
         <ScanStatusTracker position="top-right" compact={true} />
         <Routes>
-          <Route path="/" element={
+          <Route path="/dashboard" element={
+            <ProtectedRoute requiredPermission="assets:read">
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/discovery" element={
             <ProtectedRoute requiredPermission="assets:read">
               <DiscoveryDashboard />
             </ProtectedRoute>

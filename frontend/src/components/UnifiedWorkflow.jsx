@@ -209,7 +209,7 @@ const UnifiedWorkflow = () => {
       const groupData = {
         name: groupForm.name,
         description: groupForm.description,
-        asset_ids: selectedAssets.map(asset => asset.id)
+        asset_ids: selectedAssets // selectedAssets already contains IDs, not objects
       };
       
       console.log('Creating group:', groupData);

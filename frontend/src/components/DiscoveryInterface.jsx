@@ -193,13 +193,13 @@ const DiscoveryInterface = () => {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-black via-gray-900 to-black flex flex-col">
-      {/* Sophisticated Header */}
-      <div className="bg-gradient-to-r from-gray-800/80 to-gray-700/60 border-b border-red-900/50 flex-shrink-0 backdrop-blur-sm">
-        <div className="px-6 py-5">
+    <div className="h-screen bg-slate-900 flex flex-col">
+      {/* Professional Header */}
+      <div className="bg-slate-800 border-b border-slate-700 flex-shrink-0">
+        <div className="px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-200 via-red-300 to-red-400 bg-clip-text text-transparent flex items-center">
+              <h1 className="text-2xl font-bold text-slate-100 flex items-center">
                 Network Discovery
                 <HelpIcon 
                   content="Use this interface to discover network devices and convert them to managed assets. Start with a scan, then review and organize your findings."
@@ -207,7 +207,7 @@ const DiscoveryInterface = () => {
                   size="sm"
                 />
               </h1>
-              <p className="text-sm text-slate-300 font-medium mt-1">
+              <p className="text-sm text-slate-400 font-medium mt-1">
                 Discover and manage network devices and assets
               </p>
             </div>
@@ -249,22 +249,22 @@ const DiscoveryInterface = () => {
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
           {/* Sophisticated Stats and Guidance */}
-          <div className="px-6 py-4 bg-gradient-to-r from-gray-800/40 to-gray-700/30 border-b border-red-900/50 flex-shrink-0 backdrop-blur-sm">
+          <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-8 text-sm">
                 <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/50"></div>
-                  <span className="text-gray-300 font-medium">Total Devices:</span>
-                  <span className="font-bold text-red-300">{discoveredDevices?.length || 0}</span>
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span className="text-slate-300 font-medium">Total Devices:</span>
+                  <span className="font-bold text-blue-300">{discoveredDevices?.length || 0}</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 shadow-lg shadow-orange-500/50"></div>
-                  <span className="text-gray-300 font-medium">Active Scans:</span>
-                  <span className="font-bold text-orange-300">{activeScanTask ? 1 : 0}</span>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span className="text-slate-300 font-medium">Active Scans:</span>
+                  <span className="font-bold text-green-300">{activeScanTask ? 1 : 0}</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg shadow-blue-500/50"></div>
-                  <span className="text-gray-300 font-medium">Selected:</span>
+                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                  <span className="text-slate-300 font-medium">Selected:</span>
                   <span className="font-bold text-blue-300">{selectedDevices.length}</span>
                 </div>
               </div>

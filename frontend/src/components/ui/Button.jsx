@@ -10,15 +10,15 @@ const Button = React.forwardRef(({
   children, 
   ...props 
 }, ref) => {
-  const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black disabled:opacity-50 disabled:pointer-events-none';
+  const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none';
   
   const variants = {
-    default: 'bg-red-600 text-white hover:bg-red-700 border border-red-600 hover:border-red-700 shadow-sm',
-    destructive: 'bg-red-800 text-white hover:bg-red-900 border border-red-800 hover:border-red-900 shadow-sm',
-    outline: 'border border-gray-600 bg-transparent hover:bg-gray-800 text-gray-200 hover:text-white',
-    secondary: 'bg-gray-800 text-gray-200 hover:bg-gray-700 border border-gray-700 hover:border-gray-600',
-    ghost: 'hover:bg-gray-800 text-gray-300 hover:text-white',
-    link: 'text-red-400 hover:text-red-300 underline-offset-4 hover:underline'
+    default: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md',
+    destructive: 'bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md',
+    outline: 'border border-slate-600 bg-transparent hover:bg-slate-800 text-slate-200 hover:text-white',
+    secondary: 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 hover:border-slate-600',
+    ghost: 'hover:bg-slate-800 text-slate-300 hover:text-white',
+    link: 'text-blue-400 hover:text-blue-300 underline-offset-4 hover:underline'
   };
   
   const sizes = {

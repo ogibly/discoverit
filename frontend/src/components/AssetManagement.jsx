@@ -272,7 +272,7 @@ const AssetManagement = () => {
   ];
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       <PageHeader
         title="Asset Management"
         subtitle={`${assets.length} assets • ${selectedAssets.length} selected`}
@@ -282,31 +282,31 @@ const AssetManagement = () => {
         searchValue={searchTerm}
       />
 
-      {/* Stats and Filters */}
-      <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+      {/* Sophisticated Stats and Filters */}
+      <div className="px-6 py-4 bg-gradient-to-r from-slate-800/40 to-slate-700/30 border-b border-slate-700/50 flex-shrink-0 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6 text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <span className="text-slate-600 dark:text-slate-400">Total:</span>
-              <span className="font-semibold text-slate-900 dark:text-slate-100">{assets.length}</span>
+          <div className="flex items-center space-x-8 text-sm">
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/50"></div>
+              <span className="text-slate-300 font-medium">Total:</span>
+              <span className="font-bold text-violet-300">{assets.length}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-slate-600 dark:text-slate-400">Managed:</span>
-              <span className="font-semibold text-green-600 dark:text-green-400">{assets.filter(a => a.is_managed).length}</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 shadow-lg shadow-emerald-500/50"></div>
+              <span className="text-slate-300 font-medium">Managed:</span>
+              <span className="font-bold text-emerald-300">{assets.filter(a => a.is_managed).length}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-              <span className="text-slate-600 dark:text-slate-400">Unmanaged:</span>
-              <span className="font-semibold text-amber-600 dark:text-amber-400">{assets.filter(a => !a.is_managed).length}</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg shadow-amber-500/50"></div>
+              <span className="text-slate-300 font-medium">Unmanaged:</span>
+              <span className="font-bold text-amber-300">{assets.filter(a => !a.is_managed).length}</span>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 text-sm border border-slate-600 bg-slate-700/50 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500/50 transition-all duration-200"
             >
               <option value="all">All Assets</option>
               <option value="managed">Managed Only</option>
@@ -319,20 +319,20 @@ const AssetManagement = () => {
       {/* Asset List */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
-          <div className="px-6 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+          <div className="px-6 py-4 bg-gradient-to-r from-slate-800/60 to-slate-700/40 border-b border-slate-700/50 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                <span className="text-xl font-bold bg-gradient-to-r from-violet-200 to-purple-200 bg-clip-text text-transparent">
                   Assets ({filteredAssets.length})
                 </span>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     onChange={handleSelectAll}
-                    className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700/50"
                   />
-                  <span className="text-xs text-slate-600 dark:text-slate-400">Select All</span>
+                  <span className="text-sm text-slate-300 font-medium">Select All</span>
                 </div>
               </div>
             </div>
@@ -359,29 +359,29 @@ const AssetManagement = () => {
                 </div>
               </div>
             ) : (
-              <div className="divide-y divide-slate-200 dark:divide-slate-700">
+              <div className="divide-y divide-slate-700/50">
                 {paginatedAssets.map((asset) => (
                   <div
                     key={asset.id}
                     className={cn(
-                      "group relative bg-white dark:bg-slate-800 transition-colors duration-200 hover:bg-slate-50 dark:hover:bg-slate-700/50",
+                      "group relative bg-gradient-to-r from-slate-800/30 to-slate-700/20 transition-all duration-200 hover:from-slate-700/40 hover:to-slate-600/30",
                       selectedAssets.includes(asset.id) 
-                        ? "bg-blue-50 dark:bg-blue-900/10" 
+                        ? "bg-gradient-to-r from-violet-500/10 to-purple-500/10 ring-1 ring-violet-500/30" 
                         : ""
                     )}
                   >
-                    <div className="px-4 py-3">
-                      <div className="flex items-center space-x-3">
+                    <div className="px-6 py-4">
+                      <div className="flex items-center space-x-4">
                         <input
                           type="checkbox"
                           checked={selectedAssets.includes(asset.id)}
                           onChange={() => toggleAssetSelection(asset.id)}
-                          className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700/50"
                         />
                         
                         <div className="flex-shrink-0">
-                          <div className="w-6 h-6 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-slate-600 dark:text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center ring-1 ring-violet-500/30">
+                            <svg className="w-4 h-4 text-violet-300" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
                             </svg>
                           </div>
@@ -389,26 +389,26 @@ const AssetManagement = () => {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2 min-w-0">
-                              <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                            <div className="flex items-center space-x-3 min-w-0">
+                              <h3 className="text-sm font-semibold text-slate-100 truncate">
                                 {asset.name || asset.hostname || asset.primary_ip}
                               </h3>
                               <Badge className={cn(
-                                "px-1.5 py-0.5 text-xs font-medium rounded",
+                                "px-2 py-1 text-xs font-medium rounded-lg",
                                 asset.is_managed 
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300" 
-                                  : "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+                                  ? "bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-300 border border-emerald-500/30" 
+                                  : "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30"
                               )}>
-                                {asset.is_managed ? 'M' : 'U'}
+                                {asset.is_managed ? 'Managed' : 'Unmanaged'}
                               </Badge>
                             </div>
                             
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEditAsset(asset)}
-                                className="px-2 py-1 text-xs h-6"
+                                className="px-3 py-1.5 text-xs h-7 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-violet-500/50 hover:text-violet-300 transition-all duration-200"
                               >
                                 Edit
                               </Button>
@@ -416,7 +416,7 @@ const AssetManagement = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedAsset(asset)}
-                                className="px-2 py-1 text-xs h-6"
+                                className="px-3 py-1.5 text-xs h-7 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 hover:text-cyan-300 transition-all duration-200"
                               >
                                 View
                               </Button>
@@ -424,7 +424,7 @@ const AssetManagement = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDeleteAsset(asset.id)}
-                                className="px-3 py-1.5 text-xs font-medium border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300"
+                                className="px-3 py-1.5 text-xs h-7 font-medium border-rose-500/50 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-all duration-200"
                               >
                                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -434,22 +434,22 @@ const AssetManagement = () => {
                             </div>
                           </div>
                           
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                            <span className="text-slate-600 dark:text-slate-400">{asset.primary_ip}</span>
+                          <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                            <span className="text-cyan-300 bg-slate-700/50 px-2 py-1 rounded font-mono">{asset.primary_ip}</span>
                             {asset.hostname && (
-                              <span className="text-slate-500 dark:text-slate-500">• {asset.hostname}</span>
+                              <span className="text-slate-300 bg-slate-700/30 px-2 py-1 rounded">{asset.hostname}</span>
                             )}
                             {asset.mac_address && (
-                              <span className="text-slate-500 dark:text-slate-500">• {asset.mac_address}</span>
+                              <span className="text-violet-300 bg-slate-700/30 px-2 py-1 rounded font-mono">{asset.mac_address}</span>
                             )}
                             {asset.os_name && (
-                              <span className="text-slate-500 dark:text-slate-500">• {asset.os_name}</span>
+                              <span className="text-emerald-300 bg-slate-700/30 px-2 py-1 rounded">{asset.os_name}</span>
                             )}
                             {asset.manufacturer && (
-                              <span className="text-slate-500 dark:text-slate-500">• {asset.manufacturer}</span>
+                              <span className="text-amber-300 bg-slate-700/30 px-2 py-1 rounded">{asset.manufacturer}</span>
                             )}
                             {asset.model && (
-                              <span className="text-slate-500 dark:text-slate-500">• {asset.model}</span>
+                              <span className="text-rose-300 bg-slate-700/30 px-2 py-1 rounded">{asset.model}</span>
                             )}
                           </div>
                         </div>

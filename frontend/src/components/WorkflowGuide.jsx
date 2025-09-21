@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Badge } from './ui/Badge';
-import { HelpIcon, CollapsibleGuidance, ProgressiveDisclosure } from './ui';
+import { Button } from './ui/Button';
+import { HelpIcon } from './ui';
 
 const WorkflowGuide = () => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(0);
   
   const workflowSteps = [
     {
@@ -15,43 +16,43 @@ const WorkflowGuide = () => {
       details: [
         "Use Discovery screen to scan network ranges",
         "Choose from multiple scan types: Quick, Comprehensive, SNMP, ARP",
-        "Configure auto-assignment of labels and groups",
-        "Monitor scan progress and view results"
+        "Monitor scan progress and view results in real-time",
+        "Review discovered devices and their properties"
       ],
       screen: "Discovery",
       path: "/discovery"
     },
     {
       step: 2,
+      title: "Device Review",
+      description: "Review and manage discovered devices",
+      icon: "📱",
+      details: [
+        "View all discovered devices in the Discovery interface",
+        "Convert selected devices to managed assets",
+        "Edit device information and properties",
+        "Filter and sort devices by various criteria"
+      ],
+      screen: "Discovery → Devices",
+      path: "/discovery"
+    },
+    {
+      step: 3,
       title: "Asset Management",
-      description: "Review and manage discovered assets",
+      description: "Organize and manage your asset inventory",
       icon: "🏠",
       details: [
-        "View all discovered devices in Assets screen",
-        "Edit asset information and properties",
-        "Assign labels and organize assets",
-        "Select assets for operations"
+        "View all managed assets in Assets screen",
+        "Create asset groups for bulk operations",
+        "Assign labels and organize assets by location or function",
+        "Select assets for operations and management"
       ],
       screen: "Assets",
       path: "/"
     },
     {
-      step: 3,
-      title: "Asset Groups",
-      description: "Create groups for bulk operations",
-      icon: "📁",
-      details: [
-        "Create asset groups from selected assets",
-        "Define group properties and credentials",
-        "Use groups as sub-inventories for operations",
-        "Organize assets by location, function, or type"
-      ],
-      screen: "Assets → Groups",
-      path: "/"
-    },
-    {
       step: 4,
-      title: "Operations",
+      title: "Operations Execution",
       description: "Run operations on assets and groups",
       icon: "⚙️",
       details: [
@@ -70,6 +71,7 @@ const WorkflowGuide = () => {
       type: "AWX Playbook",
       description: "Execute Ansible playbooks via AWX Tower",
       icon: "🎭",
+      color: "bg-blue-900/20 text-blue-200 border-blue-800",
       details: [
         "Configure AWX Tower connection",
         "Specify playbook name and extra variables",
@@ -81,6 +83,7 @@ const WorkflowGuide = () => {
       type: "API Call",
       description: "Make HTTP API calls to external services",
       icon: "🌐",
+      color: "bg-green-900/20 text-green-200 border-green-800",
       details: [
         "Configure HTTP method (GET, POST, PUT, DELETE, PATCH)",
         "Set request headers and body",
@@ -92,6 +95,7 @@ const WorkflowGuide = () => {
       type: "Script",
       description: "Execute custom scripts on target systems",
       icon: "📜",
+      color: "bg-purple-900/20 text-purple-200 border-purple-800",
       details: [
         "Specify script path and arguments",
         "Use SSH or other remote execution methods",
@@ -101,146 +105,205 @@ const WorkflowGuide = () => {
     }
   ];
 
-  const screenClarifications = [
+  const quickStartSteps = [
     {
-      screen: "Discovery vs Scans",
-      clarification: "Discovery is the comprehensive interface for network device discovery with multiple scan types, history, and statistics. The Scans screen has been removed to avoid confusion.",
-      recommendation: "Use Discovery screen for all network scanning activities."
+      step: 1,
+      title: "Discover",
+      description: "Scan your network to find devices",
+      icon: "🔍",
+      color: "bg-blue-600"
     },
     {
-      screen: "Scanners vs Settings",
-      clarification: "Scanners screen manages individual scanner service instances (CRUD operations, health checks, subnet assignments). Settings contains global scanner defaults and system-wide configurations.",
-      recommendation: "Use Scanners screen for managing scanner instances, Settings for global defaults."
+      step: 2,
+      title: "Review",
+      description: "Check discovered devices",
+      icon: "📱",
+      color: "bg-green-600"
+    },
+    {
+      step: 3,
+      title: "Convert",
+      description: "Convert devices to managed assets",
+      icon: "🏠",
+      color: "bg-yellow-600"
+    },
+    {
+      step: 4,
+      title: "Operate",
+      description: "Run operations on assets",
+      icon: "⚙️",
+      color: "bg-purple-600"
     }
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-          DiscoverIT Workflow Guide
-          <HelpIcon 
-            content="This guide walks you through the complete workflow for network device discovery and management. Click on each step to learn more details."
-            className="ml-2"
-          />
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Complete workflow for network device discovery and management
-        </p>
+    <div className="h-screen bg-slate-900 flex flex-col">
+      {/* Compact Header */}
+      <div className="bg-slate-800 border-b border-slate-700 flex-shrink-0">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-slate-100 flex items-center">
+                Workflow Guide
+                <HelpIcon 
+                  content="This guide walks you through the complete workflow for network device discovery and management. Follow the steps to get started with DiscoverIT."
+                  className="ml-2"
+                  size="sm"
+                />
+              </h1>
+              <p className="text-xs text-slate-400 mt-1">
+                Complete workflow for network device discovery and management
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Compact Workflow Steps */}
-      <ProgressiveDisclosure
-        steps={workflowSteps.map(step => ({
-          title: `Step ${step.step}: ${step.title}`,
-          description: step.description,
-          icon: step.icon,
-          details: step.details,
-          action: () => {
-            // Navigate to the appropriate screen
-            console.log(`Navigate to ${step.screen}`);
-          },
-          actionText: `Go to ${step.screen}`
-        }))}
-        currentStep={currentStep}
-        onStepChange={setCurrentStep}
-        variant="primary"
-        showProgress={true}
-      />
-
-      {/* Operation Types */}
-      <CollapsibleGuidance
-        title="Operation Types"
-        icon="⚙️"
-        variant="info"
-        defaultOpen={false}
-      >
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Different ways to execute operations on your assets. Each type serves specific use cases:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {operationTypes.map((opType, index) => (
-              <div key={index} className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-lg">{opType.icon}</span>
-                  <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{opType.type}</h4>
+          {/* Quick Start Guide */}
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h2 className="text-sm font-semibold text-slate-100 mb-3 flex items-center">
+              <span className="mr-2">🚀</span>
+              Quick Start Guide
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {quickStartSteps.map((step, index) => (
+                <div key={index} className="text-center p-3 bg-slate-700/50 rounded-lg">
+                  <div className={`w-8 h-8 mx-auto mb-2 rounded-full ${step.color} flex items-center justify-center`}>
+                    <span className="text-white text-sm">{step.icon}</span>
+                  </div>
+                  <h4 className="font-semibold text-xs text-slate-100 mb-1">{step.step}. {step.title}</h4>
+                  <p className="text-xs text-slate-400">{step.description}</p>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{opType.description}</p>
-                <ul className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
-                  {opType.details.map((detail, idx) => (
-                    <li key={idx} className="flex items-start space-x-1">
-                      <span className="text-blue-500 mt-0.5">•</span>
-                      <span>{detail}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CollapsibleGuidance>
-
-      {/* Screen Clarifications */}
-      <CollapsibleGuidance
-        title="Screen Clarifications"
-        icon="💡"
-        variant="warning"
-        defaultOpen={false}
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Understanding the differences between similar screens to avoid confusion:
-          </p>
-          {screenClarifications.map((clarification, index) => (
-            <div key={index} className="border-l-4 border-yellow-500 pl-4 py-2">
-              <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{clarification.screen}</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{clarification.clarification}</p>
-              <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                  <strong>Recommendation:</strong> {clarification.recommendation}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CollapsibleGuidance>
-
-      {/* Quick Start */}
-      <CollapsibleGuidance
-        title="Quick Start Guide"
-        icon="🚀"
-        variant="success"
-        defaultOpen={true}
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Get started with DiscoverIT in 4 simple steps:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <div className="text-xl mb-1">🔍</div>
-              <h4 className="font-semibold mb-1 text-sm">1. Discover</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Scan your network to find devices</p>
-            </div>
-            <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <div className="text-xl mb-1">🏠</div>
-              <h4 className="font-semibold mb-1 text-sm">2. Review</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Check discovered assets</p>
-            </div>
-            <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-              <div className="text-xl mb-1">📁</div>
-              <h4 className="font-semibold mb-1 text-sm">3. Group</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Organize assets into groups</p>
-            </div>
-            <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-              <div className="text-xl mb-1">⚙️</div>
-              <h4 className="font-semibold mb-1 text-sm">4. Operate</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Run operations on assets</p>
+              ))}
             </div>
           </div>
+
+          {/* Detailed Workflow Steps */}
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h2 className="text-sm font-semibold text-slate-100 mb-3 flex items-center">
+              <span className="mr-2">📋</span>
+              Detailed Workflow Steps
+            </h2>
+            
+            {/* Step Navigation */}
+            <div className="flex space-x-2 mb-4">
+              {workflowSteps.map((step, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveStep(index)}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-all duration-200 ${
+                    activeStep === index
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  {step.step}. {step.title}
+                </button>
+              ))}
+            </div>
+
+            {/* Active Step Content */}
+            <div className="bg-slate-700/50 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-lg">{workflowSteps[activeStep].icon}</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-slate-100 mb-1">
+                    Step {workflowSteps[activeStep].step}: {workflowSteps[activeStep].title}
+                  </h3>
+                  <p className="text-xs text-slate-400 mb-3">
+                    {workflowSteps[activeStep].description}
+                  </p>
+                  <div className="space-y-2">
+                    {workflowSteps[activeStep].details.map((detail, index) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <span className="text-blue-400 mt-0.5 text-xs">•</span>
+                        <span className="text-xs text-slate-300">{detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <Badge className="bg-blue-900/20 text-blue-200 border border-blue-800 text-xs">
+                      Screen: {workflowSteps[activeStep].screen}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Operation Types */}
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h2 className="text-sm font-semibold text-slate-100 mb-3 flex items-center">
+              <span className="mr-2">⚙️</span>
+              Operation Types
+            </h2>
+            <p className="text-xs text-slate-400 mb-3">
+              Different ways to execute operations on your assets. Each type serves specific use cases:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {operationTypes.map((opType, index) => (
+                <div key={index} className="bg-slate-700/50 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="text-lg">{opType.icon}</span>
+                    <h4 className="font-semibold text-slate-100 text-xs">{opType.type}</h4>
+                  </div>
+                  <p className="text-xs text-slate-400 mb-2">{opType.description}</p>
+                  <ul className="space-y-1">
+                    {opType.details.map((detail, idx) => (
+                      <li key={idx} className="flex items-start space-x-1">
+                        <span className="text-blue-400 mt-0.5 text-xs">•</span>
+                        <span className="text-xs text-slate-300">{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Best Practices */}
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h2 className="text-sm font-semibold text-slate-100 mb-3 flex items-center">
+              <span className="mr-2">💡</span>
+              Best Practices
+            </h2>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-100 mb-1">Start with Quick Scans</h4>
+                  <p className="text-xs text-slate-400">Use quick scans for initial network reconnaissance, then run comprehensive scans on specific ranges.</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-100 mb-1">Organize with Groups</h4>
+                  <p className="text-xs text-slate-400">Create asset groups based on location, function, or type to streamline operations.</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-100 mb-1">Use Credentials Management</h4>
+                  <p className="text-xs text-slate-400">Store and manage credentials securely for automated operations and device access.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </CollapsibleGuidance>
+      </div>
     </div>
   );
 };

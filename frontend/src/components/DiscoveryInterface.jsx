@@ -169,8 +169,7 @@ const DiscoveryInterface = () => {
   };
 
   const getStatusColor = (device) => {
-    // All discovered devices are unmanaged until converted
-    return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+    return 'bg-info text-info-foreground';
   };
 
   const getStatusText = (device) => {
@@ -202,13 +201,13 @@ const DiscoveryInterface = () => {
   };
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
+    <div className="h-screen bg-background flex flex-col">
       {/* Compact Header */}
-      <div className="bg-slate-800 border-b border-slate-700 flex-shrink-0">
+      <div className="bg-card border-b border-border flex-shrink-0">
         <div className="px-4 py-3">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-lg font-semibold text-slate-100 flex items-center">
+              <h1 className="text-heading font-semibold text-foreground flex items-center">
                 Network Discovery
                 <HelpIcon 
                   content="Use this interface to discover network devices and convert them to managed assets. Start with a scan, then review and organize your findings."
@@ -216,7 +215,7 @@ const DiscoveryInterface = () => {
                   size="sm"
                 />
               </h1>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-caption text-muted-foreground mt-1">
                 Discover and manage network devices and assets
               </p>
             </div>
@@ -225,12 +224,7 @@ const DiscoveryInterface = () => {
                 variant={viewMode === 'devices' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('devices')}
-                className={cn(
-                  "text-xs font-medium transition-all duration-200 h-8 px-3",
-                  viewMode === 'devices' 
-                    ? "bg-blue-600 text-white" 
-                    : "border-slate-600 text-slate-300 hover:bg-slate-700/50"
-                )}
+                className="text-xs font-medium transition-all duration-200 h-8 px-3"
               >
                 📱 Devices
               </Button>
@@ -238,12 +232,7 @@ const DiscoveryInterface = () => {
                 variant={viewMode === 'scan' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('scan')}
-                className={cn(
-                  "text-xs font-medium transition-all duration-200 h-8 px-3",
-                  viewMode === 'scan' 
-                    ? "bg-blue-600 text-white" 
-                    : "border-slate-600 text-slate-300 hover:bg-slate-700/50"
-                )}
+                className="text-xs font-medium transition-all duration-200 h-8 px-3"
               >
                 🔍 Scan
               </Button>
@@ -253,23 +242,23 @@ const DiscoveryInterface = () => {
       </div>
 
       {/* Compact Stats */}
-      <div className="px-4 py-2 bg-slate-800/50 border-b border-slate-700 flex-shrink-0">
+      <div className="px-4 py-2 bg-muted/30 border-b border-border flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6 text-xs">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <span className="text-slate-300">Devices:</span>
-              <span className="font-semibold text-blue-300">{discoveredDevices?.length || 0}</span>
+              <div className="w-2 h-2 rounded-full bg-info"></div>
+              <span className="text-muted-foreground">Devices:</span>
+              <span className="font-semibold text-info">{discoveredDevices?.length || 0}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className="text-slate-300">Scans:</span>
-              <span className="font-semibold text-green-300">{activeScanTask ? 1 : 0}</span>
+              <div className="w-2 h-2 rounded-full bg-success"></div>
+              <span className="text-muted-foreground">Scans:</span>
+              <span className="font-semibold text-success">{activeScanTask ? 1 : 0}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-              <span className="text-slate-300">Selected:</span>
-              <span className="font-semibold text-blue-300">{selectedDevices.length}</span>
+              <div className="w-2 h-2 rounded-full bg-primary"></div>
+              <span className="text-muted-foreground">Selected:</span>
+              <span className="font-semibold text-primary">{selectedDevices.length}</span>
             </div>
           </div>
           <CollapsibleGuidance
@@ -280,10 +269,10 @@ const DiscoveryInterface = () => {
             compact={true}
           >
             <div className="flex items-center space-x-4 text-xs">
-              <span className="text-blue-500 font-bold">1. Run scan</span>
-              <span className="text-blue-500 font-bold">2. Review devices</span>
-              <span className="text-blue-500 font-bold">3. Convert to assets</span>
-              <span className="text-blue-500 font-bold">4. Organize groups</span>
+              <span className="text-primary font-bold">1. Run scan</span>
+              <span className="text-primary font-bold">2. Review devices</span>
+              <span className="text-primary font-bold">3. Convert to assets</span>
+              <span className="text-primary font-bold">4. Organize groups</span>
             </div>
           </CollapsibleGuidance>
         </div>
@@ -298,7 +287,7 @@ const DiscoveryInterface = () => {
               /* Devices View */
               <div className="space-y-4">
                 {/* Compact Controls */}
-                <div className="bg-slate-800/50 rounded-lg p-3">
+                <div className="bg-card border border-border rounded-lg p-3">
                   <div className="flex flex-col lg:flex-row gap-3">
                     <div className="flex-1">
                       <Input
@@ -312,7 +301,7 @@ const DiscoveryInterface = () => {
                       <select
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
-                        className="px-2 py-1 border border-slate-600 bg-slate-800 text-slate-100 rounded text-xs h-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="px-2 py-1 border border-input bg-background text-foreground rounded text-xs h-8 focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <option value="all">All Types</option>
                         <option value="devices">Discovered Devices</option>
@@ -321,7 +310,7 @@ const DiscoveryInterface = () => {
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
-                        className="px-2 py-1 border border-slate-600 bg-slate-800 text-slate-100 rounded text-xs h-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="px-2 py-1 border border-input bg-background text-foreground rounded text-xs h-8 focus:outline-none focus:ring-2 focus:ring-ring"
                       >
                         <option value="last_seen">Last Seen</option>
                         <option value="ip">IP Address</option>
@@ -340,64 +329,64 @@ const DiscoveryInterface = () => {
                 </div>
 
                 {/* Compact Devices Table */}
-                <div className="bg-slate-800/50 rounded-lg overflow-hidden">
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-slate-700/50 border-b border-slate-700">
+                      <thead className="bg-muted/50 border-b border-border">
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             <input
                               type="checkbox"
                               checked={selectedDevices.length === filteredDevices.length && filteredDevices.length > 0}
                               onChange={handleSelectAll}
-                              className="rounded border-slate-600 text-blue-500 focus:ring-blue-500 bg-slate-700/50"
+                              className="rounded border-input text-primary focus:ring-ring bg-background"
                             />
                           </th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Device
                           </th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             IP Address
                           </th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             MAC Address
                           </th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             OS / Vendor
                           </th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Status
                           </th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Last Seen
                           </th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-slate-800/30 divide-y divide-slate-700/50">
+                      <tbody className="bg-card/50 divide-y divide-border">
                         {filteredDevices.map((device) => (
-                          <tr key={device.id} className="hover:bg-slate-700/30 transition-all duration-200 group">
+                          <tr key={device.id} className="hover:bg-muted/30 transition-all duration-200 group">
                             <td className="px-3 py-2">
                               <input
                                 type="checkbox"
                                 checked={selectedDevices.includes(device.id)}
                                 onChange={() => toggleDeviceSelection(device.id)}
-                                className="rounded border-slate-600 text-blue-500 focus:ring-blue-500 bg-slate-700/50"
+                                className="rounded border-input text-primary focus:ring-ring bg-background"
                               />
                             </td>
                             <td className="px-3 py-2">
                               <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 rounded bg-blue-900/20 flex items-center justify-center ring-1 ring-blue-500/30">
+                                <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center ring-1 ring-primary/30">
                                   <span className="text-xs">{getDeviceTypeIcon(device)}</span>
                                 </div>
                                 <div>
-                                  <div className="text-xs font-semibold text-slate-100">
+                                  <div className="text-xs font-semibold text-foreground">
                                     {device.hostname || 'Unknown Device'}
                                   </div>
                                   {device.model && (
-                                    <div className="text-xs text-slate-400">
+                                    <div className="text-xs text-muted-foreground">
                                       {device.model}
                                     </div>
                                   )}
@@ -405,36 +394,36 @@ const DiscoveryInterface = () => {
                               </div>
                             </td>
                             <td className="px-3 py-2">
-                              <span className="text-xs font-mono text-cyan-300 bg-slate-700/50 px-2 py-1 rounded">
+                              <span className="text-xs font-mono text-accent bg-muted/50 px-2 py-1 rounded">
                                 {device.primary_ip}
                               </span>
                             </td>
                             <td className="px-3 py-2">
-                              <span className="text-xs font-mono text-slate-300">
+                              <span className="text-xs font-mono text-muted-foreground">
                                 {device.mac_address || '—'}
                               </span>
                             </td>
                             <td className="px-3 py-2">
                               <div className="text-xs">
                                 {device.os_name && (
-                                  <div className="text-slate-100 font-medium">
+                                  <div className="text-foreground font-medium">
                                     {device.os_name}
                                   </div>
                                 )}
                                 {device.manufacturer && (
-                                  <div className="text-slate-400">
+                                  <div className="text-muted-foreground">
                                     {device.manufacturer}
                                   </div>
                                 )}
                               </div>
                             </td>
                             <td className="px-3 py-2">
-                              <Badge className="bg-blue-900/20 text-blue-200 border border-blue-800 text-xs font-medium">
+                              <Badge className="bg-info text-info-foreground text-xs font-medium">
                                 {getStatusText(device)}
                               </Badge>
                             </td>
                             <td className="px-3 py-2">
-                              <span className="text-xs text-slate-300">
+                              <span className="text-xs text-muted-foreground">
                                 {formatLastSeen(device.last_seen)}
                               </span>
                             </td>
@@ -444,14 +433,14 @@ const DiscoveryInterface = () => {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleViewDevice(device)}
-                                  className="text-xs h-6 px-2 border-slate-600 text-slate-300 hover:bg-slate-700/50"
+                                  className="text-xs h-6 px-2"
                                 >
                                   View
                                 </Button>
                                 <Button
                                   size="sm"
                                   onClick={() => handleConvertToAsset(device)}
-                                  className="text-xs h-6 px-2 bg-blue-600 hover:bg-blue-700 text-white"
+                                  className="text-xs h-6 px-2"
                                 >
                                   Convert
                                 </Button>
@@ -465,16 +454,16 @@ const DiscoveryInterface = () => {
                 </div>
 
                 {filteredDevices.length === 0 && (
-                  <div className="bg-slate-800/50 rounded-lg p-6 text-center">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-700 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-card border border-border rounded-lg p-6 text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                      <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-sm font-medium text-slate-100 mb-2">
+                    <h3 className="text-sm font-medium text-foreground mb-2">
                       No devices found
                     </h3>
-                    <p className="text-xs text-slate-400 mb-3">
+                    <p className="text-xs text-muted-foreground mb-3">
                       {searchTerm || filterType !== 'all' 
                         ? 'Try adjusting your search or filter criteria'
                         : 'Start by running a network scan to discover devices'
@@ -488,10 +477,10 @@ const DiscoveryInterface = () => {
               </div>
             ) : (
               /* Scan View */
-              <div className="bg-slate-800/50 rounded-lg p-4">
+              <div className="bg-card border border-border rounded-lg p-4">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center">
+                    <label className="block text-xs font-medium text-foreground mb-1 flex items-center">
                       Target IP Range or Subnet *
                       <HelpIcon 
                         content="Enter IP ranges (192.168.1.0/24), ranges (10.0.0.1-10.0.0.100), or individual IPs (192.168.1.1). Use CIDR notation for subnets."
@@ -508,7 +497,7 @@ const DiscoveryInterface = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center">
+                    <label className="block text-xs font-medium text-foreground mb-1 flex items-center">
                       Scan Type
                       <HelpIcon 
                         content="Quick: Fast ping and port scan. Comprehensive: Includes OS detection and service identification. Deep: Full service enumeration and vulnerability scanning."
@@ -519,7 +508,7 @@ const DiscoveryInterface = () => {
                     <select
                       value={scanConfig.scanType}
                       onChange={(e) => setScanConfig({ ...scanConfig, scanType: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded text-sm h-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-input bg-background text-foreground rounded text-sm h-8 focus:outline-none focus:ring-2 focus:ring-ring"
                     >
                       <option value="quick">Quick Scan (Ping + Port Scan)</option>
                       <option value="comprehensive">Comprehensive (OS Detection + Services)</option>
@@ -528,7 +517,7 @@ const DiscoveryInterface = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-foreground mb-1">
                       Scan Name
                     </label>
                     <Input
@@ -540,14 +529,14 @@ const DiscoveryInterface = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-foreground mb-1">
                       Description
                     </label>
                     <textarea
                       placeholder="Optional: Describe this scan"
                       value={scanConfig.description}
                       onChange={(e) => setScanConfig({ ...scanConfig, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-input bg-background text-foreground rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                       rows={2}
                     />
                   </div>
@@ -574,27 +563,27 @@ const DiscoveryInterface = () => {
 
             {/* Active Scan Status */}
             {activeScanTask && (
-              <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3 mt-4">
+              <div className="bg-info/10 border border-info/20 rounded-lg p-3 mt-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="text-2xl animate-spin">🔄</div>
                     <div>
-                      <h3 className="text-sm font-semibold text-blue-100">
+                      <h3 className="text-sm font-semibold text-info">
                         {activeScanTask.name}
                       </h3>
-                      <p className="text-xs text-blue-300">
+                      <p className="text-xs text-info/80">
                         Target: {activeScanTask.target} • Status: {activeScanTask.status}
                       </p>
-                      <p className="text-xs text-blue-400">
+                      <p className="text-xs text-info/60">
                         Started: {new Date(activeScanTask.start_time).toLocaleString()}
                       </p>
                     </div>
                   </div>
                   <Button
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
                     onClick={handleCancelScan}
-                    className="border-red-600 text-red-400 hover:bg-red-900/20 h-8 px-3 text-xs"
+                    className="h-8 px-3 text-xs"
                   >
                     Cancel Scan
                   </Button>
@@ -621,55 +610,55 @@ const DiscoveryInterface = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Hostname
                 </label>
-                <p className="text-sm text-slate-100">
+                <p className="text-sm text-foreground">
                   {selectedDevice.hostname || 'Unknown'}
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   IP Address
                 </label>
-                <p className="text-sm text-slate-100 font-mono">
+                <p className="text-sm text-foreground font-mono">
                   {selectedDevice.primary_ip}
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   MAC Address
                 </label>
-                <p className="text-sm text-slate-100 font-mono">
+                <p className="text-sm text-foreground font-mono">
                   {selectedDevice.mac_address || 'Unknown'}
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Operating System
                 </label>
-                <p className="text-sm text-slate-100">
+                <p className="text-sm text-foreground">
                   {selectedDevice.os_name || 'Unknown'}
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Manufacturer
                 </label>
-                <p className="text-sm text-slate-100">
+                <p className="text-sm text-foreground">
                   {selectedDevice.manufacturer || 'Unknown'}
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Model
                 </label>
-                <p className="text-sm text-slate-100">
+                <p className="text-sm text-foreground">
                   {selectedDevice.model || 'Unknown'}
                 </p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Status
                 </label>
                 <Badge className={getStatusColor(selectedDevice)}>
@@ -677,10 +666,10 @@ const DiscoveryInterface = () => {
                 </Badge>
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Last Seen
                 </label>
-                <p className="text-sm text-slate-100">
+                <p className="text-sm text-foreground">
                   {formatLastSeen(selectedDevice.last_seen)}
                 </p>
               </div>
@@ -688,16 +677,16 @@ const DiscoveryInterface = () => {
 
             {selectedDevice.description && (
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-medium text-foreground mb-1">
                   Description
                 </label>
-                <p className="text-sm text-slate-100">
+                <p className="text-sm text-foreground">
                   {selectedDevice.description}
                 </p>
               </div>
             )}
 
-            <div className="flex gap-2 pt-3 border-t border-slate-700">
+            <div className="flex gap-2 pt-3 border-t border-border">
               {!selectedDevice.is_managed && (
                 <Button
                   onClick={() => {

@@ -17,6 +17,7 @@ const AssetManagement = () => {
     selectedAsset,
     assetGroups,
     selectedAssetGroups,
+    operations,
     loading,
     toggleAssetSelection,
     selectAllAssets,

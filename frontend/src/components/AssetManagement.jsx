@@ -62,6 +62,12 @@ const AssetManagement = () => {
     description: ''
   });
 
+  const [operationForm, setOperationForm] = useState({
+    operation_id: '',
+    target_type: 'assets',
+    credential_id: ''
+  });
+
   // Filter and search assets
   const filteredAssets = useMemo(() => {
     return assets.filter(asset => {

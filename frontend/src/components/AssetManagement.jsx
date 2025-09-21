@@ -197,50 +197,50 @@ const AssetManagement = () => {
 
   const getStatusColor = (isManaged) => {
     return isManaged 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-yellow-100 text-yellow-800';
+      ? 'bg-success text-success-foreground' 
+      : 'bg-warning text-warning-foreground';
   };
 
   const getOSIcon = (osName) => {
     if (!osName) return (
-      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
-        <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+        <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     const os = osName.toLowerCase();
     if (os.includes('windows')) return (
-      <div className="w-8 h-8 rounded-lg bg-blue-900/20 flex items-center justify-center">
-        <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-md bg-info/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-info" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     if (os.includes('linux')) return (
-      <div className="w-8 h-8 rounded-lg bg-orange-900/20 flex items-center justify-center">
-        <svg className="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-md bg-warning/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-warning" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     if (os.includes('mac')) return (
-      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
-        <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+        <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     if (os.includes('ios') || os.includes('android')) return (
-      <div className="w-8 h-8 rounded-lg bg-green-900/20 flex items-center justify-center">
-        <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-md bg-success/20 flex items-center justify-center">
+        <svg className="w-4 h-4 text-success" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
     );
     return (
-      <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center">
-        <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+      <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center">
+        <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
         </svg>
       </div>
@@ -254,25 +254,23 @@ const AssetManagement = () => {
       size: "sm",
       onClick: () => setShowGroupModal(true),
       disabled: selectedAssets.length === 0,
-      className: "text-xs"
     },
     ...(selectedAssets.length > 0 ? [{
       label: `Delete (${selectedAssets.length})`,
       variant: "outline",
       size: "sm",
       onClick: handleBulkDeleteAssets,
-      className: "text-xs border-red-300 text-red-700 hover:bg-red-50"
+      className: "text-error hover:text-error hover:bg-error/10 border-error/20"
     }] : []),
     {
       label: "Add Asset",
       size: "sm",
       onClick: () => setShowCreateModal(true),
-      className: "text-xs bg-blue-600 hover:bg-blue-700 text-white"
     }
   ];
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
+    <div className="h-screen bg-background flex flex-col">
       <PageHeader
         title="Asset Management"
         subtitle={`${assets.length} assets • ${selectedAssets.length} selected`}
@@ -282,31 +280,31 @@ const AssetManagement = () => {
         searchValue={searchTerm}
       />
 
-      {/* Professional Stats and Filters */}
-      <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700 flex-shrink-0">
+      {/* Sophisticated Stats and Filters */}
+      <div className="px-6 py-4 bg-card border-b border-border flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8 text-sm">
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-slate-300 font-medium">Total:</span>
-              <span className="font-bold text-blue-300">{assets.length}</span>
+              <div className="w-3 h-3 rounded-full bg-primary"></div>
+              <span className="text-muted-foreground font-medium">Total:</span>
+              <span className="font-bold text-primary">{assets.length}</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-slate-300 font-medium">Managed:</span>
-              <span className="font-bold text-green-300">{assets.filter(a => a.is_managed).length}</span>
+              <div className="w-3 h-3 rounded-full bg-success"></div>
+              <span className="text-muted-foreground font-medium">Managed:</span>
+              <span className="font-bold text-success">{assets.filter(a => a.is_managed).length}</span>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-slate-300 font-medium">Unmanaged:</span>
-              <span className="font-bold text-purple-300">{assets.filter(a => !a.is_managed).length}</span>
+              <div className="w-3 h-3 rounded-full bg-warning"></div>
+              <span className="text-muted-foreground font-medium">Unmanaged:</span>
+              <span className="font-bold text-warning">{assets.filter(a => !a.is_managed).length}</span>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 text-sm border border-slate-600 bg-slate-700/50 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500/50 transition-all duration-200"
+              className="px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               <option value="all">All Assets</option>
               <option value="managed">Managed Only</option>
@@ -319,10 +317,10 @@ const AssetManagement = () => {
       {/* Asset List */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
-          <div className="px-6 py-4 bg-gradient-to-r from-slate-800/60 to-slate-700/40 border-b border-slate-700/50 flex-shrink-0">
+          <div className="px-6 py-4 bg-muted/30 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <span className="text-xl font-bold bg-gradient-to-r from-violet-200 to-purple-200 bg-clip-text text-transparent">
+                <span className="text-subheading text-foreground">
                   Assets ({filteredAssets.length})
                 </span>
                 <div className="flex items-center space-x-3">
@@ -330,9 +328,9 @@ const AssetManagement = () => {
                     type="checkbox"
                     checked={allSelected}
                     onChange={handleSelectAll}
-                    className="rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700/50"
+                    className="rounded border-border text-primary focus:ring-ring bg-background"
                   />
-                  <span className="text-sm text-slate-300 font-medium">Select All</span>
+                  <span className="text-body text-muted-foreground font-medium">Select All</span>
                 </div>
               </div>
             </div>
@@ -342,31 +340,31 @@ const AssetManagement = () => {
             {loading.assets ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">Loading assets...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-body text-muted-foreground mt-2">Loading assets...</p>
                 </div>
               </div>
             ) : paginatedAssets.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                    <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">No assets found</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">Start with network discovery to find devices!</p>
+                  <h3 className="text-subheading text-foreground mb-1">No assets found</h3>
+                  <p className="text-body text-muted-foreground">Start with network discovery to find devices!</p>
                 </div>
               </div>
             ) : (
-              <div className="divide-y divide-slate-700/50">
+              <div className="divide-y divide-border">
                 {paginatedAssets.map((asset) => (
                   <div
                     key={asset.id}
                     className={cn(
-                      "group relative bg-gradient-to-r from-slate-800/30 to-slate-700/20 transition-all duration-200 hover:from-slate-700/40 hover:to-slate-600/30",
+                      "group relative bg-background transition-all duration-200 hover:bg-muted/30",
                       selectedAssets.includes(asset.id) 
-                        ? "bg-gradient-to-r from-violet-500/10 to-purple-500/10 ring-1 ring-violet-500/30" 
+                        ? "bg-primary/5 ring-1 ring-primary/20" 
                         : ""
                     )}
                   >
@@ -376,28 +374,22 @@ const AssetManagement = () => {
                           type="checkbox"
                           checked={selectedAssets.includes(asset.id)}
                           onChange={() => toggleAssetSelection(asset.id)}
-                          className="rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700/50"
+                          className="rounded border-border text-primary focus:ring-ring bg-background"
                         />
                         
                         <div className="flex-shrink-0">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center ring-1 ring-violet-500/30">
-                            <svg className="w-4 h-4 text-violet-300" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clipRule="evenodd" />
-                            </svg>
-                          </div>
+                          {getOSIcon(asset.os_name)}
                         </div>
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3 min-w-0">
-                              <h3 className="text-sm font-semibold text-slate-100 truncate">
+                              <h3 className="text-subheading text-foreground truncate">
                                 {asset.name || asset.hostname || asset.primary_ip}
                               </h3>
                               <Badge className={cn(
-                                "px-2 py-1 text-xs font-medium rounded-lg",
-                                asset.is_managed 
-                                  ? "bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-emerald-300 border border-emerald-500/30" 
-                                  : "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30"
+                                "text-xs",
+                                getStatusColor(asset.is_managed)
                               )}>
                                 {asset.is_managed ? 'Managed' : 'Unmanaged'}
                               </Badge>
@@ -408,7 +400,7 @@ const AssetManagement = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEditAsset(asset)}
-                                className="px-3 py-1.5 text-xs h-7 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-violet-500/50 hover:text-violet-300 transition-all duration-200"
+                                className="text-xs"
                               >
                                 Edit
                               </Button>
@@ -416,7 +408,7 @@ const AssetManagement = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedAsset(asset)}
-                                className="px-3 py-1.5 text-xs h-7 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:border-cyan-500/50 hover:text-cyan-300 transition-all duration-200"
+                                className="text-xs"
                               >
                                 View
                               </Button>
@@ -424,7 +416,7 @@ const AssetManagement = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDeleteAsset(asset.id)}
-                                className="px-3 py-1.5 text-xs h-7 font-medium border-rose-500/50 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-all duration-200"
+                                className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
                               >
                                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -434,22 +426,22 @@ const AssetManagement = () => {
                             </div>
                           </div>
                           
-                          <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                            <span className="text-cyan-300 bg-slate-700/50 px-2 py-1 rounded font-mono">{asset.primary_ip}</span>
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            <span className="text-info bg-info/10 px-2 py-1 rounded font-mono">{asset.primary_ip}</span>
                             {asset.hostname && (
-                              <span className="text-slate-300 bg-slate-700/30 px-2 py-1 rounded">{asset.hostname}</span>
+                              <span className="text-foreground bg-muted px-2 py-1 rounded">{asset.hostname}</span>
                             )}
                             {asset.mac_address && (
-                              <span className="text-violet-300 bg-slate-700/30 px-2 py-1 rounded font-mono">{asset.mac_address}</span>
+                              <span className="text-primary bg-primary/10 px-2 py-1 rounded font-mono">{asset.mac_address}</span>
                             )}
                             {asset.os_name && (
-                              <span className="text-emerald-300 bg-slate-700/30 px-2 py-1 rounded">{asset.os_name}</span>
+                              <span className="text-success bg-success/10 px-2 py-1 rounded">{asset.os_name}</span>
                             )}
                             {asset.manufacturer && (
-                              <span className="text-amber-300 bg-slate-700/30 px-2 py-1 rounded">{asset.manufacturer}</span>
+                              <span className="text-warning bg-warning/10 px-2 py-1 rounded">{asset.manufacturer}</span>
                             )}
                             {asset.model && (
-                              <span className="text-rose-300 bg-slate-700/30 px-2 py-1 rounded">{asset.model}</span>
+                              <span className="text-error bg-error/10 px-2 py-1 rounded">{asset.model}</span>
                             )}
                           </div>
                         </div>
@@ -462,7 +454,7 @@ const AssetManagement = () => {
           
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-center items-center space-x-2">
+            <div className="px-4 py-2 bg-card border-t border-border flex justify-center items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -472,7 +464,7 @@ const AssetManagement = () => {
               >
                 Prev
               </Button>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
+              <span className="text-xs text-muted-foreground">
                 {currentPage} / {totalPages}
               </span>
               <Button
@@ -499,7 +491,7 @@ const AssetManagement = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Asset Name *
               </label>
               <Input
@@ -510,7 +502,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Primary IP *
               </label>
               <Input
@@ -521,7 +513,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Hostname
               </label>
               <Input
@@ -531,7 +523,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 MAC Address
               </label>
               <Input
@@ -541,7 +533,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Operating System
               </label>
               <Input
@@ -551,7 +543,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Manufacturer
               </label>
               <Input
@@ -561,7 +553,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Model
               </label>
               <Input
@@ -571,14 +563,14 @@ const AssetManagement = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Description
               </label>
               <textarea
                 value={assetForm.description}
                 onChange={(e) => setAssetForm({...assetForm, description: e.target.value})}
                 placeholder="Optional description"
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                 rows={3}
               />
             </div>
@@ -588,9 +580,9 @@ const AssetManagement = () => {
                   type="checkbox"
                   checked={assetForm.is_managed}
                   onChange={(e) => setAssetForm({...assetForm, is_managed: e.target.checked})}
-                  className="rounded border-slate-300"
+                  className="rounded border-border text-primary focus:ring-ring"
                 />
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-body font-medium text-foreground">
                   Mark as managed asset
                 </span>
               </label>
@@ -620,7 +612,7 @@ const AssetManagement = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Asset Name *
               </label>
               <Input
@@ -631,7 +623,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Primary IP *
               </label>
               <Input
@@ -642,7 +634,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Hostname
               </label>
               <Input
@@ -652,7 +644,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 MAC Address
               </label>
               <Input
@@ -662,7 +654,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Operating System
               </label>
               <Input
@@ -672,7 +664,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Manufacturer
               </label>
               <Input
@@ -682,7 +674,7 @@ const AssetManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Model
               </label>
               <Input
@@ -692,14 +684,14 @@ const AssetManagement = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Description
               </label>
               <textarea
                 value={assetForm.description}
                 onChange={(e) => setAssetForm({...assetForm, description: e.target.value})}
                 placeholder="Optional description"
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                 rows={3}
               />
             </div>
@@ -709,9 +701,9 @@ const AssetManagement = () => {
                   type="checkbox"
                   checked={assetForm.is_managed}
                   onChange={(e) => setAssetForm({...assetForm, is_managed: e.target.checked})}
-                  className="rounded border-slate-300"
+                  className="rounded border-border text-primary focus:ring-ring"
                 />
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-body font-medium text-foreground">
                   Mark as managed asset
                 </span>
               </label>
@@ -739,11 +731,11 @@ const AssetManagement = () => {
         title="Create Asset Group"
       >
         <div className="space-y-4">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-semibold text-blue-900 mb-2">
+          <div className="p-4 bg-info/10 rounded-md border border-info/20">
+            <h3 className="text-subheading text-foreground mb-2">
               Selected Assets ({selectedAssets.length})
             </h3>
-            <div className="text-sm text-blue-700">
+            <div className="text-body text-muted-foreground">
               {selectedAssets.length > 0 
                 ? `Creating group from ${selectedAssets.length} selected assets`
                 : 'No assets selected'
@@ -752,7 +744,7 @@ const AssetManagement = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Group Name *
             </label>
             <Input
@@ -764,14 +756,14 @@ const AssetManagement = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Description
             </label>
             <textarea
               value={groupForm.description}
               onChange={(e) => setGroupForm({...groupForm, description: e.target.value})}
               placeholder="Optional description"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
               rows={3}
             />
           </div>

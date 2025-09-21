@@ -246,8 +246,8 @@ const DiscoveryDashboard = () => {
   };
 
   const getStatusColor = (device) => {
-    if (device.is_managed) return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800';
-    return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800';
+    if (device.is_managed) return 'bg-success text-success-foreground';
+    return 'bg-info text-info-foreground';
   };
 
   const getStatusText = (device) => {
@@ -266,12 +266,12 @@ const DiscoveryDashboard = () => {
 
   const getDeviceTypeColor = (device) => {
     const deviceType = device.model?.toLowerCase() || '';
-    if (deviceType.includes('server') || deviceType.includes('web')) return 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800';
-    if (deviceType.includes('router') || deviceType.includes('switch')) return 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800';
-    if (deviceType.includes('printer')) return 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/20 dark:text-slate-300 dark:border-slate-800';
-    if (deviceType.includes('phone') || deviceType.includes('mobile')) return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800';
-    if (deviceType.includes('camera') || deviceType.includes('security')) return 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800';
-    return 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/20 dark:text-slate-300 dark:border-slate-800';
+    if (deviceType.includes('server') || deviceType.includes('web')) return 'bg-primary text-primary-foreground';
+    if (deviceType.includes('router') || deviceType.includes('switch')) return 'bg-info text-info-foreground';
+    if (deviceType.includes('printer')) return 'bg-muted text-muted-foreground';
+    if (deviceType.includes('phone') || deviceType.includes('mobile')) return 'bg-success text-success-foreground';
+    if (deviceType.includes('camera') || deviceType.includes('security')) return 'bg-error text-error-foreground';
+    return 'bg-muted text-muted-foreground';
   };
 
   const formatLastSeen = (dateString) => {
@@ -290,71 +290,75 @@ const DiscoveryDashboard = () => {
   };
 
   const getResponseTimeColor = (responseTime) => {
-    if (!responseTime) return 'text-slate-500 dark:text-slate-400';
-    if (responseTime < 0.1) return 'text-emerald-600 dark:text-emerald-400';
-    if (responseTime < 0.5) return 'text-amber-600 dark:text-amber-400';
-    return 'text-red-600 dark:text-red-400';
+    if (!responseTime) return 'text-muted-foreground';
+    if (responseTime < 0.1) return 'text-success';
+    if (responseTime < 0.5) return 'text-warning';
+    return 'text-error';
   };
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
-      {/* Compact Header */}
-      <div className="bg-slate-800 border-b border-slate-700 flex-shrink-0">
-        <div className="px-4 py-3">
+    <div className="h-screen bg-background flex flex-col">
+      {/* Sophisticated Header */}
+      <div className="bg-card border-b border-border flex-shrink-0">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-slate-100">
+              <h1 className="text-heading text-foreground">
                 Network Discovery
               </h1>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-caption text-muted-foreground mt-1">
                 Professional network device discovery and management platform
               </p>
             </div>
-            <div className="flex items-center space-x-1 bg-slate-700 p-1 rounded-lg">
+            <div className="flex items-center space-x-1 bg-muted p-1 rounded-md">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => setViewMode('overview')}
                 className={cn(
-                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
+                  "px-3 py-1.5 text-xs font-medium transition-all duration-200 rounded-sm",
                   viewMode === 'overview' 
-                    ? "bg-slate-600 text-slate-100 shadow-sm" 
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 )}
               >
                 Dashboard
               </Button>
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => setViewMode('devices')}
                 className={cn(
-                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
+                  "px-3 py-1.5 text-xs font-medium transition-all duration-200 rounded-sm",
                   viewMode === 'devices' 
-                    ? "bg-slate-600 text-slate-100 shadow-sm" 
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 )}
               >
                 Devices
               </Button>
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => setViewMode('scan')}
                 className={cn(
-                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
+                  "px-3 py-1.5 text-xs font-medium transition-all duration-200 rounded-sm",
                   viewMode === 'scan' 
-                    ? "bg-slate-600 text-slate-100 shadow-sm" 
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 )}
               >
                 Custom Scan
               </Button>
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => setViewMode('lan-discovery')}
                 className={cn(
-                  "px-2 py-1 text-xs font-medium transition-all duration-200 rounded-md",
+                  "px-3 py-1.5 text-xs font-medium transition-all duration-200 rounded-sm",
                   viewMode === 'lan-discovery' 
-                    ? "bg-slate-600 text-slate-100 shadow-sm" 
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-600/50"
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 )}
               >
                 LAN Discovery
@@ -365,7 +369,7 @@ const DiscoveryDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-6">
         {viewMode === 'overview' && (
           <OverviewView 
             assets={assets}
@@ -431,7 +435,6 @@ const DiscoveryDashboard = () => {
         isOpen={showDeviceModal}
         onClose={() => setShowDeviceModal(false)}
         title="Device Details"
-        size="lg"
       >
         {selectedDevice && (
           <DeviceDetailsModal

@@ -16,69 +16,75 @@ const ScanView = ({
     <div className="space-y-4">
       {/* Active Scan Status */}
       {activeScanTask && (
-        <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl animate-spin">🔄</div>
-              <div>
-                <h3 className="text-sm font-semibold text-blue-100">
-                  {activeScanTask.name}
-                </h3>
-                <p className="text-xs text-blue-300">
-                  Target: {activeScanTask.target} • Status: {activeScanTask.status}
-                </p>
-                <p className="text-xs text-blue-400">
-                  Started: {new Date(activeScanTask.start_time).toLocaleString()}
-                </p>
+        <Card className="surface-elevated border-info/20 bg-info/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-info rounded-md flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-info-foreground border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div>
+                  <h3 className="text-subheading text-foreground">
+                    {activeScanTask.name}
+                  </h3>
+                  <p className="text-body text-muted-foreground">
+                    Target: {activeScanTask.target} • Status: {activeScanTask.status}
+                  </p>
+                  <p className="text-caption text-muted-foreground">
+                    Started: {new Date(activeScanTask.start_time).toLocaleString()}
+                  </p>
+                </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onCancelScan}
+                className="text-error hover:text-error hover:bg-error/10 border-error/20"
+              >
+                Cancel Scan
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onCancelScan}
-              className="border-red-600 text-red-400 hover:bg-red-900/20 h-8 px-3 text-xs"
-            >
-              Cancel Scan
-            </Button>
-          </div>
-          {activeScanTask.progress > 0 && (
-            <div className="mt-3">
-              <div className="flex justify-between text-xs text-blue-400 mb-1">
-                <span>Progress</span>
-                <span>{activeScanTask.progress}%</span>
+            {activeScanTask.progress > 0 && (
+              <div className="mt-3">
+                <div className="flex justify-between text-body text-muted-foreground mb-2">
+                  <span>Progress</span>
+                  <span>{activeScanTask.progress}%</span>
+                </div>
+                <Progress value={activeScanTask.progress} className="h-2" />
               </div>
-              <Progress value={activeScanTask.progress} className="h-2" />
-            </div>
-          )}
-        </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Scan Configuration */}
-      <div className="bg-slate-800/50 rounded-lg p-4">
-        <div className="space-y-4">
+      <Card className="surface-elevated">
+        <CardHeader>
+          <CardTitle className="text-subheading text-foreground">Scan Configuration</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Target IP Range or Subnet *
             </label>
             <Input
               placeholder="e.g., 192.168.1.0/24, 10.0.0.1-10.0.0.100, or 192.168.1.1"
               value={scanConfig.target}
               onChange={(e) => setScanConfig({ ...scanConfig, target: e.target.value })}
-              className="h-8 text-sm"
             />
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-caption text-muted-foreground mt-1">
               Enter IP ranges, subnets, or individual IP addresses to scan
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Scan Type
             </label>
             <select
               value={scanConfig.scanType}
               onChange={(e) => setScanConfig({ ...scanConfig, scanType: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded text-sm h-8 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
             >
               <option value="quick">Quick Scan (Enhanced ping + port detection)</option>
               <option value="comprehensive">Comprehensive (OS Detection + Services)</option>
@@ -89,27 +95,26 @@ const ScanView = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Scan Name
             </label>
             <Input
               placeholder="Optional: Give this scan a name"
               value={scanConfig.name}
               onChange={(e) => setScanConfig({ ...scanConfig, name: e.target.value })}
-              className="h-8 text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Description
             </label>
             <textarea
               placeholder="Optional: Describe this scan"
               value={scanConfig.description}
               onChange={(e) => setScanConfig({ ...scanConfig, description: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              rows={2}
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm resize-none"
+              rows={3}
             />
           </div>
 
@@ -117,45 +122,49 @@ const ScanView = ({
             <Button
               onClick={onStartScan}
               disabled={!scanConfig.target.trim() || activeScanTask}
-              className="flex-1 h-8 text-sm"
+              className="flex-1"
             >
               {activeScanTask ? 'Scan in Progress...' : 'Start Network Scan'}
             </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Scan Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-slate-800/50 rounded-lg p-3">
-          <div className="flex items-center space-x-2 mb-2">
-            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-              <span className="text-white text-xs">🔍</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="surface-elevated">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-8 h-8 bg-info rounded-md flex items-center justify-center">
+                <span className="text-info-foreground text-sm">🔍</span>
+              </div>
+              <h3 className="text-subheading text-foreground">
+                Quick Scan
+              </h3>
             </div>
-            <h3 className="text-sm font-semibold text-slate-100">
-              Quick Scan
-            </h3>
-          </div>
-          <p className="text-xs text-slate-400">
-            Fast discovery using enhanced ping and port detection techniques. 
-            Ideal for initial network reconnaissance.
-          </p>
-        </div>
+            <p className="text-body text-muted-foreground">
+              Fast discovery using enhanced ping and port detection techniques. 
+              Ideal for initial network reconnaissance.
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-slate-800/50 rounded-lg p-3">
-          <div className="flex items-center space-x-2 mb-2">
-            <div className="w-6 h-6 bg-orange-600 rounded flex items-center justify-center">
-              <span className="text-white text-xs">⚡</span>
+        <Card className="surface-elevated">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-8 h-8 bg-warning rounded-md flex items-center justify-center">
+                <span className="text-warning-foreground text-sm">⚡</span>
+              </div>
+              <h3 className="text-subheading text-foreground">
+                Comprehensive Scan
+              </h3>
             </div>
-            <h3 className="text-sm font-semibold text-slate-100">
-              Comprehensive Scan
-            </h3>
-          </div>
-          <p className="text-xs text-slate-400">
-            Detailed analysis including OS detection, service enumeration, 
-            and vulnerability assessment.
-          </p>
-        </div>
+            <p className="text-body text-muted-foreground">
+              Detailed analysis including OS detection, service enumeration, 
+              and vulnerability assessment.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -180,7 +180,7 @@ const CredentialsManager = () => {
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Name *
             </label>
             <Input
@@ -191,13 +191,13 @@ const CredentialsManager = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Type *
             </label>
             <select
               value={formData.credential_type}
               onChange={(e) => setFormData({...formData, credential_type: e.target.value})}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               {credentialTypes.map(type => (
                 <option key={type.value} value={type.value}>
@@ -209,14 +209,14 @@ const CredentialsManager = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-body font-medium text-foreground mb-2">
             Description
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({...formData, description: e.target.value})}
             placeholder="Enter description"
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
             rows={3}
           />
         </div>
@@ -224,7 +224,7 @@ const CredentialsManager = () => {
         {formData.credential_type === 'username_password' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Username *
               </label>
               <Input
@@ -234,7 +234,7 @@ const CredentialsManager = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Password *
               </label>
               <Input
@@ -250,22 +250,22 @@ const CredentialsManager = () => {
         {formData.credential_type === 'ssh_key' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 SSH Private Key *
               </label>
               <textarea
                 value={formData.ssh_private_key}
                 onChange={(e) => setFormData({...formData, ssh_private_key: e.target.value})}
                 placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent font-mono text-sm resize-none"
                 rows={8}
               />
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-caption text-muted-foreground mt-1">
                 Paste your SSH private key content here. Include the full key with headers.
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Passphrase (Optional)
               </label>
               <Input
@@ -280,7 +280,7 @@ const CredentialsManager = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Domain
             </label>
             <Input
@@ -290,7 +290,7 @@ const CredentialsManager = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Port
             </label>
             <Input
@@ -308,9 +308,9 @@ const CredentialsManager = () => {
             id="is_active"
             checked={formData.is_active}
             onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-            className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+            className="rounded border-border text-primary focus:ring-ring"
           />
-          <label htmlFor="is_active" className="text-sm font-medium text-slate-700">
+          <label htmlFor="is_active" className="text-body font-medium text-foreground">
             Active
           </label>
         </div>
@@ -321,144 +321,157 @@ const CredentialsManager = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-h-screen overflow-y-auto p-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Credentials Manager</h1>
-          <p className="text-slate-600">Manage authentication credentials and key pairs</p>
+    <div className="h-screen bg-background flex flex-col">
+      {/* Sophisticated Header */}
+      <div className="bg-card border-b border-border flex-shrink-0">
+        <div className="px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-heading text-foreground">Credentials Manager</h1>
+              <p className="text-caption text-muted-foreground mt-1">
+                Manage authentication credentials and key pairs
+              </p>
+            </div>
+            <Button onClick={() => setShowCreateModal(true)}>
+              + Add Credential
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          + Add Credential
-        </Button>
       </div>
 
-      <Card>
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <Input
-                placeholder="Search credentials..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <Card className="surface-elevated">
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search credentials..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              >
+                <option value="">All Types</option>
+                {credentialTypes.map(type => (
+                  <option key={type.value} value={type.value}>
+                    {type.icon} {type.label}
+                  </option>
+                ))}
+              </select>
             </div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Types</option>
-              {credentialTypes.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          {/* Bulk Actions */}
-          {selectedCredentials.length > 0 && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                    {selectedCredentials.length} credential(s) selected
-                  </span>
+            {/* Bulk Actions */}
+            {selectedCredentials.length > 0 && (
+              <div className="mb-4 p-3 bg-info/10 rounded-md border border-info/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-body text-info">
+                      {selectedCredentials.length} credential(s) selected
+                    </span>
+                    <button
+                      onClick={() => setSelectedCredentials([])}
+                      className="text-info hover:text-info/80 text-sm px-2 py-1 rounded hover:bg-info/10"
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
                   <button
-                    onClick={() => setSelectedCredentials([])}
-                    className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-100"
+                    onClick={handleBulkDelete}
+                    className="text-error hover:text-error/80 text-sm px-3 py-1 rounded hover:bg-error/10 border border-error/20 hover:border-error/30"
                   >
-                    Clear Selection
+                    Delete Selected
                   </button>
                 </div>
-                <button
-                  onClick={handleBulkDelete}
-                  className="text-red-600 hover:text-red-800 text-sm px-3 py-1 rounded hover:bg-red-50 border border-red-300 hover:border-red-400"
-                >
-                  Delete Selected
-                </button>
+              </div>
+            )}
+
+            <div className="max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCredentials.map(credential => {
+                  const typeInfo = getCredentialTypeInfo(credential.credential_type);
+                  return (
+                    <Card key={credential.id} className="surface-interactive">
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedCredentials.includes(credential.id)}
+                              onChange={() => handleToggleSelection(credential.id)}
+                              className="rounded border-border text-primary focus:ring-ring"
+                            />
+                            <span className="text-lg">{typeInfo.icon}</span>
+                            <Badge variant={credential.is_active ? 'success' : 'secondary'}>
+                              {typeInfo.label}
+                            </Badge>
+                          </div>
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => handleEdit(credential)}
+                              className="text-primary hover:text-primary/80 text-sm px-2 py-1 rounded hover:bg-primary/10"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(credential.id)}
+                              className="text-error hover:text-error/80 text-sm px-2 py-1 rounded hover:bg-error/10"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <h3 className="text-subheading text-foreground mb-2">{credential.name}</h3>
+                        
+                        {credential.description && (
+                          <p className="text-body text-muted-foreground mb-3 line-clamp-2">{credential.description}</p>
+                        )}
+                        
+                        <div className="space-y-1 text-body text-muted-foreground">
+                          {credential.username && (
+                            <div>User: {credential.username}</div>
+                          )}
+                          {credential.domain && (
+                            <div>Domain: {credential.domain}</div>
+                          )}
+                          {credential.port && (
+                            <div>Port: {credential.port}</div>
+                          )}
+                        </div>
+                        
+                        <div className="mt-3 text-caption text-muted-foreground">
+                          Created: {new Date(credential.created_at).toLocaleDateString()}
+                          {credential.last_used && (
+                            <div>Last used: {new Date(credential.last_used).toLocaleDateString()}</div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
-          )}
 
-          <div className="max-h-96 overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCredentials.map(credential => {
-                const typeInfo = getCredentialTypeInfo(credential.credential_type);
-                return (
-                  <Card key={credential.id} className="p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedCredentials.includes(credential.id)}
-                          onChange={() => handleToggleSelection(credential.id)}
-                          className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-lg">{typeInfo.icon}</span>
-                        <Badge variant={credential.is_active ? 'success' : 'secondary'}>
-                          {typeInfo.label}
-                        </Badge>
-                      </div>
-                      <div className="flex space-x-1">
-                        <button
-                          onClick={() => handleEdit(credential)}
-                          className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(credential.id)}
-                          className="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <h3 className="font-semibold text-slate-900 mb-2">{credential.name}</h3>
-                    
-                    {credential.description && (
-                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">{credential.description}</p>
-                    )}
-                    
-                    <div className="space-y-1 text-sm text-slate-500">
-                      {credential.username && (
-                        <div>User: {credential.username}</div>
-                      )}
-                      {credential.domain && (
-                        <div>Domain: {credential.domain}</div>
-                      )}
-                      {credential.port && (
-                        <div>Port: {credential.port}</div>
-                      )}
-                    </div>
-                    
-                    <div className="mt-3 text-xs text-slate-400">
-                      Created: {new Date(credential.created_at).toLocaleDateString()}
-                      {credential.last_used && (
-                        <div>Last used: {new Date(credential.last_used).toLocaleDateString()}</div>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+            {filteredCredentials.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="text-4xl mb-2">🔑</div>
+                <p className="text-body">No credentials found. Create your first credential to get started.</p>
+              </div>
+            )}
           </div>
-
-          {filteredCredentials.length === 0 && (
-            <div className="text-center py-8 text-slate-500">
-              No credentials found. Create your first credential to get started.
-            </div>
-          )}
-        </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* Create Modal */}
       <Modal

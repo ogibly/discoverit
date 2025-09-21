@@ -30,10 +30,10 @@ const DevicesView = ({
   getResponseTimeColor
 }) => {
   return (
-    <div className="space-y-6">
-      {/* Enhanced Search and Filter Controls */}
-      <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-        <CardContent className="p-6">
+    <div className="space-y-4">
+      {/* Sophisticated Search and Filter Controls */}
+      <Card className="surface-elevated">
+        <CardContent className="p-4">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -41,18 +41,18 @@ const DevicesView = ({
                   placeholder="Search devices by IP, hostname, MAC, OS, vendor, or model..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 bg-white/80 dark:bg-slate-700/80 border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-slate-400">🔍</span>
+                  <span className="text-muted-foreground">🔍</span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
               >
                 <option value="all">All Types</option>
                 <option value="devices">Discovered Devices</option>
@@ -61,7 +61,7 @@ const DevicesView = ({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 text-slate-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
               >
                 <option value="last_seen">Last Seen</option>
                 <option value="ip">IP Address</option>
@@ -72,7 +72,7 @@ const DevicesView = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-4 py-2 border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-700"
+                className="px-3"
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </Button>
@@ -83,18 +83,18 @@ const DevicesView = ({
 
       {/* Bulk Actions */}
       {selectedDevices.length > 0 && (
-        <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-          <CardContent className="p-4">
+        <Card className="surface-elevated border-warning/20 bg-warning/5">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <div className="flex items-center space-x-3">
+                <span className="text-body text-foreground">
                   {selectedDevices.length} device(s) selected
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onSelectAllDevices([])}
-                  className="text-slate-600 hover:text-slate-700"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   Clear Selection
                 </Button>
@@ -104,7 +104,7 @@ const DevicesView = ({
                   variant="outline"
                   size="sm"
                   onClick={onBulkDeleteDevices}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-error hover:text-error hover:bg-error/10 border-error/20"
                 >
                   Delete Selected
                 </Button>
@@ -114,13 +114,13 @@ const DevicesView = ({
         </Card>
       )}
 
-      {/* Enhanced Devices Grid */}
+      {/* Sophisticated Devices Grid */}
       {devices.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 max-h-[70vh] overflow-y-auto pr-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {devices.map((device) => (
-            <Card key={device.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+            <Card key={device.id} className="surface-interactive">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
@@ -129,66 +129,66 @@ const DevicesView = ({
                         e.stopPropagation();
                         onToggleDeviceSelection(device.id);
                       }}
-                      className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-border text-primary focus:ring-ring"
                     />
-                    <div className="text-3xl group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-2xl">
                       {getDeviceTypeIcon(device)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                      <h3 className="text-subheading text-foreground truncate">
                         {device.hostname || device.primary_ip || 'Unknown Device'}
                       </h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">
+                      <p className="text-body text-muted-foreground font-mono">
                         {device.primary_ip}
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end space-y-2">
-                    <Badge className={cn("text-xs font-semibold px-2 py-1", getStatusColor(device))}>
+                  <div className="flex flex-col items-end space-y-1">
+                    <Badge className={cn("text-xs", getStatusColor(device))}>
                       {getStatusText(device)}
                     </Badge>
                     {device.model && (
-                      <Badge className={cn("text-xs font-semibold px-2 py-1", getDeviceTypeColor(device))}>
+                      <Badge className={cn("text-xs", getDeviceTypeColor(device))}>
                         {device.model}
                       </Badge>
                     )}
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-6">
+                <div className="space-y-2 mb-4">
                   {device.mac_address && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">MAC:</span>
-                      <span className="text-slate-900 dark:text-slate-100 font-mono text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+                      <span className="text-muted-foreground font-medium">MAC:</span>
+                      <span className="text-foreground font-mono text-xs bg-muted px-2 py-1 rounded">
                         {device.mac_address}
                       </span>
                     </div>
                   )}
                   {device.manufacturer && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">Vendor:</span>
-                      <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                      <span className="text-muted-foreground font-medium">Vendor:</span>
+                      <span className="text-foreground font-semibold">
                         {device.manufacturer}
                       </span>
                     </div>
                   )}
                   {device.os_name && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">OS:</span>
-                      <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                      <span className="text-muted-foreground font-medium">OS:</span>
+                      <span className="text-foreground font-semibold">
                         {device.os_name}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600 dark:text-slate-400 font-medium">Last Seen:</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-semibold">
+                    <span className="text-muted-foreground font-medium">Last Seen:</span>
+                    <span className="text-foreground font-semibold">
                       {formatLastSeen(device.last_seen)}
                     </span>
                   </div>
                   {device.scan_data?.response_time && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">Response:</span>
+                      <span className="text-muted-foreground font-medium">Response:</span>
                       <span className={cn("font-semibold", getResponseTimeColor(device.scan_data.response_time))}>
                         {device.scan_data.response_time}s
                       </span>
@@ -201,7 +201,7 @@ const DevicesView = ({
                     variant="outline"
                     size="sm"
                     onClick={() => onViewDevice(device)}
-                    className="flex-1 border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
+                    className="flex-1"
                   >
                     View Details
                   </Button>
@@ -209,7 +209,7 @@ const DevicesView = ({
                     <Button
                       size="sm"
                       onClick={() => onConvertToAsset(device)}
-                      className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-semibold shadow-lg shadow-emerald-500/25"
+                      className="flex-1 bg-success hover:bg-success/90 text-success-foreground"
                     >
                       Convert to Asset
                     </Button>
@@ -221,7 +221,7 @@ const DevicesView = ({
                       e.stopPropagation();
                       onDeleteDevice(device.id);
                     }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300 hover:border-red-400"
+                    className="text-error hover:text-error hover:bg-error/10 border-error/20"
                   >
                     Delete
                   </Button>
@@ -231,23 +231,23 @@ const DevicesView = ({
           ))}
         </div>
       ) : (
-        <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-          <CardContent className="p-12 text-center">
-            <div className="text-6xl mb-4 opacity-60">🔍</div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+        <Card className="surface-elevated">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-3 opacity-60">🔍</div>
+            <h3 className="text-subheading text-foreground mb-2">
               No devices found
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+            <p className="text-body text-muted-foreground mb-4 max-w-md mx-auto">
               {searchTerm || filterType !== 'all' 
                 ? 'Try adjusting your search or filter criteria to find devices'
                 : 'Start by running a network scan or LAN discovery to find devices on your network'
               }
             </p>
-            <div className="flex gap-3 justify-center">
-              <Button className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold shadow-lg shadow-blue-500/25">
+            <div className="flex gap-2 justify-center">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 Custom Scan
               </Button>
-              <Button variant="outline" className="border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold">
+              <Button variant="outline">
                 LAN Discovery
               </Button>
             </div>

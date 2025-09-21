@@ -73,19 +73,19 @@ const ScanStatusTracker = ({
   };
 
   const cardClasses = cn(
-    'w-80 shadow-lg border border-slate-700',
+    'w-80 shadow-lg border border-border',
     positionClasses[position],
     className
   );
 
   return (
     <div className={cardClasses}>
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="surface-elevated">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-slate-100">
+              <div className="w-2 h-2 bg-info rounded-full animate-pulse"></div>
+              <span className="text-body font-medium text-foreground">
                 Active Scan
               </span>
             </div>
@@ -101,17 +101,17 @@ const ScanStatusTracker = ({
 
           <div className="space-y-2">
             <div>
-              <h3 className="text-sm font-medium text-slate-100 truncate">
+              <h3 className="text-subheading text-foreground truncate">
                 {scan.target}
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-caption text-muted-foreground">
                 {scan.scan_type} • {formatDuration(scan.start_time)}
               </p>
             </div>
 
             {scan.progress !== undefined && (
               <div className="space-y-1">
-                <div className="flex justify-between text-xs text-slate-400">
+                <div className="flex justify-between text-caption text-muted-foreground">
                   <span>Progress: {scan.progress}%</span>
                   <span>
                     {scan.completed_ips || 0} / {scan.total_ips || 0}
@@ -119,7 +119,7 @@ const ScanStatusTracker = ({
                 </div>
                 <Progress value={scan.progress} className="h-1" />
                 {scan.current_ip && (
-                  <p className="text-xs text-slate-500 truncate">
+                  <p className="text-caption text-muted-foreground truncate">
                     Scanning: {scan.current_ip}
                   </p>
                 )}
@@ -127,10 +127,10 @@ const ScanStatusTracker = ({
             )}
 
             {!compact && (
-              <div className="pt-2 border-t border-slate-700">
-                <div className="flex items-center justify-between text-xs text-slate-400">
+              <div className="pt-2 border-t border-border">
+                <div className="flex items-center justify-between text-caption text-muted-foreground">
                   <span>Started: {new Date(scan.start_time).toLocaleTimeString()}</span>
-                  <Badge className="bg-blue-900 text-blue-200 text-xs">
+                  <Badge className="bg-info text-info-foreground text-xs">
                     Running
                   </Badge>
                 </div>

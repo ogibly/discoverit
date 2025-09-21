@@ -138,8 +138,8 @@ const OperationsManagement = () => {
 
   const getStatusColor = (isActive) => {
     return isActive 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-gray-100 text-gray-800';
+      ? 'bg-success text-success-foreground' 
+      : 'bg-muted text-muted-foreground';
   };
 
   // Check if user has admin permissions
@@ -148,159 +148,174 @@ const OperationsManagement = () => {
   if (!isAdmin) {
     return (
       <div className="p-6 text-center">
-        <div className="text-red-600 text-xl font-semibold mb-2">Access Denied</div>
-        <p className="text-slate-600">Only administrators can manage operations.</p>
+        <div className="text-error text-xl font-semibold mb-2">Access Denied</div>
+        <p className="text-muted-foreground">Only administrators can manage operations.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-h-screen overflow-y-auto p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Operations Management</h1>
-          <p className="text-slate-600">
-            Manage automation integrations and operation templates
-          </p>
+    <div className="h-screen bg-background flex flex-col">
+      {/* Sophisticated Header */}
+      <div className="bg-card border-b border-border flex-shrink-0">
+        <div className="px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-heading text-foreground">Operations Management</h1>
+              <p className="text-caption text-muted-foreground mt-1">
+                Manage automation integrations and operation templates
+              </p>
+            </div>
+            <Button onClick={() => setShowCreateModal(true)}>
+              + Create Operation
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          + Create Operation
-        </Button>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-blue-600">{operations.length}</div>
-          <div className="text-sm text-slate-600">Total Operations</div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {/* Sophisticated Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-primary">{operations.length}</div>
+              <div className="text-caption text-muted-foreground">Total Operations</div>
+            </CardContent>
+          </Card>
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-success">
+                {operations.filter(o => o.is_active).length}
+              </div>
+              <div className="text-caption text-muted-foreground">Active</div>
+            </CardContent>
+          </Card>
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-info">
+                {operations.filter(o => o.operation_type === 'awx_playbook').length}
+              </div>
+              <div className="text-caption text-muted-foreground">AWX Playbooks</div>
+            </CardContent>
+          </Card>
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-warning">
+                {operations.filter(o => o.operation_type === 'api_call').length}
+              </div>
+              <div className="text-caption text-muted-foreground">API Calls</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sophisticated Filters */}
+        <Card className="surface-elevated mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search operations by name or description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex space-x-2">
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                >
+                  <option value="all">All Types</option>
+                  <option value="awx_playbook">AWX Playbooks</option>
+                  <option value="api_call">API Calls</option>
+                  <option value="script">Scripts</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
         </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-green-600">
-            {operations.filter(o => o.is_active).length}
-          </div>
-          <div className="text-sm text-slate-600">Active</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-purple-600">
-            {operations.filter(o => o.operation_type === 'awx_playbook').length}
-          </div>
-          <div className="text-sm text-slate-600">AWX Playbooks</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-2xl font-bold text-orange-600">
-            {operations.filter(o => o.operation_type === 'api_call').length}
-          </div>
-          <div className="text-sm text-slate-600">API Calls</div>
+
+        {/* Operations List */}
+        <Card className="surface-elevated">
+          <CardHeader>
+            <CardTitle className="text-subheading text-foreground">Operations ({filteredOperations.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading.operations ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="text-body text-muted-foreground mt-2">Loading operations...</p>
+              </div>
+            ) : filteredOperations.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="text-4xl mb-2">⚙️</div>
+                <p className="text-body">No operations found. Create your first automation integration!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredOperations.map((operation) => {
+                  const typeInfo = getOperationTypeInfo(operation.operation_type);
+                  return (
+                    <div
+                      key={operation.id}
+                      className="flex items-center space-x-4 p-4 border border-border rounded-md hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="text-2xl">{typeInfo.icon}</div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="text-subheading text-foreground truncate">
+                            {operation.name}
+                          </h3>
+                          <Badge className={getStatusColor(operation.is_active)}>
+                            {operation.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                          <Badge variant="outline">
+                            {typeInfo.label}
+                          </Badge>
+                        </div>
+                        <p className="text-body text-muted-foreground mt-1">
+                          {operation.description || 'No description provided'}
+                        </p>
+                        <div className="text-caption text-muted-foreground mt-1">
+                          {operation.operation_type === 'awx_playbook' && operation.awx_playbook_name && (
+                            <span>Playbook: {operation.awx_playbook_name}</span>
+                          )}
+                          {operation.operation_type === 'api_call' && operation.api_url && (
+                            <span>URL: {operation.api_url}</span>
+                          )}
+                          {operation.operation_type === 'script' && operation.script_path && (
+                            <span>Script: {operation.script_path}</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditOperation(operation)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteOperation(operation.id)}
+                          className="text-error hover:text-error hover:bg-error/10 border-error/20"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search operations by name or description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex space-x-2">
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Types</option>
-                <option value="awx_playbook">AWX Playbooks</option>
-                <option value="api_call">API Calls</option>
-                <option value="script">Scripts</option>
-              </select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Operations List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Operations ({filteredOperations.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading.operations ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-slate-600 mt-2">Loading operations...</p>
-            </div>
-          ) : filteredOperations.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <div className="text-4xl mb-2">⚙️</div>
-              <p>No operations found. Create your first automation integration!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredOperations.map((operation) => {
-                const typeInfo = getOperationTypeInfo(operation.operation_type);
-                return (
-                  <div
-                    key={operation.id}
-                    className="flex items-center space-x-4 p-4 border rounded-lg hover:border-slate-300 transition-colors"
-                  >
-                    <div className="text-2xl">{typeInfo.icon}</div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-slate-900 truncate">
-                          {operation.name}
-                        </h3>
-                        <Badge className={getStatusColor(operation.is_active)}>
-                          {operation.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Badge variant="outline">
-                          {typeInfo.label}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-slate-600 mt-1">
-                        {operation.description || 'No description provided'}
-                      </p>
-                      <div className="text-xs text-slate-500 mt-1">
-                        {operation.operation_type === 'awx_playbook' && operation.awx_playbook_name && (
-                          <span>Playbook: {operation.awx_playbook_name}</span>
-                        )}
-                        {operation.operation_type === 'api_call' && operation.api_url && (
-                          <span>URL: {operation.api_url}</span>
-                        )}
-                        {operation.operation_type === 'script' && operation.script_path && (
-                          <span>Script: {operation.script_path}</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditOperation(operation)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteOperation(operation.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Create Operation Modal */}
       <Modal
@@ -311,7 +326,7 @@ const OperationsManagement = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Operation Name *
               </label>
               <Input
@@ -322,13 +337,13 @@ const OperationsManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Operation Type *
               </label>
               <select
                 value={operationForm.operation_type}
                 onChange={(e) => setOperationForm({...operationForm, operation_type: e.target.value})}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               >
                 {operationTypes.map(type => (
                   <option key={type.value} value={type.value}>
@@ -340,14 +355,14 @@ const OperationsManagement = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Description
             </label>
             <textarea
               value={operationForm.description}
               onChange={(e) => setOperationForm({...operationForm, description: e.target.value})}
               placeholder="Describe what this operation does"
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
               rows={3}
             />
           </div>
@@ -355,7 +370,7 @@ const OperationsManagement = () => {
           {/* AWX Playbook Configuration */}
           {operationForm.operation_type === 'awx_playbook' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Playbook Name *
               </label>
               <Input
@@ -371,7 +386,7 @@ const OperationsManagement = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-body font-medium text-foreground mb-2">
                     API URL *
                   </label>
                   <Input
@@ -381,13 +396,13 @@ const OperationsManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <label className="block text-body font-medium text-foreground mb-2">
                     Method
                   </label>
                   <select
                     value={operationForm.api_method}
                     onChange={(e) => setOperationForm({...operationForm, api_method: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
@@ -399,7 +414,7 @@ const OperationsManagement = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-body font-medium text-foreground mb-2">
                   Headers (JSON)
                 </label>
                 <textarea
@@ -413,13 +428,13 @@ const OperationsManagement = () => {
                     }
                   }}
                   placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                   rows={3}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-body font-medium text-foreground mb-2">
                   Request Body (JSON)
                 </label>
                 <textarea
@@ -433,7 +448,7 @@ const OperationsManagement = () => {
                     }
                   }}
                   placeholder='{"key": "value", "data": "example"}'
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
                   rows={4}
                 />
               </div>
@@ -443,7 +458,7 @@ const OperationsManagement = () => {
           {/* Script Configuration */}
           {operationForm.operation_type === 'script' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Script Path *
               </label>
               <Input
@@ -459,9 +474,9 @@ const OperationsManagement = () => {
               type="checkbox"
               checked={operationForm.is_active}
               onChange={(e) => setOperationForm({...operationForm, is_active: e.target.checked})}
-              className="rounded border-slate-300"
+              className="rounded border-border text-primary focus:ring-ring"
             />
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-body font-medium text-foreground">
               Active (available for execution)
             </label>
           </div>
@@ -490,7 +505,7 @@ const OperationsManagement = () => {
           {/* Same form as create modal */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Operation Name *
               </label>
               <Input
@@ -501,13 +516,13 @@ const OperationsManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-body font-medium text-foreground mb-2">
                 Operation Type *
               </label>
               <select
                 value={operationForm.operation_type}
                 onChange={(e) => setOperationForm({...operationForm, operation_type: e.target.value})}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               >
                 {operationTypes.map(type => (
                   <option key={type.value} value={type.value}>
@@ -519,14 +534,14 @@ const OperationsManagement = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-body font-medium text-foreground mb-2">
               Description
             </label>
             <textarea
               value={operationForm.description}
               onChange={(e) => setOperationForm({...operationForm, description: e.target.value})}
               placeholder="Describe what this operation does"
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
               rows={3}
             />
           </div>
@@ -538,9 +553,9 @@ const OperationsManagement = () => {
               type="checkbox"
               checked={operationForm.is_active}
               onChange={(e) => setOperationForm({...operationForm, is_active: e.target.checked})}
-              className="rounded border-slate-300"
+              className="rounded border-border text-primary focus:ring-ring"
             />
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-body font-medium text-foreground">
               Active (available for execution)
             </label>
           </div>

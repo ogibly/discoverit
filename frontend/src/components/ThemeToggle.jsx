@@ -22,11 +22,10 @@ const ThemeToggle = ({ size = 'default', showLabel = true, className = '' }) => 
       disabled={isTransitioning}
       className={`
         relative inline-flex items-center justify-center rounded-lg
-        bg-slate-100 dark:bg-slate-800
-        border border-slate-200 dark:border-slate-700
-        hover:bg-slate-200 dark:hover:bg-slate-700
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        focus:ring-offset-white dark:focus:ring-offset-slate-900
+        bg-muted hover:bg-muted/80
+        border border-border
+        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+        focus:ring-offset-background
         transition-all duration-300 ease-in-out
         ${sizeClasses[size]}
         ${isTransitioning ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -38,7 +37,7 @@ const ThemeToggle = ({ size = 'default', showLabel = true, className = '' }) => 
       {/* Sun Icon */}
       <svg
         className={`
-          absolute transition-all duration-300 ease-in-out
+          absolute transition-all duration-300 ease-in-out text-foreground
           ${iconSizes[size]}
           ${theme === 'dark' 
             ? 'rotate-90 scale-0 opacity-0' 
@@ -60,7 +59,7 @@ const ThemeToggle = ({ size = 'default', showLabel = true, className = '' }) => 
       {/* Moon Icon */}
       <svg
         className={`
-          absolute transition-all duration-300 ease-in-out
+          absolute transition-all duration-300 ease-in-out text-foreground
           ${iconSizes[size]}
           ${theme === 'dark' 
             ? 'rotate-0 scale-100 opacity-100' 
@@ -81,7 +80,7 @@ const ThemeToggle = ({ size = 'default', showLabel = true, className = '' }) => 
 
       {/* Label */}
       {showLabel && (
-        <span className="ml-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span className="ml-2 text-caption font-medium text-foreground">
           {theme === 'dark' ? 'Dark' : 'Light'}
         </span>
       )}

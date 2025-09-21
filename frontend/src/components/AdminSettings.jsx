@@ -85,14 +85,14 @@ const AdminSettings = () => {
   // Check if user has admin permissions
   if (!hasPermission('admin')) {
     return (
-      <div className="h-screen bg-slate-900 flex items-center justify-center">
+      <div className="h-screen bg-background flex items-center justify-center">
         <Card className="w-96">
           <CardContent className="p-8 text-center">
             <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-xl font-bold text-slate-100 mb-2">
+            <h2 className="text-subheading text-foreground mb-2">
               Access Denied
             </h2>
-            <p className="text-slate-400">
+            <p className="text-body text-muted-foreground">
               You need administrator privileges to access this page.
             </p>
           </CardContent>
@@ -253,32 +253,34 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
-      {/* Header */}
-      <div className="px-6 py-4 bg-slate-800 border-b border-slate-700 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-100">
-              Admin Settings
-            </h1>
-            <p className="text-sm text-slate-400">
-              Manage system settings, users, and configurations
-            </p>
+    <div className="h-screen bg-background flex flex-col">
+      {/* Sophisticated Header */}
+      <div className="bg-card border-b border-border flex-shrink-0">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-heading text-foreground">
+                Admin Settings
+              </h1>
+              <p className="text-caption text-muted-foreground mt-1">
+                Manage system settings, users, and configurations
+              </p>
+            </div>
+            <Badge className="bg-primary text-primary-foreground">
+              Administrator
+            </Badge>
           </div>
-          <Badge className="bg-blue-900 text-blue-200">
-            Administrator
-          </Badge>
         </div>
       </div>
 
       {/* Status Message */}
       {statusMessage && (
-        <div className="px-6 py-3 bg-blue-500/10 border-b border-blue-500/20">
+        <div className="px-6 py-3 bg-info/10 border-b border-info/20">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-blue-200">{statusMessage}</span>
+            <span className="text-body text-info">{statusMessage}</span>
             <button
               onClick={clearStatusMessage}
-              className="text-blue-300 hover:text-blue-100 transition-colors"
+              className="text-info hover:text-info/80 transition-colors"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -299,14 +301,14 @@ const AdminSettings = () => {
 
           {/* System Settings Tab */}
           <TabsContent value="system" className="space-y-6">
-            <Card>
+            <Card className="surface-elevated">
               <CardHeader>
-                <CardTitle>General Settings</CardTitle>
+                <CardTitle className="text-subheading text-foreground">General Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       Default Subnet
                     </label>
                     <Input
@@ -316,7 +318,7 @@ const AdminSettings = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       Scan Timeout (seconds)
                     </label>
                     <Input
@@ -327,7 +329,7 @@ const AdminSettings = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       Max Concurrent Scans
                     </label>
                     <Input
@@ -338,7 +340,7 @@ const AdminSettings = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       Max Discovery Depth
                     </label>
                     <Input
@@ -356,9 +358,9 @@ const AdminSettings = () => {
                       type="checkbox"
                       checked={settings.auto_discovery_enabled}
                       onChange={(e) => setSettings({...settings, auto_discovery_enabled: e.target.checked})}
-                      className="rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-border text-primary focus:ring-ring"
                     />
-                    <span className="text-sm text-slate-300">Auto Discovery Enabled</span>
+                    <span className="text-body text-foreground">Auto Discovery Enabled</span>
                   </label>
                 </div>
 
@@ -368,9 +370,9 @@ const AdminSettings = () => {
                       type="checkbox"
                       checked={settings.email_notifications}
                       onChange={(e) => setSettings({...settings, email_notifications: e.target.checked})}
-                      className="rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-border text-primary focus:ring-ring"
                     />
-                    <span className="text-sm text-slate-300">Email Notifications</span>
+                    <span className="text-body text-foreground">Email Notifications</span>
                   </label>
                 </div>
 
@@ -382,14 +384,14 @@ const AdminSettings = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="surface-elevated">
               <CardHeader>
-                <CardTitle>AWX Integration</CardTitle>
+                <CardTitle className="text-subheading text-foreground">AWX Integration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       AWX URL
                     </label>
                     <Input
@@ -399,7 +401,7 @@ const AdminSettings = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       Username
                     </label>
                     <Input
@@ -409,7 +411,7 @@ const AdminSettings = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       Password
                     </label>
                     <Input
@@ -420,7 +422,7 @@ const AdminSettings = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-body font-medium text-foreground mb-2">
                       Token
                     </label>
                     <Input
@@ -436,10 +438,10 @@ const AdminSettings = () => {
 
           {/* User Management Tab */}
           <TabsContent value="users" className="space-y-6">
-            <Card>
+            <Card className="surface-elevated">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>User Management</CardTitle>
+                  <CardTitle className="text-subheading text-foreground">User Management</CardTitle>
                   <Button onClick={() => openUserModal()}>
                     Add User
                   </Button>
@@ -448,17 +450,17 @@ const AdminSettings = () => {
               <CardContent>
                 <div className="space-y-4">
                   {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                    <div key={user.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
                       <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                          <span className="text-primary-foreground font-semibold">
                             {user.username.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <h3 className="font-medium text-slate-100">{user.full_name || user.username}</h3>
-                          <p className="text-sm text-slate-400">{user.email}</p>
-                          <Badge className={user.is_active ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}>
+                          <h3 className="text-subheading text-foreground">{user.full_name || user.username}</h3>
+                          <p className="text-body text-muted-foreground">{user.email}</p>
+                          <Badge className={user.is_active ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
                             {user.is_active ? 'Active' : 'Inactive'}
                           </Badge>
                         </div>
@@ -488,10 +490,10 @@ const AdminSettings = () => {
 
           {/* Scanner Configs Tab */}
           <TabsContent value="scanners" className="space-y-6">
-            <Card>
+            <Card className="surface-elevated">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Scanner Configurations</CardTitle>
+                  <CardTitle className="text-subheading text-foreground">Scanner Configurations</CardTitle>
                   <Button onClick={() => setShowScannerModal(true)}>
                     Add Scanner
                   </Button>
@@ -500,11 +502,11 @@ const AdminSettings = () => {
               <CardContent>
                 <div className="space-y-4">
                   {scannerConfigs.map((config) => (
-                    <div key={config.id} className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                    <div key={config.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
                       <div>
-                        <h3 className="font-medium text-slate-100">{config.name}</h3>
-                        <p className="text-sm text-slate-400">{config.url}</p>
-                        <Badge className={config.is_active ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}>
+                        <h3 className="text-subheading text-foreground">{config.name}</h3>
+                        <p className="text-body text-muted-foreground">{config.url}</p>
+                        <Badge className={config.is_active ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
                           {config.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
@@ -533,7 +535,7 @@ const AdminSettings = () => {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-body font-medium text-foreground mb-2">
               Username
             </label>
             <Input
@@ -543,7 +545,7 @@ const AdminSettings = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-body font-medium text-foreground mb-2">
               Email
             </label>
             <Input
@@ -554,7 +556,7 @@ const AdminSettings = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-body font-medium text-foreground mb-2">
               Full Name
             </label>
             <Input
@@ -564,7 +566,7 @@ const AdminSettings = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-body font-medium text-foreground mb-2">
               Password
             </label>
             <Input
@@ -575,13 +577,13 @@ const AdminSettings = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-body font-medium text-foreground mb-2">
               Role
             </label>
             <select
               value={userForm.role_id}
               onChange={(e) => setUserForm({...userForm, role_id: e.target.value})}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               <option value="">Select a role</option>
               {roles.map((role) => (
@@ -596,9 +598,9 @@ const AdminSettings = () => {
               type="checkbox"
               checked={userForm.is_active}
               onChange={(e) => setUserForm({...userForm, is_active: e.target.checked})}
-              className="rounded border-slate-600 bg-slate-800 text-blue-600 focus:ring-blue-500"
+              className="rounded border-border text-primary focus:ring-ring"
             />
-            <span className="text-sm text-slate-300">Active</span>
+            <span className="text-body text-foreground">Active</span>
           </div>
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={closeUserModal}>

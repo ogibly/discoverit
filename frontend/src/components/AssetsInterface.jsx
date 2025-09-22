@@ -17,6 +17,7 @@ const AssetsInterface = () => {
     selectedAsset,
     assetGroups,
     selectedAssetGroups,
+    labels,
     loading,
     toggleAssetSelection,
     selectAllAssets,
@@ -31,7 +32,11 @@ const AssetsInterface = () => {
     toggleAssetGroupSelection,
     selectAllAssetGroups,
     fetchAssets,
-    fetchAssetGroups
+    fetchAssetGroups,
+    fetchLabels,
+    createLabel,
+    updateLabel,
+    deleteLabel
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('assets');
@@ -43,6 +48,8 @@ const AssetsInterface = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [showLabelModal, setShowLabelModal] = useState(false);
+  const [editingLabel, setEditingLabel] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
 
   // Form states
@@ -60,13 +67,24 @@ const AssetsInterface = () => {
   const [groupForm, setGroupForm] = useState({
     name: '',
     description: '',
-    asset_ids: []
+    asset_ids: [],
+    label_ids: []
+  });
+
+  const [labelForm, setLabelForm] = useState({
+    name: '',
+    description: '',
+    color: '#3B82F6',
+    icon: '🏷️',
+    category: 'general',
+    is_active: true
   });
 
   useEffect(() => {
     fetchAssets();
     fetchAssetGroups();
-  }, [fetchAssets, fetchAssetGroups]);
+    fetchLabels();
+  }, [fetchAssets, fetchAssetGroups, fetchLabels]);
 
   // Filter and sort assets
   const filteredAssets = useMemo(() => {
@@ -224,6 +242,68 @@ const AssetsInterface = () => {
     }
   };
 
+  // Label management functions
+  const handleCreateLabel = async () => {
+    try {
+      await createLabel(labelForm);
+      setShowLabelModal(false);
+      setLabelForm({
+        name: '',
+        description: '',
+        color: '#3B82F6',
+        icon: '🏷️',
+        category: 'general',
+        is_active: true
+      });
+    } catch (error) {
+      console.error('Failed to create label:', error);
+      alert('Failed to create label: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleUpdateLabel = async () => {
+    try {
+      await updateLabel(editingLabel.id, labelForm);
+      setShowLabelModal(false);
+      setEditingLabel(null);
+      setLabelForm({
+        name: '',
+        description: '',
+        color: '#3B82F6',
+        icon: '🏷️',
+        category: 'general',
+        is_active: true
+      });
+    } catch (error) {
+      console.error('Failed to update label:', error);
+      alert('Failed to update label: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleDeleteLabel = async (labelId) => {
+    if (window.confirm('Are you sure you want to delete this label?')) {
+      try {
+        await deleteLabel(labelId);
+      } catch (error) {
+        console.error('Failed to delete label:', error);
+        alert('Failed to delete label: ' + (error.response?.data?.detail || error.message));
+      }
+    }
+  };
+
+  const handleEditLabel = (label) => {
+    setEditingLabel(label);
+    setLabelForm({
+      name: label.name || '',
+      description: label.description || '',
+      color: label.color || '#3B82F6',
+      icon: label.icon || '🏷️',
+      category: label.category || 'general',
+      is_active: label.is_active !== false
+    });
+    setShowLabelModal(true);
+  };
+
   const handleSelectAll = () => {
     if (activeTab === 'assets') {
       if (selectedAssets.length === filteredAssets.length) {
@@ -373,9 +453,10 @@ const AssetsInterface = () => {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="assets">Assets</TabsTrigger>
               <TabsTrigger value="groups">Asset Groups</TabsTrigger>
+              <TabsTrigger value="labels">Labels</TabsTrigger>
             </TabsList>
 
             <TabsContent value="assets" className="space-y-6">

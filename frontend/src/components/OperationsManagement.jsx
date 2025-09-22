@@ -218,7 +218,7 @@ const OperationsManagement = () => {
   };
 
   if (!hasPermission('admin')) {
-  return (
+    return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
         <Card className="w-96">
           <CardContent className="p-8 text-center">
@@ -240,7 +240,7 @@ const OperationsManagement = () => {
       {/* Header */}
       <div className="px-6 py-6 border-b border-border">
         <div className="flex items-center justify-between">
-          <div>
+            <div>
             <h1 className="text-3xl font-bold text-foreground">Operations</h1>
             <p className="text-body text-muted-foreground mt-1">
               Manage automation operations and scripts
@@ -343,8 +343,8 @@ const OperationsManagement = () => {
         <div className="space-y-6">
           {/* Operation Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="surface-elevated">
-          <CardContent className="p-4">
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-caption text-muted-foreground">Active Operations</p>
@@ -354,10 +354,10 @@ const OperationsManagement = () => {
                 <span className="text-success">✅</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="surface-elevated">
-          <CardContent className="p-4">
+            </CardContent>
+          </Card>
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-caption text-muted-foreground">Inactive Operations</p>
@@ -367,10 +367,10 @@ const OperationsManagement = () => {
                 <span className="text-error">❌</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="surface-elevated">
-          <CardContent className="p-4">
+            </CardContent>
+          </Card>
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-caption text-muted-foreground">Operation Types</p>
@@ -380,10 +380,10 @@ const OperationsManagement = () => {
                 <span className="text-info">⚙️</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="surface-elevated">
-          <CardContent className="p-4">
+            </CardContent>
+          </Card>
+          <Card className="surface-elevated">
+            <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-caption text-muted-foreground">Selected</p>
@@ -393,9 +393,9 @@ const OperationsManagement = () => {
                 <span className="text-warning">✓</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
 
       {/* Bulk Actions */}
       {selectedOperations.length > 0 && (
@@ -457,17 +457,17 @@ const OperationsManagement = () => {
                     <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-lg", getOperationTypeColor(operation.operation_type))}>
                       {getOperationTypeIcon(operation.operation_type)}
                     </div>
-                  </div>
+              </div>
                   <Badge className={cn("text-xs", getStatusColor(operation.is_active))}>
                     {operation.is_active ? 'Active' : 'Inactive'}
                   </Badge>
-                </div>
+              </div>
 
-                <div className="space-y-3">
+              <div className="space-y-3">
                   <div>
-                    <h3 className="text-subheading text-foreground truncate">
-                      {operation.name}
-                    </h3>
+                          <h3 className="text-subheading text-foreground truncate">
+                            {operation.name}
+                          </h3>
                     <p className="text-caption text-muted-foreground">
                       {operation.description || 'No description'}
                     </p>
@@ -481,38 +481,38 @@ const OperationsManagement = () => {
                     <div className="flex justify-between">
                       <span>Status:</span>
                       <span>{operation.is_active ? 'Active' : 'Inactive'}</span>
-                    </div>
+                        </div>
                     <div className="flex justify-between">
                       <span>Created:</span>
                       <span>{new Date(operation.created_at).toLocaleDateString()}</span>
-                    </div>
+                        </div>
                     {operation.updated_at && (
                       <div className="flex justify-between">
                         <span>Updated:</span>
                         <span>{new Date(operation.updated_at).toLocaleDateString()}</span>
                       </div>
                     )}
-                  </div>
-
+                      </div>
+                      
                   <div className="flex space-x-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
+                        <Button
+                          variant="outline"
+                          size="sm"
                       onClick={() => setEditingOperation(operation)}
                       className="flex-1 text-xs"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteOperation(operation.id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteOperation(operation.id)}
                       className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
               </CardContent>
             </Card>
           ))}
@@ -604,7 +604,7 @@ const OperationsManagement = () => {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
           </CardContent>
         </Card>
       )}
@@ -616,14 +616,14 @@ const OperationsManagement = () => {
         title="Create Operation"
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
               Name *
-            </label>
-            <Input
-              value={operationForm.name}
-              onChange={(e) => setOperationForm({...operationForm, name: e.target.value})}
-              placeholder="Enter operation name"
+              </label>
+              <Input
+                value={operationForm.name}
+                onChange={(e) => setOperationForm({...operationForm, name: e.target.value})}
+                placeholder="Enter operation name"
             />
           </div>
           <div>
@@ -634,24 +634,24 @@ const OperationsManagement = () => {
               value={operationForm.description}
               onChange={(e) => setOperationForm({...operationForm, description: e.target.value})}
               placeholder="Enter operation description"
-            />
-          </div>
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Operation Type *
-            </label>
-            <select
-              value={operationForm.operation_type}
-              onChange={(e) => setOperationForm({...operationForm, operation_type: e.target.value})}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
+              />
+            </div>
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                Operation Type *
+              </label>
+              <select
+                value={operationForm.operation_type}
+                onChange={(e) => setOperationForm({...operationForm, operation_type: e.target.value})}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              >
               {operationTypes.filter(t => t.value !== 'all').map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
+                  <option key={type.value} value={type.value}>
+                    {type.icon} {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -679,14 +679,14 @@ const OperationsManagement = () => {
         title="Edit Operation"
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
               Name *
-            </label>
-            <Input
-              value={operationForm.name}
-              onChange={(e) => setOperationForm({...operationForm, name: e.target.value})}
-              placeholder="Enter operation name"
+              </label>
+              <Input
+                value={operationForm.name}
+                onChange={(e) => setOperationForm({...operationForm, name: e.target.value})}
+                placeholder="Enter operation name"
             />
           </div>
           <div>
@@ -697,24 +697,24 @@ const OperationsManagement = () => {
               value={operationForm.description}
               onChange={(e) => setOperationForm({...operationForm, description: e.target.value})}
               placeholder="Enter operation description"
-            />
-          </div>
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Operation Type *
-            </label>
-            <select
-              value={operationForm.operation_type}
-              onChange={(e) => setOperationForm({...operationForm, operation_type: e.target.value})}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
+              />
+            </div>
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                Operation Type *
+              </label>
+              <select
+                value={operationForm.operation_type}
+                onChange={(e) => setOperationForm({...operationForm, operation_type: e.target.value})}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              >
               {operationTypes.filter(t => t.value !== 'all').map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
+                  <option key={type.value} value={type.value}>
+                    {type.icon} {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"

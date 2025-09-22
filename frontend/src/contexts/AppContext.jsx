@@ -815,7 +815,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     // Don't fetch data on initial load - wait for auth-changed event
     // This prevents race conditions with token validation
-  }, [fetchAssets, fetchAssetGroups, fetchLabels, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
+  }, [fetchAssets, fetchAssetGroups, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
 
   // Listen for authentication changes
   useEffect(() => {

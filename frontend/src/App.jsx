@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import DevicesInterface from './components/DevicesInterface';
 import Discovery from './components/Discovery';
+import LabManagement from './components/LabManagement';
 import AssetsInterface from './components/AssetsInterface';
 import AssetDetail from './components/AssetDetail';
 import OperationsManagement from './components/OperationsManagement';
@@ -45,6 +46,16 @@ const Navigation = () => {
         </svg>
       ), 
       permission: 'assets:read'
+    },
+    { 
+      path: '/labs', 
+      label: 'Lab Management', 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ), 
+      permission: 'admin:read'
     },
     { 
       path: '/devices', 
@@ -277,6 +288,11 @@ const AppContent = () => {
           <Route path="/discovery" element={
             <ProtectedRoute requiredPermission="assets:read">
               <Discovery />
+            </ProtectedRoute>
+          } />
+          <Route path="/labs" element={
+            <ProtectedRoute requiredPermission="admin:read">
+              <LabManagement />
             </ProtectedRoute>
           } />
           <Route path="/devices" element={

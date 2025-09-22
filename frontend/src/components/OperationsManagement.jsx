@@ -333,33 +333,6 @@ const OperationsManagement = () => {
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </Button>
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ⊞
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ☰
-                </Button>
-              </div>
-              <Button onClick={() => setShowCreateModal(true)} className="ml-2">
-                Create Operation
-              </Button>
             </div>
           </div>
         </CardContent>

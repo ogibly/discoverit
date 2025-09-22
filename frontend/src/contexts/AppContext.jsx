@@ -737,7 +737,7 @@ export function AppProvider({ children }) {
 
   const fetchScannerConfigs = useCallback(async () => {
     try {
-      const configs = await apiCall('/scanner-configs');
+      const configs = await apiCall('/scanners');
       return configs;
     } catch (error) {
       throw error;

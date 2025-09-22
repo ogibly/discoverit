@@ -33,7 +33,7 @@ const DevicesInterface = () => {
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
+  const [viewMode, setViewMode] = useState('table'); // 'grid' or 'table'
 
   // Load data on component mount
   useEffect(() => {

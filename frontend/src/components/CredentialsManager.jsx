@@ -6,6 +6,7 @@ import { Input } from './ui/Input';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { cn } from '../utils/cn';
+import PageHeader from './PageHeader';
 
 const CredentialsManager = () => {
   const { 
@@ -23,7 +24,7 @@ const CredentialsManager = () => {
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('table');
   const [selectedCredentials, setSelectedCredentials] = useState([]);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,6 +66,12 @@ const CredentialsManager = () => {
       await fetchCredentials();
     } catch (error) {
       console.error('Failed to load credentials:', error);
+      // Set a timeout to prevent infinite loading
+      setTimeout(() => {
+        if (loading.credentials) {
+          console.warn('Credentials loading timeout - forcing stop');
+        }
+      }, 10000); // 10 second timeout
     }
   };
 
@@ -238,31 +245,23 @@ const CredentialsManager = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-6 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Credentials</h1>
-            <p className="text-body text-muted-foreground mt-1">
-              Manage authentication credentials for your assets
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{credentials.length}</div>
-              <div className="text-caption text-muted-foreground">Total Credentials</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-success">{credentials.filter(c => c.is_active).length}</div>
-              <div className="text-caption text-muted-foreground">Active</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-warning">{credentials.filter(c => !c.is_active).length}</div>
-              <div className="text-caption text-muted-foreground">Inactive</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Credentials"
+        subtitle="Manage authentication credentials for your assets"
+        metrics={[
+          { value: credentials.length, label: "Total Credentials", color: "text-primary" },
+          { value: credentials.filter(c => c.is_active).length, label: "Active", color: "text-success" },
+          { value: credentials.filter(c => !c.is_active).length, label: "Inactive", color: "text-warning" }
+        ]}
+        actions={[
+          {
+            label: "Create Credential",
+            icon: "➕",
+            onClick: () => setShowCreateModal(true),
+            variant: "default"
+          }
+        ]}
+      />
 
       {/* Search and Filter Controls */}
       <Card className="surface-elevated">
@@ -408,7 +407,7 @@ const CredentialsManager = () => {
       )}
 
       {/* Credential List */}
-      {loading ? (
+      {loading.credentials ? (
         <Card className="surface-elevated">
           <CardContent className="p-12 text-center">
             <div className="text-4xl mb-4">⏳</div>

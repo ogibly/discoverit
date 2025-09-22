@@ -44,7 +44,7 @@ const AssetsInterface = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('table');
 
   // Form states
   const [assetForm, setAssetForm] = useState({

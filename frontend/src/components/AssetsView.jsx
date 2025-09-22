@@ -28,7 +28,7 @@ const AssetsView = ({
   totalPages,
   onPageChange
 }) => {
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
+  const [viewMode, setViewMode] = useState('table'); // 'grid' or 'table'
 
   const statusOptions = [
     { value: 'all', label: 'All Assets', icon: '📱' },

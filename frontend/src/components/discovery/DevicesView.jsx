@@ -29,7 +29,7 @@ const DevicesView = ({
   formatLastSeen,
   getResponseTimeColor
 }) => {
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
+  const [viewMode, setViewMode] = useState('table'); // 'grid' or 'table'
 
   const deviceTypes = [
     { value: 'all', label: 'All Devices', icon: '📱' },

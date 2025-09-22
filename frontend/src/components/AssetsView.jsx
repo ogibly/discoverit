@@ -113,30 +113,6 @@ const AssetsView = ({
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </Button>
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ⊞
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ☰
-                </Button>
-              </div>
             </div>
           </div>
         </CardContent>
@@ -242,7 +218,37 @@ const AssetsView = ({
             </p>
           </CardContent>
         </Card>
-      ) : viewMode === 'grid' ? (
+      ) : (
+        <>
+          {/* View Toggle */}
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  "text-xs font-medium transition-all duration-200 h-8 px-3",
+                  viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                ⊞
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  "text-xs font-medium transition-all duration-200 h-8 px-3",
+                  viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                ☰
+              </Button>
+            </div>
+          </div>
+
+          {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {assets.map((asset) => (
             <Card key={asset.id} className="surface-interactive">
@@ -336,7 +342,7 @@ const AssetsView = ({
             </Card>
           ))}
         </div>
-      ) : (
+        ) : (
         <Card className="surface-elevated">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -438,6 +444,8 @@ const AssetsView = ({
             </div>
           </CardContent>
         </Card>
+        )}
+        </>
       )}
 
       {/* Pagination */}

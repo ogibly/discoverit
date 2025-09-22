@@ -9,6 +9,7 @@ import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { HelpIcon } from './ui';
 import { cn } from '../utils/cn';
+import PageHeader from './PageHeader';
 
 const AssetsInterface = () => {
   const {
@@ -77,7 +78,8 @@ const AssetsInterface = () => {
         asset.primary_ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.model?.toLowerCase().includes(searchTerm.toLowerCase());
+        asset.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (asset.tags && asset.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
       
       let matchesFilter = true;
       if (filterStatus === 'active') {
@@ -128,7 +130,8 @@ const AssetsInterface = () => {
     let filtered = assetGroups.filter(group => {
       const matchesSearch = !searchTerm || 
         group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.description?.toLowerCase().includes(searchTerm.toLowerCase());
+        group.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (group.tags && group.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
       
       return matchesSearch;
     });
@@ -263,56 +266,24 @@ const AssetsInterface = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-6 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center">
-              Asset Inventory
-              <HelpIcon 
-                content="Manage your asset inventory and organize them into groups for better categorization and management."
-                className="ml-2"
-                size="sm"
-              />
-            </h1>
-            <p className="text-body text-muted-foreground mt-1">
-              Manage your asset inventory and organize them into groups
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{totalAssets}</div>
-              <div className="text-caption text-muted-foreground">Total Assets</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{activeAssets}</div>
-              <div className="text-caption text-muted-foreground">Active</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{totalGroups}</div>
-              <div className="text-caption text-muted-foreground">Asset Groups</div>
-            </div>
-            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="text-xs font-medium transition-all duration-200 h-8 px-3"
-              >
-                ⊞
-              </Button>
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className="text-xs font-medium transition-all duration-200 h-8 px-3"
-              >
-                ☰
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center">
+            Asset Inventory
+            <HelpIcon 
+              content="Manage your asset inventory and organize them into groups for better categorization and management."
+              className="ml-2"
+              size="sm"
+            />
+          </span>
+        }
+        subtitle="Manage your asset inventory and organize them into groups"
+        metrics={[
+          { value: totalAssets, label: "Total Assets", color: "text-primary" },
+          { value: activeAssets, label: "Active", color: "text-green-600" },
+          { value: totalGroups, label: "Asset Groups", color: "text-blue-600" }
+        ]}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
@@ -387,7 +358,7 @@ const AssetsInterface = () => {
                   <div className="flex flex-col lg:flex-row gap-4">
                     <div className="flex-1">
                       <Input
-                        placeholder="Search assets by name, IP, description, manufacturer, or model..."
+                        placeholder="Search assets by name, IP, description, manufacturer, model, or labels..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full"
@@ -428,6 +399,34 @@ const AssetsInterface = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* View Toggle */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-foreground">View:</span>
+                  <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
+                    >
+                      ⊞
+                    </Button>
+                    <Button
+                      variant={viewMode === 'table' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('table')}
+                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
+                    >
+                      ☰
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {filteredAssets.length} asset{filteredAssets.length !== 1 ? 's' : ''}
+                </div>
+              </div>
 
               {/* Asset List */}
               {filteredAssets.length === 0 ? (
@@ -538,11 +537,28 @@ const AssetsInterface = () => {
                               )}
                             </div>
 
+                            {/* Labels Display */}
+                            {asset.tags && asset.tags.length > 0 && (
+                              <div className="mt-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {asset.tags.map((tag, index) => (
+                                    <span
+                                      key={index}
+                                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
                             <div className="flex space-x-2 mt-6">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
+                                  console.log('Edit button clicked for asset:', asset);
                                   setSelectedAsset(asset);
                                   setAssetForm(asset);
                                   setShowEditModal(true);
@@ -633,6 +649,7 @@ const AssetsInterface = () => {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => {
+                                          console.log('Edit button clicked for asset (table):', asset);
                                           setSelectedAsset(asset);
                                           setAssetForm(asset);
                                           setShowEditModal(true);
@@ -668,7 +685,7 @@ const AssetsInterface = () => {
                   <div className="flex flex-col lg:flex-row gap-4">
                     <div className="flex-1">
                       <Input
-                        placeholder="Search asset groups by name or description..."
+                        placeholder="Search asset groups by name, description, or labels..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full"

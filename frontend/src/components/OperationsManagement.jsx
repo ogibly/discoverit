@@ -7,22 +7,23 @@ import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { cn } from '../utils/cn';
+import { useFormState, useListState, useModalState } from '../hooks/useFormState';
+import { createCrudOperations, handleApiError, validationRules } from '../utils/apiHelpers';
+import DataTable from './common/DataTable';
+import FormModal, { FormInput, FormTextarea, FormSelect, FormCheckbox } from './common/FormModal';
+import StatusIndicator from './common/StatusIndicator';
+import PageHeader from './PageHeader';
 
 const OperationsManagement = () => {
   const { api, operations, loading } = useApp();
   const { user, hasPermission } = useAuth();
   
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingOperation, setEditingOperation] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
-  const [viewMode, setViewMode] = useState('grid');
-  const [selectedOperations, setSelectedOperations] = useState([]);
+  // Use custom hooks for state management
+  const listState = useListState(operations);
+  const createModal = useModalState();
+  const editModal = useModalState();
   
-  const [operationForm, setOperationForm] = useState({
+  const initialForm = {
     name: '',
     description: '',
     operation_type: 'awx_playbook',
@@ -35,7 +36,15 @@ const OperationsManagement = () => {
     script_path: '',
     script_args: {},
     is_active: true
+  };
+  
+  const formState = useFormState(initialForm, () => {
+    createModal.closeModal();
+    editModal.closeModal();
   });
+  
+  // Create CRUD operations
+  const crudOps = createCrudOperations(api, 'operations');
 
   const operationTypes = [
     { value: 'all', label: 'All Operations', icon: '⚙️' },
@@ -51,91 +60,104 @@ const OperationsManagement = () => {
     { value: 'is_active', label: 'Status' }
   ];
 
+  // Update form when editing operation changes
   useEffect(() => {
-    if (editingOperation) {
-      setOperationForm({
-        name: editingOperation.name || '',
-        description: editingOperation.description || '',
-        operation_type: editingOperation.operation_type || 'awx_playbook',
-        awx_playbook_name: editingOperation.awx_playbook_name || '',
-        awx_extra_vars: editingOperation.awx_extra_vars || {},
-        api_url: editingOperation.api_url || '',
-        api_method: editingOperation.api_method || 'POST',
-        api_headers: editingOperation.api_headers || {},
-        api_body: editingOperation.api_body || {},
-        script_path: editingOperation.script_path || '',
-        script_args: editingOperation.script_args || {},
-        is_active: editingOperation.is_active !== false
+    if (editModal.data) {
+      formState.updateForm({
+        name: editModal.data.name || '',
+        description: editModal.data.description || '',
+        operation_type: editModal.data.operation_type || 'awx_playbook',
+        awx_playbook_name: editModal.data.awx_playbook_name || '',
+        awx_extra_vars: editModal.data.awx_extra_vars || {},
+        api_url: editModal.data.api_url || '',
+        api_method: editModal.data.api_method || 'POST',
+        api_headers: editModal.data.api_headers || {},
+        api_body: editModal.data.api_body || {},
+        script_path: editModal.data.script_path || '',
+        script_args: editModal.data.script_args || {},
+        is_active: editModal.data.is_active !== false
       });
     }
-  }, [editingOperation]);
+  }, [editModal.data, formState]);
 
-  // Filter and sort operations
-  const filteredOperations = operations
-    .filter(operation => {
-      const matchesSearch = operation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (operation.description && operation.description.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesFilter = filterType === 'all' || operation.operation_type === filterType;
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      let aValue, bValue;
-      
-      switch (sortBy) {
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'operation_type':
-          aValue = a.operation_type;
-          bValue = b.operation_type;
-          break;
-        case 'created_at':
-          aValue = new Date(a.created_at);
-          bValue = new Date(b.created_at);
-          break;
-        case 'is_active':
-          aValue = a.is_active ? 1 : 0;
-          bValue = b.is_active ? 1 : 0;
-          break;
-        default:
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-      }
-      
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-  const allSelected = filteredOperations.length > 0 && filteredOperations.every(operation => selectedOperations.includes(operation.id));
+  // Define table columns
+  const columns = [
+    {
+      key: 'name',
+      header: 'Name',
+      accessor: 'name',
+      sortable: true
+    },
+    {
+      key: 'operation_type',
+      header: 'Type',
+      accessor: 'operation_type',
+      sortable: true,
+      render: (value) => (
+        <Badge variant="secondary">
+          {operationTypes.find(t => t.value === value)?.label || value}
+        </Badge>
+      )
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      accessor: 'is_active',
+      sortable: true,
+      render: (value) => <StatusIndicator status={value ? 'active' : 'inactive'} />
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      accessor: 'created_at',
+      sortable: true,
+      render: (value) => new Date(value).toLocaleDateString()
+    }
+  ];
 
   const handleCreateOperation = async () => {
+    const isValid = formState.validateForm({
+      name: validationRules.required('Operation name is required'),
+      operation_type: validationRules.required('Operation type is required')
+    });
+
+    if (!isValid) return;
+
+    formState.setIsSubmitting(true);
     try {
-      await api.post('/operations', operationForm);
-      setShowCreateModal(false);
-      resetForm();
+      await crudOps.create(formState.form);
+      formState.resetForm();
+      createModal.closeModal();
       // Refresh operations list
       window.location.reload(); // Simple refresh for now
     } catch (error) {
-      console.error('Failed to create operation:', error);
-      alert('Failed to create operation: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = handleApiError(error, 'create operation');
+      alert(errorMessage);
+    } finally {
+      formState.setIsSubmitting(false);
     }
   };
 
   const handleUpdateOperation = async () => {
+    const isValid = formState.validateForm({
+      name: validationRules.required('Operation name is required'),
+      operation_type: validationRules.required('Operation type is required')
+    });
+
+    if (!isValid) return;
+
+    formState.setIsSubmitting(true);
     try {
-      await api.put(`/operations/${editingOperation.id}`, operationForm);
-      setShowEditModal(false);
-      setEditingOperation(null);
-      resetForm();
+      await crudOps.update(editModal.data.id, formState.form);
+      formState.resetForm();
+      editModal.closeModal();
       // Refresh operations list
       window.location.reload(); // Simple refresh for now
     } catch (error) {
-      console.error('Failed to update operation:', error);
-      alert('Failed to update operation: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = handleApiError(error, 'update operation');
+      alert(errorMessage);
+    } finally {
+      formState.setIsSubmitting(false);
     }
   };
 
@@ -143,12 +165,12 @@ const OperationsManagement = () => {
     if (!confirm('Are you sure you want to delete this operation?')) return;
     
     try {
-      await api.delete(`/operations/${operationId}`);
+      await crudOps.delete(operationId);
       // Refresh operations list
       window.location.reload(); // Simple refresh for now
     } catch (error) {
-      console.error('Failed to delete operation:', error);
-      alert('Failed to delete operation: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = handleApiError(error, 'delete operation');
+      alert(errorMessage);
     }
   };
 
@@ -156,43 +178,24 @@ const OperationsManagement = () => {
     if (!confirm(`Are you sure you want to delete ${operationIds.length} operations?`)) return;
     
     try {
-      await Promise.all(operationIds.map(id => api.delete(`/operations/${id}`)));
-      setSelectedOperations([]);
+      await crudOps.bulkDelete(operationIds);
+      listState.clearSelection();
       // Refresh operations list
       window.location.reload(); // Simple refresh for now
     } catch (error) {
-      console.error('Failed to delete operations:', error);
-      alert('Failed to delete operations: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = handleApiError(error, 'delete operations');
+      alert(errorMessage);
     }
   };
 
-  const resetForm = () => {
-    setOperationForm({
-      name: '',
-      description: '',
-      operation_type: 'awx_playbook',
-      awx_playbook_name: '',
-      awx_extra_vars: {},
-      api_url: '',
-      api_method: 'POST',
-      api_headers: {},
-      api_body: {},
-      script_path: '',
-      script_args: {},
-      is_active: true
-    });
+  // Action handlers
+  const handleEditOperation = (operation) => {
+    editModal.openModal(operation);
   };
 
-  const toggleOperationSelection = (operationId) => {
-    setSelectedOperations(prev => 
-      prev.includes(operationId) 
-        ? prev.filter(id => id !== operationId)
-        : [...prev, operationId]
-    );
-  };
-
-  const selectAllOperations = (operationIds) => {
-    setSelectedOperations(operationIds);
+  const handleCreateNew = () => {
+    formState.resetForm();
+    createModal.openModal();
   };
 
   const getOperationTypeIcon = (type) => {
@@ -237,58 +240,23 @@ const OperationsManagement = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-6 border-b border-border">
-        <div className="flex items-center justify-between">
-            <div>
-            <h1 className="text-3xl font-bold text-foreground">Operations</h1>
-            <p className="text-body text-muted-foreground mt-1">
-              Manage automation operations and scripts
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{operations.length}</div>
-              <div className="text-caption text-muted-foreground">Total Operations</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-success">{operations.filter(o => o.is_active).length}</div>
-              <div className="text-caption text-muted-foreground">Active</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-warning">{operations.filter(o => !o.is_active).length}</div>
-              <div className="text-caption text-muted-foreground">Inactive</div>
-            </div>
-            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className={cn(
-                  "px-3 py-1 text-sm",
-                  viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                ⊞
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className={cn(
-                  "px-3 py-1 text-sm",
-                  viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                ☰
-              </Button>
-            </div>
-            <Button onClick={() => setShowCreateModal(true)} className="ml-2">
-              Create Operation
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Operations"
+        subtitle="Manage automation operations and scripts"
+        metrics={[
+          { value: operations.length, label: "Total Operations", color: "text-primary" },
+          { value: operations.filter(o => o.is_active).length, label: "Active", color: "text-success" },
+          { value: operations.filter(o => !o.is_active).length, label: "Inactive", color: "text-warning" }
+        ]}
+        actions={[
+          {
+            label: "Create Operation",
+            icon: "➕",
+            onClick: handleCreateNew,
+            variant: "default"
+          }
+        ]}
+      />
 
       {/* Search and Filter Controls */}
       <Card className="surface-elevated">
@@ -441,7 +409,43 @@ const OperationsManagement = () => {
             </p>
           </CardContent>
         </Card>
-      ) : viewMode === 'grid' ? (
+      ) : (
+        <>
+          {/* View Toggle */}
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-foreground">View:</span>
+              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    "text-xs font-medium transition-all duration-200 h-8 px-3",
+                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  ⊞
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className={cn(
+                    "text-xs font-medium transition-all duration-200 h-8 px-3",
+                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  ☰
+                </Button>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {filteredOperations.length} operation{filteredOperations.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+
+          {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOperations.map((operation) => (
             <Card key={operation.id} className="surface-interactive">
@@ -517,7 +521,7 @@ const OperationsManagement = () => {
             </Card>
           ))}
         </div>
-      ) : (
+        ) : (
         <Card className="surface-elevated">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -607,6 +611,8 @@ const OperationsManagement = () => {
               </div>
           </CardContent>
         </Card>
+        )}
+        </>
       )}
 
       {/* Create Operation Modal */}

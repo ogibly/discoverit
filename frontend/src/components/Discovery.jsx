@@ -7,6 +7,7 @@ import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { cn } from '../utils/cn';
+import PageHeader from './PageHeader';
 
 const Discovery = () => {
   const navigate = useNavigate();
@@ -208,31 +209,15 @@ const Discovery = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-6 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Network Discovery</h1>
-            <p className="text-body text-muted-foreground mt-1">
-              Discover and scan devices on your network
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{totalScans}</div>
-              <div className="text-caption text-muted-foreground">Total Scans</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-success">{totalDevices}</div>
-              <div className="text-caption text-muted-foreground">Devices Found</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-warning">{activeScans}</div>
-              <div className="text-caption text-muted-foreground">Active</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Network Discovery"
+        subtitle="Discover and scan devices on your network"
+        metrics={[
+          { value: totalScans, label: "Total Scans", color: "text-primary" },
+          { value: totalDevices, label: "Devices Found", color: "text-success" },
+          { value: activeScans, label: "Active", color: "text-warning" }
+        ]}
+      />
 
       {/* Active Scan Status */}
       {activeScanTask && (
@@ -324,7 +309,7 @@ const Discovery = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {discoveredDevices.slice(0, 6).map((device) => (
                     <div
                       key={device.id}

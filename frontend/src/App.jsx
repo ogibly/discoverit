@@ -97,34 +97,34 @@ const Navigation = () => {
   return (
     <div className="flex flex-col w-64 bg-background border-r border-border">
       {/* Sophisticated Header */}
-      <div className="px-6 py-6 border-b border-border bg-gradient-to-r from-primary/5 to-primary/10">
+      <div className="px-4 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-primary/10">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-primary-foreground font-bold text-xl">D</span>
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+            <span className="text-primary-foreground font-bold text-lg">D</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">DiscoverIT</h1>
-            <p className="text-sm text-muted-foreground">Network Discovery & Asset Management</p>
+            <h1 className="text-lg font-bold text-foreground">DiscoverIT</h1>
+            <p className="text-xs text-muted-foreground">Network Discovery & Asset Management</p>
           </div>
         </div>
       </div>
       
       {/* Main Navigation */}
-      <nav className="flex-grow px-4 py-4 space-y-2">
+      <nav className="flex-grow px-3 py-3 space-y-1">
         {filteredItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
             className={cn(
-              "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
+              "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 group",
               location.pathname === item.path
-                ? "bg-primary text-primary-foreground shadow-md"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
             )}
           >
             <div className={cn(
               "transition-all duration-200",
-              location.pathname === item.path ? "scale-110" : "group-hover:scale-105"
+              location.pathname === item.path ? "scale-105" : "group-hover:scale-105"
             )}>
               {item.icon}
             </div>
@@ -134,30 +134,30 @@ const Navigation = () => {
         
         {/* Global Settings Section */}
         {hasPermission('admin') && (
-          <div className="pt-6 border-t border-border">
-            <div className="px-4 py-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <div className="pt-4 border-t border-border">
+            <div className="px-3 py-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Administration
               </h3>
               <Link
                 to="/admin-settings"
                 className={cn(
-                  "flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-200/20",
+                  "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 group",
                   location.pathname === '/admin-settings'
-                    ? "bg-orange-500 text-white shadow-lg"
-                    : "text-orange-600 hover:bg-orange-500/20 hover:text-orange-700"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                 )}
               >
                 <div className={cn(
                   "transition-all duration-200",
-                  location.pathname === '/admin-settings' ? "scale-110" : "group-hover:scale-105"
+                  location.pathname === '/admin-settings' ? "scale-105" : "group-hover:scale-105"
                 )}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <span className="font-semibold">Global Settings</span>
+                <span className="font-medium">Global Settings</span>
               </Link>
             </div>
           </div>

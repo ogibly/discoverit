@@ -116,30 +116,6 @@ const DevicesView = ({
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </Button>
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ⊞
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ☰
-                </Button>
-              </div>
             </div>
           </div>
         </CardContent>
@@ -245,7 +221,43 @@ const DevicesView = ({
             </p>
           </CardContent>
         </Card>
-      ) : viewMode === 'grid' ? (
+      ) : (
+        <>
+          {/* View Toggle */}
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-foreground">View:</span>
+              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    "text-xs font-medium transition-all duration-200 h-8 px-3",
+                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  ⊞
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className={cn(
+                    "text-xs font-medium transition-all duration-200 h-8 px-3",
+                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  ☰
+                </Button>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {devices.length} device{devices.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+
+          {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {devices.map((device) => (
             <Card key={device.id} className="surface-interactive">
@@ -335,7 +347,7 @@ const DevicesView = ({
             </Card>
           ))}
         </div>
-      ) : (
+        ) : (
         <Card className="surface-elevated">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -435,6 +447,8 @@ const DevicesView = ({
             </div>
           </CardContent>
         </Card>
+        )}
+        </>
       )}
     </div>
   );

@@ -25,6 +25,8 @@ const CredentialsManager = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedCredentials, setSelectedCredentials] = useState([]);
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -108,8 +110,27 @@ const CredentialsManager = () => {
 
   const allSelected = filteredCredentials.length > 0 && filteredCredentials.every(credential => selectedCredentials.includes(credential.id));
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      credential_type: 'username_password',
+      username: '',
+      password: '',
+      ssh_private_key: '',
+      ssh_passphrase: '',
+      domain: '',
+      port: '',
+      is_active: true
+    });
+    setError(null);
+  };
+
   const handleCreate = async () => {
     try {
+      setIsSubmitting(true);
+      setError(null);
+      
       const credentialData = { ...formData };
       
       // Clean up empty fields based on credential type
@@ -127,12 +148,18 @@ const CredentialsManager = () => {
       resetForm();
     } catch (error) {
       console.error('Failed to create credential:', error);
-      alert('Failed to create credential: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to create credential';
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleUpdate = async () => {
     try {
+      setIsSubmitting(true);
+      setError(null);
+      
       const credentialData = { ...formData };
       delete credentialData.id;
       
@@ -142,7 +169,10 @@ const CredentialsManager = () => {
       resetForm();
     } catch (error) {
       console.error('Failed to update credential:', error);
-      alert('Failed to update credential: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to update credential';
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -168,21 +198,6 @@ const CredentialsManager = () => {
       console.error('Failed to delete credentials:', error);
       alert('Failed to delete credentials: ' + (error.response?.data?.detail || error.message));
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      credential_type: 'username_password',
-      username: '',
-      password: '',
-      ssh_private_key: '',
-      ssh_passphrase: '',
-      domain: '',
-      port: '',
-      is_active: true
-    });
   };
 
   const toggleCredentialSelection = (credentialId) => {
@@ -292,30 +307,6 @@ const CredentialsManager = () => {
               >
                 {sortOrder === 'asc' ? '↑' : '↓'}
               </Button>
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ⊞
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    "px-3 py-1 text-sm",
-                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ☰
-                </Button>
-              </div>
               <Button onClick={() => setShowCreateModal(true)} className="ml-2">
                 Create Credential
               </Button>
@@ -434,7 +425,43 @@ const CredentialsManager = () => {
             </p>
           </CardContent>
         </Card>
-      ) : viewMode === 'grid' ? (
+      ) : (
+        <>
+          {/* View Toggle */}
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-foreground">View:</span>
+              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    "text-xs font-medium transition-all duration-200 h-8 px-3",
+                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  ⊞
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className={cn(
+                    "text-xs font-medium transition-all duration-200 h-8 px-3",
+                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  ☰
+                </Button>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {filteredCredentials.length} credential{filteredCredentials.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+
+          {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCredentials.map((credential) => (
             <Card key={credential.id} className="surface-interactive">
@@ -531,7 +558,7 @@ const CredentialsManager = () => {
             </Card>
           ))}
         </div>
-      ) : (
+        ) : (
         <Card className="surface-elevated">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -642,6 +669,8 @@ const CredentialsManager = () => {
             </div>
           </CardContent>
         </Card>
+        )}
+        </>
       )}
 
       {/* Create Credential Modal */}

@@ -10,6 +10,7 @@ import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import OperationsManagement from './OperationsManagement';
 import { cn } from '../utils/cn';
+import PageHeader from './PageHeader';
 
 const AdminSettings = () => {
   const { 
@@ -269,24 +270,106 @@ const AdminSettings = () => {
     });
   };
 
+  // Scanner management functions
+  const handleCreateScanner = async () => {
+    try {
+      const response = await fetch('/api/v2/scanners', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(scannerForm)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to create scanner');
+      }
+
+      setStatusMessage('Satellite scanner created successfully');
+      setTimeout(() => setStatusMessage(null), 3000);
+      setShowScannerModal(false);
+      resetScannerForm();
+      // Refresh scanner list
+    } catch (error) {
+      console.error('Failed to create scanner:', error);
+      setStatusMessage('Failed to create scanner: ' + error.message);
+      setTimeout(() => setStatusMessage(null), 5000);
+    }
+  };
+
+  const handleEditScanner = (scanner) => {
+    setEditingScanner(scanner);
+    setScannerForm({
+      name: scanner.name,
+      url: scanner.url,
+      subnets: scanner.subnets || [],
+      is_active: scanner.is_active,
+      is_default: scanner.is_default || false,
+      max_concurrent_scans: scanner.max_concurrent_scans || 3,
+      timeout_seconds: scanner.timeout_seconds || 300
+    });
+    setShowScannerModal(true);
+  };
+
+  const handleDeleteScanner = async (scannerId) => {
+    if (window.confirm('Are you sure you want to delete this satellite scanner?')) {
+      try {
+        const response = await fetch(`/api/v2/scanners/${scannerId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to delete scanner');
+        }
+
+        setStatusMessage('Satellite scanner deleted successfully');
+        setTimeout(() => setStatusMessage(null), 3000);
+        // Refresh scanner list
+      } catch (error) {
+        console.error('Failed to delete scanner:', error);
+        setStatusMessage('Failed to delete scanner: ' + error.message);
+        setTimeout(() => setStatusMessage(null), 5000);
+      }
+    }
+  };
+
+  const resetScannerForm = () => {
+    setScannerForm({
+      name: '',
+      url: '',
+      subnets: [],
+      is_active: true,
+      is_default: false,
+      max_concurrent_scans: 3,
+      timeout_seconds: 300
+    });
+    setEditingScanner(null);
+  };
+
+  const closeScannerModal = () => {
+    setShowScannerModal(false);
+    resetScannerForm();
+  };
+
   return (
     <div className="h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="px-6 py-6 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Admin Settings
-            </h1>
-            <p className="text-body text-muted-foreground mt-1">
-              Manage system settings, users, and configurations
-            </p>
-          </div>
-          <Badge className="bg-primary text-primary-foreground">
-            Administrator
-          </Badge>
-        </div>
-      </div>
+      <PageHeader
+        title="Admin Settings"
+        subtitle="Manage system settings, users, and configurations"
+        actions={[
+          {
+            label: "Administrator",
+            variant: "secondary",
+            className: "bg-primary text-primary-foreground"
+          }
+        ]}
+      />
 
       {/* Status Message */}
       {statusMessage && (
@@ -507,37 +590,136 @@ const AdminSettings = () => {
 
           {/* Scanner Configs Tab */}
           <TabsContent value="scanners" className="space-y-6">
+            {/* Main Scanner Configuration */}
+            <Card className="surface-elevated border-primary/20 bg-primary/5">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-subheading text-foreground flex items-center">
+                      <span className="mr-2">🎯</span>
+                      Main Scanner Configuration
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Core scanner that handles all IPs/subnets not assigned to satellite scanners
+                    </p>
+                  </div>
+                  <Badge className="bg-primary text-primary-foreground">
+                    Default
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Scanner Name
+                    </label>
+                    <Input
+                      value="Main Scanner"
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Scanner URL
+                    </label>
+                    <Input
+                      value="http://scanner:8001"
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Default Subnets
+                    </label>
+                    <Input
+                      value="172.18.0.0/16, 192.168.0.0/16, 10.0.0.0/8"
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Handles all subnets not specifically assigned to satellite scanners
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-info/10 border border-info/20 rounded-md">
+                  <div className="flex items-center">
+                    <span className="text-info mr-2">ℹ️</span>
+                    <p className="text-sm text-info">
+                      The main scanner is automatically configured and handles all network discovery requests by default.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Satellite Scanners */}
             <Card className="surface-elevated">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-subheading text-foreground">Scanner Configurations</CardTitle>
+                  <div>
+                    <CardTitle className="text-subheading text-foreground flex items-center">
+                      <span className="mr-2">🛰️</span>
+                      Satellite Scanners
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Additional scanners for specific subnets, VLANs, or network segments
+                    </p>
+                  </div>
                   <Button onClick={() => setShowScannerModal(true)}>
-                    Add Scanner
+                    Add Satellite Scanner
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {scannerConfigs.map((config) => (
-                    <div key={config.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
-                      <div>
-                        <h3 className="text-subheading text-foreground">{config.name}</h3>
-                        <p className="text-body text-muted-foreground">{config.url}</p>
-                        <Badge className={config.is_active ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
-                          {config.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
+                {scannerConfigs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">🛰️</div>
+                    <h3 className="text-subheading text-foreground mb-2">No Satellite Scanners</h3>
+                    <p className="text-body text-muted-foreground mb-4">
+                      Add satellite scanners to enhance discovery capabilities for specific network segments.
+                    </p>
+                    <Button onClick={() => setShowScannerModal(true)}>
+                      Add Your First Satellite Scanner
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {scannerConfigs.map((config) => (
+                      <div key={config.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="text-subheading text-foreground">{config.name}</h3>
+                            {config.is_default && (
+                              <Badge className="bg-primary text-primary-foreground text-xs">
+                                Default
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-body text-muted-foreground mb-2">{config.url}</p>
+                          <div className="flex items-center space-x-2">
+                            <Badge className={config.is_active ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
+                              {config.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              Subnets: {config.subnets?.length || 0}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEditScanner(config)}>
+                            Edit
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(config.id)}>
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
-                          Edit
-                        </Button>
-                        <Button variant="destructive" size="sm">
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -631,6 +813,111 @@ const AdminSettings = () => {
             </Button>
             <Button onClick={editingUser ? handleUpdateUser : handleCreateUser} disabled={loading}>
               {loading ? 'Saving...' : editingUser ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Scanner Modal */}
+      <Modal
+        isOpen={showScannerModal}
+        onClose={closeScannerModal}
+        title={editingScanner ? 'Edit Satellite Scanner' : 'Add Satellite Scanner'}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Scanner Name
+            </label>
+            <Input
+              value={scannerForm.name}
+              onChange={(e) => setScannerForm({...scannerForm, name: e.target.value})}
+              placeholder="e.g., Branch Office Scanner"
+            />
+          </div>
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Scanner URL
+            </label>
+            <Input
+              value={scannerForm.url}
+              onChange={(e) => setScannerForm({...scannerForm, url: e.target.value})}
+              placeholder="e.g., http://scanner2:8001"
+            />
+          </div>
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Assigned Subnets
+            </label>
+            <Input
+              value={scannerForm.subnets.join(', ')}
+              onChange={(e) => setScannerForm({...scannerForm, subnets: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
+              placeholder="e.g., 192.168.1.0/24, 10.0.1.0/24"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Comma-separated list of subnets this scanner should handle
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                Max Concurrent Scans
+              </label>
+              <Input
+                type="number"
+                value={scannerForm.max_concurrent_scans}
+                onChange={(e) => setScannerForm({...scannerForm, max_concurrent_scans: parseInt(e.target.value)})}
+                min="1"
+                max="10"
+              />
+            </div>
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                Timeout (seconds)
+              </label>
+              <Input
+                type="number"
+                value={scannerForm.timeout_seconds}
+                onChange={(e) => setScannerForm({...scannerForm, timeout_seconds: parseInt(e.target.value)})}
+                min="60"
+                max="3600"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={scannerForm.is_active}
+                onChange={(e) => setScannerForm({...scannerForm, is_active: e.target.checked})}
+                className="rounded border-border"
+              />
+              <span className="text-sm text-foreground">Active</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={scannerForm.is_default}
+                onChange={(e) => setScannerForm({...scannerForm, is_default: e.target.checked})}
+                className="rounded border-border"
+              />
+              <span className="text-sm text-foreground">Default Scanner</span>
+            </label>
+          </div>
+          <div className="p-3 bg-info/10 border border-info/20 rounded-md">
+            <div className="flex items-center">
+              <span className="text-info mr-2">ℹ️</span>
+              <p className="text-sm text-info">
+                Satellite scanners are used for specific network segments. The main scanner handles all other requests.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={closeScannerModal}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateScanner}>
+              {editingScanner ? 'Update Scanner' : 'Add Scanner'}
             </Button>
           </div>
         </div>

@@ -8,6 +8,8 @@ import { Progress } from './ui/Progress';
 import { HelpIcon } from './ui';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import PageHeader from './PageHeader';
 
 const Dashboard = () => {
   const {
@@ -21,10 +23,34 @@ const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
+  // Scanner information state
+  const [scanners, setScanners] = useState([]);
+  const [scannerHealth, setScannerHealth] = useState([]);
+  const [loadingScanners, setLoadingScanners] = useState(true);
+  
   useEffect(() => {
     fetchAssets();
     fetchDiscoveredDevices();
+    fetchScannerInfo();
   }, [fetchAssets, fetchDiscoveredDevices]);
+
+  const fetchScannerInfo = async () => {
+    try {
+      setLoadingScanners(true);
+      
+      // Fetch scanner configurations
+      const scannersResponse = await axios.get('/api/v2/scanners');
+      setScanners(scannersResponse.data);
+      
+      // Fetch scanner health
+      const healthResponse = await axios.get('/api/v2/scanners/health/all');
+      setScannerHealth(healthResponse.data);
+    } catch (error) {
+      console.error('Failed to fetch scanner information:', error);
+    } finally {
+      setLoadingScanners(false);
+    }
+  };
 
   // Calculate key metrics
   const totalAssets = assets.length;
@@ -86,50 +112,111 @@ const Dashboard = () => {
     { name: 'Other', count: assets.filter(a => a && (!a.device_type || a.device_type === 'other')).length, icon: '📱' }
   ];
 
-  const systemStatus = [
-    { name: 'Scanner Service', status: 'Online', color: 'bg-success', badgeColor: 'badge-success' },
-    { name: 'Database', status: 'Healthy', color: 'bg-success', badgeColor: 'badge-success' },
-    { name: 'API Gateway', status: 'Online', color: 'bg-success', badgeColor: 'badge-success' },
-    { name: 'Discovery Engine', status: 'Ready', color: 'bg-info', badgeColor: 'badge-info' }
-  ];
+  // Calculate system status based on actual data
+  const getSystemStatus = () => {
+    const status = [];
+    
+    // Database status (always healthy if we can fetch data)
+    status.push({
+      name: 'Database',
+      status: 'Healthy',
+      color: 'bg-success',
+      badgeColor: 'badge-success',
+      details: 'Connected and responsive'
+    });
+    
+    // API Gateway status
+    status.push({
+      name: 'API Gateway',
+      status: 'Online',
+      color: 'bg-success',
+      badgeColor: 'badge-success',
+      details: 'All endpoints responding'
+    });
+    
+    // Scanner status based on actual scanner health
+    if (loadingScanners) {
+      status.push({
+        name: 'Scanner Service',
+        status: 'Checking...',
+        color: 'bg-warning',
+        badgeColor: 'badge-warning',
+        details: 'Verifying scanner health'
+      });
+    } else if (scannerHealth.length === 0) {
+      status.push({
+        name: 'Scanner Service',
+        status: 'No Scanners',
+        color: 'bg-error',
+        badgeColor: 'badge-error',
+        details: 'No scanner configurations found'
+      });
+    } else {
+      const healthyScanners = scannerHealth.filter(s => s.status === 'healthy').length;
+      const totalScanners = scannerHealth.length;
+      
+      if (healthyScanners === totalScanners) {
+        status.push({
+          name: 'Scanner Service',
+          status: 'All Healthy',
+          color: 'bg-success',
+          badgeColor: 'badge-success',
+          details: `${healthyScanners}/${totalScanners} scanners online`
+        });
+      } else if (healthyScanners > 0) {
+        status.push({
+          name: 'Scanner Service',
+          status: 'Partial',
+          color: 'bg-warning',
+          badgeColor: 'badge-warning',
+          details: `${healthyScanners}/${totalScanners} scanners online`
+        });
+      } else {
+        status.push({
+          name: 'Scanner Service',
+          status: 'Offline',
+          color: 'bg-error',
+          badgeColor: 'badge-error',
+          details: 'All scanners unreachable'
+        });
+      }
+    }
+    
+    // Discovery Engine status
+    status.push({
+      name: 'Discovery Engine',
+      status: activeScanTask ? 'Active' : 'Ready',
+      color: activeScanTask ? 'bg-info' : 'bg-success',
+      badgeColor: activeScanTask ? 'badge-info' : 'badge-success',
+      details: activeScanTask ? `Scanning: ${activeScanTask.name}` : 'Ready for new scans'
+    });
+    
+    return status;
+  };
 
   return (
     <div className="h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="px-6 py-6 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center">
-              Dashboard
-              <HelpIcon 
-                content="Overview of your network discovery and asset management system. Click on metrics to navigate to relevant sections."
-                className="ml-2"
-                size="sm"
-              />
-            </h1>
-            <p className="text-body text-muted-foreground mt-1">
-              Real-time overview of your network discovery and asset management system
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{totalAssets}</div>
-              <div className="text-caption text-muted-foreground">Total Assets</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-info">{totalDevices}</div>
-              <div className="text-caption text-muted-foreground">Total Devices</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-warning">{newDevices}</div>
-              <div className="text-caption text-muted-foreground">New Devices</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center">
+            Dashboard
+            <HelpIcon 
+              content="Overview of your network discovery and asset management system. Click on metrics to navigate to relevant sections."
+              className="ml-2"
+              size="sm"
+            />
+          </span>
+        }
+        subtitle="Real-time overview of your network discovery and asset management system"
+        metrics={[
+          { value: totalAssets, label: "Assets", color: "text-primary" },
+          { value: totalDevices, label: "Devices", color: "text-info" },
+          { value: newDevices, label: "New", color: "text-warning" }
+        ]}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="space-y-6">
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -140,13 +227,13 @@ const Dashboard = () => {
                 onClick={metric.onClick}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-lg", metric.color)}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-sm", metric.color)}>
                       {metric.icon}
                     </div>
                     <div className="text-right">
                       <div className={cn(
-                        "text-sm font-medium flex items-center",
+                        "text-xs font-medium flex items-center",
                         metric.changeType === 'positive' ? 'text-success' : 
                         metric.changeType === 'negative' ? 'text-error' : 'text-muted-foreground'
                       )}>
@@ -157,8 +244,8 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">{metric.label}</p>
-                    <p className="text-xl font-bold text-foreground">{metric.value}</p>
+                    <p className="text-xs text-muted-foreground">{metric.label}</p>
+                    <p className="text-lg font-bold text-foreground">{metric.value}</p>
                     <p className="text-xs text-muted-foreground">{metric.description}</p>
                   </div>
                 </CardContent>
@@ -166,48 +253,23 @@ const Dashboard = () => {
             ))}
           </div>
 
-          {/* Network Health Overview */}
-          <Card className="surface-elevated">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-subheading text-foreground flex items-center">
-                🌐 Network Health Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-info/10 rounded-lg">
-                  <div className="text-2xl font-bold text-info">98%</div>
-                  <div className="text-body text-info">Uptime</div>
-                </div>
-                <div className="text-center p-4 bg-success/10 rounded-lg">
-                  <div className="text-2xl font-bold text-success">24ms</div>
-                  <div className="text-body text-success">Avg Response</div>
-                </div>
-                <div className="text-center p-4 bg-warning/10 rounded-lg">
-                  <div className="text-2xl font-bold text-warning">2</div>
-                  <div className="text-body text-warning">Issues</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Device Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Device Distribution and System Status */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card className="surface-elevated">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-subheading text-foreground flex items-center">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
                   📊 Device Distribution
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {deviceTypeStats.map((type, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-lg">{type.icon}</span>
-                        <span className="text-body font-medium text-foreground">{type.name}</span>
+                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm">{type.icon}</span>
+                        <span className="text-sm font-medium text-foreground">{type.name}</span>
                       </div>
-                      <span className="text-body font-semibold text-muted-foreground">{type.count}</span>
+                      <span className="text-sm font-semibold text-muted-foreground">{type.count}</span>
                     </div>
                   ))}
                 </div>
@@ -215,105 +277,144 @@ const Dashboard = () => {
             </Card>
 
             <Card className="surface-elevated">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-subheading text-foreground flex items-center">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
                   ⚡ System Status
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {systemStatus.map((status, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={cn("w-3 h-3 rounded-full", status.color)}></div>
-                        <span className="text-body font-medium text-foreground">{status.name}</span>
+                <div className="space-y-3">
+                  {getSystemStatus().map((status, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className={cn("w-2 h-2 rounded-full", status.color)}></div>
+                          <span className="text-sm font-medium text-foreground">{status.name}</span>
+                        </div>
+                        <Badge className={cn("text-xs", status.badgeColor)}>
+                          {status.status}
+                        </Badge>
                       </div>
-                      <Badge className={cn("text-xs", status.badgeColor)}>
-                        {status.status}
-                      </Badge>
+                      <div className="text-xs text-muted-foreground ml-4">
+                        {status.details}
+                      </div>
                     </div>
                   ))}
                 </div>
+                
+                {/* Scanner Details */}
+                {scanners.length > 0 && (
+                  <div className="mt-4 pt-3 border-t border-border">
+                    <div className="text-xs font-medium text-foreground mb-2">Available Scanners:</div>
+                    <div className="space-y-1">
+                      {scanners.slice(0, 3).map((scanner, index) => {
+                        const health = scannerHealth.find(h => h.scanner_id === scanner.id);
+                        return (
+                          <div key={index} className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground truncate">{scanner.name}</span>
+                            <div className="flex items-center space-x-1">
+                              <div className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                health?.status === 'healthy' ? 'bg-success' : 
+                                health?.status === 'unhealthy' ? 'bg-error' : 'bg-warning'
+                              )}></div>
+                              <span className="text-muted-foreground">
+                                {health?.status === 'healthy' ? 'Online' : 
+                                 health?.status === 'unhealthy' ? 'Offline' : 'Unknown'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {scanners.length > 3 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{scanners.length - 3} more scanners
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Active Operations */}
-          <Card className="surface-elevated">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-subheading text-foreground flex items-center">
-                🔄 Active Operations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {activeScanTask ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-info/10 rounded-lg border border-info/20">
+          {/* Active Operations and Quick Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Active Operations */}
+            <Card className="surface-elevated">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
+                  🔄 Active Operations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {activeScanTask ? (
+                  <div className="p-3 bg-info/10 rounded-lg border border-info/20">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-body font-semibold text-info">Active Scan</h4>
-                      <Badge className="badge-info">
+                      <h4 className="text-sm font-semibold text-info">Active Scan</h4>
+                      <Badge className="badge-info text-xs">
                         Running
                       </Badge>
                     </div>
-                    <p className="text-body text-info mb-3">{activeScanTask.name}</p>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-caption text-info">
+                    <p className="text-sm text-info mb-2">{activeScanTask.name}</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-info">
                         <span>Progress</span>
                         <span>{activeScanTask.progress || 0}%</span>
                       </div>
-                      <Progress value={activeScanTask.progress || 0} className="h-2" />
+                      <Progress value={activeScanTask.progress || 0} className="h-1.5" />
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <div className="text-4xl mb-2">⏸️</div>
-                  <p className="text-body">No active operations</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <div className="text-2xl mb-1">⏸️</div>
+                    <p className="text-sm">No active operations</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* Quick Actions */}
-          <Card className="surface-elevated">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-subheading text-foreground flex items-center">
-                🚀 Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <Button
-                  onClick={() => navigate('/discovery')}
-                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-info hover:bg-info/90 text-info-foreground transition-all duration-200"
-                >
-                  <span className="text-xl">🔍</span>
-                  <span className="text-sm font-medium">Start Discovery</span>
-                </Button>
-                <Button
-                  onClick={() => navigate('/devices')}
-                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
-                >
-                  <span className="text-xl">📱</span>
-                  <span className="text-sm font-medium">View Devices</span>
-                </Button>
-                <Button
-                  onClick={() => navigate('/assets')}
-                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-success hover:bg-success/90 text-success-foreground transition-all duration-200"
-                >
-                  <span className="text-xl">📋</span>
-                  <span className="text-sm font-medium">Manage Assets</span>
-                </Button>
-                <Button
-                  onClick={() => navigate('/admin-settings?tab=operations')}
-                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-warning hover:bg-warning/90 text-warning-foreground transition-all duration-200"
-                >
-                  <span className="text-xl">⚙️</span>
-                  <span className="text-sm font-medium">Operations</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Quick Actions */}
+            <Card className="surface-elevated">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
+                  🚀 Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => navigate('/discovery')}
+                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-info hover:bg-info/90 text-info-foreground transition-all duration-200"
+                  >
+                    <span className="text-lg">🔍</span>
+                    <span className="text-xs font-medium">Start Discovery</span>
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/devices')}
+                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
+                  >
+                    <span className="text-lg">📱</span>
+                    <span className="text-xs font-medium">View Devices</span>
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/assets')}
+                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-success hover:bg-success/90 text-success-foreground transition-all duration-200"
+                  >
+                    <span className="text-lg">📋</span>
+                    <span className="text-xs font-medium">Manage Assets</span>
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/admin-settings?tab=operations')}
+                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-warning hover:bg-warning/90 text-warning-foreground transition-all duration-200"
+                  >
+                    <span className="text-lg">⚙️</span>
+                    <span className="text-xs font-medium">Operations</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

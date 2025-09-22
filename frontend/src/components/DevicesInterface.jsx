@@ -9,6 +9,7 @@ import { Modal } from './ui/Modal';
 import { Progress } from './ui/Progress';
 import { HelpIcon, CollapsibleGuidance } from './ui';
 import { cn } from '../utils/cn';
+import PageHeader from './PageHeader';
 
 const DevicesInterface = () => {
   const {
@@ -147,56 +148,24 @@ const DevicesInterface = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-6 border-b border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center">
-              Network Devices
-              <HelpIcon 
-                content="Discover, explore, and manage network devices. Convert devices to assets to add them to your inventory."
-                className="ml-2"
-                size="sm"
-              />
-            </h1>
-            <p className="text-body text-muted-foreground mt-1">
-              Discover, explore, and manage network devices
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{totalDevices}</div>
-              <div className="text-caption text-muted-foreground">Total Devices</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{newDevices}</div>
-              <div className="text-caption text-muted-foreground">New</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{convertedDevices}</div>
-              <div className="text-caption text-muted-foreground">Converted</div>
-            </div>
-            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="text-xs font-medium transition-all duration-200 h-8 px-3"
-              >
-                ⊞
-              </Button>
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className="text-xs font-medium transition-all duration-200 h-8 px-3"
-              >
-                ☰
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title={
+          <span className="flex items-center">
+            Network Devices
+            <HelpIcon 
+              content="Discover, explore, and manage network devices. Convert devices to assets to add them to your inventory."
+              className="ml-2"
+              size="sm"
+            />
+          </span>
+        }
+        subtitle="Discover, explore, and manage network devices"
+        metrics={[
+          { value: totalDevices, label: "Total Devices", color: "text-primary" },
+          { value: newDevices, label: "New", color: "text-blue-600" },
+          { value: convertedDevices, label: "Converted", color: "text-green-600" }
+        ]}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
@@ -370,6 +339,34 @@ const DevicesInterface = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* View Toggle */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-foreground">View:</span>
+                  <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
+                    >
+                      ⊞
+                    </Button>
+                    <Button
+                      variant={viewMode === 'table' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('table')}
+                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
+                    >
+                      ☰
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''}
+                </div>
+              </div>
 
               {/* Device Grid/Table */}
               {viewMode === 'grid' ? (

@@ -17,7 +17,6 @@ const AssetsInterface = () => {
     selectedAsset,
     assetGroups,
     selectedAssetGroups,
-    labels,
     loading,
     toggleAssetSelection,
     selectAllAssets,
@@ -32,11 +31,7 @@ const AssetsInterface = () => {
     toggleAssetGroupSelection,
     selectAllAssetGroups,
     fetchAssets,
-    fetchAssetGroups,
-    fetchLabels,
-    createLabel,
-    updateLabel,
-    deleteLabel
+    fetchAssetGroups
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('assets');
@@ -48,8 +43,6 @@ const AssetsInterface = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
-  const [showLabelModal, setShowLabelModal] = useState(false);
-  const [editingLabel, setEditingLabel] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
 
   // Form states
@@ -68,23 +61,13 @@ const AssetsInterface = () => {
     name: '',
     description: '',
     asset_ids: [],
-    label_ids: []
-  });
-
-  const [labelForm, setLabelForm] = useState({
-    name: '',
-    description: '',
-    color: '#3B82F6',
-    icon: '🏷️',
-    category: 'general',
-    is_active: true
+    tags: []
   });
 
   useEffect(() => {
     fetchAssets();
     fetchAssetGroups();
-    fetchLabels();
-  }, [fetchAssets, fetchAssetGroups, fetchLabels]);
+  }, [fetchAssets, fetchAssetGroups]);
 
   // Filter and sort assets
   const filteredAssets = useMemo(() => {
@@ -242,67 +225,6 @@ const AssetsInterface = () => {
     }
   };
 
-  // Label management functions
-  const handleCreateLabel = async () => {
-    try {
-      await createLabel(labelForm);
-      setShowLabelModal(false);
-      setLabelForm({
-        name: '',
-        description: '',
-        color: '#3B82F6',
-        icon: '🏷️',
-        category: 'general',
-        is_active: true
-      });
-    } catch (error) {
-      console.error('Failed to create label:', error);
-      alert('Failed to create label: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
-  const handleUpdateLabel = async () => {
-    try {
-      await updateLabel(editingLabel.id, labelForm);
-      setShowLabelModal(false);
-      setEditingLabel(null);
-      setLabelForm({
-        name: '',
-        description: '',
-        color: '#3B82F6',
-        icon: '🏷️',
-        category: 'general',
-        is_active: true
-      });
-    } catch (error) {
-      console.error('Failed to update label:', error);
-      alert('Failed to update label: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
-  const handleDeleteLabel = async (labelId) => {
-    if (window.confirm('Are you sure you want to delete this label?')) {
-      try {
-        await deleteLabel(labelId);
-      } catch (error) {
-        console.error('Failed to delete label:', error);
-        alert('Failed to delete label: ' + (error.response?.data?.detail || error.message));
-      }
-    }
-  };
-
-  const handleEditLabel = (label) => {
-    setEditingLabel(label);
-    setLabelForm({
-      name: label.name || '',
-      description: label.description || '',
-      color: label.color || '#3B82F6',
-      icon: label.icon || '🏷️',
-      category: label.category || 'general',
-      is_active: label.is_active !== false
-    });
-    setShowLabelModal(true);
-  };
 
   const handleSelectAll = () => {
     if (activeTab === 'assets') {
@@ -453,10 +375,9 @@ const AssetsInterface = () => {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="assets">Assets</TabsTrigger>
               <TabsTrigger value="groups">Asset Groups</TabsTrigger>
-              <TabsTrigger value="labels">Labels</TabsTrigger>
             </TabsList>
 
             <TabsContent value="assets" className="space-y-6">
@@ -1050,6 +971,56 @@ const AssetsInterface = () => {
               rows={3}
             />
           </div>
+          
+          {/* Jira-style Labels */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Labels
+            </label>
+            <div className="space-y-2">
+              <Input
+                placeholder="Type a label and press Enter to add"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const newLabel = e.target.value.trim();
+                    if (newLabel && !assetForm.tags.includes(newLabel)) {
+                      setAssetForm({
+                        ...assetForm,
+                        tags: [...assetForm.tags, newLabel]
+                      });
+                      e.target.value = '';
+                    }
+                  }
+                }}
+                className="w-full"
+              />
+              {assetForm.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {assetForm.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssetForm({
+                            ...assetForm,
+                            tags: assetForm.tags.filter((_, i) => i !== index)
+                          });
+                        }}
+                        className="ml-1 text-blue-600 hover:text-blue-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowCreateModal(false)}>
               Cancel
@@ -1156,6 +1127,56 @@ const AssetsInterface = () => {
               rows={3}
             />
           </div>
+          
+          {/* Jira-style Labels */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Labels
+            </label>
+            <div className="space-y-2">
+              <Input
+                placeholder="Type a label and press Enter to add"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const newLabel = e.target.value.trim();
+                    if (newLabel && !assetForm.tags.includes(newLabel)) {
+                      setAssetForm({
+                        ...assetForm,
+                        tags: [...assetForm.tags, newLabel]
+                      });
+                      e.target.value = '';
+                    }
+                  }
+                }}
+                className="w-full"
+              />
+              {assetForm.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {assetForm.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssetForm({
+                            ...assetForm,
+                            tags: assetForm.tags.filter((_, i) => i !== index)
+                          });
+                        }}
+                        className="ml-1 text-blue-600 hover:text-blue-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancel
@@ -1198,6 +1219,56 @@ const AssetsInterface = () => {
               rows={3}
             />
           </div>
+          
+          {/* Jira-style Labels */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Labels
+            </label>
+            <div className="space-y-2">
+              <Input
+                placeholder="Type a label and press Enter to add"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const newLabel = e.target.value.trim();
+                    if (newLabel && !groupForm.tags?.includes(newLabel)) {
+                      setGroupForm({
+                        ...groupForm,
+                        tags: [...(groupForm.tags || []), newLabel]
+                      });
+                      e.target.value = '';
+                    }
+                  }
+                }}
+                className="w-full"
+              />
+              {groupForm.tags && groupForm.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {groupForm.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGroupForm({
+                            ...groupForm,
+                            tags: groupForm.tags.filter((_, i) => i !== index)
+                          });
+                        }}
+                        className="ml-1 text-green-600 hover:text-green-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowGroupModal(false)}>
               Cancel
@@ -1239,6 +1310,56 @@ const AssetsInterface = () => {
               className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               rows={3}
             />
+          </div>
+          
+          {/* Jira-style Labels */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Labels
+            </label>
+            <div className="space-y-2">
+              <Input
+                placeholder="Type a label and press Enter to add"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const newLabel = e.target.value.trim();
+                    if (newLabel && !groupForm.tags?.includes(newLabel)) {
+                      setGroupForm({
+                        ...groupForm,
+                        tags: [...(groupForm.tags || []), newLabel]
+                      });
+                      e.target.value = '';
+                    }
+                  }
+                }}
+                className="w-full"
+              />
+              {groupForm.tags && groupForm.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {groupForm.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGroupForm({
+                            ...groupForm,
+                            tags: groupForm.tags.filter((_, i) => i !== index)
+                          });
+                        }}
+                        className="ml-1 text-green-600 hover:text-green-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowEditGroupModal(false)}>

@@ -21,9 +21,6 @@ const initialState = {
   selectedAssetGroups: [],
   selectedAssetGroup: null,
   
-  // Labels
-  labels: [],
-  selectedLabels: [],
   
   // Credentials
   credentials: [],
@@ -42,7 +39,6 @@ const initialState = {
     assets: false,
     discoveredDevices: false,
     assetGroups: false,
-    labels: false,
     credentials: false,
     scanTasks: false,
     operations: false,
@@ -84,12 +80,6 @@ const ActionTypes = {
   UPDATE_ASSET_GROUP: 'UPDATE_ASSET_GROUP',
   DELETE_ASSET_GROUP: 'DELETE_ASSET_GROUP',
   
-  // Labels
-  SET_LABELS: 'SET_LABELS',
-  SET_SELECTED_LABELS: 'SET_SELECTED_LABELS',
-  ADD_LABEL: 'ADD_LABEL',
-  UPDATE_LABEL: 'UPDATE_LABEL',
-  DELETE_LABEL: 'DELETE_LABEL',
   
   // Credentials
   SET_CREDENTIALS: 'SET_CREDENTIALS',
@@ -188,22 +178,6 @@ function appReducer(state, action) {
         selectedAssetGroups: state.selectedAssetGroups.filter(id => id !== action.payload)
       };
     
-    // Labels
-    case ActionTypes.SET_LABELS:
-      return { ...state, labels: action.payload };
-    case ActionTypes.SET_SELECTED_LABELS:
-      return { ...state, selectedLabels: action.payload };
-    case ActionTypes.ADD_LABEL:
-      return { ...state, labels: [...state.labels, action.payload] };
-    case ActionTypes.UPDATE_LABEL:
-      return {
-        ...state,
-        labels: state.labels.map(label =>
-          label.id === action.payload.id ? action.payload : label
-        )
-      };
-    case ActionTypes.DELETE_LABEL:
-      return { ...state, labels: state.labels.filter(label => label.id !== action.payload) };
     
     // Credentials
     case ActionTypes.SET_CREDENTIALS:
@@ -559,48 +533,6 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
-  // Label actions
-  const fetchLabels = useCallback(async () => {
-    dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'labels', value: true } });
-    try {
-      const labels = await apiCall('/labels');
-      dispatch({ type: ActionTypes.SET_LABELS, payload: labels });
-    } catch (error) {
-      // Error already handled in apiCall
-    } finally {
-      dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'labels', value: false } });
-    }
-  }, [apiCall]);
-
-  const createLabel = useCallback(async (labelData) => {
-    try {
-      const newLabel = await apiCall('/labels', { method: 'POST', data: labelData });
-      dispatch({ type: ActionTypes.ADD_LABEL, payload: newLabel });
-      return newLabel;
-    } catch (error) {
-      throw error;
-    }
-  }, [apiCall]);
-
-  const updateLabel = useCallback(async (labelId, labelData) => {
-    try {
-      const updatedLabel = await apiCall(`/labels/${labelId}`, { method: 'PUT', data: labelData });
-      dispatch({ type: ActionTypes.UPDATE_LABEL, payload: updatedLabel });
-      return updatedLabel;
-    } catch (error) {
-      throw error;
-    }
-  }, [apiCall]);
-
-  const deleteLabel = useCallback(async (labelId) => {
-    try {
-      await apiCall(`/labels/${labelId}`, { method: 'DELETE' });
-      dispatch({ type: ActionTypes.DELETE_LABEL, payload: labelId });
-    } catch (error) {
-      throw error;
-    }
-  }, [apiCall]);
-
   // Credential actions
   const fetchCredentials = useCallback(async () => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'credentials', value: true } });
@@ -841,12 +773,11 @@ export function AppProvider({ children }) {
     // Refresh all data after authentication
     fetchAssets();
     fetchAssetGroups();
-    fetchLabels();
     fetchScanTasks();
     fetchOperations();
     fetchJobs();
     fetchActiveScanTask();
-  }, [fetchAssets, fetchAssetGroups, fetchLabels, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
+  }, [fetchAssets, fetchAssetGroups, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
 
   // Selection actions
   const toggleAssetSelection = useCallback((assetId) => {
@@ -968,11 +899,6 @@ export function AppProvider({ children }) {
     updateAssetGroup,
     deleteAssetGroup,
     
-    // Label actions
-    fetchLabels,
-    createLabel,
-    updateLabel,
-    deleteLabel,
     
     // Credential actions
     fetchCredentials,

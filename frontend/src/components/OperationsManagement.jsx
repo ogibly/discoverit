@@ -20,6 +20,21 @@ const OperationsManagement = () => {
   
   // Use custom hooks for state management
   const listState = useListState(operations);
+  const {
+    searchTerm,
+    setSearchTerm,
+    filterType,
+    setFilterType,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
+    viewMode,
+    setViewMode,
+    selectedItems,
+    setSelectedItems,
+    clearSelection
+  } = listState;
   const createModal = useModalState();
   const editModal = useModalState();
   
@@ -179,7 +194,7 @@ const OperationsManagement = () => {
     
     try {
       await crudOps.bulkDelete(operationIds);
-      listState.clearSelection();
+      clearSelection();
       // Refresh operations list
       window.location.reload(); // Simple refresh for now
     } catch (error) {

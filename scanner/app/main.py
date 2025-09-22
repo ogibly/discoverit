@@ -1,11 +1,210 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import nmap
 from datetime import datetime
 import json
-from typing import List, Dict
+from typing import List, Dict, Optional
 import socket
+import re
 
 app = FastAPI()
+
+class ScanRequest(BaseModel):
+    target: str
+    scan_type: str
+    discovery_depth: int = 1
+    timeout: int = 30
+
+@app.get("/health")
+def health_check():
+    """
+    Health check endpoint for the scanner service.
+    """
+    try:
+        # Test if nmap is available
+        nm = nmap.PortScanner()
+        return {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "service": "scanner",
+            "version": "1.0.0",
+            "nmap_available": True
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "service": "scanner",
+            "version": "1.0.0",
+            "error": str(e),
+            "nmap_available": False
+        }
+
+@app.post("/scan")
+def unified_scan(request: ScanRequest):
+    """
+    Unified scan endpoint that handles all scan types with enhanced data collection.
+    """
+    nm = nmap.PortScanner()
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    
+    try:
+        # Build scan arguments based on type and depth
+        if request.scan_type == "quick":
+            arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995 -PA21,22,23,25,53,80,110,443,993,995"
+        elif request.scan_type == "comprehensive":
+            arguments = "-sS -O -sV -A --script default,safe"
+        elif request.scan_type == "lan_discovery":
+            if request.discovery_depth == 1:
+                arguments = "-sn -PR"  # ARP only
+            elif request.discovery_depth == 2:
+                arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995 -PR"
+            else:  # depth >= 3
+                arguments = "-sS -O -sV -A --script default,safe"
+        elif request.scan_type == "arp":
+            arguments = "-sn -PR"
+        elif request.scan_type == "snmp":
+            arguments = "-sU -p 161 --script snmp-info,snmp-brute"
+        else:
+            arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995"
+        
+        # Add timing and timeout
+        arguments += f" -T4 --host-timeout {request.timeout}s"
+        
+        # Run the scan
+        nm.scan(request.target, arguments=arguments)
+        
+        if request.target not in nm.all_hosts():
+            return {
+                "ip": request.target,
+                "status": "failed",
+                "error": "Host is down or unreachable",
+                "timestamp": timestamp,
+                "scan_type": request.scan_type
+            }
+        
+        host_data = nm[request.target]
+        
+        # Extract comprehensive information
+        result = {
+            "ip": request.target,
+            "status": "completed",
+            "timestamp": timestamp,
+            "scan_type": request.scan_type,
+            "discovery_depth": request.discovery_depth,
+            "raw_output": nm.csv(),
+            "hostname": host_data.hostname() if host_data.hostname() else None,
+            "addresses": {
+                "ipv4": host_data['addresses'].get('ipv4'),
+                "ipv6": host_data['addresses'].get('ipv6'),
+                "mac": host_data['addresses'].get('mac')
+            },
+            "vendor": host_data.get('vendor', {}).get(host_data['addresses'].get('mac', '')) if host_data['addresses'].get('mac') else None,
+            "ports": [],
+            "services": [],
+            "os_info": {},
+            "device_info": {},
+            "response_time": None,
+            "ttl": None,
+            "network_info": {}
+        }
+        
+        # Extract OS information
+        if 'osmatch' in host_data and host_data['osmatch']:
+            best_match = host_data['osmatch'][0]
+            result["os_info"] = {
+                "os_name": best_match.get('name', 'Unknown'),
+                "os_accuracy": best_match.get('accuracy', 0),
+                "os_family": best_match.get('osclass', [{}])[0].get('osfamily', 'Unknown') if best_match.get('osclass') else 'Unknown',
+                "os_version": best_match.get('osclass', [{}])[0].get('version', 'Unknown') if best_match.get('osclass') else 'Unknown'
+            }
+        
+        # Extract device information
+        mac_address = host_data['addresses'].get('mac')
+        if mac_address:
+            result["device_info"] = {
+                "manufacturer": host_data.get('vendor', {}).get(mac_address, 'Unknown'),
+                "model": "Unknown",
+                "serial_number": "Unknown"
+            }
+        
+        # Extract ports and services
+        if host_data.all_protocols():
+            for proto in host_data.all_protocols():
+                for port in host_data[proto].keys():
+                    port_info = host_data[proto][port]
+                    if port_info.get("state") == "open":
+                        port_data = {
+                            "port": port,
+                            "protocol": proto,
+                            "service": port_info.get("name", ""),
+                            "state": port_info.get("state", ""),
+                            "version": port_info.get("version", ""),
+                            "product": port_info.get("product", ""),
+                            "extrainfo": port_info.get("extrainfo", ""),
+                            "cpe": port_info.get("cpe", "")
+                        }
+                        result["ports"].append(port_data)
+                        if port_info.get("name"):
+                            result["services"].append(port_info.get("name"))
+        
+        # Extract response time and TTL from raw output
+        raw_output = nm.csv()
+        response_time_match = re.search(r'(\d+\.\d+)s latency', raw_output)
+        if response_time_match:
+            result["response_time"] = float(response_time_match.group(1))
+        
+        ttl_match = re.search(r'TTL=(\d+)', raw_output)
+        if ttl_match:
+            result["ttl"] = int(ttl_match.group(1))
+        
+        # Determine device type
+        result["device_type"] = _determine_device_type(result)
+        
+        return result
+        
+    except Exception as e:
+        return {
+            "ip": request.target,
+            "status": "failed",
+            "error": str(e),
+            "timestamp": timestamp,
+            "scan_type": request.scan_type
+        }
+
+def _determine_device_type(scan_result: Dict) -> str:
+    """Determine device type based on scan results."""
+    services = scan_result.get("services", [])
+    ports = scan_result.get("ports", [])
+    vendor = scan_result.get("vendor", "")
+    
+    # Network infrastructure
+    if any(service in services for service in ["ssh", "telnet", "snmp"]):
+        if any(port["port"] in [161, 162] for port in ports):  # SNMP
+            return "network_device"
+        return "server"
+    
+    # Web servers
+    if any(service in services for service in ["http", "https", "apache", "nginx"]):
+        return "web_server"
+    
+    # Database servers
+    if any(service in services for service in ["mysql", "postgresql", "mssql", "oracle"]):
+        return "database_server"
+    
+    # Printers
+    if any(service in services for service in ["ipp", "lpd", "printer"]):
+        return "printer"
+    
+    # IoT devices
+    if vendor and any(brand in vendor.lower() for brand in ["cisco", "netgear", "linksys", "tp-link"]):
+        return "network_device"
+    
+    # Default
+    if scan_result.get("ports"):
+        return "unknown_device"
+    else:
+        return "host"
 
 @app.post("/scan/quick")
 def quick_scan(ip: str):

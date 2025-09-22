@@ -184,6 +184,8 @@ class ScanTask(Base):
     discovered_devices = Column(Integer, default=0)  # Actual devices discovered (not just IPs scanned)
     error_message = Column(Text, nullable=True)
     created_by = Column(String(100), nullable=True)  # User who initiated the scan
+    discovery_depth = Column(Integer, default=1)  # Network discovery depth (hops)
+    scanner_ids = Column(JSON, nullable=True)  # List of scanner IDs to use
     
     # Relationships
     scans = relationship("Scan", back_populates="scan_task", cascade="all, delete-orphan")

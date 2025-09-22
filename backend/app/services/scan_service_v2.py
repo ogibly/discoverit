@@ -1,0 +1,558 @@
+"""
+Enhanced Scan service for managing network scans and scan tasks.
+"""
+from typing import List, Optional, Dict, Any
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import and_, desc
+from ..models import ScanTask, Scan, Asset
+from ..schemas import ScanTaskCreate, ScanTaskUpdate
+from .asset_service import AssetService
+import ipaddress
+import requests
+import json
+from datetime import datetime
+import asyncio
+import concurrent.futures
+import logging
+import time
+import subprocess
+
+logger = logging.getLogger(__name__)
+
+
+class ScanServiceV2:
+    def __init__(self, db: Session):
+        self.db = db
+        self.asset_service = AssetService(db)
+
+    def create_scan_task(self, task_data: ScanTaskCreate) -> ScanTask:
+        """Create a new scan task with enhanced validation."""
+        # Validate target format
+        try:
+            if '/' in task_data.target:
+                ipaddress.ip_network(task_data.target, strict=False)
+            else:
+                ipaddress.ip_address(task_data.target)
+        except ValueError as e:
+            raise ValueError(f"Invalid target format: {e}")
+        
+        task = ScanTask(
+            name=task_data.name,
+            target=task_data.target,
+            scan_type=task_data.scan_type,
+            created_by=task_data.created_by,
+            discovery_depth=getattr(task_data, 'discovery_depth', 1),
+            scanner_ids=getattr(task_data, 'scanner_ids', [])
+        )
+        
+        self.db.add(task)
+        self.db.commit()
+        self.db.refresh(task)
+        
+        logger.info(f"Created scan task {task.id}: {task.name}")
+        return task
+
+    def get_scan_task(self, task_id: int) -> Optional[ScanTask]:
+        """Get a scan task by ID with all related data."""
+        return self.db.query(ScanTask).options(
+            joinedload(ScanTask.scans)
+        ).filter(ScanTask.id == task_id).first()
+
+    def get_scan_tasks(
+        self, 
+        skip: int = 0, 
+        limit: int = 100,
+        status: Optional[str] = None
+    ) -> List[ScanTask]:
+        """Get scan tasks with optional filtering."""
+        query = self.db.query(ScanTask).options(
+            joinedload(ScanTask.scans)
+        )
+        
+        if status:
+            query = query.filter(ScanTask.status == status)
+        
+        return query.order_by(desc(ScanTask.start_time)).offset(skip).limit(limit).all()
+
+    def get_active_scan_task(self) -> Optional[ScanTask]:
+        """Get the currently active scan task."""
+        return self.db.query(ScanTask).filter(
+            ScanTask.status == "running"
+        ).first()
+
+    def cancel_scan_task(self, task_id: int) -> bool:
+        """Cancel a running scan task."""
+        task = self.get_scan_task(task_id)
+        if not task or task.status != "running":
+            return False
+        
+        task.status = "cancelled"
+        task.end_time = datetime.utcnow()
+        self.db.commit()
+        
+        logger.info(f"Cancelled scan task {task_id}")
+        return True
+
+    def get_ips_from_target(self, target: str) -> List[str]:
+        """Get list of IPs to scan from target specification."""
+        ips = []
+        
+        try:
+            if '/' in target:
+                # CIDR notation
+                network = ipaddress.ip_network(target, strict=False)
+                # Limit to reasonable number of IPs (max 1024)
+                if network.num_addresses > 1024:
+                    raise ValueError(f"Target network too large: {network.num_addresses} addresses (max 1024)")
+                
+                for ip in network.hosts():
+                    ips.append(str(ip))
+            else:
+                # Single IP
+                ipaddress.ip_address(target)  # Validate
+                ips.append(target)
+                
+        except ValueError as e:
+            logger.error(f"Invalid target format: {target} - {e}")
+            raise ValueError(f"Invalid target format: {e}")
+        
+        return ips
+
+    def run_scan_task(self, task_id: int) -> None:
+        """Run a scan task with enhanced error handling and progress tracking."""
+        task = self.get_scan_task(task_id)
+        if not task:
+            logger.error(f"Scan task {task_id} not found")
+            return
+        
+        try:
+            logger.info(f"Starting scan task {task_id}: {task.name}")
+            
+            # Initialize task status
+            task.status = "running"
+            task.start_time = datetime.utcnow()
+            self.db.commit()
+            
+            # Get IPs to scan
+            ips_to_scan = self.get_ips_from_target(task.target)
+            total_ips = len(ips_to_scan)
+            task.total_ips = total_ips
+            self.db.commit()
+            
+            logger.info(f"Scanning {total_ips} IPs for task {task_id}")
+            
+            # Update progress as we scan
+            for i, ip in enumerate(ips_to_scan):
+                # Check for cancellation
+                self.db.refresh(task)
+                if task.status == "cancelled":
+                    logger.info(f"Scan task {task_id} cancelled")
+                    break
+                
+                # Update current IP and progress
+                task.current_ip = ip
+                task.completed_ips = i
+                task.progress = int((i / total_ips) * 100) if total_ips > 0 else 0
+                self.db.commit()
+                
+                try:
+                    # Perform the scan
+                    scan_result = self._perform_scan(ip, task.scan_type, task.discovery_depth)
+                    
+                    # Categorize the scan result
+                    categorization = self._categorize_scan_result(scan_result)
+                    scan_result["categorization"] = categorization
+                    
+                    # Add task metadata
+                    scan_result["task_metadata"] = {
+                        "task_id": task.id,
+                        "task_name": task.name,
+                        "discovery_depth": task.discovery_depth,
+                        "scan_timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                    # Create scan record
+                    scan = Scan(
+                        asset_id=None,  # No asset created automatically
+                        scan_task_id=task.id,
+                        scan_data=scan_result,
+                        scan_type=task.scan_type,
+                        status="completed" if categorization["is_device"] else "no_device"
+                    )
+                    self.db.add(scan)
+                    self.db.commit()
+                    
+                    logger.debug(f"Scanned {ip}: {categorization['result_type']}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to scan {ip}: {e}")
+                    # Create failed scan record
+                    failed_scan = Scan(
+                        asset_id=None,
+                        scan_task_id=task.id,
+                        scan_data={
+                            "ip": ip,
+                            "status": "failed",
+                            "error": str(e),
+                            "timestamp": datetime.utcnow().isoformat()
+                        },
+                        scan_type=task.scan_type,
+                        status="failed"
+                    )
+                    self.db.add(failed_scan)
+                    self.db.commit()
+            
+            # Mark task as completed
+            if task.status != "cancelled":
+                task.status = "completed"
+                task.progress = 100
+                task.completed_ips = total_ips
+                
+                # Count actual discovered devices
+                discovered_count = self.db.query(Scan).filter(
+                    Scan.scan_task_id == task.id,
+                    Scan.status == "completed"
+                ).count()
+                
+                task.discovered_devices = discovered_count
+                logger.info(f"Scan task {task_id} completed: {discovered_count} devices found")
+            
+            task.end_time = datetime.utcnow()
+            self.db.commit()
+            
+        except Exception as e:
+            logger.error(f"Scan task {task_id} failed: {e}")
+            # Mark task as failed
+            task.status = "failed"
+            task.error_message = str(e)
+            task.end_time = datetime.utcnow()
+            self.db.commit()
+
+    def _perform_scan(self, ip: str, scan_type: str, discovery_depth: int = 1) -> Dict[str, Any]:
+        """Perform a comprehensive scan using the scanner service."""
+        try:
+            # Use scanner service for actual scanning
+            scanner_url = "http://scanner:8001"  # Default scanner service
+            
+            # Prepare scan request
+            scan_request = {
+                "target": ip,
+                "scan_type": scan_type,
+                "discovery_depth": discovery_depth,
+                "timeout": 30
+            }
+            
+            # Call scanner service
+            response = requests.post(
+                f"{scanner_url}/scan",
+                json=scan_request,
+                timeout=35  # Slightly longer than scanner timeout
+            )
+            
+            if response.status_code == 200:
+                scan_result = response.json()
+                scan_result["scanner_info"] = {
+                    "scanner_url": scanner_url,
+                    "scan_method": "remote_scanner"
+                }
+                return scan_result
+            else:
+                # Fallback to local nmap if scanner service fails
+                logger.warning(f"Scanner service failed for {ip}, using local nmap")
+                return self._perform_local_scan(ip, scan_type, discovery_depth)
+                
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Scanner service unavailable for {ip}: {e}, using local nmap")
+            return self._perform_local_scan(ip, scan_type, discovery_depth)
+        except Exception as e:
+            logger.error(f"Scan failed for {ip}: {e}")
+            return {
+                "ip": ip,
+                "status": "failed",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+                "scan_type": scan_type
+            }
+
+    def _perform_local_scan(self, ip: str, scan_type: str, discovery_depth: int = 1) -> Dict[str, Any]:
+        """Fallback local scan using nmap directly."""
+        import re
+        
+        try:
+            # Build scan command based on type and depth
+            if scan_type == "quick":
+                cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", ip]
+            elif scan_type == "comprehensive":
+                cmd = ["nmap", "-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
+            elif scan_type == "lan_discovery":
+                # Enhanced LAN discovery based on depth
+                if discovery_depth == 1:
+                    cmd = ["nmap", "-sn", "-PR", ip]  # ARP only
+                elif discovery_depth == 2:
+                    cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PR", ip]
+                else:  # depth >= 3
+                    cmd = ["nmap", "-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
+            else:
+                cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", ip]
+            
+            # Run nmap
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            # Parse results
+            scan_result = self._parse_nmap_output(result, ip, scan_type)
+            scan_result["scanner_info"] = {
+                "scanner_url": "local_nmap",
+                "scan_method": "local_nmap"
+            }
+            
+            return scan_result
+            
+        except subprocess.TimeoutExpired:
+            return {
+                "ip": ip,
+                "status": "failed",
+                "error": "Scan timeout",
+                "timestamp": datetime.utcnow().isoformat(),
+                "scan_type": scan_type
+            }
+        except Exception as e:
+            return {
+                "ip": ip,
+                "status": "failed",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+                "scan_type": scan_type
+            }
+
+    def _parse_nmap_output(self, result: subprocess.CompletedProcess, ip: str, scan_type: str) -> Dict[str, Any]:
+        """Parse nmap output into structured data."""
+        import re
+        
+        scan_result = {
+            "ip": ip,
+            "scan_type": scan_type,
+            "timestamp": datetime.utcnow().isoformat(),
+            "status": "completed" if result.returncode == 0 else "failed",
+            "raw_output": result.stdout,
+            "stderr": result.stderr,
+            "ports": [],
+            "os_info": {},
+            "device_info": {},
+            "hostname": None,
+            "addresses": {"mac": None},
+            "vendor": None,
+            "device_type": None,
+            "response_time": None,
+            "ttl": None,
+            "services": [],
+            "network_info": {}
+        }
+        
+        # Check if host is up
+        if "Host is up" not in result.stdout and "0 hosts up" in result.stdout:
+            scan_result["status"] = "failed"
+            scan_result["error"] = "Host is down or unreachable"
+            return scan_result
+        
+        # Extract hostname
+        hostname_match = re.search(r'for (\S+)', result.stdout)
+        if hostname_match:
+            scan_result["hostname"] = hostname_match.group(1)
+        
+        # Extract MAC address and vendor
+        mac_match = re.search(r'MAC Address: ([0-9A-Fa-f:]{17}) \(([^)]+)\)', result.stdout)
+        if mac_match:
+            scan_result["addresses"]["mac"] = mac_match.group(1)
+            scan_result["vendor"] = mac_match.group(2)
+        
+        # Extract response time
+        response_time_match = re.search(r'(\d+\.\d+)s latency', result.stdout)
+        if response_time_match:
+            scan_result["response_time"] = float(response_time_match.group(1))
+        
+        # Extract TTL
+        ttl_match = re.search(r'TTL=(\d+)', result.stdout)
+        if ttl_match:
+            scan_result["ttl"] = int(ttl_match.group(1))
+        
+        # Extract OS information
+        os_match = re.search(r'Running: ([^,]+)', result.stdout)
+        if os_match:
+            scan_result["os_info"]["os_name"] = os_match.group(1).strip()
+        
+        # Extract OS details
+        os_details_match = re.search(r'OS details: ([^,]+)', result.stdout)
+        if os_details_match:
+            scan_result["os_info"]["os_details"] = os_details_match.group(1).strip()
+        
+        # Extract open ports
+        port_matches = re.findall(r'(\d+)/(\w+)\s+open\s+(\w+)(?:\s+([^,]+))?', result.stdout)
+        for port, protocol, service, version in port_matches:
+            port_info = {
+                "port": int(port),
+                "protocol": protocol,
+                "service": service,
+                "state": "open",
+                "version": version.strip() if version else None
+            }
+            scan_result["ports"].append(port_info)
+            scan_result["services"].append(service)
+        
+        # Determine device type
+        scan_result["device_type"] = self._determine_device_type(scan_result)
+        
+        return scan_result
+
+    def _determine_device_type(self, scan_result: Dict[str, Any]) -> str:
+        """Determine device type based on scan results."""
+        services = scan_result.get("services", [])
+        ports = scan_result.get("ports", [])
+        vendor = scan_result.get("vendor", "")
+        
+        # Network infrastructure
+        if any(service in services for service in ["ssh", "telnet", "snmp"]):
+            if any(port["port"] in [161, 162] for port in ports):  # SNMP
+                return "network_device"
+            return "server"
+        
+        # Web servers
+        if any(service in services for service in ["http", "https", "apache", "nginx"]):
+            return "web_server"
+        
+        # Database servers
+        if any(service in services for service in ["mysql", "postgresql", "mssql", "oracle"]):
+            return "database_server"
+        
+        # Printers
+        if any(service in services for service in ["ipp", "lpd", "printer"]):
+            return "printer"
+        
+        # IoT devices
+        if vendor and any(brand in vendor.lower() for brand in ["cisco", "netgear", "linksys", "tp-link"]):
+            return "network_device"
+        
+        # Default
+        if scan_result.get("ports"):
+            return "unknown_device"
+        else:
+            return "host"
+
+    def _categorize_scan_result(self, scan_result: Dict[str, Any]) -> Dict[str, Any]:
+        """Categorize scan results to help users understand what was found."""
+        result_type = "unknown"
+        confidence = "low"
+        indicators = []
+
+        # If scan failed
+        if scan_result.get("status") == "failed" or "error" in scan_result:
+            result_type = "failed"
+            confidence = "none"
+            indicators.append("Scan failed")
+            return {
+                "result_type": result_type,
+                "confidence": confidence,
+                "indicators": indicators,
+                "is_device": False
+            }
+
+        # Check if host is up
+        if "Host is up" not in scan_result.get("raw_output", ""):
+            result_type = "no_response"
+            confidence = "none"
+            indicators.append("No response")
+            return {
+                "result_type": result_type,
+                "confidence": confidence,
+                "indicators": indicators,
+                "is_device": False
+            }
+
+        # Analyze indicators to determine device type and confidence
+        if scan_result.get("ports") and len(scan_result["ports"]) > 0:
+            indicators.append(f"{len(scan_result['ports'])} open ports")
+            confidence = "high"
+            result_type = "active_device"
+
+        if scan_result.get("hostname") and scan_result["hostname"] != scan_result.get("ip"):
+            indicators.append("DNS hostname")
+            if confidence == "low":
+                confidence = "medium"
+            if result_type == "unknown":
+                result_type = "named_device"
+
+        if scan_result.get("addresses", {}).get("mac"):
+            indicators.append("MAC address")
+            confidence = "high"
+            result_type = "physical_device"
+
+        if scan_result.get("os_info", {}).get("os_name"):
+            indicators.append("OS detected")
+            confidence = "high"
+            result_type = "active_device"
+
+        if scan_result.get("vendor"):
+            indicators.append("Vendor info")
+            if confidence == "low":
+                confidence = "medium"
+            if result_type == "unknown":
+                result_type = "identified_device"
+
+        if scan_result.get("response_time") is not None:
+            indicators.append("Response time")
+            if result_type == "unknown":
+                result_type = "responding_host"
+
+        if scan_result.get("ttl") is not None:
+            indicators.append("TTL info")
+            if result_type == "unknown":
+                result_type = "network_device"
+
+        if scan_result.get("services") and len(scan_result["services"]) > 0:
+            indicators.append(f"{len(scan_result['services'])} services")
+            if confidence == "low":
+                confidence = "medium"
+            if result_type == "unknown":
+                result_type = "service_device"
+
+        # If no specific indicators, it's just a responding IP
+        if result_type == "unknown" and len(indicators) == 0:
+            result_type = "responding_ip"
+            confidence = "low"
+            indicators.append("Basic response")
+
+        return {
+            "result_type": result_type,
+            "confidence": confidence,
+            "indicators": indicators,
+            "is_device": self._is_device_discovered(scan_result)
+        }
+
+    def _is_device_discovered(self, scan_result: Dict[str, Any]) -> bool:
+        """Determine if a device was actually discovered."""
+        # Device is considered discovered if:
+        # 1. Has open ports
+        # 2. Has MAC address
+        # 3. Has hostname (different from IP)
+        # 4. Has OS information
+        
+        has_ports = scan_result.get("ports") and len(scan_result["ports"]) > 0
+        has_mac = scan_result.get("addresses", {}).get("mac")
+        has_hostname = scan_result.get("hostname") and scan_result["hostname"] != scan_result.get("ip")
+        has_os = scan_result.get("os_info", {}).get("os_name")
+        
+        return has_ports or has_mac or has_hostname or has_os
+
+    def delete_scan(self, scan_id: int) -> bool:
+        """Delete a scan record."""
+        scan = self.db.query(Scan).filter(Scan.id == scan_id).first()
+        if scan:
+            self.db.delete(scan)
+            self.db.commit()
+            return True
+        return False
+
+    def get_scan_history(self, asset_id: int, limit: int = 10) -> List[Scan]:
+        """Get scan history for an asset."""
+        return self.db.query(Scan).filter(
+            Scan.asset_id == asset_id
+        ).order_by(desc(Scan.timestamp)).limit(limit).all()

@@ -154,14 +154,18 @@ const Dashboard = () => {
     } else {
       const healthyScanners = scannerHealth.filter(s => s.status === 'healthy').length;
       const totalScanners = scannerHealth.length;
+      const hasDefaultScanner = scannerHealth.some(s => s.scanner_id === 'default');
       
       if (healthyScanners === totalScanners) {
+        const statusText = hasDefaultScanner && totalScanners === 1 ? 'Default Online' : 'All Healthy';
         status.push({
           name: 'Scanner Service',
-          status: 'All Healthy',
+          status: statusText,
           color: 'bg-success',
           badgeColor: 'badge-success',
-          details: `${healthyScanners}/${totalScanners} scanners online`
+          details: hasDefaultScanner && totalScanners === 1 
+            ? 'Default scanner is online and healthy'
+            : `${healthyScanners}/${totalScanners} scanners online`
         });
       } else if (healthyScanners > 0) {
         status.push({

@@ -212,6 +212,10 @@ class ScannerService:
             ScannerConfig.is_active == True
         ).all()
         
+        # If no scanners are configured, check if we can reach the default scanner service
+        if not active_scanners:
+            return self._check_default_scanner_health()
+        
         health_results = []
         for scanner in active_scanners:
             health_result = self.check_scanner_health(scanner.id)
@@ -223,6 +227,42 @@ class ScannerService:
             })
         
         return health_results
+
+    def _check_default_scanner_health(self) -> List[Dict[str, Any]]:
+        """Check the health of the default scanner service when no configurations exist."""
+        # Try to reach the default scanner service
+        default_scanner_urls = [
+            "http://scanner:8001",
+            "http://localhost:8001",
+            "http://127.0.0.1:8001"
+        ]
+        
+        for url in default_scanner_urls:
+            try:
+                health_url = f"{url}/health"
+                response = requests.get(health_url, timeout=5)
+                
+                if response.status_code == 200:
+                    return [{
+                        "scanner_id": "default",
+                        "scanner_name": "Default Scanner",
+                        "scanner_url": url,
+                        "status": "healthy",
+                        "message": "Default scanner is responding",
+                        "response_time": response.elapsed.total_seconds(),
+                        "status_code": response.status_code
+                    }]
+            except (requests.exceptions.RequestException, Exception):
+                continue
+        
+        # If no default scanner is reachable, return an error
+        return [{
+            "scanner_id": "default",
+            "scanner_name": "Default Scanner",
+            "scanner_url": "http://scanner:8001",
+            "status": "unreachable",
+            "message": "Default scanner service is not reachable"
+        }]
 
     def get_scanner_statistics(self) -> Dict[str, Any]:
         """Get statistics about scanner configurations."""

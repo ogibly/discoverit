@@ -148,20 +148,37 @@ class ScanService:
                 task.progress = int((i / total_ips) * 100) if total_ips > 0 else 0
                 self.db.commit()
                 
-                # Perform the scan
-                scan_result = self._perform_scan(ip, task.scan_type)
+                # Get the appropriate scanner for this IP
+                from .scanner_service import ScannerService
+                scanner_service = ScannerService(self.db)
+                scanner_config = scanner_service.get_scanner_for_ip(ip)
                 
-                # Only create scan record if a device was actually discovered
-                if self._is_device_discovered(scan_result):
-                    scan = Scan(
-                        asset_id=None,  # No asset created automatically
-                        scan_task_id=task.id,
-                        scan_data=scan_result,
-                        scan_type=task.scan_type,
-                        status="completed"
-                    )
-                    self.db.add(scan)
-                    self.db.commit()
+                # Perform the scan
+                scan_result = self._perform_scan(ip, task.scan_type, scanner_config)
+                
+                # Categorize the scan result
+                categorization = self._categorize_scan_result(scan_result)
+                scan_result["categorization"] = categorization
+                
+                # Add scanner information to scan result
+                scan_result["scanner_info"] = {
+                    "scanner_id": scanner_config.id if scanner_config else "default",
+                    "scanner_name": scanner_config.name if scanner_config else "Default Scanner",
+                    "scanner_url": scanner_config.url if scanner_config else "http://scanner:8001",
+                    "is_default": scanner_config.is_default if scanner_config else True
+                }
+                
+                # Create scan record for all results (including orphaned IPs)
+                # This allows users to see what was found vs what wasn't
+                scan = Scan(
+                    asset_id=None,  # No asset created automatically
+                    scan_task_id=task.id,
+                    scan_data=scan_result,
+                    scan_type=task.scan_type,
+                    status="completed" if categorization["is_device"] else "no_device"
+                )
+                self.db.add(scan)
+                self.db.commit()
             
             # Mark task as completed
             if task.status != "cancelled":
@@ -188,7 +205,7 @@ class ScanService:
             task.end_time = datetime.utcnow()
             self.db.commit()
 
-    def _perform_scan(self, ip: str, scan_type: str) -> Dict[str, Any]:
+    def _perform_scan(self, ip: str, scan_type: str, scanner_config=None) -> Dict[str, Any]:
         """Perform a comprehensive scan on a single IP address using multiple tools."""
         import subprocess
         import json
@@ -636,3 +653,96 @@ class ScanService:
         
         # If none of the above conditions are met, no device was discovered
         return False
+
+    def _categorize_scan_result(self, scan_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Categorize scan results to help users understand what was found.
+        Returns additional metadata about the scan result.
+        """
+        result_type = "unknown"
+        confidence = "low"
+        indicators = []
+        
+        # If scan failed
+        if scan_result.get("status") == "failed" or "error" in scan_result:
+            result_type = "failed"
+            confidence = "none"
+            indicators.append("Scan failed")
+            return {
+                "result_type": result_type,
+                "confidence": confidence,
+                "indicators": indicators,
+                "is_device": False
+            }
+        
+        # Check if host is up
+        if "Host is up" not in scan_result.get("raw_output", ""):
+            result_type = "no_response"
+            confidence = "none"
+            indicators.append("No response")
+            return {
+                "result_type": result_type,
+                "confidence": confidence,
+                "indicators": indicators,
+                "is_device": False
+            }
+        
+        # Analyze indicators to determine device type and confidence
+        if scan_result.get("ports") and len(scan_result["ports"]) > 0:
+            indicators.append(f"{len(scan_result['ports'])} open ports")
+            confidence = "high"
+            result_type = "active_device"
+        
+        if scan_result.get("hostname") and scan_result["hostname"] != scan_result.get("ip"):
+            indicators.append("DNS hostname")
+            if confidence == "low":
+                confidence = "medium"
+            if result_type == "unknown":
+                result_type = "named_device"
+        
+        if scan_result.get("addresses", {}).get("mac"):
+            indicators.append("MAC address")
+            confidence = "high"
+            result_type = "physical_device"
+        
+        if scan_result.get("os_info", {}).get("os_name"):
+            indicators.append("OS detected")
+            confidence = "high"
+            result_type = "active_device"
+        
+        if scan_result.get("vendor"):
+            indicators.append("Vendor info")
+            if confidence == "low":
+                confidence = "medium"
+            if result_type == "unknown":
+                result_type = "identified_device"
+        
+        if scan_result.get("response_time") is not None:
+            indicators.append("Response time")
+            if result_type == "unknown":
+                result_type = "responding_host"
+        
+        if scan_result.get("ttl") is not None:
+            indicators.append("TTL info")
+            if result_type == "unknown":
+                result_type = "network_device"
+        
+        if scan_result.get("services") and len(scan_result["services"]) > 0:
+            indicators.append(f"{len(scan_result['services'])} services")
+            if confidence == "low":
+                confidence = "medium"
+            if result_type == "unknown":
+                result_type = "service_device"
+        
+        # If no specific indicators, it's just a responding IP
+        if result_type == "unknown" and len(indicators) == 0:
+            result_type = "responding_ip"
+            confidence = "low"
+            indicators.append("Basic response")
+        
+        return {
+            "result_type": result_type,
+            "confidence": confidence,
+            "indicators": indicators,
+            "is_device": self._is_device_discovered(scan_result)
+        }

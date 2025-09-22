@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from .db_utils import get_db
 from .services.asset_service import AssetService
-from .services.scan_service import ScanService
+from .services.scan_service_v2 import ScanServiceV2 as ScanService
 from .services.operation_service import OperationService
 from .services.credential_service import CredentialService
 from .services.scanner_service import ScannerService
@@ -479,6 +479,9 @@ def get_discovered_devices(
             device_info = scan_data.get("device_info", {})
             addresses = scan_data.get("addresses", {})
             
+            # Extract categorization data
+            categorization = scan_data.get("categorization", {})
+            
             devices.append({
                 "id": scan.id,  # Use scan ID as device ID
                 "primary_ip": ip_address,
@@ -497,7 +500,12 @@ def get_discovered_devices(
                 "scan_status": scan.status,
                 "scan_type": scan.scan_type,
                 "scan_task_id": scan.scan_task_id,
-                "scan_task_name": scan.scan_task.name if scan.scan_task else None
+                "scan_task_name": scan.scan_task.name if scan.scan_task else None,
+                # Categorization data for UI display
+                "result_type": categorization.get("result_type", "unknown"),
+                "confidence": categorization.get("confidence", "low"),
+                "indicators": categorization.get("indicators", []),
+                "is_device": categorization.get("is_device", False)
             })
         except (json.JSONDecodeError, KeyError) as e:
             # Skip malformed scan data

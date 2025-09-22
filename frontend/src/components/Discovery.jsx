@@ -35,46 +35,36 @@ const Discovery = () => {
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [networkValidation, setNetworkValidation] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [availableScanners, setAvailableScanners] = useState([]);
+  const [selectedScanners, setSelectedScanners] = useState([]);
+  const [discoveryDepth, setDiscoveryDepth] = useState(2);
+  const [maxDiscoveryDepth, setMaxDiscoveryDepth] = useState(3);
 
-  // Predefined scan presets for common network ranges
+  // Scan action presets based on user feedback
   const scanPresets = [
     {
-      id: 'lan_quick',
-      name: 'Quick LAN Discovery',
-      description: 'Fast discovery of devices on your local network',
+      id: 'local_network_discovery',
+      name: 'Local Network Discovery',
+      description: 'Quick device mapping of target networks with configurable depth',
       target: 'auto',
-      scan_type: 'quick',
-      icon: '⚡',
-      color: 'text-blue-600'
+      scan_type: 'lan_discovery',
+      icon: '🌐',
+      color: 'text-blue-600',
+      requiresSubnetSelection: true,
+      allowsDepthControl: true,
+      fixedType: true
     },
     {
-      id: 'lan_comprehensive',
-      name: 'Comprehensive LAN Scan',
-      description: 'Detailed scan with OS detection and service enumeration',
-      target: 'auto',
-      scan_type: 'comprehensive',
-      icon: '🔍',
-      color: 'text-green-600'
-    },
-    {
-      id: 'custom_subnet',
-      name: 'Custom Subnet',
-      description: 'Scan a specific subnet or IP range',
+      id: 'custom_target',
+      name: 'Custom Target',
+      description: 'All types of targets, methods, and intensity levels',
       target: '',
       scan_type: 'quick',
       icon: '🎯',
-      color: 'text-purple-600',
-      isCustom: true
-    },
-    {
-      id: 'single_ip',
-      name: 'Single IP Scan',
-      description: 'Deep scan of a specific IP address',
-      target: '',
-      scan_type: 'comprehensive',
-      icon: '📍',
       color: 'text-orange-600',
-      isCustom: true
+      isCustom: true,
+      allowsAllOptions: true,
+      fixedType: false
     }
   ];
 
@@ -92,7 +82,29 @@ const Discovery = () => {
     fetchScanTasks();
     fetchActiveScanTask();
     fetchDiscoveredDevices();
+    fetchScannerConfigurations();
+    fetchSystemSettings();
   }, [fetchScanTasks, fetchActiveScanTask, fetchDiscoveredDevices]);
+
+  const fetchScannerConfigurations = async () => {
+    try {
+      const response = await fetch('/api/v2/scanners');
+      const scanners = await response.json();
+      setAvailableScanners(scanners.filter(scanner => scanner.is_active));
+    } catch (error) {
+      console.error('Failed to fetch scanner configurations:', error);
+    }
+  };
+
+  const fetchSystemSettings = async () => {
+    try {
+      const response = await fetch('/api/v2/settings');
+      const settings = await response.json();
+      setMaxDiscoveryDepth(settings.max_discovery_depth || 3);
+    } catch (error) {
+      console.error('Failed to fetch system settings:', error);
+    }
+  };
 
   useEffect(() => {
     if (activeScanTask) {
@@ -116,12 +128,37 @@ const Discovery = () => {
       scan_type: preset.scan_type,
       description: preset.description
     });
+    
+    // Set default scanners for local network discovery
+    if (preset.requiresSubnetSelection && availableScanners.length > 0) {
+      const defaultScanners = availableScanners.filter(s => s.is_default);
+      if (defaultScanners.length > 0) {
+        setSelectedScanners(defaultScanners);
+      } else {
+        // If no default scanners, select the first one
+        setSelectedScanners([availableScanners[0]]);
+      }
+    }
+    
     setShowScanModal(true);
   };
 
   const validateNetworkRange = async (target) => {
-    if (!target || target === 'auto') {
+    if (!target || target === 'auto' || target === 'custom') {
       setNetworkValidation(null);
+      return;
+    }
+
+    // Basic client-side validation first
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+    const rangeRegex = /^(\d{1,3}\.){3}\d{1,3}-(\d{1,3}\.){3}\d{1,3}$/;
+    
+    if (!ipRegex.test(target) && !cidrRegex.test(target) && !rangeRegex.test(target)) {
+      setNetworkValidation({ 
+        valid: false, 
+        error: 'Invalid format. Use CIDR (192.168.1.0/24), IP range (192.168.1.1-254), or single IP' 
+      });
       return;
     }
 
@@ -142,7 +179,7 @@ const Discovery = () => {
       }
     } catch (error) {
       console.error('Network validation failed:', error);
-      setNetworkValidation({ valid: false, error: 'Validation failed' });
+      setNetworkValidation({ valid: false, error: 'Validation failed - please check your network connection' });
     } finally {
       setIsValidating(false);
     }
@@ -154,14 +191,43 @@ const Discovery = () => {
       return;
     }
 
+    // Additional validation for local network discovery
+    if (selectedPreset?.requiresSubnetSelection && selectedScanners.length === 0) {
+      alert('Please select at least one scanner for this scan');
+      return;
+    }
+
+    // Additional validation for custom targets
+    if (selectedPreset?.isCustom && scanForm.target === 'custom') {
+      alert('Please enter a valid network target');
+      return;
+    }
+
+    if (selectedPreset?.isCustom && networkValidation && !networkValidation.valid) {
+      alert('Please fix the network target validation errors before starting the scan');
+      return;
+    }
+
     try {
       setIsScanning(true);
-      await createScanTask({
+      const scanTaskData = {
         name: scanForm.name,
         target: scanForm.target,
         scan_type: scanForm.scan_type,
         created_by: 'user'
-      });
+      };
+
+      // Add discovery depth for local network discovery
+      if (selectedPreset?.allowsDepthControl) {
+        scanTaskData.discovery_depth = discoveryDepth;
+      }
+
+      // Add scanner information
+      if (selectedScanners.length > 0) {
+        scanTaskData.scanner_ids = selectedScanners.map(s => s.id);
+      }
+
+      await createScanTask(scanTaskData);
       setShowScanModal(false);
       setScanForm({
         name: '',
@@ -170,6 +236,9 @@ const Discovery = () => {
         description: ''
       });
       setSelectedPreset(null);
+      setSelectedScanners([]);
+      setNetworkValidation(null);
+      setDiscoveryDepth(2);
     } catch (error) {
       console.error('Failed to start scan:', error);
       alert('Failed to start scan: ' + (error.response?.data?.detail || error.message));
@@ -257,7 +326,7 @@ const Discovery = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {scanPresets.map((preset) => (
                   <div
                     key={preset.id}
@@ -491,19 +560,28 @@ const Discovery = () => {
                   ))}
                 </select>
                 {scanForm.target === 'custom' && (
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="192.168.1.0/24 or 192.168.1.1-192.168.1.254"
-                      value={scanForm.target}
-                      onChange={(e) => {
-                        setScanForm({...scanForm, target: e.target.value});
-                        // Debounce validation
-                        clearTimeout(window.validationTimeout);
-                        window.validationTimeout = setTimeout(() => {
-                          validateNetworkRange(e.target.value);
-                        }, 500);
-                      }}
-                    />
+                  <div className="space-y-3">
+                    <div>
+                      <Input
+                        placeholder="192.168.1.0/24, 192.168.1.1-192.168.1.254, or 192.168.1.100"
+                        value={scanForm.target}
+                        onChange={(e) => {
+                          setScanForm({...scanForm, target: e.target.value});
+                          // Debounce validation
+                          clearTimeout(window.validationTimeout);
+                          window.validationTimeout = setTimeout(() => {
+                            validateNetworkRange(e.target.value);
+                          }, 500);
+                        }}
+                        className={cn(
+                          networkValidation && !networkValidation.valid && !isValidating && "border-red-300 focus:border-red-500 focus:ring-red-500"
+                        )}
+                      />
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Enter CIDR notation (192.168.1.0/24), IP range (192.168.1.1-254), or single IP
+                      </div>
+                    </div>
+                    
                     {/* Network Validation Feedback */}
                     {isValidating && (
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -513,22 +591,33 @@ const Discovery = () => {
                     )}
                     {networkValidation && !isValidating && (
                       <div className={cn(
-                        "p-3 rounded-md text-sm",
+                        "p-3 rounded-md text-sm border",
                         networkValidation.valid 
-                          ? "bg-green-50 border border-green-200 text-green-800" 
-                          : "bg-red-50 border border-red-200 text-red-800"
+                          ? "bg-green-50 border-green-200 text-green-800" 
+                          : "bg-red-50 border-red-200 text-red-800"
                       )}>
                         {networkValidation.valid ? (
                           <div>
-                            <div className="font-medium">✓ {networkValidation.description}</div>
+                            <div className="font-medium flex items-center space-x-1">
+                              <span>✓</span>
+                              <span>{networkValidation.description}</span>
+                            </div>
                             {networkValidation.ip_count && (
-                              <div className="text-xs mt-1">
+                              <div className="text-xs mt-1 text-green-700">
                                 {networkValidation.ip_count.toLocaleString()} IP addresses to scan
+                                {networkValidation.ip_count > 1000 && (
+                                  <span className="ml-2 text-orange-600">
+                                    (Large range - may take longer)
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
                         ) : (
-                          <div className="font-medium">✗ {networkValidation.error}</div>
+                          <div className="font-medium flex items-center space-x-1">
+                            <span>✗</span>
+                            <span>{networkValidation.error}</span>
+                          </div>
                         )}
                       </div>
                     )}
@@ -544,22 +633,117 @@ const Discovery = () => {
             )}
           </div>
 
-          {/* Scan Type */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Scan Type
-            </label>
-            <select
-              value={scanForm.scan_type}
-              onChange={(e) => setScanForm({...scanForm, scan_type: e.target.value})}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
-              <option value="quick">Quick Discovery (Fast, basic info)</option>
-              <option value="comprehensive">Comprehensive Scan (Detailed, slower)</option>
-              <option value="arp">ARP Scan (Local network only)</option>
-              <option value="snmp">SNMP Scan (Network devices)</option>
-            </select>
-          </div>
+          {/* Scanner Selection for Local Network Discovery */}
+          {selectedPreset?.requiresSubnetSelection && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Scanners & Networks *
+              </label>
+              <div className="space-y-3">
+                {availableScanners.map((scanner) => (
+                  <div key={scanner.id} className="flex items-center space-x-3 p-3 border border-border rounded-md">
+                    <input
+                      type="checkbox"
+                      id={`scanner-${scanner.id}`}
+                      checked={selectedScanners.some(s => s.id === scanner.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedScanners([...selectedScanners, scanner]);
+                        } else {
+                          setSelectedScanners(selectedScanners.filter(s => s.id !== scanner.id));
+                        }
+                      }}
+                      className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary focus:ring-2"
+                    />
+                    <label htmlFor={`scanner-${scanner.id}`} className="flex-1 cursor-pointer">
+                      <div className="font-medium text-foreground">
+                        {scanner.name} {scanner.is_default && <span className="text-xs text-primary">(Default)</span>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {scanner.subnets?.length || 0} network{scanner.subnets?.length !== 1 ? 's' : ''} available
+                      </div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+              
+              {selectedScanners.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <div className="text-xs text-muted-foreground">
+                    Select target networks from available scanners:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedScanners.flatMap(scanner => 
+                      scanner.subnets?.map((subnet, index) => (
+                        <button
+                          key={`${scanner.id}-${index}`}
+                          onClick={() => setScanForm({...scanForm, target: subnet})}
+                          className={cn(
+                            "px-2 py-1 text-xs rounded border transition-colors",
+                            scanForm.target === subnet
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-muted text-muted-foreground border-border hover:bg-accent"
+                          )}
+                        >
+                          {subnet}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Discovery Depth for Local Network Discovery */}
+          {selectedPreset?.allowsDepthControl && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Discovery Depth (Network Hops)
+              </label>
+              <div className="space-y-2">
+                <input
+                  type="range"
+                  min="1"
+                  max={maxDiscoveryDepth}
+                  value={discoveryDepth}
+                  onChange={(e) => setDiscoveryDepth(parseInt(e.target.value))}
+                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>1 hop (Local only)</span>
+                  <span className="font-medium text-foreground">{discoveryDepth} hop{discoveryDepth > 1 ? 's' : ''}</span>
+                  <span>{maxDiscoveryDepth} hops (Max)</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {discoveryDepth === 1 && "Scan only the immediate local network"}
+                  {discoveryDepth === 2 && "Scan local network + one hop beyond"}
+                  {discoveryDepth === 3 && "Scan local network + two hops beyond"}
+                  {discoveryDepth > 3 && `Scan local network + ${discoveryDepth - 1} hops beyond`}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scan Type - Only show for Custom Target */}
+          {!selectedPreset?.fixedType && (
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Scan Type
+              </label>
+              <select
+                value={scanForm.scan_type}
+                onChange={(e) => setScanForm({...scanForm, scan_type: e.target.value})}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              >
+                <option value="quick">⚡ Quick Scan - Fast ping and port detection</option>
+                <option value="comprehensive">🔍 Comprehensive Scan - OS detection and service enumeration</option>
+                <option value="arp">📡 ARP Scan - Local network ARP discovery only</option>
+                <option value="snmp">🔧 SNMP Scan - Network device SNMP discovery</option>
+                <option value="lan_discovery">🌐 LAN Discovery - Multi-technique network discovery</option>
+              </select>
+            </div>
+          )}
 
           {/* Description */}
           <div>
@@ -582,6 +766,9 @@ const Discovery = () => {
               onClick={() => {
                 setShowScanModal(false);
                 setSelectedPreset(null);
+                setSelectedScanners([]);
+                setNetworkValidation(null);
+                setDiscoveryDepth(2);
               }}
             >
               Cancel
@@ -592,7 +779,9 @@ const Discovery = () => {
                 isScanning || 
                 !scanForm.name.trim() || 
                 !scanForm.target.trim() ||
-                (selectedPreset?.isCustom && scanForm.target === 'custom' && networkValidation && !networkValidation.valid)
+                (selectedPreset?.requiresSubnetSelection && selectedScanners.length === 0) ||
+                (selectedPreset?.isCustom && scanForm.target === 'custom') ||
+                (selectedPreset?.isCustom && networkValidation && !networkValidation.valid)
               }
               className="px-6"
             >

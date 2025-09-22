@@ -3,8 +3,30 @@ import requests
 from pydantic import BaseModel
 from typing import Optional, List
 import ipaddress
+from datetime import datetime
 
 app = FastAPI()
+
+@app.get("/health")
+def health_check():
+    """
+    Health check endpoint for the scan manager service.
+    """
+    try:
+        # Test if we can reach the backend
+        response = requests.get("http://backend:8000/api/v2/settings", timeout=5)
+        backend_healthy = response.status_code == 200
+    except:
+        backend_healthy = False
+    
+    return {
+        "status": "healthy" if backend_healthy else "degraded",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "service": "scanmanager",
+        "version": "1.0.0",
+        "backend_connected": backend_healthy,
+        "scanners_configured": len(scanners)
+    }
 
 class ScanRequest(BaseModel):
     ip: str

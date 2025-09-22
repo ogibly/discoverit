@@ -291,8 +291,10 @@ class Operation(OperationBase):
 class ScanTaskBase(BaseModel):
     name: Optional[str] = None
     target: str = Field(..., description="CIDR, IP range, or specific IPs to scan")
-    scan_type: str = Field(..., description="Type of scan: quick, comprehensive, arp, snmp")
+    scan_type: str = Field(..., description="Type of scan: quick, comprehensive, arp, snmp, lan_discovery")
     created_by: Optional[str] = None
+    discovery_depth: Optional[int] = Field(1, ge=1, le=5, description="Network discovery depth (hops)")
+    scanner_ids: Optional[List[int]] = Field(default_factory=list, description="List of scanner IDs to use")
 
 class ScanTaskCreate(ScanTaskBase):
     pass

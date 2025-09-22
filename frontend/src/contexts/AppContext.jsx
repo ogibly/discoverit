@@ -25,6 +25,10 @@ const initialState = {
   labels: [],
   selectedLabels: [],
   
+  // Credentials
+  credentials: [],
+  selectedCredentials: [],
+  
   // Scan Tasks
   scanTasks: [],
   activeScanTask: null,
@@ -39,6 +43,7 @@ const initialState = {
     discoveredDevices: false,
     assetGroups: false,
     labels: false,
+    credentials: false,
     scanTasks: false,
     operations: false,
     jobs: false
@@ -85,6 +90,13 @@ const ActionTypes = {
   ADD_LABEL: 'ADD_LABEL',
   UPDATE_LABEL: 'UPDATE_LABEL',
   DELETE_LABEL: 'DELETE_LABEL',
+  
+  // Credentials
+  SET_CREDENTIALS: 'SET_CREDENTIALS',
+  SET_SELECTED_CREDENTIALS: 'SET_SELECTED_CREDENTIALS',
+  ADD_CREDENTIAL: 'ADD_CREDENTIAL',
+  UPDATE_CREDENTIAL: 'UPDATE_CREDENTIAL',
+  DELETE_CREDENTIAL: 'DELETE_CREDENTIAL',
   
   // Scan Tasks
   SET_SCAN_TASKS: 'SET_SCAN_TASKS',
@@ -192,6 +204,23 @@ function appReducer(state, action) {
       };
     case ActionTypes.DELETE_LABEL:
       return { ...state, labels: state.labels.filter(label => label.id !== action.payload) };
+    
+    // Credentials
+    case ActionTypes.SET_CREDENTIALS:
+      return { ...state, credentials: action.payload };
+    case ActionTypes.SET_SELECTED_CREDENTIALS:
+      return { ...state, selectedCredentials: action.payload };
+    case ActionTypes.ADD_CREDENTIAL:
+      return { ...state, credentials: [...state.credentials, action.payload] };
+    case ActionTypes.UPDATE_CREDENTIAL:
+      return {
+        ...state,
+        credentials: state.credentials.map(credential =>
+          credential.id === action.payload.id ? action.payload : credential
+        )
+      };
+    case ActionTypes.DELETE_CREDENTIAL:
+      return { ...state, credentials: state.credentials.filter(credential => credential.id !== action.payload) };
     
     // Scan Tasks
     case ActionTypes.SET_SCAN_TASKS:
@@ -543,6 +572,77 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  const createLabel = useCallback(async (labelData) => {
+    try {
+      const newLabel = await apiCall('/labels', { method: 'POST', data: labelData });
+      dispatch({ type: ActionTypes.ADD_LABEL, payload: newLabel });
+      return newLabel;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const updateLabel = useCallback(async (labelId, labelData) => {
+    try {
+      const updatedLabel = await apiCall(`/labels/${labelId}`, { method: 'PUT', data: labelData });
+      dispatch({ type: ActionTypes.UPDATE_LABEL, payload: updatedLabel });
+      return updatedLabel;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteLabel = useCallback(async (labelId) => {
+    try {
+      await apiCall(`/labels/${labelId}`, { method: 'DELETE' });
+      dispatch({ type: ActionTypes.DELETE_LABEL, payload: labelId });
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  // Credential actions
+  const fetchCredentials = useCallback(async () => {
+    dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'credentials', value: true } });
+    try {
+      const credentials = await apiCall('/credentials');
+      dispatch({ type: ActionTypes.SET_CREDENTIALS, payload: credentials });
+    } catch (error) {
+      // Error already handled in apiCall
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'credentials', value: false } });
+    }
+  }, [apiCall]);
+
+  const createCredential = useCallback(async (credentialData) => {
+    try {
+      const newCredential = await apiCall('/credentials', { method: 'POST', data: credentialData });
+      dispatch({ type: ActionTypes.ADD_CREDENTIAL, payload: newCredential });
+      return newCredential;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const updateCredential = useCallback(async (credentialId, credentialData) => {
+    try {
+      const updatedCredential = await apiCall(`/credentials/${credentialId}`, { method: 'PUT', data: credentialData });
+      dispatch({ type: ActionTypes.UPDATE_CREDENTIAL, payload: updatedCredential });
+      return updatedCredential;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteCredential = useCallback(async (credentialId) => {
+    try {
+      await apiCall(`/credentials/${credentialId}`, { method: 'DELETE' });
+      dispatch({ type: ActionTypes.DELETE_CREDENTIAL, payload: credentialId });
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
   // Scan Task actions
   const fetchScanTasks = useCallback(async () => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'scanTasks', value: true } });
@@ -870,6 +970,15 @@ export function AppProvider({ children }) {
     
     // Label actions
     fetchLabels,
+    createLabel,
+    updateLabel,
+    deleteLabel,
+    
+    // Credential actions
+    fetchCredentials,
+    createCredential,
+    updateCredential,
+    deleteCredential,
     
     // Scan Task actions
     fetchScanTasks,

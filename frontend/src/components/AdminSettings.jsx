@@ -9,6 +9,7 @@ import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import OperationsManagement from './OperationsManagement';
+import LabelsManager from './LabelsManager';
 import { cn } from '../utils/cn';
 
 const AdminSettings = () => {
@@ -308,10 +309,11 @@ const AdminSettings = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="system">System Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
+            <TabsTrigger value="labels">Labels</TabsTrigger>
             <TabsTrigger value="operations">Operations</TabsTrigger>
           </TabsList>
 
@@ -540,6 +542,11 @@ const AdminSettings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Labels Tab */}
+          <TabsContent value="labels" className="space-y-6">
+            <LabelsManager />
           </TabsContent>
 
           {/* Operations Tab */}

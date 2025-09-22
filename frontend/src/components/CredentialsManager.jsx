@@ -8,9 +8,14 @@ import { Modal } from './ui/Modal';
 import { cn } from '../utils/cn';
 
 const CredentialsManager = () => {
-  const { api } = useApp();
-  const [credentials, setCredentials] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    credentials, 
+    loading, 
+    fetchCredentials, 
+    createCredential, 
+    updateCredential, 
+    deleteCredential 
+  } = useApp();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCredential, setEditingCredential] = useState(null);
@@ -55,14 +60,9 @@ const CredentialsManager = () => {
 
   const loadCredentials = async () => {
     try {
-      setLoading(true);
-      const response = await api.get('/credentials');
-      setCredentials(response.data || []);
+      await fetchCredentials();
     } catch (error) {
       console.error('Failed to load credentials:', error);
-      setCredentials([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -122,10 +122,9 @@ const CredentialsManager = () => {
         credentialData.ssh_passphrase = null;
       }
 
-      await api.post('/credentials', credentialData);
+      await createCredential(credentialData);
       setShowCreateModal(false);
       resetForm();
-      loadCredentials();
     } catch (error) {
       console.error('Failed to create credential:', error);
       alert('Failed to create credential: ' + (error.response?.data?.detail || error.message));
@@ -137,11 +136,10 @@ const CredentialsManager = () => {
       const credentialData = { ...formData };
       delete credentialData.id;
       
-      await api.put(`/credentials/${editingCredential.id}`, credentialData);
+      await updateCredential(editingCredential.id, credentialData);
       setShowEditModal(false);
       setEditingCredential(null);
       resetForm();
-      loadCredentials();
     } catch (error) {
       console.error('Failed to update credential:', error);
       alert('Failed to update credential: ' + (error.response?.data?.detail || error.message));
@@ -152,8 +150,7 @@ const CredentialsManager = () => {
     if (!confirm('Are you sure you want to delete this credential?')) return;
     
     try {
-      await api.delete(`/credentials/${id}`);
-      loadCredentials();
+      await deleteCredential(id);
     } catch (error) {
       console.error('Failed to delete credential:', error);
       alert('Failed to delete credential: ' + (error.response?.data?.detail || error.message));

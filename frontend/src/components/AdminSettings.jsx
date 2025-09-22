@@ -271,22 +271,20 @@ const AdminSettings = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col">
-      {/* Sophisticated Header */}
-      <div className="bg-card border-b border-border flex-shrink-0">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-heading text-foreground">
-                Admin Settings
-              </h1>
-              <p className="text-caption text-muted-foreground mt-1">
-                Manage system settings, users, and configurations
-              </p>
-            </div>
-            <Badge className="bg-primary text-primary-foreground">
-              Administrator
-            </Badge>
+      {/* Header */}
+      <div className="px-6 py-6 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Admin Settings
+            </h1>
+            <p className="text-body text-muted-foreground mt-1">
+              Manage system settings, users, and configurations
+            </p>
           </div>
+          <Badge className="bg-primary text-primary-foreground">
+            Administrator
+          </Badge>
         </div>
       </div>
 

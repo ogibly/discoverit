@@ -28,8 +28,84 @@ class Label(Base):
     name = Column(String(100), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
     color = Column(String(7), nullable=True)  # Hex color code
+    
+    # Modern label features
+    label_type = Column(String(20), default="custom", index=True)  # system, custom, dynamic, template
+    category = Column(String(50), nullable=True, index=True)  # security, environment, device_type, etc.
+    parent_id = Column(Integer, ForeignKey("labels.id"), nullable=True)  # For hierarchical labels
+    icon = Column(String(50), nullable=True)  # Icon identifier (e.g., "server", "shield", "globe")
+    
+    # Smart labeling rules
+    auto_apply_rules = Column(JSON, nullable=True)  # Rules for automatic application
+    priority = Column(Integer, default=0)  # Label priority for display order
+    
+    # Usage analytics
+    usage_count = Column(Integer, default=0)  # How many assets use this label
+    last_used = Column(DateTime, nullable=True)
+    
+    # Metadata
+    is_active = Column(Boolean, default=True)
+    is_system = Column(Boolean, default=False)  # System labels cannot be deleted
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    parent = relationship("Label", remote_side=[id], backref="children")
+    creator = relationship("User")
+
+class LabelTemplate(Base):
+    __tablename__ = "label_templates"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(50), nullable=True)  # security, environment, compliance, etc.
+    
+    # Template configuration
+    labels = Column(JSON, nullable=False)  # List of label definitions
+    is_default = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    
+    # Usage tracking
+    usage_count = Column(Integer, default=0)
+    last_used = Column(DateTime, nullable=True)
+    
+    # Metadata
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    creator = relationship("User")
+
+class SmartLabelRule(Base):
+    __tablename__ = "smart_label_rules"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    
+    # Rule configuration
+    conditions = Column(JSON, nullable=False)  # Rule conditions (e.g., os_name contains "Windows")
+    label_id = Column(Integer, ForeignKey("labels.id"), nullable=False)
+    priority = Column(Integer, default=0)  # Rule execution priority
+    
+    # Rule behavior
+    is_active = Column(Boolean, default=True)
+    auto_apply = Column(Boolean, default=True)  # Automatically apply when conditions are met
+    remove_on_false = Column(Boolean, default=False)  # Remove label when conditions are no longer met
+    
+    # Usage tracking
+    match_count = Column(Integer, default=0)
+    last_matched = Column(DateTime, nullable=True)
+    
+    # Metadata
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    label = relationship("Label")
+    creator = relationship("User")
 
 class Asset(Base):
     __tablename__ = "assets"
@@ -105,6 +181,7 @@ class ScanTask(Base):
     current_ip = Column(String(45), nullable=True)  # IP being scanned
     total_ips = Column(Integer, default=0)  # Total IPs to scan
     completed_ips = Column(Integer, default=0)  # Completed IPs
+    discovered_devices = Column(Integer, default=0)  # Actual devices discovered (not just IPs scanned)
     error_message = Column(Text, nullable=True)
     created_by = Column(String(100), nullable=True)  # User who initiated the scan
     

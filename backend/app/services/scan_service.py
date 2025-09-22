@@ -151,23 +151,33 @@ class ScanService:
                 # Perform the scan
                 scan_result = self._perform_scan(ip, task.scan_type)
                 
-                # Store scan result without creating asset automatically
-                # Users can later convert discovered devices to assets manually
-                scan = Scan(
-                    asset_id=None,  # No asset created automatically
-                    scan_task_id=task.id,
-                    scan_data=scan_result,
-                    scan_type=task.scan_type,
-                    status="completed" if "error" not in scan_result else "failed"
-                )
-                self.db.add(scan)
-                self.db.commit()
+                # Only create scan record if a device was actually discovered
+                if self._is_device_discovered(scan_result):
+                    scan = Scan(
+                        asset_id=None,  # No asset created automatically
+                        scan_task_id=task.id,
+                        scan_data=scan_result,
+                        scan_type=task.scan_type,
+                        status="completed"
+                    )
+                    self.db.add(scan)
+                    self.db.commit()
             
             # Mark task as completed
             if task.status != "cancelled":
                 task.status = "completed"
                 task.progress = 100
                 task.completed_ips = total_ips
+                
+                # Count actual discovered devices for this scan task
+                discovered_count = self.db.query(Scan).filter(
+                    Scan.scan_task_id == task.id,
+                    Scan.asset_id.is_(None)  # Only count discovered devices, not converted assets
+                ).count()
+                
+                # Update task with discovered device count
+                task.discovered_devices = discovered_count
+                
             task.end_time = datetime.utcnow()
             self.db.commit()
             
@@ -576,3 +586,53 @@ class ScanService:
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             }
+
+    def _is_device_discovered(self, scan_result: Dict[str, Any]) -> bool:
+        """
+        Determine if a scan result represents an actual discovered device.
+        Only creates device records for IPs that have actual devices behind them.
+        """
+        # If scan failed, no device was discovered
+        if scan_result.get("status") == "failed" or "error" in scan_result:
+            return False
+        
+        # Check if host is up and responding
+        if "Host is up" not in scan_result.get("raw_output", ""):
+            return False
+        
+        # Device is considered discovered if any of these conditions are met:
+        
+        # 1. Has open ports (indicates services running)
+        if scan_result.get("ports") and len(scan_result["ports"]) > 0:
+            return True
+        
+        # 2. Has a hostname (indicates DNS resolution)
+        if scan_result.get("hostname") and scan_result["hostname"] != scan_result.get("ip"):
+            return True
+        
+        # 3. Has MAC address (indicates physical device on local network)
+        if scan_result.get("addresses", {}).get("mac"):
+            return True
+        
+        # 4. Has OS information (indicates OS fingerprinting success)
+        if scan_result.get("os_info", {}).get("os_name"):
+            return True
+        
+        # 5. Has vendor information (indicates device identification)
+        if scan_result.get("vendor"):
+            return True
+        
+        # 6. Has response time (indicates device responded to probes)
+        if scan_result.get("response_time") is not None:
+            return True
+        
+        # 7. Has TTL information (indicates network device)
+        if scan_result.get("ttl") is not None:
+            return True
+        
+        # 8. Has services detected (even if no open ports, services might be detected)
+        if scan_result.get("services") and len(scan_result["services"]) > 0:
+            return True
+        
+        # If none of the above conditions are met, no device was discovered
+        return False

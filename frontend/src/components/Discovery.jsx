@@ -6,7 +6,6 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
-import PageHeader from './PageHeader';
 import { cn } from '../utils/cn';
 
 const Discovery = () => {
@@ -25,35 +24,67 @@ const Discovery = () => {
   } = useApp();
 
   const [showScanModal, setShowScanModal] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'table'
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [selectedScans, setSelectedScans] = useState([]);
-  
   const [scanForm, setScanForm] = useState({
     name: '',
-    target_range: '',
-    scan_type: 'lan_discovery',
-    max_depth: 3
+    target: '',
+    scan_type: 'quick',
+    description: ''
   });
-
   const [isScanning, setIsScanning] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState(null);
+  const [networkValidation, setNetworkValidation] = useState(null);
+  const [isValidating, setIsValidating] = useState(false);
 
-  const statusOptions = [
-    { value: 'all', label: 'All Scans', icon: '📊' },
-    { value: 'completed', label: 'Completed', icon: '✅' },
-    { value: 'running', label: 'Running', icon: '🔄' },
-    { value: 'failed', label: 'Failed', icon: '❌' },
-    { value: 'cancelled', label: 'Cancelled', icon: '⏹️' }
+  // Predefined scan presets for common network ranges
+  const scanPresets = [
+    {
+      id: 'lan_quick',
+      name: 'Quick LAN Discovery',
+      description: 'Fast discovery of devices on your local network',
+      target: 'auto',
+      scan_type: 'quick',
+      icon: '⚡',
+      color: 'text-blue-600'
+    },
+    {
+      id: 'lan_comprehensive',
+      name: 'Comprehensive LAN Scan',
+      description: 'Detailed scan with OS detection and service enumeration',
+      target: 'auto',
+      scan_type: 'comprehensive',
+      icon: '🔍',
+      color: 'text-green-600'
+    },
+    {
+      id: 'custom_subnet',
+      name: 'Custom Subnet',
+      description: 'Scan a specific subnet or IP range',
+      target: '',
+      scan_type: 'quick',
+      icon: '🎯',
+      color: 'text-purple-600',
+      isCustom: true
+    },
+    {
+      id: 'single_ip',
+      name: 'Single IP Scan',
+      description: 'Deep scan of a specific IP address',
+      target: '',
+      scan_type: 'comprehensive',
+      icon: '📍',
+      color: 'text-orange-600',
+      isCustom: true
+    }
   ];
 
-  const sortOptions = [
-    { value: 'created_at', label: 'Created Date' },
-    { value: 'name', label: 'Name' },
-    { value: 'status', label: 'Status' },
-    { value: 'devices_found', label: 'Devices Found' }
+  // Common network ranges for quick selection
+  const commonRanges = [
+    { label: 'Local Network (Auto)', value: 'auto' },
+    { label: '192.168.1.0/24', value: '192.168.1.0/24' },
+    { label: '192.168.0.0/24', value: '192.168.0.0/24' },
+    { label: '10.0.0.0/24', value: '10.0.0.0/24' },
+    { label: '172.16.0.0/24', value: '172.16.0.0/24' },
+    { label: 'Custom Range', value: 'custom' }
   ];
 
   useEffect(() => {
@@ -63,67 +94,81 @@ const Discovery = () => {
   }, [fetchScanTasks, fetchActiveScanTask, fetchDiscoveredDevices]);
 
   useEffect(() => {
-    setIsScanning(activeScanTask !== null);
+    if (activeScanTask) {
+      setIsScanning(true);
+    } else {
+      setIsScanning(false);
+    }
   }, [activeScanTask]);
 
-  // Filter and sort scans
-  const filteredScans = useMemo(() => {
-    return scanTasks
-      .filter(scan => {
-        const matchesSearch = scan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             scan.target_range.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filterStatus === 'all' || scan.status === filterStatus;
-        return matchesSearch && matchesFilter;
-      })
-      .sort((a, b) => {
-        let aValue, bValue;
-        
-        switch (sortBy) {
-          case 'name':
-            aValue = a.name.toLowerCase();
-            bValue = b.name.toLowerCase();
-            break;
-          case 'status':
-            aValue = a.status;
-            bValue = b.status;
-            break;
-          case 'devices_found':
-            aValue = a.devices_found || 0;
-            bValue = b.devices_found || 0;
-            break;
-          case 'created_at':
-          default:
-            aValue = new Date(a.created_at);
-            bValue = new Date(b.created_at);
-            break;
-        }
-        
-        if (sortOrder === 'asc') {
-          return aValue > bValue ? 1 : -1;
-        } else {
-          return aValue < bValue ? 1 : -1;
-        }
-      });
-  }, [scanTasks, searchTerm, filterStatus, sortBy, sortOrder]);
+  // Calculate key metrics
+  const totalScans = scanTasks.length;
+  const completedScans = scanTasks.filter(s => s.status === 'completed').length;
+  const totalDevices = discoveredDevices.length;
+  const activeScans = scanTasks.filter(s => s.status === 'running').length;
 
-  const allSelected = filteredScans.length > 0 && filteredScans.every(scan => selectedScans.includes(scan.id));
+  const handlePresetSelect = (preset) => {
+    setSelectedPreset(preset);
+    setScanForm({
+      name: preset.name,
+      target: preset.target,
+      scan_type: preset.scan_type,
+      description: preset.description
+    });
+    setShowScanModal(true);
+  };
+
+  const validateNetworkRange = async (target) => {
+    if (!target || target === 'auto') {
+      setNetworkValidation(null);
+      return;
+    }
+
+    setIsValidating(true);
+    try {
+      const response = await fetch(`/api/v2/validate-network-range?target=${encodeURIComponent(target)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const result = await response.json();
+      setNetworkValidation(result);
+      
+      // Auto-suggest name if validation is successful
+      if (result.valid && result.suggested_name && !scanForm.name) {
+        setScanForm(prev => ({ ...prev, name: result.suggested_name }));
+      }
+    } catch (error) {
+      console.error('Network validation failed:', error);
+      setNetworkValidation({ valid: false, error: 'Validation failed' });
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   const handleStartScan = async () => {
-    if (!scanForm.name.trim() || !scanForm.target_range.trim()) {
+    if (!scanForm.name.trim() || !scanForm.target.trim()) {
       alert('Please fill in all required fields');
       return;
     }
 
     try {
       setIsScanning(true);
-      await createScanTask(scanForm);
+      await createScanTask({
+        name: scanForm.name,
+        target: scanForm.target,
+        scan_type: scanForm.scan_type,
+        created_by: 'user'
+      });
       setShowScanModal(false);
       setScanForm({
         name: '',
-        target_range: '',
-        scan_type: 'lan_discovery',
-        max_depth: 3
+        target: '',
+        scan_type: 'quick',
+        description: ''
       });
+      setSelectedPreset(null);
     } catch (error) {
       console.error('Failed to start scan:', error);
       alert('Failed to start scan: ' + (error.response?.data?.detail || error.message));
@@ -132,165 +177,81 @@ const Discovery = () => {
   };
 
   const handleCancelScan = async () => {
-    if (!activeScanTask) return;
-    
-    try {
-      await cancelScanTask(activeScanTask.id);
-      setIsScanning(false);
-    } catch (error) {
-      console.error('Failed to cancel scan:', error);
-      alert('Failed to cancel scan: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
-  const handleQuickLanDiscovery = async () => {
-    try {
-      setIsScanning(true);
-      const config = {
-        maxDepth: 3,
-        name: 'Quick LAN Discovery',
-        target_range: 'auto'
-      };
-      await runLanDiscovery(config);
-    } catch (error) {
-      console.error('Failed to start LAN discovery:', error);
-      alert('Failed to start LAN discovery: ' + (error.response?.data?.detail || error.message));
-      setIsScanning(false);
-    }
-  };
-
-  const getScanStatusColor = (status) => {
-    switch (status) {
-      case 'running':
-        return 'bg-info text-info-foreground';
-      case 'completed':
-        return 'bg-success text-success-foreground';
-      case 'failed':
-        return 'bg-error text-error-foreground';
-      case 'cancelled':
-        return 'bg-muted text-muted-foreground';
-      default:
-        return 'bg-warning text-warning-foreground';
-    }
-  };
-
-  const getScanStatusIcon = (status) => {
-    switch (status) {
-      case 'running':
-        return '🔄';
-      case 'completed':
-        return '✅';
-      case 'failed':
-        return '❌';
-      case 'cancelled':
-        return '⏹️';
-      default:
-        return '⏳';
-    }
-  };
-
-  const getScanTypeIcon = (type) => {
-    switch (type) {
-      case 'lan_discovery':
-        return '🌐';
-      case 'port_scan':
-        return '🔍';
-      case 'service_scan':
-        return '⚙️';
-      default:
-        return '📊';
-    }
-  };
-
-  const getScanTypeColor = (type) => {
-    switch (type) {
-      case 'lan_discovery':
-        return 'bg-blue-500/20 text-blue-600';
-      case 'port_scan':
-        return 'bg-green-500/20 text-green-600';
-      case 'service_scan':
-        return 'bg-purple-500/20 text-purple-600';
-      default:
-        return 'bg-gray-500/20 text-gray-600';
+    if (activeScanTask) {
+      try {
+        await cancelScanTask(activeScanTask.id);
+      } catch (error) {
+        console.error('Failed to cancel scan:', error);
+        alert('Failed to cancel scan: ' + (error.response?.data?.detail || error.message));
+      }
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Unknown';
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid Date';
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleString();
     } catch (error) {
       return 'Invalid Date';
     }
   };
 
-  const toggleScanSelection = (scanId) => {
-    setSelectedScans(prev => 
-      prev.includes(scanId) 
-        ? prev.filter(id => id !== scanId)
-        : [...prev, scanId]
-    );
-  };
-
-  const selectAllScans = (scanIds) => {
-    setSelectedScans(scanIds);
-  };
-
-  const handleViewResults = () => {
-    navigate('/devices');
-  };
-
-  const headerActions = [
-    {
-      label: isScanning ? "Scanning..." : "Start LAN Discovery",
-      variant: "default",
-      size: "sm",
-      onClick: handleQuickLanDiscovery,
-      disabled: isScanning,
-    },
-    {
-      label: "Configure Custom Scan",
-      variant: "outline",
-      size: "sm",
-      onClick: () => setShowScanModal(true),
-      disabled: isScanning,
+  const getScanStatusColor = (status) => {
+    switch (status) {
+      case 'running': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'failed': return 'bg-red-100 text-red-800 border-red-200';
+      case 'cancelled': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-  ];
+  };
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-      <PageHeader
-        title="Network Discovery & Scanning"
-        subtitle={`${scanTasks.length} scans completed • ${discoveredDevices.length} devices discovered • ${isScanning ? 'Active scan in progress' : 'Ready to discover devices'}`}
-        actions={headerActions}
-        searchPlaceholder="Search scan history..."
-        onSearch={() => {}}
-        searchValue=""
-      />
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-6 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Network Discovery</h1>
+            <p className="text-body text-muted-foreground mt-1">
+              Discover and scan devices on your network
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">{totalScans}</div>
+              <div className="text-caption text-muted-foreground">Total Scans</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-success">{totalDevices}</div>
+              <div className="text-caption text-muted-foreground">Devices Found</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-warning">{activeScans}</div>
+              <div className="text-caption text-muted-foreground">Active</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Active Scan Status */}
       {activeScanTask && (
-        <div className="px-6 py-4 bg-card border-b border-border flex-shrink-0">
+        <div className="px-6 py-3 bg-blue-50 border-b border-blue-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-info border-t-transparent"></div>
-                <span className="text-subheading text-foreground">Active Scan</span>
-              </div>
-              <Badge className="bg-info text-info-foreground">
-                {activeScanTask.status}
-              </Badge>
-              <span className="text-body text-muted-foreground">
-                {activeScanTask.name} - {activeScanTask.target_range}
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+              <span className="text-body text-foreground font-medium">
+                {activeScanTask.name} is running on {activeScanTask.target}
               </span>
+              <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                {activeScanTask.progress}% complete
+              </Badge>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={handleCancelScan}
-              className="text-error hover:text-error hover:bg-error/10 border-error/20"
+              className="text-red-600 hover:text-red-600 hover:bg-red-50 border-red-200"
             >
               Cancel Scan
             </Button>
@@ -298,502 +259,309 @@ const Discovery = () => {
         </div>
       )}
 
-      {/* Scan Actions */}
-      <div className="px-6 py-4 bg-card border-b border-border flex-shrink-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="surface-elevated border-primary/20">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-md bg-primary/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-subheading text-foreground">Quick Network Discovery</h3>
-                  <p className="text-caption text-muted-foreground">Automatically discover devices on your local network</p>
-                </div>
-              </div>
-              <Button
-                className="w-full mt-3"
-                onClick={handleQuickLanDiscovery}
-                disabled={isScanning}
-              >
-                {isScanning ? 'Scanning Network...' : 'Start Network Discovery'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="surface-elevated border-warning/20">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-md bg-warning/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-subheading text-foreground">Advanced Scan Configuration</h3>
-                  <p className="text-caption text-muted-foreground">Customize scan parameters and target specific ranges</p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full mt-3"
-                onClick={() => setShowScanModal(true)}
-                disabled={isScanning}
-              >
-                Configure Advanced Scan
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Scan Statistics */}
-      <div className="px-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="surface-elevated">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-caption text-muted-foreground">Total Scans</p>
-                  <p className="text-2xl font-bold text-primary">{scanTasks.length}</p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <span className="text-primary">📊</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="surface-elevated">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-caption text-muted-foreground">Devices Discovered</p>
-                  <p className="text-2xl font-bold text-success">{discoveredDevices.length}</p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
-                  <span className="text-success">📱</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="surface-elevated">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-caption text-muted-foreground">Completed Scans</p>
-                  <p className="text-2xl font-bold text-info">{scanTasks.filter(s => s.status === 'completed').length}</p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-info/20 flex items-center justify-center">
-                  <span className="text-info">✅</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="surface-elevated">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-caption text-muted-foreground">Active Scans</p>
-                  <p className="text-2xl font-bold text-warning">{scanTasks.filter(s => s.status === 'running').length}</p>
-                </div>
-                <div className="w-8 h-8 rounded-lg bg-warning/20 flex items-center justify-center">
-                  <span className="text-warning">🔄</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Recent Discoveries */}
-      {discoveredDevices.length > 0 && (
-        <div className="px-6 pb-4">
-          <Card className="surface-elevated">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-subheading text-foreground flex items-center">
-                  📱 Recent Discoveries ({discoveredDevices.length})
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleViewResults}
-                >
-                  View All Devices
-                </Button>
-              </div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          
+          {/* Quick Scan Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span className="text-2xl">🚀</span>
+                <span>Quick Scan Actions</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {discoveredDevices.slice(0, 6).map((device) => (
-                  <div key={device.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg">
-                    <div className="w-8 h-8 rounded-md bg-primary/20 flex items-center justify-center">
-                      <span className="text-sm">📱</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {scanPresets.map((preset) => (
+                  <div
+                    key={preset.id}
+                    className={cn(
+                      "p-4 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 hover:border-solid hover:shadow-md",
+                      selectedPreset?.id === preset.id 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                    )}
+                    onClick={() => handlePresetSelect(preset)}
+                  >
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className="text-2xl">{preset.icon}</span>
+                      <div>
+                        <h3 className="font-medium text-foreground">{preset.name}</h3>
+                        <p className="text-sm text-muted-foreground">{preset.scan_type}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-body font-medium text-foreground truncate">
-                        {device.hostname || device.primary_ip || 'Unknown Device'}
-                      </p>
-                      <p className="text-caption text-muted-foreground">
-                        {device.primary_ip} • {device.mac_address || 'No MAC'}
-                      </p>
-                    </div>
-                    <Badge className="text-xs bg-success text-success-foreground">
-                      Discovered
-                    </Badge>
+                    <p className="text-sm text-muted-foreground">{preset.description}</p>
+                    {preset.isCustom && (
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          Custom Target
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-              {discoveredDevices.length > 6 && (
-                <div className="text-center pt-4">
-                  <Button variant="outline" size="sm" onClick={handleViewResults}>
-                    View All {discoveredDevices.length} Devices
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
-        </div>
-      )}
 
-      {/* Search and Filter Controls */}
-      <div className="px-6 pb-4">
-        <Card className="surface-elevated">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search scans by name or target range..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div className="flex items-center space-x-3">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  {statusOptions.map(status => (
-                    <option key={status.value} value={status.value}>
-                      {status.icon} {status.label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  {sortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="px-3"
-                >
-                  {sortOrder === 'asc' ? '↑' : '↓'}
-                </Button>
-                <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className={cn(
-                      "px-3 py-1 text-sm",
-                      viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    ⊞
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('table')}
-                    className={cn(
-                      "px-3 py-1 text-sm",
-                      viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    ☰
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bulk Actions */}
-      {selectedScans.length > 0 && (
-        <div className="px-6 pb-4">
-          <Card className="surface-elevated">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <span className="text-body text-foreground">
-                    {selectedScans.length} scan(s) selected
-                  </span>
+          {/* Recent Discoveries */}
+          {discoveredDevices.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2">
+                    <span className="text-2xl">🔍</span>
+                    <span>Recent Discoveries ({totalDevices})</span>
+                  </CardTitle>
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedScans([])}
-                    className="text-caption"
+                    onClick={() => navigate('/devices')}
+                    className="text-sm"
                   >
-                    Clear Selection
+                    View All Devices →
                   </Button>
                 </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-error hover:text-error hover:bg-error/10 border-error/20"
-                  >
-                    Delete Selected
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Scan List */}
-      <div className="flex-1 overflow-hidden px-6 pb-6">
-        {loading.scanTasks ? (
-          <Card className="surface-elevated">
-            <CardContent className="p-12 text-center">
-              <div className="text-4xl mb-4">⏳</div>
-              <h3 className="text-subheading text-foreground mb-2">Loading scans...</h3>
-            </CardContent>
-          </Card>
-        ) : filteredScans.length === 0 ? (
-          <Card className="surface-elevated">
-            <CardContent className="p-12 text-center">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-subheading text-foreground mb-2">No scans found</h3>
-              <p className="text-body text-muted-foreground">
-                Start your first network discovery scan to find devices.
-              </p>
-            </CardContent>
-          </Card>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredScans.map((scan) => (
-              <Card key={scan.id} className="surface-interactive">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedScans.includes(scan.id)}
-                        onChange={() => toggleScanSelection(scan.id)}
-                        className="rounded border-border text-primary focus:ring-ring"
-                      />
-                      <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-lg", getScanTypeColor(scan.scan_type))}>
-                        {getScanTypeIcon(scan.scan_type)}
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {discoveredDevices.slice(0, 6).map((device) => (
+                    <div
+                      key={device.id}
+                      className="p-4 border border-border rounded-lg hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground truncate">
+                          {device.hostname || device.primary_ip}
+                        </h4>
+                        <Badge variant="outline" className="text-xs">
+                          {device.os_name || 'Unknown OS'}
+                        </Badge>
                       </div>
-                    </div>
-                    <Badge className={cn("text-xs", getScanStatusColor(scan.status))}>
-                      {scan.status}
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-subheading text-foreground truncate">
-                        {scan.name}
-                      </h3>
-                      <p className="text-caption text-muted-foreground">
-                        {scan.target_range}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2 text-caption text-muted-foreground">
-                      <div className="flex justify-between">
-                        <span>Type:</span>
-                        <span className="capitalize">{scan.scan_type.replace('_', ' ')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Status:</span>
-                        <span>{scan.status}</span>
-                      </div>
-                      {scan.devices_found && (
+                      <div className="space-y-1 text-sm text-muted-foreground">
                         <div className="flex justify-between">
-                          <span>Devices Found:</span>
-                          <span className="text-success">{scan.devices_found}</span>
+                          <span>IP:</span>
+                          <span className="font-mono">{device.primary_ip}</span>
                         </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span>Created:</span>
-                        <span>{formatDate(scan.created_at)}</span>
+                        {device.mac_address && (
+                          <div className="flex justify-between">
+                            <span>MAC:</span>
+                            <span className="font-mono">{device.mac_address}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span>Found:</span>
+                          <span>{formatDate(device.created_at)}</span>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex space-x-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleViewResults}
-                        className="flex-1 text-xs"
-                      >
-                        View Results
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
-                      >
-                        Delete
-                      </Button>
-                    </div>
+                  ))}
+                </div>
+                {discoveredDevices.length > 6 && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate('/devices')}
+                    >
+                      View All {discoveredDevices.length} Devices →
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="surface-elevated">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/30 border-b border-border">
-                    <tr>
-                      <th className="px-6 py-3 text-left">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          onChange={() => selectAllScans(allSelected ? [] : filteredScans.map(s => s.id))}
-                          className="rounded border-border text-primary focus:ring-ring"
-                        />
-                      </th>
-                      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">Scan</th>
-                      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">Target</th>
-                      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">Type</th>
-                      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">Status</th>
-                      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">Devices</th>
-                      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">Created</th>
-                      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {filteredScans.map((scan) => (
-                      <tr key={scan.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <input
-                            type="checkbox"
-                            checked={selectedScans.includes(scan.id)}
-                            onChange={() => toggleScanSelection(scan.id)}
-                            className="rounded border-border text-primary focus:ring-ring"
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className={cn("w-8 h-8 rounded-md flex items-center justify-center text-sm", getScanTypeColor(scan.scan_type))}>
-                              {getScanTypeIcon(scan.scan_type)}
-                            </div>
-                            <div>
-                              <div className="text-body font-medium text-foreground">
-                                {scan.name}
-                              </div>
-                            </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Scan History */}
+          {scanTasks.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <span className="text-2xl">📊</span>
+                  <span>Scan History</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {scanTasks.slice(0, 5).map((scan) => (
+                    <div
+                      key={scan.id}
+                      className="flex items-center justify-between p-4 border border-border rounded-lg"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary font-bold">
+                            {scan.scan_type === 'quick' ? '⚡' : 
+                             scan.scan_type === 'comprehensive' ? '🔍' : '🎯'}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-foreground">{scan.name}</h4>
+                          <p className="text-sm text-muted-foreground font-mono">
+                            {scan.target}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <div className="text-sm font-medium text-foreground">
+                            {scan.discovered_devices || 0} devices
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-body text-foreground font-mono">{scan.target_range}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-body text-foreground capitalize">
-                            {scan.scan_type.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge className={cn("text-xs", getScanStatusColor(scan.status))}>
-                            {scan.status}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-body text-foreground">
-                            {scan.devices_found || 0}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-body text-muted-foreground">
-                            {formatDate(scan.created_at)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleViewResults}
-                              className="text-xs"
-                            >
-                              View Results
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
-                            >
-                              Delete
-                            </Button>
+                          <div className="text-xs text-muted-foreground">
+                            {formatDate(scan.start_time)}
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                        </div>
+                        <Badge className={cn("text-xs", getScanStatusColor(scan.status))}>
+                          {scan.status}
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/devices?scan_task_id=${scan.id}`)}
+                          disabled={scan.status !== 'completed'}
+                        >
+                          View Results
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {scanTasks.length > 5 && (
+                  <div className="mt-4 text-center">
+                    <Button variant="outline">
+                      View All {scanTasks.length} Scans →
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Empty State */}
+          {totalScans === 0 && totalDevices === 0 && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  Start Discovering Your Network
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Run your first network scan to discover devices, services, and security insights across your infrastructure.
+                </p>
+                <Button
+                  onClick={() => handlePresetSelect(scanPresets[0])}
+                  className="px-8"
+                >
+                  Start Quick LAN Discovery
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
-      {/* Custom Scan Modal */}
+      {/* Scan Configuration Modal */}
       <Modal
         isOpen={showScanModal}
-        onClose={() => setShowScanModal(false)}
-        title="Create Custom Scan"
+        onClose={() => {
+          setShowScanModal(false);
+          setSelectedPreset(null);
+        }}
+        title="Configure Scan"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Scan Name */}
           <div>
-            <label className="block text-body font-medium text-foreground mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Scan Name *
             </label>
             <Input
               value={scanForm.name}
               onChange={(e) => setScanForm({...scanForm, name: e.target.value})}
-              placeholder="Enter scan name"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Target Range *
-            </label>
-            <Input
-              value={scanForm.target_range}
-              onChange={(e) => setScanForm({...scanForm, target_range: e.target.value})}
-              placeholder="192.168.1.0/24 or 192.168.1.1-192.168.1.254"
+              placeholder="Enter a descriptive name for this scan"
               required
             />
           </div>
 
+          {/* Target Selection */}
           <div>
-            <label className="block text-body font-medium text-foreground mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Target Range *
+            </label>
+            {selectedPreset?.isCustom ? (
+              <div className="space-y-3">
+                <select
+                  value={scanForm.target}
+                  onChange={(e) => {
+                    setScanForm({...scanForm, target: e.target.value});
+                    if (e.target.value !== 'custom') {
+                      validateNetworkRange(e.target.value);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                >
+                  {commonRanges.map((range) => (
+                    <option key={range.value} value={range.value}>
+                      {range.label}
+                    </option>
+                  ))}
+                </select>
+                {scanForm.target === 'custom' && (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="192.168.1.0/24 or 192.168.1.1-192.168.1.254"
+                      value={scanForm.target}
+                      onChange={(e) => {
+                        setScanForm({...scanForm, target: e.target.value});
+                        // Debounce validation
+                        clearTimeout(window.validationTimeout);
+                        window.validationTimeout = setTimeout(() => {
+                          validateNetworkRange(e.target.value);
+                        }, 500);
+                      }}
+                    />
+                    {/* Network Validation Feedback */}
+                    {isValidating && (
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+                        <span>Validating network range...</span>
+                      </div>
+                    )}
+                    {networkValidation && !isValidating && (
+                      <div className={cn(
+                        "p-3 rounded-md text-sm",
+                        networkValidation.valid 
+                          ? "bg-green-50 border border-green-200 text-green-800" 
+                          : "bg-red-50 border border-red-200 text-red-800"
+                      )}>
+                        {networkValidation.valid ? (
+                          <div>
+                            <div className="font-medium">✓ {networkValidation.description}</div>
+                            {networkValidation.ip_count && (
+                              <div className="text-xs mt-1">
+                                {networkValidation.ip_count.toLocaleString()} IP addresses to scan
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="font-medium">✗ {networkValidation.error}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 bg-muted rounded-md">
+                <span className="text-sm text-muted-foreground">
+                  {selectedPreset?.target === 'auto' ? 'Auto-detect local network' : selectedPreset?.target}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Scan Type */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
               Scan Type
             </label>
             <select
@@ -801,35 +569,47 @@ const Discovery = () => {
               onChange={(e) => setScanForm({...scanForm, scan_type: e.target.value})}
               className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             >
-              <option value="lan_discovery">LAN Discovery</option>
-              <option value="port_scan">Port Scan</option>
-              <option value="service_scan">Service Scan</option>
+              <option value="quick">Quick Discovery (Fast, basic info)</option>
+              <option value="comprehensive">Comprehensive Scan (Detailed, slower)</option>
+              <option value="arp">ARP Scan (Local network only)</option>
+              <option value="snmp">SNMP Scan (Network devices)</option>
             </select>
           </div>
 
+          {/* Description */}
           <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Max Depth
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Description (Optional)
             </label>
-            <Input
-              type="number"
-              value={scanForm.max_depth}
-              onChange={(e) => setScanForm({...scanForm, max_depth: parseInt(e.target.value)})}
-              min="1"
-              max="10"
+            <textarea
+              value={scanForm.description}
+              onChange={(e) => setScanForm({...scanForm, description: e.target.value})}
+              placeholder="Add notes about this scan..."
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
+              rows={3}
             />
           </div>
-          
-          <div className="flex justify-end space-x-3 pt-4">
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button 
-              variant="secondary" 
-              onClick={() => setShowScanModal(false)}
+              variant="outline" 
+              onClick={() => {
+                setShowScanModal(false);
+                setSelectedPreset(null);
+              }}
             >
               Cancel
             </Button>
             <Button 
               onClick={handleStartScan}
-              disabled={isScanning}
+              disabled={
+                isScanning || 
+                !scanForm.name.trim() || 
+                !scanForm.target.trim() ||
+                (selectedPreset?.isCustom && scanForm.target === 'custom' && networkValidation && !networkValidation.valid)
+              }
+              className="px-6"
             >
               {isScanning ? 'Starting...' : 'Start Scan'}
             </Button>

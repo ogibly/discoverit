@@ -218,8 +218,8 @@ const OperationsManagement = () => {
   };
 
   if (!hasPermission('admin')) {
-    return (
-      <div className="h-screen bg-background flex items-center justify-center">
+  return (
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
         <Card className="w-96">
           <CardContent className="p-8 text-center">
             <div className="text-6xl mb-4">🔒</div>
@@ -236,23 +236,56 @@ const OperationsManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-heading text-foreground">Operations</h2>
-          <p className="text-caption text-muted-foreground mt-1">
-            Manage automation operations and scripts
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{operations.length}</div>
-            <div className="text-caption text-muted-foreground">Total Operations</div>
+      <div className="px-6 py-6 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Operations</h1>
+            <p className="text-body text-muted-foreground mt-1">
+              Manage automation operations and scripts
+            </p>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-success">{operations.filter(o => o.is_active).length}</div>
-            <div className="text-caption text-muted-foreground">Active</div>
+          <div className="flex items-center space-x-3">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">{operations.length}</div>
+              <div className="text-caption text-muted-foreground">Total Operations</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-success">{operations.filter(o => o.is_active).length}</div>
+              <div className="text-caption text-muted-foreground">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-warning">{operations.filter(o => !o.is_active).length}</div>
+              <div className="text-caption text-muted-foreground">Inactive</div>
+            </div>
+            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  "px-3 py-1 text-sm",
+                  viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                ⊞
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  "px-3 py-1 text-sm",
+                  viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                ☰
+              </Button>
+            </div>
+            <Button onClick={() => setShowCreateModal(true)} className="ml-2">
+              Create Operation
+            </Button>
           </div>
         </div>
       </div>
@@ -332,7 +365,10 @@ const OperationsManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Operation Statistics */}
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
+          {/* Operation Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="surface-elevated">
           <CardContent className="p-4">
@@ -725,6 +761,8 @@ const OperationsManagement = () => {
           </div>
         </div>
       </Modal>
+        </div>
+      </div>
     </div>
   );
 };

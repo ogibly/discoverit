@@ -5,14 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
+import { HelpIcon } from './ui';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const {
     assets,
+    discoveredDevices,
     activeScanTask,
-    fetchAssets
+    fetchAssets,
+    fetchDiscoveredDevices
   } = useApp();
   
   const { user } = useAuth();
@@ -20,50 +23,57 @@ const Dashboard = () => {
   
   useEffect(() => {
     fetchAssets();
-  }, [fetchAssets]);
+    fetchDiscoveredDevices();
+  }, [fetchAssets, fetchDiscoveredDevices]);
 
   // Calculate key metrics
   const totalAssets = assets.length;
-  const managedAssets = assets.filter(asset => asset && asset.is_managed).length;
-  const unmanagedAssets = totalAssets - managedAssets;
+  const totalDevices = discoveredDevices.length;
+  const newDevices = discoveredDevices.filter(device => 
+    !assets.some(asset => asset.primary_ip === device.primary_ip)
+  ).length;
   const deviceTypes = [...new Set(assets.map(asset => asset?.device_type).filter(Boolean))].length;
 
   const keyMetrics = [
     {
       label: 'Total Assets',
       value: totalAssets,
-      description: 'All discovered devices',
+      description: 'Assets in inventory',
       icon: '📊',
-      color: 'bg-info text-info-foreground',
+      color: 'bg-primary text-primary-foreground',
       change: '+12%',
-      changeType: 'positive'
+      changeType: 'positive',
+      onClick: () => navigate('/assets')
     },
     {
-      label: 'Managed Assets',
-      value: managedAssets,
-      description: 'Under management',
-      icon: '✅',
-      color: 'bg-success text-success-foreground',
+      label: 'Total Devices',
+      value: totalDevices,
+      description: 'Discovered devices',
+      icon: '📱',
+      color: 'bg-info text-info-foreground',
       change: '+8%',
-      changeType: 'positive'
+      changeType: 'positive',
+      onClick: () => navigate('/devices')
     },
     {
-      label: 'Unmanaged Assets',
-      value: unmanagedAssets,
-      description: 'Require attention',
-      icon: '⚠️',
+      label: 'New Devices',
+      value: newDevices,
+      description: 'Awaiting conversion',
+      icon: '🆕',
       color: 'bg-warning text-warning-foreground',
       change: '-3%',
-      changeType: 'negative'
+      changeType: 'negative',
+      onClick: () => navigate('/devices?filter=new')
     },
     {
       label: 'Device Types',
       value: deviceTypes,
       description: 'Unique device models',
       icon: '🔧',
-      color: 'bg-primary text-primary-foreground',
+      color: 'bg-success text-success-foreground',
       change: '+2',
-      changeType: 'positive'
+      changeType: 'positive',
+      onClick: () => navigate('/assets')
     }
   ];
 
@@ -85,25 +95,34 @@ const Dashboard = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col">
-      {/* Sophisticated Header */}
-      <div className="bg-card border-b border-border flex-shrink-0">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-heading text-foreground">Dashboard</h1>
-              <p className="text-caption text-muted-foreground mt-1">
-                Overview of your network discovery and asset management system
-              </p>
+      {/* Header */}
+      <div className="px-6 py-6 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center">
+              Dashboard
+              <HelpIcon 
+                content="Overview of your network discovery and asset management system. Click on metrics to navigate to relevant sections."
+                className="ml-2"
+                size="sm"
+              />
+            </h1>
+            <p className="text-body text-muted-foreground mt-1">
+              Real-time overview of your network discovery and asset management system
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">{totalAssets}</div>
+              <div className="text-caption text-muted-foreground">Total Assets</div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{assets.length}</div>
-                <div className="text-caption text-muted-foreground">Total Assets</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-success">{assets.filter(a => a && a.is_managed).length}</div>
-                <div className="text-caption text-muted-foreground">Managed</div>
-              </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-info">{totalDevices}</div>
+              <div className="text-caption text-muted-foreground">Total Devices</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-warning">{newDevices}</div>
+              <div className="text-caption text-muted-foreground">New Devices</div>
             </div>
           </div>
         </div>
@@ -113,17 +132,21 @@ const Dashboard = () => {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           {/* Key Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {keyMetrics.map((metric, index) => (
-              <Card key={index} className="surface-elevated hover:shadow-md transition-all duration-300 group">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center text-xl", metric.color)}>
+              <Card 
+                key={index} 
+                className="surface-elevated hover:shadow-lg transition-all duration-300 group cursor-pointer transform hover:scale-105"
+                onClick={metric.onClick}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-lg", metric.color)}>
                       {metric.icon}
                     </div>
                     <div className="text-right">
                       <div className={cn(
-                        "text-body font-medium flex items-center",
+                        "text-sm font-medium flex items-center",
                         metric.changeType === 'positive' ? 'text-success' : 
                         metric.changeType === 'negative' ? 'text-error' : 'text-muted-foreground'
                       )}>
@@ -133,10 +156,10 @@ const Dashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-body text-muted-foreground">{metric.label}</p>
-                    <p className="text-2xl font-semibold text-foreground">{metric.value}</p>
-                    <p className="text-caption text-muted-foreground">{metric.description}</p>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{metric.label}</p>
+                    <p className="text-xl font-bold text-foreground">{metric.value}</p>
+                    <p className="text-xs text-muted-foreground">{metric.description}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -259,34 +282,34 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 <Button
                   onClick={() => navigate('/discovery')}
-                  className="h-20 flex flex-col items-center justify-center space-y-2 bg-info hover:bg-info/90 text-info-foreground transition-all duration-200"
+                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-info hover:bg-info/90 text-info-foreground transition-all duration-200"
                 >
-                  <span className="text-2xl">🔍</span>
-                  <span className="text-body font-medium">Start Discovery</span>
+                  <span className="text-xl">🔍</span>
+                  <span className="text-sm font-medium">Start Discovery</span>
+                </Button>
+                <Button
+                  onClick={() => navigate('/devices')}
+                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
+                >
+                  <span className="text-xl">📱</span>
+                  <span className="text-sm font-medium">View Devices</span>
                 </Button>
                 <Button
                   onClick={() => navigate('/assets')}
-                  className="h-20 flex flex-col items-center justify-center space-y-2 bg-success hover:bg-success/90 text-success-foreground transition-all duration-200"
+                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-success hover:bg-success/90 text-success-foreground transition-all duration-200"
                 >
-                  <span className="text-2xl">📋</span>
-                  <span className="text-body font-medium">Manage Assets</span>
+                  <span className="text-xl">📋</span>
+                  <span className="text-sm font-medium">Manage Assets</span>
                 </Button>
                 <Button
-                  onClick={() => navigate('/scan-status')}
-                  className="h-20 flex flex-col items-center justify-center space-y-2 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
+                  onClick={() => navigate('/admin-settings?tab=operations')}
+                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-warning hover:bg-warning/90 text-warning-foreground transition-all duration-200"
                 >
-                  <span className="text-2xl">📊</span>
-                  <span className="text-body font-medium">Scan Status</span>
-                </Button>
-                <Button
-                  onClick={() => navigate('/operations-management')}
-                  className="h-20 flex flex-col items-center justify-center space-y-2 bg-warning hover:bg-warning/90 text-warning-foreground transition-all duration-200"
-                >
-                  <span className="text-2xl">⚙️</span>
-                  <span className="text-body font-medium">Operations</span>
+                  <span className="text-xl">⚙️</span>
+                  <span className="text-sm font-medium">Operations</span>
                 </Button>
               </div>
             </CardContent>

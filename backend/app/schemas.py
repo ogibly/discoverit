@@ -315,6 +315,7 @@ class ScanTask(ScanTaskBase):
     current_ip: Optional[str] = None
     total_ips: int
     completed_ips: int
+    discovered_devices: int = 0  # Actual devices discovered (not just IPs scanned)
     error_message: Optional[str] = None
     
     class Config:

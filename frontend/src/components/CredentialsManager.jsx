@@ -225,23 +225,29 @@ const CredentialsManager = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-heading text-foreground">Credentials</h2>
-          <p className="text-caption text-muted-foreground mt-1">
-            Manage authentication credentials for your assets
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">{credentials.length}</div>
-            <div className="text-caption text-muted-foreground">Total Credentials</div>
+      <div className="px-6 py-6 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Credentials</h1>
+            <p className="text-body text-muted-foreground mt-1">
+              Manage authentication credentials for your assets
+            </p>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-success">{credentials.filter(c => c.is_active).length}</div>
-            <div className="text-caption text-muted-foreground">Active</div>
+          <div className="flex items-center space-x-3">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">{credentials.length}</div>
+              <div className="text-caption text-muted-foreground">Total Credentials</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-success">{credentials.filter(c => c.is_active).length}</div>
+              <div className="text-caption text-muted-foreground">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-warning">{credentials.filter(c => !c.is_active).length}</div>
+              <div className="text-caption text-muted-foreground">Inactive</div>
+            </div>
           </div>
         </div>
       </div>
@@ -321,7 +327,10 @@ const CredentialsManager = () => {
         </CardContent>
       </Card>
 
-      {/* Credential Statistics */}
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
+          {/* Credential Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="surface-elevated">
           <CardContent className="p-4">
@@ -937,6 +946,8 @@ const CredentialsManager = () => {
           </div>
         </form>
       </Modal>
+        </div>
+      </div>
     </div>
   );
 };

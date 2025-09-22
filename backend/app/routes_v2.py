@@ -2,7 +2,7 @@
 Refactored API routes using service layer.
 """
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Request, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from .db_utils import get_db
 from .services.asset_service import AssetService
@@ -437,6 +437,7 @@ def get_discovered_devices(
     limit: int = Query(100, ge=1, le=1000),
     search: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    scan_task_id: Optional[int] = Query(None, description="Filter devices by scan task ID"),
     current_user: User = Depends(require_assets_read),
     db: Session = Depends(get_db)
 ):
@@ -451,6 +452,10 @@ def get_discovered_devices(
     if status:
         query = query.filter(Scan.status == status)
     
+    # Filter by scan task ID if provided
+    if scan_task_id:
+        query = query.filter(Scan.scan_task_id == scan_task_id)
+    
     # Apply search
     if search:
         query = query.filter(Scan.scan_data.contains(search))
@@ -458,8 +463,8 @@ def get_discovered_devices(
     # Get total count
     total = query.count()
     
-    # Apply pagination
-    scans = query.order_by(Scan.timestamp.desc()).offset(skip).limit(limit).all()
+    # Apply pagination and include scan_task relationship
+    scans = query.options(joinedload(Scan.scan_task)).order_by(Scan.timestamp.desc()).offset(skip).limit(limit).all()
     
     # Format results
     devices = []
@@ -490,7 +495,9 @@ def get_discovered_devices(
                 "updated_at": scan.timestamp,
                 "scan_data": scan_data,
                 "scan_status": scan.status,
-                "scan_type": scan.scan_type
+                "scan_type": scan.scan_type,
+                "scan_task_id": scan.scan_task_id,
+                "scan_task_name": scan.scan_task.name if scan.scan_task else None
             })
         except (json.JSONDecodeError, KeyError) as e:
             # Skip malformed scan data
@@ -871,6 +878,85 @@ def suggest_subnet():
     except Exception:
         pass
     return {"subnet": None}
+
+@router.post("/validate-network-range")
+def validate_network_range(
+    target: str = Query(..., description="Network range to validate (CIDR, IP range, or single IP)"),
+    db: Session = Depends(get_db)
+):
+    """Validate and analyze a network range for scanning."""
+    import ipaddress
+    import re
+    
+    try:
+        # Handle different input formats
+        if target.lower() == 'auto':
+            return {
+                "valid": True,
+                "type": "auto",
+                "description": "Auto-detect local network",
+                "ip_count": None,
+                "suggested_name": "Auto LAN Discovery"
+            }
+        
+        # Check if it's a CIDR notation
+        if '/' in target:
+            network = ipaddress.ip_network(target, strict=False)
+            return {
+                "valid": True,
+                "type": "cidr",
+                "network": str(network),
+                "ip_count": network.num_addresses,
+                "first_ip": str(network.network_address),
+                "last_ip": str(network.broadcast_address),
+                "description": f"CIDR network with {network.num_addresses} addresses",
+                "suggested_name": f"Scan {target}"
+            }
+        
+        # Check if it's an IP range (e.g., 192.168.1.1-192.168.1.254)
+        if '-' in target:
+            parts = target.split('-')
+            if len(parts) == 2:
+                start_ip = ipaddress.ip_address(parts[0].strip())
+                end_ip = ipaddress.ip_address(parts[1].strip())
+                
+                # Calculate IP count
+                ip_count = int(end_ip) - int(start_ip) + 1
+                
+                return {
+                    "valid": True,
+                    "type": "range",
+                    "start_ip": str(start_ip),
+                    "end_ip": str(end_ip),
+                    "ip_count": ip_count,
+                    "description": f"IP range with {ip_count} addresses",
+                    "suggested_name": f"Range Scan {target}"
+                }
+        
+        # Check if it's a single IP
+        try:
+            ip = ipaddress.ip_address(target)
+            return {
+                "valid": True,
+                "type": "single",
+                "ip": str(ip),
+                "ip_count": 1,
+                "description": "Single IP address",
+                "suggested_name": f"Single IP Scan {target}"
+            }
+        except ValueError:
+            pass
+        
+        return {
+            "valid": False,
+            "error": "Invalid network range format. Use CIDR (192.168.1.0/24), IP range (192.168.1.1-192.168.1.254), or single IP (192.168.1.1)"
+        }
+        
+    except Exception as e:
+        return {
+            "valid": False,
+            "error": f"Invalid network range: {str(e)}"
+        }
 
 # Scanner management routes
 @router.get("/scanners", response_model=List[schemas.ScannerConfig])

@@ -14,20 +14,20 @@ const PageHeader = ({
 }) => {
   return (
     <div className={cn("bg-card border-b border-border", className)}>
-      <div className="px-6 py-4">
+      <div className="px-6 py-6">
         <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h1 className="text-heading text-foreground">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-caption text-muted-foreground mt-1">
+              <p className="text-body text-muted-foreground mt-1">
                 {subtitle}
               </p>
             )}
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {searchPlaceholder && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

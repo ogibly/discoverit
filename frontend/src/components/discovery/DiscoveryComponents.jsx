@@ -314,7 +314,7 @@ export const SmartTargetInput = ({
               value={value}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="e.g., 192.168.1.100, 192.168.1.0/24, 192.168.1.1-50"
+              placeholder="e.g., 192.168.1.100, 192.168.1.0/24, 192.168.1.1-192.168.1.50"
               className={cn(
                 "w-full pr-10",
                 isValid && "border-success",
@@ -386,7 +386,8 @@ export const SmartTargetInput = ({
           </div>
           <div className="p-2 bg-muted/30 rounded border">
             <div className="font-medium">Range</div>
-            <div className="text-muted-foreground">192.168.1.1-50</div>
+            <div className="text-muted-foreground">192.168.1.1-192.168.1.50</div>
+            <div className="text-muted-foreground text-xs mt-1">or 192.168.1.1-50</div>
           </div>
         </div>
       </div>

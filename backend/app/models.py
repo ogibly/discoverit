@@ -317,6 +317,22 @@ class Settings(Base):
     awx_password = Column(String(255), nullable=True)  # Should be encrypted
     awx_token = Column(String(500), nullable=True)  # Should be encrypted
     
+    # AWX Job Templates
+    awx_network_discovery_template = Column(String(50), nullable=True)
+    awx_network_discovery_vars = Column(Text, nullable=True)  # JSON string
+    awx_device_config_template = Column(String(50), nullable=True)
+    awx_device_config_vars = Column(Text, nullable=True)  # JSON string
+    awx_security_template = Column(String(50), nullable=True)
+    awx_security_vars = Column(Text, nullable=True)  # JSON string
+    
+    # AWX Workflow Settings
+    awx_auto_config = Column(Boolean, default=False)
+    awx_auto_security = Column(Boolean, default=False)
+    awx_sync_inventory = Column(Boolean, default=False)
+    awx_inventory_id = Column(String(50), nullable=True)
+    awx_sync_interval = Column(Integer, default=30)  # minutes
+    awx_connected = Column(Boolean, default=False)
+    
     # Application settings
     scan_timeout = Column(Integer, default=300)  # Default scan timeout in seconds
     max_concurrent_scans = Column(Integer, default=5)

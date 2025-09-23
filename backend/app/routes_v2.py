@@ -842,6 +842,22 @@ def update_settings(settings: schemas.SettingsUpdate, db: Session = Depends(get_
     service = AssetService(db)
     return service.update_settings(settings)
 
+@router.get("/awx-settings")
+def get_awx_settings(db: Session = Depends(get_db)):
+    """Get AWX integration settings."""
+    service = AssetService(db)
+    return service.get_awx_settings()
+
+@router.put("/awx-settings")
+def update_awx_settings(
+    awx_settings: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_settings_write)
+):
+    """Update AWX integration settings."""
+    service = AssetService(db)
+    return service.update_awx_settings(awx_settings)
+
 @router.post("/awx/test-connection")
 def test_awx_connection(
     awx_config: dict,

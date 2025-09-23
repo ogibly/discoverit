@@ -407,3 +407,43 @@ class AssetService:
         self.db.commit()
         self.db.refresh(asset)
         return asset
+
+    def get_awx_settings(self) -> Dict[str, Any]:
+        """Get AWX integration settings."""
+        settings = self.get_settings()
+        if not settings:
+            return {}
+        
+        return {
+            "awx_url": getattr(settings, 'awx_url', ''),
+            "awx_username": getattr(settings, 'awx_username', ''),
+            "awx_password": getattr(settings, 'awx_password', ''),
+            "awx_token": getattr(settings, 'awx_token', ''),
+            "awx_network_discovery_template": getattr(settings, 'awx_network_discovery_template', ''),
+            "awx_network_discovery_vars": getattr(settings, 'awx_network_discovery_vars', ''),
+            "awx_device_config_template": getattr(settings, 'awx_device_config_template', ''),
+            "awx_device_config_vars": getattr(settings, 'awx_device_config_vars', ''),
+            "awx_security_template": getattr(settings, 'awx_security_template', ''),
+            "awx_security_vars": getattr(settings, 'awx_security_vars', ''),
+            "awx_auto_config": getattr(settings, 'awx_auto_config', False),
+            "awx_auto_security": getattr(settings, 'awx_auto_security', False),
+            "awx_sync_inventory": getattr(settings, 'awx_sync_inventory', False),
+            "awx_inventory_id": getattr(settings, 'awx_inventory_id', ''),
+            "awx_sync_interval": getattr(settings, 'awx_sync_interval', 30),
+            "awx_connected": getattr(settings, 'awx_connected', False)
+        }
+
+    def update_awx_settings(self, awx_settings: Dict[str, Any]) -> Dict[str, Any]:
+        """Update AWX integration settings."""
+        settings = self.get_settings()
+        if not settings:
+            settings = self.create_default_settings()
+        
+        # Update AWX settings
+        for key, value in awx_settings.items():
+            if hasattr(settings, key):
+                setattr(settings, key, value)
+        
+        self.db.commit()
+        self.db.refresh(settings)
+        return self.get_awx_settings()

@@ -114,8 +114,8 @@ const ScansTracker = ({
 
   if (isCollapsed) {
     return (
-      <div className={cn("fixed bottom-4 right-4 z-50", className)}>
-        <Card className="w-64 shadow-lg border border-primary/20 bg-background/95 backdrop-blur-sm">
+      <div className={cn("fixed bottom-4 left-4 z-30", className)}>
+        <Card className="w-72 shadow-md border border-border/50 bg-background/90 backdrop-blur-sm hover:shadow-lg hover:border-primary/30 transition-all duration-200">
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 min-w-0 flex-1">
@@ -124,9 +124,9 @@ const ScansTracker = ({
                     <Activity className="w-4 h-4 text-blue-500 animate-pulse flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-foreground truncate">Scan Running</p>
-                        <p className="text-xs text-muted-foreground">
-                          {Math.round(activeScanTask.progress || 0)}% • {formatDuration(activeScanTask.start_time)}
-                        </p>
+                      <p className="text-xs text-muted-foreground">
+                        {Math.round(activeScanTask.progress || 0)}% • {formatDuration(activeScanTask.start_time)}
+                      </p>
                     </div>
                   </>
                 ) : (
@@ -135,7 +135,7 @@ const ScansTracker = ({
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-foreground">No Active Scans</p>
                       <p className="text-xs text-muted-foreground">
-                        {recentScans.length} recent
+                        {recentScans.length} recent scans
                       </p>
                     </div>
                   </>
@@ -145,7 +145,7 @@ const ScansTracker = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsCollapsed(false)}
-                className="h-6 w-6 p-0 flex-shrink-0"
+                className="h-6 w-6 p-0 flex-shrink-0 hover:bg-accent/50"
               >
                 <ChevronUp className="w-3 h-3" />
               </Button>
@@ -157,8 +157,8 @@ const ScansTracker = ({
   }
 
   return (
-    <div className={cn("fixed bottom-4 right-4 z-50 w-96", className)}>
-      <Card className="shadow-xl border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
+    <div className={cn("fixed bottom-4 left-4 z-30 w-96", className)}>
+      <Card className="shadow-lg border border-border/50 bg-background/90 backdrop-blur-sm">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center space-x-2">

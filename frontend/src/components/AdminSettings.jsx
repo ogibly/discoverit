@@ -82,7 +82,7 @@ const AdminSettings = () => {
       fetchSettings();
       fetchUsers();
       fetchRoles();
-      fetchScannerConfigs();
+      fetchScannerConfigsAPI();
     }
   }, [hasPermission]);
 

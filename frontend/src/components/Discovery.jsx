@@ -17,7 +17,7 @@ import {
 import ScansTracker from './discovery/ScansTracker';
 import ScanResultsModal from './discovery/ScanResultsModal';
 import ScanNotifications from './discovery/ScanNotifications';
-import { useScanUpdates } from '../../hooks/useScanUpdates';
+import { useScanUpdates } from '../hooks/useScanUpdates';
 
 const Discovery = () => {
   const {

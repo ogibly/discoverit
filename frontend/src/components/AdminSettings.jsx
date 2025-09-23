@@ -608,12 +608,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">Auto Discovery</label>
                       <p className="text-xs text-muted-foreground">Automatically discover new devices on the network</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.auto_discovery_enabled}
-                      onChange={(e) => setSettings({...settings, auto_discovery_enabled: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.auto_discovery_enabled}
+                        onChange={(e) => setSettings({...settings, auto_discovery_enabled: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -621,12 +624,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">Smart Scheduling</label>
                       <p className="text-xs text-muted-foreground">Schedule scans during low-activity periods</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.smart_scheduling || false}
-                      onChange={(e) => setSettings({...settings, smart_scheduling: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.smart_scheduling || false}
+                        onChange={(e) => setSettings({...settings, smart_scheduling: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                 </div>
               </CardContent>
@@ -650,12 +656,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">Email Notifications</label>
                       <p className="text-xs text-muted-foreground">Send scan completion alerts via email</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.email_notifications}
-                      onChange={(e) => setSettings({...settings, email_notifications: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.email_notifications}
+                        onChange={(e) => setSettings({...settings, email_notifications: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -663,12 +672,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">Critical Device Alerts</label>
                       <p className="text-xs text-muted-foreground">Alert when critical devices go offline</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.critical_device_alerts || false}
-                      onChange={(e) => setSettings({...settings, critical_device_alerts: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.critical_device_alerts || false}
+                        onChange={(e) => setSettings({...settings, critical_device_alerts: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -676,12 +688,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">New Device Discovery</label>
                       <p className="text-xs text-muted-foreground">Notify when new devices are discovered</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.new_device_notifications || false}
-                      onChange={(e) => setSettings({...settings, new_device_notifications: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.new_device_notifications || false}
+                        onChange={(e) => setSettings({...settings, new_device_notifications: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                 </div>
               </CardContent>
@@ -1131,12 +1146,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">Auto-trigger Configuration</label>
                       <p className="text-xs text-muted-foreground">Automatically run device configuration after discovery</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.awx_auto_config || false}
-                      onChange={(e) => setSettings({...settings, awx_auto_config: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.awx_auto_config || false}
+                        onChange={(e) => setSettings({...settings, awx_auto_config: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -1144,12 +1162,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">Security Assessment on New Devices</label>
                       <p className="text-xs text-muted-foreground">Run security scans on newly discovered devices</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.awx_auto_security || false}
-                      onChange={(e) => setSettings({...settings, awx_auto_security: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.awx_auto_security || false}
+                        onChange={(e) => setSettings({...settings, awx_auto_security: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -1157,12 +1178,15 @@ const AdminSettings = () => {
                       <label className="text-body font-medium text-foreground">Inventory Synchronization</label>
                       <p className="text-xs text-muted-foreground">Sync discovered devices to AWX inventory</p>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.awx_sync_inventory || false}
-                      onChange={(e) => setSettings({...settings, awx_sync_inventory: e.target.checked})}
-                      className="rounded border-border text-primary focus:ring-ring"
-                    />
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.awx_sync_inventory || false}
+                        onChange={(e) => setSettings({...settings, awx_sync_inventory: e.target.checked})}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                   </div>
                 </div>
 

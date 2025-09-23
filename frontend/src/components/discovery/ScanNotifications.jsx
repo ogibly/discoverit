@@ -80,6 +80,7 @@ const ScanNotifications = ({
           break;
         case 'running':
           // Only show running notification if it's a new scan
+          const lastNotification = notifications[notifications.length - 1];
           if (!lastNotification || lastNotification.scanId !== activeScanTask.id) {
             notification = {
               id: Date.now(),

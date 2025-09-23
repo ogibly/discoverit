@@ -72,7 +72,10 @@ const Discovery = () => {
   };
 
   const checkScannerForTarget = (target) => {
-    if (!target || !availableScanners.length) return null;
+    if (!target || !availableScanners.length) {
+      // If no scanners available, this should be handled elsewhere
+      return null;
+    }
 
     // Find satellite scanner for the target range
     const satelliteScanner = availableScanners.find(scanner => 
@@ -86,12 +89,12 @@ const Discovery = () => {
       setScannerSuggestion(null);
       return satelliteScanner;
     } else {
-      // Use default scanner and show suggestion
+      // Always use default scanner as fallback
       const defaultScanner = availableScanners.find(s => s.is_default) || availableScanners[0];
       setSelectedScanner(defaultScanner);
       setScannerSuggestion({
         type: 'info',
-        message: 'Consider setting up a dedicated scanner for this IP range to improve scan results next time.',
+        message: 'Using default scanner. For improved scan capabilities and accuracy, consider setting up a dedicated satellite scanner for this IP range.',
         action: 'Setup Scanner'
       });
       return defaultScanner;
@@ -130,8 +133,9 @@ const Discovery = () => {
   };
 
   const handleStep3 = () => {
+    // Scanner should always be available due to fallback logic
     if (!selectedScanner) {
-      alert('No scanner available. Please check your scanner configuration.');
+      console.error('No scanner selected - this should not happen');
       return;
     }
     setCurrentStep(4);
@@ -232,64 +236,72 @@ const Discovery = () => {
       case 3:
         return (
           <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Scanner Check</h2>
-              <p className="text-muted-foreground">System is checking for optimal scanner</p>
-            </div>
-
             {isCheckingScanner ? (
-              <div className="flex items-center justify-center space-x-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="text-muted-foreground">Analyzing network topology...</span>
-              </div>
+              <>
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">Scanner Check</h2>
+                  <p className="text-muted-foreground">System is checking for optimal scanner</p>
+                </div>
+                <div className="flex items-center justify-center space-x-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="text-muted-foreground">Analyzing network topology...</span>
+                </div>
+              </>
             ) : selectedScanner ? (
-              <div className="space-y-4">
-                <Card className={cn(
-                  "border-2",
-                  selectedScanner.is_default ? "border-warning/50 bg-warning/5" : "border-success/50 bg-success/5"
-                )}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-2xl">
-                        {selectedScanner.is_default ? "🔄" : "🛰️"}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {selectedScanner.is_default ? "Default Scanner" : "Satellite Scanner"}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedScanner.name} • {selectedScanner.subnets?.length || 0} networks
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {scannerSuggestion && (
-                  <Card className="border-info/50 bg-info/5">
+              <>
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">Scanner Selected</h2>
+                  <p className="text-muted-foreground">Optimal scanner found for your target</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <Card className={cn(
+                    "border-2",
+                    selectedScanner.is_default ? "border-warning/50 bg-warning/5" : "border-success/50 bg-success/5"
+                  )}>
                     <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <div className="text-info text-xl">💡</div>
+                      <div className="flex items-center space-x-3">
+                        <div className="text-2xl">
+                          {selectedScanner.is_default ? "🔄" : "🛰️"}
+                        </div>
                         <div>
-                          <h4 className="font-medium text-info">Suggestion</h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {scannerSuggestion.message}
+                          <h3 className="font-semibold text-foreground">
+                            {selectedScanner.is_default ? "Default Scanner" : "Satellite Scanner"}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedScanner.name} • {selectedScanner.subnets?.length || 0} networks
                           </p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                )}
 
-                <div className="flex justify-between">
-                  <Button variant="outline" onClick={goBack}>
-                    ← Back
-                  </Button>
-                  <Button onClick={handleStep3} size="lg">
-                    Continue with {selectedScanner.is_default ? "Default" : "Satellite"} Scanner →
-                  </Button>
+                  {scannerSuggestion && (
+                    <Card className="border-info/50 bg-info/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="text-info text-xl">💡</div>
+                          <div>
+                            <h4 className="font-medium text-info">Improvement Suggestion</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {scannerSuggestion.message}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <div className="flex justify-between">
+                    <Button variant="outline" onClick={goBack}>
+                      ← Back
+                    </Button>
+                    <Button onClick={handleStep3} size="lg">
+                      Continue with {selectedScanner.is_default ? "Default" : "Satellite"} Scanner →
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </>
             ) : (
               <div className="text-center py-8">
                 <div className="text-4xl mb-4">⚠️</div>

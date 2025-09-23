@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Operations from './Operations'; // Import the existing Operations component
+import OperationsManagement from './OperationsManagement'; // Import the existing Operations component
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -144,7 +144,7 @@ export default function Settings() {
       )}
 
       {activeSection === 'operations' && (
-        <Operations />
+        <OperationsManagement />
       )}
     </div>
   );

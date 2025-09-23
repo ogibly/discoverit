@@ -968,6 +968,7 @@ def validate_network_range(
 
 # Scanner management routes
 @router.get("/scanners", response_model=List[schemas.ScannerConfig])
+@router.get("/scanner-configs", response_model=List[schemas.ScannerConfig])
 def list_scanner_configs(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -985,6 +986,7 @@ def list_scanner_configs(
     )
 
 @router.post("/scanners", response_model=schemas.ScannerConfig)
+@router.post("/scanner-configs", response_model=schemas.ScannerConfig)
 def create_scanner_config(config: schemas.ScannerConfigCreate, db: Session = Depends(get_db)):
     """Create a new scanner configuration."""
     service = ScannerService(db)
@@ -1009,6 +1011,7 @@ def get_default_scanner(db: Session = Depends(get_db)):
     return config
 
 @router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)
+@router.get("/scanner-configs/{config_id}", response_model=schemas.ScannerConfig)
 def get_scanner_config(config_id: int, db: Session = Depends(get_db)):
     """Get a scanner configuration by ID."""
     service = ScannerService(db)
@@ -1018,6 +1021,7 @@ def get_scanner_config(config_id: int, db: Session = Depends(get_db)):
     return config
 
 @router.put("/scanners/{config_id}", response_model=schemas.ScannerConfig)
+@router.put("/scanner-configs/{config_id}", response_model=schemas.ScannerConfig)
 def update_scanner_config(
     config_id: int,
     config: schemas.ScannerConfigUpdate,
@@ -1034,6 +1038,7 @@ def update_scanner_config(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/scanners/{config_id}")
+@router.delete("/scanner-configs/{config_id}")
 def delete_scanner_config(config_id: int, db: Session = Depends(get_db)):
     """Delete a scanner configuration."""
     service = ScannerService(db)

@@ -72,6 +72,12 @@ const OperationsManagement = () => {
     createModal.openModal();
   };
   
+  // Form state aliases for consistency with component usage
+  const operationForm = formState.form;
+  const setOperationForm = (updates) => {
+    formState.updateForm(updates);
+  };
+  
   const initialForm = {
     name: '',
     description: '',

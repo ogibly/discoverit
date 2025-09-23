@@ -40,6 +40,26 @@ const OperationsManagement = () => {
   const createModal = useModalState();
   const editModal = useModalState();
   
+  const initialForm = {
+    name: '',
+    description: '',
+    operation_type: 'awx_playbook',
+    awx_playbook_name: '',
+    awx_extra_vars: {},
+    api_url: '',
+    api_method: 'POST',
+    api_headers: {},
+    api_body: {},
+    script_path: '',
+    script_args: {},
+    is_active: true
+  };
+  
+  const formState = useFormState(initialForm, () => {
+    createModal.closeModal();
+    editModal.closeModal();
+  });
+  
   // Aliases for consistency with component usage
   const selectedOperations = selectedItems;
   const filteredOperations = filteredAndSortedItems();
@@ -77,26 +97,6 @@ const OperationsManagement = () => {
   const setOperationForm = (updates) => {
     formState.updateForm(updates);
   };
-  
-  const initialForm = {
-    name: '',
-    description: '',
-    operation_type: 'awx_playbook',
-    awx_playbook_name: '',
-    awx_extra_vars: {},
-    api_url: '',
-    api_method: 'POST',
-    api_headers: {},
-    api_body: {},
-    script_path: '',
-    script_args: {},
-    is_active: true
-  };
-  
-  const formState = useFormState(initialForm, () => {
-    createModal.closeModal();
-    editModal.closeModal();
-  });
   
   // Create CRUD operations
   const crudOps = createCrudOperations(api, 'operations');

@@ -11,7 +11,8 @@ import {
   TargetOption, 
   IntensityOption, 
   LiveProgressTracker, 
-  ResultsView 
+  ResultsView,
+  SmartTargetInput
 } from './discovery/DiscoveryComponents';
 
 const Discovery = () => {
@@ -218,60 +219,14 @@ const Discovery = () => {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Select Target</h2>
-              <p className="text-muted-foreground">Choose what to scan from your IP scope</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <TargetOption
-                title="Single IP"
-                description="192.168.1.100"
-                icon="🎯"
-                onClick={() => handleStep2('192.168.1.100')}
-              />
-              <TargetOption
-                title="Custom Range"
-                description="192.168.1.1-192.168.1.50"
-                icon="📊"
-                onClick={() => handleStep2('192.168.1.1-192.168.1.50')}
-              />
-              <TargetOption
-                title="Full Subnet"
-                description="192.168.1.0/24"
-                icon="🌐"
-                onClick={() => handleStep2('192.168.1.0/24')}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-foreground">Or enter custom target:</label>
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="e.g., 192.168.1.0/24, 10.0.0.1-10.0.0.100"
-                  value={scanConfig.target}
-                  onChange={(e) => setScanConfig(prev => ({ ...prev, target: e.target.value }))}
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={() => handleStep2(scanConfig.target)}
-                  disabled={!scanConfig.target.trim() || isCheckingScanner}
-                >
-                  {isCheckingScanner ? 'Checking...' : 'Continue →'}
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={goBack} disabled={isCheckingScanner}>
-                ← Back
-              </Button>
-              <div className="text-sm text-muted-foreground">
-                Step 2 of 7
-              </div>
-            </div>
-          </div>
+          <SmartTargetInput 
+            value={scanConfig.target}
+            onChange={(value) => setScanConfig(prev => ({ ...prev, target: value }))}
+            onContinue={() => handleStep2(scanConfig.target)}
+            onBack={goBack}
+            isChecking={isCheckingScanner}
+            availableScanners={availableScanners}
+          />
         );
 
       case 3:
@@ -478,14 +433,6 @@ const Discovery = () => {
       <PageHeader
         title="Network Discovery"
         subtitle="Discover and analyze devices in your network"
-        actions={[
-          {
-            label: "New Scan",
-            icon: "🔍",
-            onClick: () => setCurrentStep(1),
-            variant: "default"
-          }
-        ]}
       />
 
       <div className="flex-1 overflow-auto p-6">

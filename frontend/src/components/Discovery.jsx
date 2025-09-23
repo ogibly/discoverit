@@ -40,6 +40,7 @@ const Discovery = () => {
   const [scannerSuggestion, setScannerSuggestion] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [isCheckingScanner, setIsCheckingScanner] = useState(false);
 
   // Step definitions
   const steps = [
@@ -112,12 +113,26 @@ const Discovery = () => {
   };
 
   const handleStep2 = (target) => {
+    if (!target || !target.trim()) {
+      alert('Please enter a valid target IP or range');
+      return;
+    }
     setScanConfig(prev => ({ ...prev, target }));
-    const scanner = checkScannerForTarget(target);
-    setCurrentStep(3);
+    setIsCheckingScanner(true);
+    
+    // Simulate scanner check delay for better UX
+    setTimeout(() => {
+      const scanner = checkScannerForTarget(target);
+      setIsCheckingScanner(false);
+      setCurrentStep(3);
+    }, 1500);
   };
 
   const handleStep3 = () => {
+    if (!selectedScanner) {
+      alert('No scanner available. Please check your scanner configuration.');
+      return;
+    }
     setCurrentStep(4);
   };
 
@@ -126,7 +141,25 @@ const Discovery = () => {
     setCurrentStep(5);
   };
 
+  // Navigation helpers
+  const goToStep = (step) => {
+    if (step >= 1 && step <= 7) {
+      setCurrentStep(step);
+    }
+  };
+
+  const goBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleStep5 = async () => {
+    if (!scanConfig.target || !selectedScanner) {
+      alert('Please complete all required fields before submitting the scan.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const scanTaskData = {
@@ -142,6 +175,7 @@ const Discovery = () => {
       setShowResults(true);
     } catch (error) {
       console.error('Failed to start scan:', error);
+      alert(`Failed to start scan: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -222,10 +256,19 @@ const Discovery = () => {
                 />
                 <Button 
                   onClick={() => handleStep2(scanConfig.target)}
-                  disabled={!scanConfig.target.trim()}
+                  disabled={!scanConfig.target.trim() || isCheckingScanner}
                 >
-                  Continue
+                  {isCheckingScanner ? 'Checking...' : 'Continue →'}
                 </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={goBack} disabled={isCheckingScanner}>
+                ← Back
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                Step 2 of 7
               </div>
             </div>
           </div>
@@ -239,12 +282,12 @@ const Discovery = () => {
               <p className="text-muted-foreground">System is checking for optimal scanner</p>
             </div>
 
-            <div className="flex items-center justify-center space-x-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="text-muted-foreground">Analyzing network topology...</span>
-            </div>
-
-            {selectedScanner && (
+            {isCheckingScanner ? (
+              <div className="flex items-center justify-center space-x-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="text-muted-foreground">Analyzing network topology...</span>
+              </div>
+            ) : selectedScanner ? (
               <div className="space-y-4">
                 <Card className={cn(
                   "border-2",
@@ -283,11 +326,27 @@ const Discovery = () => {
                   </Card>
                 )}
 
-                <div className="text-center">
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={goBack}>
+                    ← Back
+                  </Button>
                   <Button onClick={handleStep3} size="lg">
-                    Continue with {selectedScanner.is_default ? "Default" : "Satellite"} Scanner
+                    Continue with {selectedScanner.is_default ? "Default" : "Satellite"} Scanner →
                   </Button>
                 </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">⚠️</div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  No Scanner Available
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Please check your scanner configuration and try again.
+                </p>
+                <Button variant="outline" onClick={goBack}>
+                  ← Back to Target Selection
+                </Button>
               </div>
             )}
           </div>
@@ -327,6 +386,19 @@ const Discovery = () => {
                 onClick={() => handleStep4('comprehensive')}
               />
             </div>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={goBack}>
+                ← Back
+              </Button>
+              <Button 
+                onClick={() => handleStep4(scanConfig.intensity)} 
+                disabled={!scanConfig.intensity}
+                size="lg"
+              >
+                Continue →
+              </Button>
+            </div>
           </div>
         );
 
@@ -359,14 +431,17 @@ const Discovery = () => {
               </CardContent>
             </Card>
 
-            <div className="text-center">
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={goBack} disabled={isSubmitting}>
+                ← Back
+              </Button>
               <Button 
                 onClick={handleStep5} 
                 size="lg" 
                 disabled={isSubmitting}
                 className="px-8"
               >
-                {isSubmitting ? 'Starting Scan...' : 'Launch Discovery Scan'}
+                {isSubmitting ? 'Starting Scan...' : 'Launch Discovery Scan →'}
               </Button>
             </div>
           </div>

@@ -35,6 +35,23 @@ const OperationsManagement = () => {
     setSelectedItems,
     clearSelection
   } = listState;
+  
+  // Alias for consistency with component usage
+  const selectedOperations = selectedItems;
+  
+  // Selection handlers
+  const toggleOperationSelection = (operationId) => {
+    if (selectedItems.includes(operationId)) {
+      setSelectedItems(selectedItems.filter(id => id !== operationId));
+    } else {
+      setSelectedItems([...selectedItems, operationId]);
+    }
+  };
+  
+  const selectAllOperations = (operationIds) => {
+    setSelectedItems(operationIds);
+  };
+  
   const createModal = useModalState();
   const editModal = useModalState();
   

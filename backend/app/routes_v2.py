@@ -46,6 +46,17 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Check IP restrictions
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    from .services.ldap_service import IPRangeService
+    ip_service = IPRangeService(db)
+    
+    if not ip_service.check_user_ip_access(user, client_ip):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied from IP address {client_ip}",
+        )
+    
     # Create access token
     access_token = auth_service.create_access_token(user.id)
     
@@ -1238,6 +1249,212 @@ def preview_ansible_inventory(
             "assets_without_credentials": len([a for a in assets if a.id not in credentials or not credentials[a.id]])
         }
     }
+
+# LDAP Configuration routes
+@router.get("/ldap/configs", response_model=List[schemas.LDAPConfig])
+def list_ldap_configs(
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """List LDAP configurations."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    return service.get_ldap_configs(skip=skip, limit=limit, is_active=is_active)
+
+@router.post("/ldap/configs", response_model=schemas.LDAPConfig)
+def create_ldap_config(
+    config: schemas.LDAPConfigCreate,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Create a new LDAP configuration."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    return service.create_ldap_config(config, current_user.id)
+
+@router.get("/ldap/configs/{config_id}", response_model=schemas.LDAPConfig)
+def get_ldap_config(
+    config_id: int,
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Get LDAP configuration by ID."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    config = service.get_ldap_config(config_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="LDAP configuration not found")
+    return config
+
+@router.put("/ldap/configs/{config_id}", response_model=schemas.LDAPConfig)
+def update_ldap_config(
+    config_id: int,
+    config: schemas.LDAPConfigUpdate,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Update LDAP configuration."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    updated_config = service.update_ldap_config(config_id, config)
+    if not updated_config:
+        raise HTTPException(status_code=404, detail="LDAP configuration not found")
+    return updated_config
+
+@router.delete("/ldap/configs/{config_id}")
+def delete_ldap_config(
+    config_id: int,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Delete LDAP configuration."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    if not service.delete_ldap_config(config_id):
+        raise HTTPException(status_code=404, detail="LDAP configuration not found")
+
+@router.post("/ldap/configs/{config_id}/test")
+def test_ldap_connection(
+    config_id: int,
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Test LDAP connection."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    config = service.get_ldap_config(config_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="LDAP configuration not found")
+    
+    result = service.test_connection(config)
+    return result
+
+@router.post("/ldap/configs/{config_id}/sync")
+def sync_ldap_users(
+    config_id: int,
+    sync_type: str = "incremental",
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Synchronize users from LDAP."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    config = service.get_ldap_config(config_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="LDAP configuration not found")
+    
+    if sync_type not in ["full", "incremental"]:
+        raise HTTPException(status_code=400, detail="Invalid sync type. Must be 'full' or 'incremental'")
+    
+    result = service.sync_users(config, sync_type)
+    return result
+
+@router.get("/ldap/sync-logs", response_model=List[schemas.LDAPSyncLog])
+def get_ldap_sync_logs(
+    config_id: Optional[int] = None,
+    limit: int = 50,
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Get LDAP sync logs."""
+    from .services.ldap_service import LDAPService
+    service = LDAPService(db)
+    return service.get_sync_logs(config_id=config_id, limit=limit)
+
+# IP Range Management routes
+@router.get("/ip-ranges", response_model=List[schemas.IPRange])
+def list_ip_ranges(
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """List IP ranges."""
+    from .services.ldap_service import IPRangeService
+    service = IPRangeService(db)
+    return service.get_ip_ranges(skip=skip, limit=limit, is_active=is_active)
+
+@router.post("/ip-ranges", response_model=schemas.IPRange)
+def create_ip_range(
+    ip_range: schemas.IPRangeCreate,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Create a new IP range."""
+    from .services.ldap_service import IPRangeService
+    service = IPRangeService(db)
+    return service.create_ip_range(ip_range.dict(), current_user.id)
+
+@router.get("/ip-ranges/{range_id}", response_model=schemas.IPRange)
+def get_ip_range(
+    range_id: int,
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Get IP range by ID."""
+    from .services.ldap_service import IPRangeService
+    service = IPRangeService(db)
+    ip_range = service.get_ip_range(range_id)
+    if not ip_range:
+        raise HTTPException(status_code=404, detail="IP range not found")
+    return ip_range
+
+@router.put("/ip-ranges/{range_id}", response_model=schemas.IPRange)
+def update_ip_range(
+    range_id: int,
+    ip_range: schemas.IPRangeUpdate,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Update IP range."""
+    from .services.ldap_service import IPRangeService
+    service = IPRangeService(db)
+    updated_range = service.update_ip_range(range_id, ip_range.dict(exclude_unset=True))
+    if not updated_range:
+        raise HTTPException(status_code=404, detail="IP range not found")
+    return updated_range
+
+@router.delete("/ip-ranges/{range_id}")
+def delete_ip_range(
+    range_id: int,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Delete IP range."""
+    from .services.ldap_service import IPRangeService
+    service = IPRangeService(db)
+    if not service.delete_ip_range(range_id):
+        raise HTTPException(status_code=404, detail="IP range not found")
+
+@router.post("/users/{user_id}/ip-ranges/{range_id}")
+def assign_ip_range_to_user(
+    user_id: int,
+    range_id: int,
+    current_user: User = Depends(require_users_write),
+    db: Session = Depends(get_db)
+):
+    """Assign IP range to user."""
+    from .services.ldap_service import IPRangeService
+    service = IPRangeService(db)
+    if not service.assign_ip_range_to_user(user_id, range_id, current_user.id):
+        raise HTTPException(status_code=404, detail="User or IP range not found")
+
+@router.delete("/users/{user_id}/ip-ranges/{range_id}")
+def remove_ip_range_from_user(
+    user_id: int,
+    range_id: int,
+    current_user: User = Depends(require_users_write),
+    db: Session = Depends(get_db)
+):
+    """Remove IP range from user."""
+    from .services.ldap_service import IPRangeService
+    service = IPRangeService(db)
+    if not service.remove_ip_range_from_user(user_id, range_id):
+        raise HTTPException(status_code=404, detail="User or IP range not found")
 
 @router.get("/health")
 def health_check():

@@ -475,6 +475,9 @@ class UserBase(BaseModel):
     full_name: Optional[str] = Field(None, max_length=255)
     is_active: bool = True
     role_id: Optional[int] = None
+    auth_source: str = Field(default="local", pattern="^(local|ldap)$")
+    ldap_dn: Optional[str] = None
+    ldap_uid: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=100)
@@ -615,6 +618,147 @@ class Notification(NotificationBase):
     created_at: datetime
     scan_task_id: Optional[int] = None
     job_id: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+# LDAP Configuration Schemas
+class LDAPConfigBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+    server_uri: str = Field(..., min_length=1, max_length=500)
+    use_ssl: bool = False
+    use_tls: bool = True
+    verify_cert: bool = True
+    bind_dn: Optional[str] = None
+    bind_password: Optional[str] = None
+    user_base_dn: str = Field(..., min_length=1, max_length=500)
+    user_search_filter: str = Field(default="(objectClass=person)", max_length=500)
+    user_search_scope: str = Field(default="subtree", pattern="^(base|onelevel|subtree)$")
+    username_attribute: str = Field(default="sAMAccountName", max_length=100)
+    email_attribute: str = Field(default="mail", max_length=100)
+    full_name_attribute: str = Field(default="displayName", max_length=100)
+    first_name_attribute: str = Field(default="givenName", max_length=100)
+    last_name_attribute: str = Field(default="sn", max_length=100)
+    group_base_dn: Optional[str] = None
+    group_search_filter: str = Field(default="(objectClass=group)", max_length=500)
+    group_member_attribute: str = Field(default="member", max_length=100)
+    user_member_attribute: str = Field(default="memberOf", max_length=100)
+    role_mapping: Optional[Dict[str, str]] = None
+    connection_timeout: int = Field(default=10, ge=1, le=300)
+    read_timeout: int = Field(default=10, ge=1, le=300)
+    max_connections: int = Field(default=10, ge=1, le=100)
+    retry_attempts: int = Field(default=3, ge=1, le=10)
+    auto_sync_enabled: bool = True
+    sync_interval_minutes: int = Field(default=60, ge=1, le=1440)
+    is_active: bool = True
+    is_default: bool = False
+
+class LDAPConfigCreate(LDAPConfigBase):
+    pass
+
+class LDAPConfigUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    server_uri: Optional[str] = Field(None, min_length=1, max_length=500)
+    use_ssl: Optional[bool] = None
+    use_tls: Optional[bool] = None
+    verify_cert: Optional[bool] = None
+    bind_dn: Optional[str] = None
+    bind_password: Optional[str] = None
+    user_base_dn: Optional[str] = Field(None, min_length=1, max_length=500)
+    user_search_filter: Optional[str] = Field(None, max_length=500)
+    user_search_scope: Optional[str] = Field(None, pattern="^(base|onelevel|subtree)$")
+    username_attribute: Optional[str] = Field(None, max_length=100)
+    email_attribute: Optional[str] = Field(None, max_length=100)
+    full_name_attribute: Optional[str] = Field(None, max_length=100)
+    first_name_attribute: Optional[str] = Field(None, max_length=100)
+    last_name_attribute: Optional[str] = Field(None, max_length=100)
+    group_base_dn: Optional[str] = None
+    group_search_filter: Optional[str] = Field(None, max_length=500)
+    group_member_attribute: Optional[str] = Field(None, max_length=100)
+    user_member_attribute: Optional[str] = Field(None, max_length=100)
+    role_mapping: Optional[Dict[str, str]] = None
+    connection_timeout: Optional[int] = Field(None, ge=1, le=300)
+    read_timeout: Optional[int] = Field(None, ge=1, le=300)
+    max_connections: Optional[int] = Field(None, ge=1, le=100)
+    retry_attempts: Optional[int] = Field(None, ge=1, le=10)
+    auto_sync_enabled: Optional[bool] = None
+    sync_interval_minutes: Optional[int] = Field(None, ge=1, le=1440)
+    is_active: Optional[bool] = None
+    is_default: Optional[bool] = None
+
+class LDAPConfig(LDAPConfigBase):
+    id: int
+    last_sync: Optional[datetime] = None
+    sync_status: str
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+# IP Range Schemas
+class IPRangeBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    ip_range: str = Field(..., min_length=1, max_length=100)
+    ip_start: Optional[str] = None
+    ip_end: Optional[str] = None
+    range_type: str = Field(default="cidr", pattern="^(cidr|range|single)$")
+    is_restrictive: bool = True
+    priority: int = Field(default=0, ge=0, le=1000)
+    is_active: bool = True
+
+class IPRangeCreate(IPRangeBase):
+    pass
+
+class IPRangeUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    ip_range: Optional[str] = Field(None, min_length=1, max_length=100)
+    ip_start: Optional[str] = None
+    ip_end: Optional[str] = None
+    range_type: Optional[str] = Field(None, pattern="^(cidr|range|single)$")
+    is_restrictive: Optional[bool] = None
+    priority: Optional[int] = Field(None, ge=0, le=1000)
+    is_active: Optional[bool] = None
+
+class IPRange(IPRangeBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+# LDAP Sync Log Schema
+class LDAPSyncLog(BaseModel):
+    id: int
+    ldap_config_id: int
+    sync_type: str
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    status: str
+    users_created: int
+    users_updated: int
+    users_deactivated: int
+    groups_processed: int
+    errors_count: int
+    error_message: Optional[str] = None
+    error_details: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        from_attributes = True
+
+# User IP Range Assignment Schema
+class UserIPRangeAssignment(BaseModel):
+    user_id: int
+    ip_range_id: int
+    granted_at: datetime
+    granted_by: Optional[int] = None
     
     class Config:
         from_attributes = True

@@ -370,9 +370,14 @@ class User(Base):
     full_name = Column(String(255), nullable=True)
     
     # Authentication
-    hashed_password = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=True)  # Nullable for LDAP users
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
+    
+    # Authentication source
+    auth_source = Column(String(20), default='local')  # 'local' or 'ldap'
+    ldap_dn = Column(String(500), nullable=True)  # LDAP Distinguished Name
+    ldap_uid = Column(String(100), nullable=True)  # LDAP UID attribute
     
     # Role relationship
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
@@ -381,6 +386,7 @@ class User(Base):
     # Session management
     last_login = Column(DateTime, nullable=True)
     login_count = Column(Integer, default=0)
+    last_ldap_sync = Column(DateTime, nullable=True)
     
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -388,6 +394,14 @@ class User(Base):
     
     # User preferences
     preferences = Column(JSON, nullable=True)  # User-specific settings
+    
+    # IP Range restrictions
+    allowed_ip_ranges = relationship(
+        "IPRange", 
+        secondary="user_ip_ranges", 
+        back_populates="allowed_users",
+        foreign_keys="[user_ip_ranges.c.user_id, user_ip_ranges.c.ip_range_id]"
+    )
 
 class UserSession(Base):
     __tablename__ = "user_sessions"
@@ -447,6 +461,140 @@ class Credential(Base):
     
     # Relationships
     creator = relationship("User")
+
+# LDAP Configuration
+class LDAPConfig(Base):
+    __tablename__ = "ldap_configs"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    
+    # LDAP Server Configuration
+    server_uri = Column(String(500), nullable=False)  # ldap://server:389 or ldaps://server:636
+    use_ssl = Column(Boolean, default=False)
+    use_tls = Column(Boolean, default=True)
+    verify_cert = Column(Boolean, default=True)
+    
+    # Authentication
+    bind_dn = Column(String(500), nullable=True)  # Service account DN
+    bind_password = Column(String(500), nullable=True)  # Encrypted service account password
+    
+    # User Search Configuration
+    user_base_dn = Column(String(500), nullable=False)  # Base DN for user search
+    user_search_filter = Column(String(500), default="(objectClass=person)")
+    user_search_scope = Column(String(20), default="subtree")  # base, onelevel, subtree
+    
+    # User Attribute Mapping
+    username_attribute = Column(String(100), default="sAMAccountName")  # or uid, cn, etc.
+    email_attribute = Column(String(100), default="mail")
+    full_name_attribute = Column(String(100), default="displayName")
+    first_name_attribute = Column(String(100), default="givenName")
+    last_name_attribute = Column(String(100), default="sn")
+    
+    # Group Configuration
+    group_base_dn = Column(String(500), nullable=True)
+    group_search_filter = Column(String(500), default="(objectClass=group)")
+    group_member_attribute = Column(String(100), default="member")
+    user_member_attribute = Column(String(100), default="memberOf")
+    
+    # Role Mapping
+    role_mapping = Column(JSON, nullable=True)  # Map LDAP groups to application roles
+    
+    # Connection Settings
+    connection_timeout = Column(Integer, default=10)
+    read_timeout = Column(Integer, default=10)
+    max_connections = Column(Integer, default=10)
+    retry_attempts = Column(Integer, default=3)
+    
+    # Sync Settings
+    auto_sync_enabled = Column(Boolean, default=True)
+    sync_interval_minutes = Column(Integer, default=60)
+    last_sync = Column(DateTime, nullable=True)
+    sync_status = Column(String(20), default="pending")  # pending, running, success, error
+    
+    # Status
+    is_active = Column(Boolean, default=True)
+    is_default = Column(Boolean, default=False)
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User")
+
+# IP Range Management
+class IPRange(Base):
+    __tablename__ = "ip_ranges"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    
+    # IP Range Definition
+    ip_range = Column(String(100), nullable=False)  # CIDR notation: 192.168.1.0/24
+    ip_start = Column(String(45), nullable=True)  # Start IP for ranges
+    ip_end = Column(String(45), nullable=True)    # End IP for ranges
+    
+    # Range Type
+    range_type = Column(String(20), default="cidr")  # cidr, range, single
+    
+    # Access Control
+    is_restrictive = Column(Boolean, default=True)  # True = restrict to this range, False = allow all except this range
+    priority = Column(Integer, default=0)  # Higher priority rules are evaluated first
+    
+    # Status
+    is_active = Column(Boolean, default=True)
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User")
+    allowed_users = relationship(
+        "User", 
+        secondary="user_ip_ranges", 
+        back_populates="allowed_ip_ranges",
+        foreign_keys="[user_ip_ranges.c.user_id, user_ip_ranges.c.ip_range_id]"
+    )
+
+# Association table for User-IP Range relationships
+user_ip_ranges = Table(
+    'user_ip_ranges',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True),
+    Column('ip_range_id', Integer, ForeignKey('ip_ranges.id', ondelete='CASCADE'), primary_key=True),
+    Column('granted_at', DateTime, default=datetime.utcnow),
+    Column('granted_by', Integer, ForeignKey('users.id'), nullable=True)
+)
+
+# LDAP Sync Log
+class LDAPSyncLog(Base):
+    __tablename__ = "ldap_sync_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    ldap_config_id = Column(Integer, ForeignKey("ldap_configs.id"), nullable=False)
+    
+    # Sync Details
+    sync_type = Column(String(20), nullable=False)  # full, incremental, user, group
+    started_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default="running")  # running, success, error, partial
+    
+    # Results
+    users_created = Column(Integer, default=0)
+    users_updated = Column(Integer, default=0)
+    users_deactivated = Column(Integer, default=0)
+    groups_processed = Column(Integer, default=0)
+    errors_count = Column(Integer, default=0)
+    
+    # Error Details
+    error_message = Column(Text, nullable=True)
+    error_details = Column(JSON, nullable=True)
+    
+    # Relationships
+    ldap_config = relationship("LDAPConfig")
 
 class Notification(Base):
     __tablename__ = "notifications"

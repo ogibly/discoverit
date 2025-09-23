@@ -4,7 +4,7 @@ Authentication service for user management and role-based permissions.
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, desc, or_
-from ..models import User, Role, UserSession
+from ..models import User, Role, UserSession, LDAPConfig
 from ..schemas import UserCreate, UserUpdate, UserPasswordUpdate, RoleCreate, RoleUpdate
 from datetime import datetime, timedelta
 import secrets
@@ -208,8 +208,38 @@ class AuthService:
             )
         ).options(joinedload(User.role)).first()
         
-        if not user or not self.verify_password(password, user.hashed_password):
+        if not user:
             return None
+        
+        # Handle LDAP authentication
+        if user.auth_source == "ldap":
+            from .ldap_service import LDAPService
+            ldap_service = LDAPService(self.db)
+            
+            # Get default LDAP config
+            ldap_config = self.db.query(LDAPConfig).filter(
+                LDAPConfig.is_default == True,
+                LDAPConfig.is_active == True
+            ).first()
+            
+            if not ldap_config:
+                logger.error("No default LDAP configuration found")
+                return None
+            
+            # Authenticate against LDAP
+            ldap_user_data = ldap_service.authenticate_user(username, password, ldap_config)
+            if not ldap_user_data:
+                return None
+            
+            # Update user info from LDAP
+            user.email = ldap_user_data.get("email", user.email)
+            user.full_name = ldap_user_data.get("full_name", user.full_name)
+            user.last_ldap_sync = datetime.utcnow()
+            
+        else:
+            # Handle local authentication
+            if not user.hashed_password or not self.verify_password(password, user.hashed_password):
+                return None
         
         # Update login info
         user.last_login = datetime.utcnow()

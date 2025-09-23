@@ -7,3 +7,6 @@ alembic
 requests
 passlib[bcrypt]
 python-jose[cryptography]
+python-ldap
+ldap3
+ipaddress

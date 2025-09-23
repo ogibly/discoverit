@@ -14,6 +14,10 @@ import {
   ResultsView,
   SmartTargetInput
 } from './discovery/DiscoveryComponents';
+import ScansTracker from './discovery/ScansTracker';
+import ScanResultsModal from './discovery/ScanResultsModal';
+import ScanNotifications from './discovery/ScanNotifications';
+import { useScanUpdates } from '../../hooks/useScanUpdates';
 
 const Discovery = () => {
   const {
@@ -25,7 +29,8 @@ const Discovery = () => {
     fetchActiveScanTask,
     fetchDiscoveredDevices,
     createScanTask,
-    cancelScanTask
+    cancelScanTask,
+    dispatch
   } = useApp();
 
   // Workflow state
@@ -42,6 +47,8 @@ const Discovery = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isCheckingScanner, setIsCheckingScanner] = useState(false);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [selectedScanTask, setSelectedScanTask] = useState(null);
 
   // Step definitions
   const steps = [
@@ -60,6 +67,18 @@ const Discovery = () => {
     fetchDiscoveredDevices();
     fetchAvailableScanners();
   }, [fetchScanTasks, fetchActiveScanTask, fetchDiscoveredDevices]);
+
+  // Real-time updates for active scan
+  useScanUpdates(activeScanTask, (updatedTask) => {
+    // Update the active scan task in the context
+    dispatch({ type: 'UPDATE_SCAN_TASK', payload: updatedTask });
+    
+    // If scan completed, refresh all data
+    if (updatedTask.status === 'completed' || updatedTask.status === 'failed') {
+      fetchScanTasks();
+      fetchDiscoveredDevices();
+    }
+  });
 
   const fetchAvailableScanners = async () => {
     try {
@@ -88,7 +107,7 @@ const Discovery = () => {
     if (!availableScanners.length) {
       console.log('No scanners available, creating fallback scanner');
       const fallbackScanner = {
-        id: 'fallback-default',
+        id: 0, // Use 0 as fallback ID for default scanner
         name: 'Default Scanner',
         is_default: true,
         is_active: true,
@@ -198,7 +217,7 @@ const Discovery = () => {
         target: scanConfig.target,
         scan_type: scanConfig.intensity === 'quick' ? 'quick' : 'comprehensive',
         created_by: 'user',
-        scanner_ids: selectedScanner ? [selectedScanner.id] : []
+        scanner_ids: selectedScanner && typeof selectedScanner.id === 'number' && selectedScanner.id > 0 ? [selectedScanner.id] : []
       };
 
       await createScanTask(scanTaskData);
@@ -223,6 +242,20 @@ const Discovery = () => {
     setSelectedScanner(null);
     setScannerSuggestion(null);
     setShowResults(false);
+  };
+
+  // ScansTracker handlers
+  const handleViewResults = async (scanId) => {
+    const scanTask = scanTasks.find(task => task.id === scanId);
+    if (scanTask) {
+      setSelectedScanTask(scanTask);
+      setResultsModalOpen(true);
+    }
+  };
+
+  const handleDownloadResults = (scanId) => {
+    // Download scan results - this will be handled by the modal
+    console.log('Download results for scan:', scanId);
   };
 
   const getStepStatus = (stepId) => {
@@ -515,6 +548,33 @@ const Discovery = () => {
           </Card>
         </div>
       </div>
+
+      {/* Scans Tracker */}
+      <ScansTracker
+        activeScanTask={activeScanTask}
+        scanTasks={scanTasks}
+        onCancelScan={cancelScanTask}
+        onViewResults={handleViewResults}
+        onDownloadResults={handleDownloadResults}
+      />
+
+      {/* Results Modal */}
+      <ScanResultsModal
+        isOpen={resultsModalOpen}
+        onClose={() => {
+          setResultsModalOpen(false);
+          setSelectedScanTask(null);
+        }}
+        scanTask={selectedScanTask}
+        scanResults={discoveredDevices}
+      />
+
+      {/* Scan Notifications */}
+      <ScanNotifications
+        activeScanTask={activeScanTask}
+        scanTasks={scanTasks}
+        position="top-right"
+      />
     </div>
   );
 };

@@ -575,6 +575,96 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  // LDAP Configuration actions
+  const fetchLDAPConfigs = useCallback(async () => {
+    try {
+      const configs = await apiCall('/ldap/configs');
+      return configs;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const createLDAPConfig = useCallback(async (configData) => {
+    try {
+      const config = await apiCall('/ldap/configs', { method: 'POST', data: configData });
+      return config;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const updateLDAPConfig = useCallback(async (configId, configData) => {
+    try {
+      const config = await apiCall(`/ldap/configs/${configId}`, { method: 'PUT', data: configData });
+      return config;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteLDAPConfig = useCallback(async (configId) => {
+    try {
+      await apiCall(`/ldap/configs/${configId}`, { method: 'DELETE' });
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const testLDAPConnection = useCallback(async (configId) => {
+    try {
+      const result = await apiCall(`/ldap/configs/${configId}/test`, { method: 'POST' });
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const syncLDAPUsers = useCallback(async (configId) => {
+    try {
+      const result = await apiCall(`/ldap/configs/${configId}/sync`, { method: 'POST' });
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  // IP Range actions
+  const fetchIPRanges = useCallback(async () => {
+    try {
+      const ranges = await apiCall('/ip-ranges');
+      return ranges;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const createIPRange = useCallback(async (rangeData) => {
+    try {
+      const range = await apiCall('/ip-ranges', { method: 'POST', data: rangeData });
+      return range;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const updateIPRange = useCallback(async (rangeId, rangeData) => {
+    try {
+      const range = await apiCall(`/ip-ranges/${rangeId}`, { method: 'PUT', data: rangeData });
+      return range;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteIPRange = useCallback(async (rangeId) => {
+    try {
+      await apiCall(`/ip-ranges/${rangeId}`, { method: 'DELETE' });
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
   // Scan Task actions
   const fetchScanTasks = useCallback(async () => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'scanTasks', value: true } });
@@ -905,6 +995,20 @@ export function AppProvider({ children }) {
     createCredential,
     updateCredential,
     deleteCredential,
+    
+    // LDAP Configuration actions
+    fetchLDAPConfigs,
+    createLDAPConfig,
+    updateLDAPConfig,
+    deleteLDAPConfig,
+    testLDAPConnection,
+    syncLDAPUsers,
+    
+    // IP Range actions
+    fetchIPRanges,
+    createIPRange,
+    updateIPRange,
+    deleteIPRange,
     
     // Scan Task actions
     fetchScanTasks,

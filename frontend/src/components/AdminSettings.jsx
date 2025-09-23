@@ -23,7 +23,17 @@ const AdminSettings = () => {
     updateUser: updateUserAPI,
     deleteUser: deleteUserAPI,
     fetchRoles: fetchRolesAPI,
-    fetchScannerConfigs: fetchScannerConfigsAPI
+    fetchScannerConfigs: fetchScannerConfigsAPI,
+    fetchLDAPConfigs,
+    createLDAPConfig,
+    updateLDAPConfig,
+    deleteLDAPConfig,
+    testLDAPConnection,
+    syncLDAPUsers,
+    fetchIPRanges,
+    createIPRange,
+    updateIPRange,
+    deleteIPRange
   } = useApp();
   const { hasPermission } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,8 +133,30 @@ const AdminSettings = () => {
       fetchUsers();
       fetchRoles();
       fetchScannerConfigsAPI();
+      loadLDAPConfigs();
+      loadIPRanges();
     }
   }, [hasPermission]);
+
+  // Load LDAP configurations
+  const loadLDAPConfigs = async () => {
+    try {
+      const configs = await fetchLDAPConfigs();
+      setLdapConfigs(configs);
+    } catch (error) {
+      console.error('Failed to load LDAP configurations:', error);
+    }
+  };
+
+  // Load IP ranges
+  const loadIPRanges = async () => {
+    try {
+      const ranges = await fetchIPRanges();
+      setIpRanges(ranges);
+    } catch (error) {
+      console.error('Failed to load IP ranges:', error);
+    }
+  };
 
   // Handle tab parameter from URL
   useEffect(() => {
@@ -397,15 +429,110 @@ const AdminSettings = () => {
     resetScannerForm();
   };
 
-  // LDAP management functions (placeholder)
+  // LDAP management functions
   const handleCreateLDAP = async () => {
-    console.log('Create LDAP config:', ldapForm);
-    // TODO: Implement LDAP creation
+    try {
+      const config = await createLDAPConfig(ldapForm);
+      setLdapConfigs([...ldapConfigs, config]);
+      setShowLDAPModal(false);
+      setLdapForm({
+        name: '',
+        server_url: '',
+        bind_dn: '',
+        bind_password: '',
+        user_search_base: '',
+        user_search_filter: '',
+        group_search_base: '',
+        group_search_filter: '',
+        is_default: false,
+        is_active: true
+      });
+      alert('LDAP configuration created successfully!');
+    } catch (error) {
+      console.error('Failed to create LDAP config:', error);
+      alert('Failed to create LDAP configuration: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleEditLDAP = (config) => {
+    setEditingLDAP(config);
+    setLdapForm({
+      name: config.name,
+      server_url: config.server_url,
+      bind_dn: config.bind_dn,
+      bind_password: config.bind_password,
+      user_search_base: config.user_search_base,
+      user_search_filter: config.user_search_filter,
+      group_search_base: config.group_search_base,
+      group_search_filter: config.group_search_filter,
+      is_default: config.is_default,
+      is_active: config.is_active
+    });
+    setShowLDAPModal(true);
+  };
+
+  const handleUpdateLDAP = async () => {
+    try {
+      const config = await updateLDAPConfig(editingLDAP.id, ldapForm);
+      setLdapConfigs(ldapConfigs.map(c => c.id === editingLDAP.id ? config : c));
+      setShowLDAPModal(false);
+      setEditingLDAP(null);
+      setLdapForm({
+        name: '',
+        server_url: '',
+        bind_dn: '',
+        bind_password: '',
+        user_search_base: '',
+        user_search_filter: '',
+        group_search_base: '',
+        group_search_filter: '',
+        is_default: false,
+        is_active: true
+      });
+      alert('LDAP configuration updated successfully!');
+    } catch (error) {
+      console.error('Failed to update LDAP config:', error);
+      alert('Failed to update LDAP configuration: ' + (error.response?.data?.detail || error.message));
+    }
   };
 
   const handleDeleteLDAP = async (ldapId) => {
-    console.log('Delete LDAP config:', ldapId);
-    // TODO: Implement LDAP deletion
+    if (confirm('Are you sure you want to delete this LDAP configuration?')) {
+      try {
+        await deleteLDAPConfig(ldapId);
+        setLdapConfigs(ldapConfigs.filter(c => c.id !== ldapId));
+        alert('LDAP configuration deleted successfully!');
+      } catch (error) {
+        console.error('Failed to delete LDAP config:', error);
+        alert('Failed to delete LDAP configuration: ' + (error.response?.data?.detail || error.message));
+      }
+    }
+  };
+
+  const handleTestLDAPConnection = async (configId) => {
+    try {
+      const result = await testLDAPConnection(configId);
+      if (result.success) {
+        alert('LDAP connection test successful!');
+      } else {
+        alert('LDAP connection test failed: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Failed to test LDAP connection:', error);
+      alert('Failed to test LDAP connection: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleSyncLDAPUsers = async (configId) => {
+    try {
+      const result = await syncLDAPUsers(configId);
+      alert(`LDAP user sync completed. ${result.synced_users || 0} users synchronized.`);
+      // Refresh users list
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to sync LDAP users:', error);
+      alert('Failed to sync LDAP users: ' + (error.response?.data?.detail || error.message));
+    }
   };
 
   // IP Range management functions (placeholder)
@@ -423,6 +550,16 @@ const AdminSettings = () => {
   const handleCreateRole = async () => {
     console.log('Create role:', roleForm);
     // TODO: Implement role creation
+  };
+
+  const handleEditRole = (role) => {
+    setEditingRole(role);
+    setRoleForm({
+      name: role.name,
+      description: role.description || '',
+      permissions: role.permissions || []
+    });
+    setShowRoleModal(true);
   };
 
   const handleDeleteRole = async (roleId) => {
@@ -781,22 +918,78 @@ const AdminSettings = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">🔐</div>
-                  <h3 className="text-subheading text-foreground mb-2">LDAP Integration</h3>
-                  <p className="text-body text-muted-foreground mb-4">
-                    Configure LDAP servers for centralized authentication and user management.
-                  </p>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p>• Active Directory integration</p>
-                    <p>• User synchronization</p>
-                    <p>• Group-based role mapping</p>
-                    <p>• Secure authentication</p>
+                {ldapConfigs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">🔐</div>
+                    <h3 className="text-subheading text-foreground mb-2">LDAP Integration</h3>
+                    <p className="text-body text-muted-foreground mb-4">
+                      Configure LDAP servers for centralized authentication and user management.
+                    </p>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p>• Active Directory integration</p>
+                      <p>• User synchronization</p>
+                      <p>• Group-based role mapping</p>
+                      <p>• Secure authentication</p>
+                    </div>
+                    <Button onClick={() => setShowLDAPModal(true)} className="mt-4">
+                      Configure LDAP Server
+                    </Button>
                   </div>
-                  <Button onClick={() => setShowLDAPModal(true)} className="mt-4">
-                    Configure LDAP Server
-                  </Button>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    {ldapConfigs.map((config) => (
+                      <div key={config.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                            <span className="text-primary-foreground font-semibold">LDAP</span>
+                          </div>
+                          <div>
+                            <h3 className="text-subheading text-foreground">{config.name}</h3>
+                            <p className="text-body text-muted-foreground">{config.server_url}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge className={config.is_active ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}>
+                                {config.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                              {config.is_default && (
+                                <Badge className="bg-info text-info-foreground">Default</Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestLDAPConnection(config.id)}
+                          >
+                            Test
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSyncLDAPUsers(config.id)}
+                          >
+                            Sync Users
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditLDAP(config)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteLDAP(config.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -887,7 +1080,7 @@ const AdminSettings = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowRoleModal(true)}
+                          onClick={() => handleEditRole(role)}
                         >
                           Edit
                         </Button>

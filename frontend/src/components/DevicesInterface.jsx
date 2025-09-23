@@ -100,7 +100,23 @@ const DevicesInterface = () => {
 
   const handleConvertToAsset = async (device) => {
     try {
-      await convertDeviceToAsset(device.id);
+      // Prepare asset data from device information
+      const assetData = {
+        name: device.hostname || device.primary_ip || `Device ${device.primary_ip}`,
+        description: `Converted from discovered device`,
+        primary_ip: device.primary_ip,
+        mac_address: device.mac_address,
+        hostname: device.hostname,
+        os_name: device.os_name,
+        os_family: device.os_family,
+        os_version: device.os_version,
+        manufacturer: device.manufacturer,
+        model: device.model,
+        is_managed: false,
+        is_active: true
+      };
+      
+      await convertDeviceToAsset(device.id, assetData);
       alert('Device converted to asset successfully!');
     } catch (error) {
       console.error('Failed to convert device to asset:', error);
@@ -168,8 +184,8 @@ const DevicesInterface = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-6">
+      <div className="flex-1 flex flex-col p-6">
+        <div className="space-y-6 flex-shrink-0">
           {/* Device Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="surface-elevated">
@@ -266,6 +282,29 @@ const DevicesInterface = () => {
                   >
                     {sortOrder === 'asc' ? '↑' : '↓'}
                   </Button>
+                  
+                  {/* View Toggle - Integrated into toolbar */}
+                  <div className="flex items-center space-x-2 border-l border-border pl-3">
+                    <span className="text-sm font-medium text-foreground">View:</span>
+                    <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className="text-xs font-medium transition-all duration-200 h-8 px-3"
+                      >
+                        ⊞
+                      </Button>
+                      <Button
+                        variant={viewMode === 'table' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('table')}
+                        className="text-xs font-medium transition-all duration-200 h-8 px-3"
+                      >
+                        ☰
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -340,29 +379,8 @@ const DevicesInterface = () => {
                 </Card>
               )}
 
-              {/* View Toggle */}
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-foreground">View:</span>
-                  <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
-                    >
-                      ⊞
-                    </Button>
-                    <Button
-                      variant={viewMode === 'table' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('table')}
-                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
-                    >
-                      ☰
-                    </Button>
-                  </div>
-                </div>
+              {/* Device Count */}
+              <div className="flex justify-end items-center mb-4">
                 <div className="text-sm text-muted-foreground">
                   {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''}
                 </div>

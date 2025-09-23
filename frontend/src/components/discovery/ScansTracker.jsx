@@ -114,16 +114,16 @@ const ScansTracker = ({
 
   if (isCollapsed) {
     return (
-      <div className={cn("fixed bottom-4 right-4 z-30", className)}>
-        <Card className="w-72 shadow-md border border-border/50 bg-background/90 backdrop-blur-sm hover:shadow-lg hover:border-primary/30 transition-all duration-200">
+      <div className={cn("fixed bottom-0 left-0 right-0 z-30 transition-all duration-300", className)}>
+        <Card className="mx-4 mb-4 shadow-lg border border-border/50 bg-background/95 backdrop-blur-sm">
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
                 {hasActiveScan ? (
                   <>
-                    <Activity className="w-4 h-4 text-blue-500 animate-pulse flex-shrink-0" />
+                    <Activity className="w-5 h-5 text-blue-500 animate-pulse flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-foreground truncate">Scan Running</p>
+                      <p className="text-sm font-medium text-foreground">Scan Running</p>
                       <p className="text-xs text-muted-foreground">
                         {Math.round(activeScanTask.progress || 0)}% • {formatDuration(activeScanTask.start_time)}
                       </p>
@@ -131,24 +131,31 @@ const ScansTracker = ({
                   </>
                 ) : (
                   <>
-                    <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-foreground">No Active Scans</p>
+                      <p className="text-sm font-medium text-foreground">Scan Tracker</p>
                       <p className="text-xs text-muted-foreground">
-                        {recentScans.length} recent scans
+                        {recentScans.length} recent scans • Click to expand
                       </p>
                     </div>
                   </>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsCollapsed(false)}
-                className="h-6 w-6 p-0 flex-shrink-0 hover:bg-accent/50"
-              >
-                <ChevronUp className="w-3 h-3" />
-              </Button>
+              <div className="flex items-center space-x-2">
+                {hasActiveScan && (
+                  <Badge variant="secondary" className="text-xs">
+                    {Math.round(activeScanTask.progress || 0)}%
+                  </Badge>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsCollapsed(false)}
+                  className="h-8 w-8 p-0 flex-shrink-0 hover:bg-accent/50"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -157,35 +164,33 @@ const ScansTracker = ({
   }
 
   return (
-    <div className={cn("fixed bottom-4 right-4 z-30 w-96", className)}>
-      <Card className="shadow-lg border border-border/50 bg-background/90 backdrop-blur-sm">
-        <CardHeader className="pb-3">
+    <div className={cn("fixed bottom-0 left-0 right-0 z-30 transition-all duration-300", className)}>
+      <Card className="mx-4 mb-4 shadow-lg border border-border/50 bg-background/95 backdrop-blur-sm max-h-96">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center space-x-2">
-              <Activity className="w-5 h-5 text-primary" />
+            <CardTitle className="text-base flex items-center space-x-2">
+              <Activity className="w-4 h-4 text-primary" />
               <span>Scan Tracker</span>
-            </CardTitle>
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="text-xs">
-                {recentScans.length} scans
+              <Badge variant="outline" className="text-xs ml-2">
+                {scanTasks?.length || 0} scans
               </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsCollapsed(true)}
-                className="h-8 w-8 p-0"
-              >
-                <ChevronDown className="w-4 h-4" />
-              </Button>
-            </div>
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(true)}
+              className="h-7 w-7 p-0 hover:bg-accent/50"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </Button>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4 max-h-96 overflow-y-auto">
+        <CardContent className="space-y-3 max-h-80 overflow-y-auto">
           {/* Active Scan */}
           {hasActiveScan && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between mb-3">
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-sm text-blue-800 dark:text-blue-200">Active Scan</span>
                 <div className="flex space-x-2">
                   <Button
@@ -221,6 +226,9 @@ const ScansTracker = ({
             <h4 className="text-sm font-medium text-foreground flex items-center space-x-2">
               <Clock className="w-4 h-4" />
               <span>Recent Scans</span>
+              <Badge variant="outline" className="text-xs">
+                {recentScans.length}
+              </Badge>
             </h4>
             
             {recentScans.length === 0 ? (
@@ -235,7 +243,7 @@ const ScansTracker = ({
                   <div
                     key={scan.id}
                     className={cn(
-                      "p-3 rounded-lg border transition-all cursor-pointer",
+                      "p-2 rounded-lg border transition-all cursor-pointer",
                       expandedScan === scan.id 
                         ? "bg-muted border-primary/50" 
                         : "bg-background border-border hover:border-primary/30"

@@ -281,7 +281,7 @@ const Discovery = () => {
         );
 
       case 2:
-        return (
+  return (
           <SmartTargetInput 
             value={scanConfig.target}
             onChange={(value) => setScanConfig(prev => ({ ...prev, target: value }))}
@@ -300,7 +300,7 @@ const Discovery = () => {
                 <div className="text-center">
                   <h2 className="text-2xl font-bold text-foreground mb-2">Scanner Check</h2>
                   <p className="text-muted-foreground">System is checking for optimal scanner</p>
-                </div>
+                    </div>
                 <div className="flex items-center justify-center space-x-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   <span className="text-muted-foreground">Analyzing network topology...</span>
@@ -311,7 +311,7 @@ const Discovery = () => {
                 <div className="text-center">
                   <h2 className="text-2xl font-bold text-foreground mb-2">Scanner Selected</h2>
                   <p className="text-muted-foreground">Optimal scanner found for your target</p>
-                </div>
+            </div>
                 
                 <div className="space-y-4">
                   <Card className={cn(
@@ -322,34 +322,34 @@ const Discovery = () => {
                       <div className="flex items-center space-x-3">
                         <div className="text-2xl">
                           {selectedScanner.is_default ? "🔄" : "🛰️"}
-                        </div>
+                    </div>
                         <div>
                           <h3 className="font-semibold text-foreground">
                             {selectedScanner.is_default ? "Default Scanner" : "Satellite Scanner"}
-                          </h3>
+                      </h3>
                           <p className="text-sm text-muted-foreground">
                             {selectedScanner.name} • {selectedScanner.subnets?.length || 0} networks
                           </p>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+            </div>
+          </CardContent>
+        </Card>
 
                   {scannerSuggestion && (
                     <Card className="border-info/50 bg-info/5">
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3">
                           <div className="text-info text-xl">💡</div>
-                          <div>
+                <div>
                             <h4 className="font-medium text-info">Improvement Suggestion</h4>
                             <p className="text-sm text-muted-foreground mt-1">
                               {scannerSuggestion.message}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
                   <div className="flex justify-between">
                     <Button variant="outline" onClick={goBack}>
@@ -374,8 +374,8 @@ const Discovery = () => {
                   ← Back to Target Selection
                 </Button>
               </div>
-            )}
-          </div>
+                    )}
+                  </div>
         );
 
       case 4:
@@ -384,7 +384,7 @@ const Discovery = () => {
             <div className="text-center">
               <h2 className="text-2xl font-bold text-foreground mb-2">Set Scan Intensity</h2>
               <p className="text-muted-foreground">Choose the quality and amount of data to gather</p>
-            </div>
+              </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <IntensityOption
@@ -411,7 +411,7 @@ const Discovery = () => {
                 selected={scanConfig.intensity === 'comprehensive'}
                 onClick={() => handleStep4('comprehensive')}
               />
-            </div>
+      </div>
 
             <div className="flex justify-between">
               <Button variant="outline" onClick={goBack}>
@@ -420,8 +420,8 @@ const Discovery = () => {
               <Button 
                 onClick={() => handleStep4(scanConfig.intensity)} 
                 disabled={!scanConfig.intensity}
-                size="lg"
-              >
+        size="lg"
+      >
                 Continue →
               </Button>
             </div>
@@ -442,7 +442,7 @@ const Discovery = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Target:</span>
                     <span className="font-medium">{scanConfig.target}</span>
-                  </div>
+                      </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Scanner:</span>
                     <span className="font-medium">{selectedScanner?.name}</span>
@@ -452,8 +452,8 @@ const Discovery = () => {
                     <Badge variant="secondary" className="capitalize">
                       {scanConfig.intensity}
                     </Badge>
-                  </div>
-                </div>
+              </div>
+            </div>
               </CardContent>
             </Card>
 
@@ -506,7 +506,7 @@ const Discovery = () => {
         subtitle="Discover and analyze devices in your network"
       />
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-6 pb-24">
         <div className="max-w-4xl mx-auto">
           {/* Progress Steps */}
           <div className="mb-8">

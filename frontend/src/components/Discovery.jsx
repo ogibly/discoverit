@@ -65,16 +65,42 @@ const Discovery = () => {
     try {
       const response = await fetch('/api/v2/scanners');
       const scanners = await response.json();
-      setAvailableScanners(scanners.filter(scanner => scanner.is_active));
+      const activeScanners = scanners.filter(scanner => scanner.is_active);
+      console.log('Fetched scanners:', scanners);
+      console.log('Active scanners:', activeScanners);
+      setAvailableScanners(activeScanners);
     } catch (error) {
       console.error('Failed to fetch scanners:', error);
+      // Set empty array on error to trigger fallback
+      setAvailableScanners([]);
     }
   };
 
   const checkScannerForTarget = (target) => {
-    if (!target || !availableScanners.length) {
-      // If no scanners available, this should be handled elsewhere
+    console.log('Checking scanner for target:', target);
+    console.log('Available scanners:', availableScanners);
+    
+    if (!target) {
       return null;
+    }
+
+    // If no scanners available, create a fallback default scanner
+    if (!availableScanners.length) {
+      console.log('No scanners available, creating fallback scanner');
+      const fallbackScanner = {
+        id: 'fallback-default',
+        name: 'Default Scanner',
+        is_default: true,
+        is_active: true,
+        subnets: []
+      };
+      setSelectedScanner(fallbackScanner);
+      setScannerSuggestion({
+        type: 'info',
+        message: 'Using default scanner. For improved scan capabilities and accuracy, consider setting up a dedicated satellite scanner for this IP range.',
+        action: 'Setup Scanner'
+      });
+      return fallbackScanner;
     }
 
     // Find satellite scanner for the target range

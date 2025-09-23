@@ -95,6 +95,9 @@ const ActionTypes = {
   
   // Operations & Jobs
   SET_OPERATIONS: 'SET_OPERATIONS',
+  ADD_OPERATION: 'ADD_OPERATION',
+  UPDATE_OPERATION: 'UPDATE_OPERATION',
+  DELETE_OPERATION: 'DELETE_OPERATION',
   SET_JOBS: 'SET_JOBS',
   ADD_JOB: 'ADD_JOB',
   UPDATE_JOB: 'UPDATE_JOB',
@@ -213,6 +216,20 @@ function appReducer(state, action) {
     // Operations & Jobs
     case ActionTypes.SET_OPERATIONS:
       return { ...state, operations: action.payload };
+    case ActionTypes.ADD_OPERATION:
+      return { ...state, operations: [...state.operations, action.payload] };
+    case ActionTypes.UPDATE_OPERATION:
+      return {
+        ...state,
+        operations: state.operations.map(operation =>
+          operation.id === action.payload.id ? action.payload : operation
+        )
+      };
+    case ActionTypes.DELETE_OPERATION:
+      return {
+        ...state,
+        operations: state.operations.filter(operation => operation.id !== action.payload)
+      };
     case ActionTypes.SET_JOBS:
       return { ...state, jobs: action.payload };
     case ActionTypes.ADD_JOB:
@@ -221,7 +238,7 @@ function appReducer(state, action) {
       return {
         ...state,
         jobs: state.jobs.map(job =>
-          job.id === action.payload.id ? action.payload : job
+          job.id === action.payload.id ? { ...job, ...action.payload } : job
         )
       };
     
@@ -738,6 +755,49 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  const createOperation = useCallback(async (operationData) => {
+    try {
+      const operation = await apiCall('/operations', {
+        method: 'POST',
+        data: operationData
+      });
+      dispatch({ type: ActionTypes.ADD_OPERATION, payload: operation });
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Operation created successfully' });
+      return operation;
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to create operation' });
+      throw error;
+    }
+  }, [apiCall]);
+
+  const updateOperation = useCallback(async (operationId, operationData) => {
+    try {
+      const operation = await apiCall(`/operations/${operationId}`, {
+        method: 'PUT',
+        data: operationData
+      });
+      dispatch({ type: ActionTypes.UPDATE_OPERATION, payload: operation });
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Operation updated successfully' });
+      return operation;
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to update operation' });
+      throw error;
+    }
+  }, [apiCall]);
+
+  const deleteOperation = useCallback(async (operationId) => {
+    try {
+      await apiCall(`/operations/${operationId}`, {
+        method: 'DELETE'
+      });
+      dispatch({ type: ActionTypes.DELETE_OPERATION, payload: operationId });
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Operation deleted successfully' });
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to delete operation' });
+      throw error;
+    }
+  }, [apiCall]);
+
   const runOperation = useCallback(async (operationData) => {
     try {
       const job = await apiCall('/operations/run', {
@@ -749,6 +809,19 @@ export function AppProvider({ children }) {
       return job;
     } catch (error) {
       dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to start operation' });
+      throw error;
+    }
+  }, [apiCall]);
+
+  const cancelJob = useCallback(async (jobId) => {
+    try {
+      await apiCall(`/jobs/${jobId}/cancel`, {
+        method: 'POST'
+      });
+      dispatch({ type: ActionTypes.UPDATE_JOB, payload: { id: jobId, status: 'cancelled' } });
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Job cancelled successfully' });
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to cancel job' });
       throw error;
     }
   }, [apiCall]);
@@ -1020,8 +1093,12 @@ export function AppProvider({ children }) {
     
     // Operation actions
     fetchOperations,
+    createOperation,
+    updateOperation,
+    deleteOperation,
     fetchJobs,
     runOperation,
+    cancelJob,
     
     // Admin/Settings actions
     fetchSettings,

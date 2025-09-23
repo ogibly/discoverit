@@ -216,27 +216,49 @@ class AssetGroupWithAssets(AssetGroup):
 class OperationBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    operation_type: str = Field(..., description="Type of operation: awx_playbook, api_call, script")
+    operation_type: str = Field(..., description="Type of operation: awx, api, script")
     
     # AWX Tower configuration
-    awx_url: Optional[str] = None
-    awx_playbook_id: Optional[int] = None
-    awx_playbook_name: Optional[str] = None
+    awx_job_template_id: Optional[str] = None
+    awx_job_template_name: Optional[str] = None
     awx_extra_vars: Optional[Dict[str, Any]] = None
+    awx_inventory_source: Optional[str] = Field("assets", description="Source for inventory: assets, asset_groups, labels")
+    awx_limit: Optional[str] = None
+    awx_tags: Optional[str] = None
+    awx_skip_tags: Optional[str] = None
+    awx_verbosity: Optional[int] = Field(0, ge=0, le=4)
     
-    # Generic API configuration
+    # API configuration
     api_url: Optional[str] = None
     api_method: Optional[str] = Field(None, pattern=r'^(GET|POST|PUT|DELETE|PATCH)$')
     api_headers: Optional[Dict[str, str]] = None
     api_body: Optional[Dict[str, Any]] = None
+    api_auth_type: Optional[str] = Field("none", description="Authentication type: none, basic, bearer, api_key")
+    api_auth_credentials: Optional[str] = None
+    api_timeout: Optional[int] = Field(30, ge=1, le=300)
     
     # Script execution
-    script_path: Optional[str] = None
+    script_type: Optional[str] = Field(None, description="Script type: powershell, bash, python, cmd")
+    script_content: Optional[str] = None
+    script_file_path: Optional[str] = None
     script_args: Optional[Dict[str, Any]] = None
+    script_timeout: Optional[int] = Field(300, ge=1, le=3600)
+    script_working_directory: Optional[str] = None
     
     # Target configuration
-    target_group_id: Optional[int] = None
+    target_type: Optional[str] = Field("assets", description="Target type: assets, asset_groups, labels")
+    target_assets: Optional[List[int]] = None
+    target_asset_groups: Optional[List[int]] = None
     target_labels: Optional[List[int]] = None
+    
+    # Credentials
+    credential_id: Optional[int] = None
+    
+    # Scheduling
+    schedule_enabled: Optional[bool] = False
+    schedule_cron: Optional[str] = None
+    schedule_timezone: Optional[str] = Field("UTC")
+    
     is_active: bool = True
 
 class OperationCreate(OperationBase):
@@ -246,18 +268,48 @@ class OperationUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     operation_type: Optional[str] = None
-    awx_url: Optional[str] = None
-    awx_playbook_id: Optional[int] = None
-    awx_playbook_name: Optional[str] = None
+    
+    # AWX Tower configuration
+    awx_job_template_id: Optional[str] = None
+    awx_job_template_name: Optional[str] = None
     awx_extra_vars: Optional[Dict[str, Any]] = None
+    awx_inventory_source: Optional[str] = None
+    awx_limit: Optional[str] = None
+    awx_tags: Optional[str] = None
+    awx_skip_tags: Optional[str] = None
+    awx_verbosity: Optional[int] = Field(None, ge=0, le=4)
+    
+    # API configuration
     api_url: Optional[str] = None
     api_method: Optional[str] = Field(None, pattern=r'^(GET|POST|PUT|DELETE|PATCH)$')
     api_headers: Optional[Dict[str, str]] = None
     api_body: Optional[Dict[str, Any]] = None
-    script_path: Optional[str] = None
+    api_auth_type: Optional[str] = None
+    api_auth_credentials: Optional[str] = None
+    api_timeout: Optional[int] = Field(None, ge=1, le=300)
+    
+    # Script execution
+    script_type: Optional[str] = None
+    script_content: Optional[str] = None
+    script_file_path: Optional[str] = None
     script_args: Optional[Dict[str, Any]] = None
-    target_group_id: Optional[int] = None
+    script_timeout: Optional[int] = Field(None, ge=1, le=3600)
+    script_working_directory: Optional[str] = None
+    
+    # Target configuration
+    target_type: Optional[str] = None
+    target_assets: Optional[List[int]] = None
+    target_asset_groups: Optional[List[int]] = None
     target_labels: Optional[List[int]] = None
+    
+    # Credentials
+    credential_id: Optional[int] = None
+    
+    # Scheduling
+    schedule_enabled: Optional[bool] = None
+    schedule_cron: Optional[str] = None
+    schedule_timezone: Optional[str] = None
+    
     is_active: Optional[bool] = None
 
 class OperationRun(BaseModel):
@@ -269,6 +321,17 @@ class OperationRun(BaseModel):
     params: Optional[Dict[str, Any]] = None
     credential_id: Optional[int] = None  # Selected credential for the operation
     override_credentials: Optional[Dict[str, Any]] = None  # Override credentials for specific assets
+    
+    # Runtime overrides
+    awx_extra_vars: Optional[Dict[str, Any]] = None
+    api_headers: Optional[Dict[str, str]] = None
+    api_body: Optional[Dict[str, Any]] = None
+    script_args: Optional[Dict[str, Any]] = None
+    
+    # Execution options
+    timeout: Optional[int] = None
+    parallel_execution: Optional[bool] = True
+    max_parallel: Optional[int] = Field(5, ge=1, le=20)
 
 class OperationExecution(BaseModel):
     operation_id: int
@@ -284,6 +347,75 @@ class Operation(OperationBase):
     created_at: datetime
     updated_at: datetime
     target_group: Optional[AssetGroup] = None
+    
+    class Config:
+        from_attributes = True
+
+class JobBase(BaseModel):
+    operation_id: int
+    asset_ids: Optional[List[int]] = None
+    asset_group_ids: Optional[List[int]] = None
+    target_labels: Optional[List[int]] = None
+    status: Optional[str] = Field("pending", description="Job status: pending, running, completed, failed, cancelled")
+    progress: Optional[int] = Field(0, ge=0, le=100)
+    current_asset: Optional[str] = None
+    total_assets: Optional[int] = 0
+    processed_assets: Optional[int] = 0
+    results: Optional[Dict[str, Any]] = None
+    error_message: Optional[str] = None
+    log_output: Optional[str] = None
+    summary: Optional[Dict[str, Any]] = None
+    
+    # AWX specific fields
+    awx_job_id: Optional[str] = None
+    awx_job_url: Optional[str] = None
+    awx_inventory_id: Optional[str] = None
+    
+    # API specific fields
+    api_response_status: Optional[int] = None
+    api_response_headers: Optional[Dict[str, Any]] = None
+    api_response_body: Optional[str] = None
+    
+    # Script specific fields
+    script_exit_code: Optional[int] = None
+    script_stdout: Optional[str] = None
+    script_stderr: Optional[str] = None
+    
+    # Timing
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    params: Optional[Dict[str, Any]] = None
+
+class JobCreate(JobBase):
+    pass
+
+class JobUpdate(BaseModel):
+    status: Optional[str] = Field(None, pattern=r'^(pending|running|completed|failed|cancelled)$')
+    progress: Optional[int] = Field(None, ge=0, le=100)
+    current_asset: Optional[str] = None
+    total_assets: Optional[int] = None
+    processed_assets: Optional[int] = None
+    results: Optional[Dict[str, Any]] = None
+    error_message: Optional[str] = None
+    log_output: Optional[str] = None
+    summary: Optional[Dict[str, Any]] = None
+    awx_job_id: Optional[str] = None
+    awx_job_url: Optional[str] = None
+    awx_inventory_id: Optional[str] = None
+    api_response_status: Optional[int] = None
+    api_response_headers: Optional[Dict[str, Any]] = None
+    api_response_body: Optional[str] = None
+    script_exit_code: Optional[int] = None
+    script_stdout: Optional[str] = None
+    script_stderr: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    params: Optional[Dict[str, Any]] = None
+
+class Job(JobBase):
+    id: int
+    created_at: datetime
+    created_by: Optional[int] = None
     
     class Config:
         from_attributes = True

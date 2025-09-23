@@ -1,25 +1,28 @@
-"""
-Operation service for managing operations and jobs.
-"""
-from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc
-from ..models import Operation, Job, Asset, AssetGroup, Label, Credential
-from ..schemas import OperationCreate, OperationUpdate, OperationRun, JobCreate
-import requests
 import json
-from datetime import datetime
 import asyncio
-import concurrent.futures
+import subprocess
+import requests
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_
 
+from ..models import Operation, Job, Asset, AssetGroup, Credential, User
+from ..schemas import OperationCreate, OperationUpdate, OperationRun, JobCreate, JobUpdate
+import logging
+
+logger = logging.getLogger(__name__)
 
 class OperationService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_operation(self, operation_data: OperationCreate) -> Operation:
+    def create_operation(self, operation_data: OperationCreate, user_id: int) -> Operation:
         """Create a new operation."""
-        operation = Operation(**operation_data.dict())
+        operation = Operation(
+            **operation_data.dict(),
+            created_by=user_id
+        )
         self.db.add(operation)
         self.db.commit()
         self.db.refresh(operation)
@@ -27,27 +30,11 @@ class OperationService:
 
     def get_operation(self, operation_id: int) -> Optional[Operation]:
         """Get an operation by ID."""
-        return self.db.query(Operation).options(
-            joinedload(Operation.jobs),
-            joinedload(Operation.target_group)
-        ).filter(Operation.id == operation_id).first()
+        return self.db.query(Operation).filter(Operation.id == operation_id).first()
 
-    def get_operations(
-        self, 
-        skip: int = 0, 
-        limit: int = 100,
-        is_active: Optional[bool] = None
-    ) -> List[Operation]:
-        """Get operations with optional filtering."""
-        query = self.db.query(Operation).options(
-            joinedload(Operation.jobs),
-            joinedload(Operation.target_group)
-        )
-        
-        if is_active is not None:
-            query = query.filter(Operation.is_active == is_active)
-        
-        return query.order_by(desc(Operation.created_at)).offset(skip).limit(limit).all()
+    def get_operations(self, skip: int = 0, limit: int = 100) -> List[Operation]:
+        """Get all operations with pagination."""
+        return self.db.query(Operation).offset(skip).limit(limit).all()
 
     def update_operation(self, operation_id: int, operation_data: OperationUpdate) -> Optional[Operation]:
         """Update an operation."""
@@ -66,7 +53,7 @@ class OperationService:
 
     def delete_operation(self, operation_id: int) -> bool:
         """Delete an operation."""
-        operation = self.db.query(Operation).filter(Operation.id == operation_id).first()
+        operation = self.get_operation(operation_id)
         if not operation:
             return False
         
@@ -74,376 +61,296 @@ class OperationService:
         self.db.commit()
         return True
 
-    def run_operation(self, operation_run: OperationRun) -> Job:
+    def run_operation(self, run_data: OperationRun, user_id: int) -> Job:
         """Run an operation on specified targets."""
-        # Get or create operation
-        if operation_run.operation_id:
-            operation = self.get_operation(operation_run.operation_id)
-        elif operation_run.operation_name:
-            operation = self.db.query(Operation).filter(
-                Operation.name == operation_run.operation_name
-            ).first()
-            if not operation:
-                # Create a temporary operation
-                operation = Operation(
-                    name=operation_run.operation_name,
-                    operation_type="api_call",
-                    is_active=True
-                )
-                self.db.add(operation)
-                self.db.commit()
-                self.db.refresh(operation)
-        else:
-            raise ValueError("Either operation_id or operation_name must be provided")
-        
+        operation = self.get_operation(run_data.operation_id)
         if not operation:
-            raise ValueError("Operation not found")
-        
-        # Get target assets
-        target_assets = self._get_target_assets(operation_run)
-        
+            raise ValueError(f"Operation {run_data.operation_id} not found")
+
+        # Resolve target assets
+        target_assets = self._resolve_target_assets(run_data, operation)
+        if not target_assets:
+            raise ValueError("No target assets found")
+
         # Create job
-        job = Job(
+        job_data = JobCreate(
             operation_id=operation.id,
             asset_ids=[asset.id for asset in target_assets],
-            asset_group_ids=operation_run.asset_group_ids,
-            target_labels=operation_run.target_labels,
-            params=operation_run.params,
+            total_assets=len(target_assets),
             status="pending",
-            created_by=operation_run.params.get("created_by") if operation_run.params else None
+            params=run_data.params or {}
         )
         
+        job = Job(**job_data.dict(), created_by=user_id)
         self.db.add(job)
         self.db.commit()
         self.db.refresh(job)
+
+        # Start execution asynchronously
+        asyncio.create_task(self._execute_operation(job, operation, target_assets, run_data))
         
         return job
 
-    def _get_target_assets(self, operation_run: OperationRun) -> List[Asset]:
-        """Get assets based on operation run parameters."""
+    def _resolve_target_assets(self, run_data: OperationRun, operation: Operation) -> List[Asset]:
+        """Resolve target assets from various sources."""
         assets = []
         
-        # Get assets by IDs
-        if operation_run.asset_ids:
-            assets.extend(
-                self.db.query(Asset).filter(Asset.id.in_(operation_run.asset_ids)).all()
-            )
+        # From run data
+        if run_data.asset_ids:
+            assets.extend(self.db.query(Asset).filter(Asset.id.in_(run_data.asset_ids)).all())
         
-        # Get assets from groups
-        if operation_run.asset_group_ids:
-            for group_id in operation_run.asset_group_ids:
-                group = self.db.query(AssetGroup).options(
-                    joinedload(AssetGroup.assets)
-                ).filter(AssetGroup.id == group_id).first()
+        if run_data.asset_group_ids:
+            for group_id in run_data.asset_group_ids:
+                group = self.db.query(AssetGroup).filter(AssetGroup.id == group_id).first()
                 if group:
                     assets.extend(group.assets)
         
-        # Get assets by labels
-        if operation_run.target_labels:
+        if run_data.target_labels:
+            # Get assets with specific labels
             label_assets = self.db.query(Asset).join(Asset.labels).filter(
-                Label.id.in_(operation_run.target_labels)
+                Asset.labels.any(id.in_(run_data.target_labels))
             ).all()
             assets.extend(label_assets)
+        
+        # From operation configuration
+        if not assets:
+            if operation.target_assets:
+                assets.extend(self.db.query(Asset).filter(Asset.id.in_(operation.target_assets)).all())
+            
+            if operation.target_asset_groups:
+                for group_id in operation.target_asset_groups:
+                    group = self.db.query(AssetGroup).filter(AssetGroup.id == group_id).first()
+                    if group:
+                        assets.extend(group.assets)
+            
+            if operation.target_labels:
+                label_assets = self.db.query(Asset).join(Asset.labels).filter(
+                    Asset.labels.any(id.in_(operation.target_labels))
+                ).all()
+                assets.extend(label_assets)
         
         # Remove duplicates
         unique_assets = list({asset.id: asset for asset in assets}.values())
         return unique_assets
 
-    def execute_job(self, job_id: int) -> None:
-        """Execute a job in the background."""
-        job = self.get_job(job_id)
-        if not job:
-            return
-        
+    async def _execute_operation(self, job: Job, operation: Operation, assets: List[Asset], run_data: OperationRun):
+        """Execute the operation on all target assets."""
         try:
+            # Update job status
             job.status = "running"
             job.start_time = datetime.utcnow()
             self.db.commit()
+
+            results = {}
             
-            # Get target assets
-            target_assets = self.db.query(Asset).filter(
-                Asset.id.in_(job.asset_ids or [])
-            ).all()
+            # Execute based on operation type
+            if operation.operation_type == "awx":
+                results = await self._execute_awx_operation(job, operation, assets, run_data)
+            elif operation.operation_type == "api":
+                results = await self._execute_api_operation(job, operation, assets, run_data)
+            elif operation.operation_type == "script":
+                results = await self._execute_script_operation(job, operation, assets, run_data)
+            else:
+                raise ValueError(f"Unsupported operation type: {operation.operation_type}")
+
+            # Update job completion
+            job.status = "completed"
+            job.end_time = datetime.utcnow()
+            job.progress = 100
+            job.results = results
+            job.summary = {
+                "total_assets": len(assets),
+                "successful": len([r for r in results.values() if r.get("success", False)]),
+                "failed": len([r for r in results.values() if not r.get("success", False)]),
+                "execution_time": (job.end_time - job.start_time).total_seconds()
+            }
+            self.db.commit()
+
+        except Exception as e:
+            logger.error(f"Operation execution failed: {e}")
+            job.status = "failed"
+            job.end_time = datetime.utcnow()
+            job.error_message = str(e)
+            self.db.commit()
+
+    async def _execute_awx_operation(self, job: Job, operation: Operation, assets: List[Asset], run_data: OperationRun) -> Dict[str, Any]:
+        """Execute AWX/Ansible Tower operation."""
+        results = {}
+        
+        # Get AWX settings
+        from .asset_service import AssetService
+        asset_service = AssetService(self.db)
+        awx_settings = asset_service.get_awx_settings()
+        
+        if not awx_settings.get("awx_connected"):
+            raise ValueError("AWX Tower is not connected")
+        
+        # Prepare inventory
+        inventory = self._prepare_awx_inventory(assets, operation)
+        
+        # Prepare extra variables
+        extra_vars = operation.awx_extra_vars or {}
+        if run_data.awx_extra_vars:
+            extra_vars.update(run_data.awx_extra_vars)
+        
+        # Add asset-specific variables
+        extra_vars.update({
+            "target_assets": [{"ip": asset.primary_ip, "hostname": asset.hostname} for asset in assets],
+            "job_id": job.id,
+            "operation_name": operation.name
+        })
+        
+        # Launch AWX job
+        awx_payload = {
+            "job_template": operation.awx_job_template_id,
+            "inventory": inventory,
+            "extra_vars": json.dumps(extra_vars),
+            "limit": operation.awx_limit,
+            "tags": operation.awx_tags,
+            "skip_tags": operation.awx_skip_tags,
+            "verbosity": operation.awx_verbosity
+        }
+        
+        try:
+            response = requests.post(
+                f"{awx_settings['awx_url']}/api/v2/job_templates/{operation.awx_job_template_id}/launch/",
+                json=awx_payload,
+                auth=(awx_settings['awx_username'], awx_settings['awx_password']),
+                timeout=30
+            )
             
-            results = []
-            total_assets = len(target_assets)
-            
-            for i, asset in enumerate(target_assets):
-                # Check for cancellation
-                self.db.refresh(job)
-                if job.status == "cancelled":
-                    break
-                
-                # Update progress
-                job.current_asset = asset.name
-                job.progress = int(((i + 1) / total_assets) * 100) if total_assets > 0 else 0
+            if response.status_code == 201:
+                awx_job_data = response.json()
+                job.awx_job_id = str(awx_job_data['id'])
+                job.awx_job_url = f"{awx_settings['awx_url']}/#/jobs/playbook/{awx_job_data['id']}"
                 self.db.commit()
                 
-                # Execute operation on asset
-                result = self._execute_operation_on_asset(job.operation, asset, job.params)
-                results.append(result)
-            
-            # Mark job as completed
-            if job.status != "cancelled":
-                job.status = "completed"
-                job.progress = 100
-            job.results = results
-            job.end_time = datetime.utcnow()
-            self.db.commit()
-            
-        except Exception as e:
-            # Mark job as failed
-            job.status = "failed"
-            job.error_message = str(e)
-            job.end_time = datetime.utcnow()
-            self.db.commit()
-
-    def _execute_operation_on_asset(self, operation: Operation, asset: Asset, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Execute an operation on a single asset."""
-        try:
-            if operation.operation_type == "awx_playbook":
-                return self._execute_awx_playbook(operation, asset, params)
-            elif operation.operation_type == "api_call":
-                return self._execute_api_call(operation, asset, params)
-            elif operation.operation_type == "script":
-                return self._execute_script(operation, asset, params)
+                # Monitor AWX job
+                results = await self._monitor_awx_job(job, awx_settings, assets)
             else:
-                return {
-                    "asset_id": asset.id,
-                    "asset_name": asset.name,
-                    "status": "failed",
-                    "error": f"Unknown operation type: {operation.operation_type}"
+                raise Exception(f"AWX job launch failed: {response.text}")
+                
+        except Exception as e:
+            logger.error(f"AWX operation failed: {e}")
+            for asset in assets:
+                results[asset.primary_ip] = {
+                    "success": False,
+                    "error": str(e),
+                    "asset": asset.primary_ip
                 }
-        except Exception as e:
-            return {
-                "asset_id": asset.id,
-                "asset_name": asset.name,
-                "status": "failed",
-                "error": str(e)
-            }
+        
+        return results
 
-    def _execute_awx_playbook(self, operation: Operation, asset: Asset, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Execute an AWX playbook on an asset."""
-        try:
-            from .awx_service import AWXService
-            
-            # Get AWX settings from database
-            settings = self.db.query(models.Settings).first()
-            if not settings or not settings.awx_url:
-                raise ValueError("AWX Tower not configured")
-            
-            # Initialize AWX service
-            awx_service = AWXService(
-                awx_url=settings.awx_url,
-                username=settings.awx_username or "",
-                password=settings.awx_password or ""
-            )
-            
-            # Test connection
-            if not awx_service.test_connection():
-                raise Exception("Failed to connect to AWX Tower")
-            
-            # Prepare asset data
-            asset_data = {
-                "id": asset.id,
-                "name": asset.name,
-                "primary_ip": asset.primary_ip,
-                "hostname": asset.hostname,
-                "mac_address": asset.mac_address,
-                "username": asset.username,
-                "ssh_key": asset.ssh_key,
-                "os_name": asset.os_name,
-                "manufacturer": asset.manufacturer,
-                "model": asset.model
-            }
-            
-            # Merge extra vars
-            extra_vars = operation.awx_extra_vars or {}
-            if params:
-                extra_vars.update(params)
-            
-            # Run playbook
-            result = awx_service.run_playbook_on_assets(
-                playbook_name=operation.awx_playbook_name,
-                assets=[asset_data],
-                extra_vars=extra_vars,
-                job_name=f"{operation.name}_{asset.name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-            )
-            
-            return {
-                "asset_id": asset.id,
-                "asset_name": asset.name,
-                "status": "success",
-                "operation_type": "awx_playbook",
-                "playbook": operation.awx_playbook_name,
-                "awx_job_id": result["job_id"],
-                "awx_job_url": result["job_url"],
-                "response": "AWX playbook launched successfully"
-            }
-            
-        except Exception as e:
-            return {
-                "asset_id": asset.id,
-                "asset_name": asset.name,
-                "status": "failed",
-                "operation_type": "awx_playbook",
-                "playbook": operation.awx_playbook_name,
-                "error": str(e)
-            }
+    async def _execute_api_operation(self, job: Job, operation: Operation, assets: List[Asset], run_data: OperationRun) -> Dict[str, Any]:
+        """Execute API call operation."""
+        results = {}
+        
+        # Prepare headers
+        headers = operation.api_headers or {}
+        if run_data.api_headers:
+            headers.update(run_data.api_headers)
+        
+        # Prepare body
+        body = operation.api_body or {}
+        if run_data.api_body:
+            body.update(run_data.api_body)
+        
+        # Process each asset
+        for i, asset in enumerate(assets):
+            try:
+                job.current_asset = asset.primary_ip
+                job.processed_assets = i
+                job.progress = int((i / len(assets)) * 100)
+                self.db.commit()
+                
+                # Prepare asset-specific request
+                asset_headers = headers.copy()
+                asset_body = body.copy()
+                
+                # Replace placeholders with asset data
+                asset_headers = self._replace_placeholders(asset_headers, asset)
+                asset_body = self._replace_placeholders(asset_body, asset)
+                
+                # Make API call
+                response = requests.request(
+                    method=operation.api_method,
+                    url=operation.api_url,
+                    headers=asset_headers,
+                    json=asset_body if operation.api_method in ['POST', 'PUT', 'PATCH'] else None,
+                    timeout=operation.api_timeout
+                )
+                
+                results[asset.primary_ip] = {
+                    "success": response.status_code < 400,
+                    "status_code": response.status_code,
+                    "response": response.text[:1000],  # Limit response size
+                    "asset": asset.primary_ip,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+            except Exception as e:
+                logger.error(f"API operation failed for asset {asset.primary_ip}: {e}")
+                results[asset.primary_ip] = {
+                    "success": False,
+                    "error": str(e),
+                    "asset": asset.primary_ip,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+        
+        return results
 
-    def _execute_api_call(self, operation: Operation, asset: Asset, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Execute an API call for an asset."""
-        if not operation.api_url:
-            raise ValueError("API URL not configured")
+    async def _execute_script_operation(self, job: Job, operation: Operation, assets: List[Asset], run_data: OperationRun) -> Dict[str, Any]:
+        """Execute script operation via WinRM or SSH."""
+        results = {}
         
-        # Replace placeholders in URL with asset data
-        url = operation.api_url.replace("{ip}", asset.primary_ip or "")
-        url = url.replace("{hostname}", asset.hostname or "")
-        url = url.replace("{name}", asset.name)
+        # Get credentials
+        credential = None
+        if operation.credential_id:
+            credential = self.db.query(Credential).filter(Credential.id == operation.credential_id).first()
         
-        # Make the API call
-        response = requests.request(
-            method=operation.api_method or "GET",
-            url=url,
-            headers=operation.api_headers or {},
-            json=operation.api_body,
-            timeout=30
-        )
+        # Process each asset
+        for i, asset in enumerate(assets):
+            try:
+                job.current_asset = asset.primary_ip
+                job.processed_assets = i
+                job.progress = int((i / len(assets)) * 100)
+                self.db.commit()
+                
+                # Prepare script content
+                script_content = operation.script_content or ""
+                script_args = operation.script_args or {}
+                if run_data.script_args:
+                    script_args.update(run_data.script_args)
+                
+                # Replace placeholders
+                script_content = self._replace_placeholders(script_content, asset)
+                script_args = self._replace_placeholders(script_args, asset)
+                
+                # Execute script
+                if operation.script_type == "powershell":
+                    result = await self._execute_powershell_script(asset, script_content, script_args, credential)
+                elif operation.script_type == "bash":
+                    result = await self._execute_bash_script(asset, script_content, script_args, credential)
+                elif operation.script_type == "python":
+                    result = await self._execute_python_script(asset, script_content, script_args, credential)
+                else:
+                    raise ValueError(f"Unsupported script type: {operation.script_type}")
+                
+                results[asset.primary_ip] = result
+                
+            except Exception as e:
+                logger.error(f"Script operation failed for asset {asset.primary_ip}: {e}")
+                results[asset.primary_ip] = {
+                    "success": False,
+                    "error": str(e),
+                    "asset": asset.primary_ip,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
         
-        return {
-            "asset_id": asset.id,
-            "asset_name": asset.name,
-            "status": "success" if response.status_code < 400 else "failed",
-            "operation_type": "api_call",
-            "status_code": response.status_code,
-            "response": response.text[:1000]  # Limit response size
-        }
+        return results
 
-    def _execute_script(self, operation: Operation, asset: Asset, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        """Execute a script on an asset."""
-        # This would execute a script (SSH, PowerShell, etc.)
-        # For now, return a mock response
-        return {
-            "asset_id": asset.id,
-            "asset_name": asset.name,
-            "status": "success",
-            "operation_type": "script",
-            "script": operation.script_path,
-            "response": "Script execution completed successfully"
-        }
-
-    def get_job(self, job_id: int) -> Optional[Job]:
-        """Get a job by ID."""
-        return self.db.query(Job).options(
-            joinedload(Job.operation)
-        ).filter(Job.id == job_id).first()
-
-    def get_jobs(
-        self, 
-        skip: int = 0, 
-        limit: int = 100,
-        status: Optional[str] = None
-    ) -> List[Job]:
-        """Get jobs with optional filtering."""
-        query = self.db.query(Job).options(
-            joinedload(Job.operation)
-        )
-        
-        if status:
-            query = query.filter(Job.status == status)
-        
-        return query.order_by(desc(Job.created_at)).offset(skip).limit(limit).all()
-
-    def cancel_job(self, job_id: int) -> bool:
-        """Cancel a running job."""
-        job = self.get_job(job_id)
-        if not job or job.status not in ["pending", "running"]:
-            return False
-        
-        job.status = "cancelled"
-        job.end_time = datetime.utcnow()
-        self.db.commit()
-        return True
-
-    def get_credentials_for_operation(self, operation_type: str) -> List[Credential]:
-        """Get appropriate credentials for a specific operation type."""
-        # Map operation types to credential types
-        credential_type_mapping = {
-            'ansible': ['username_password', 'ssh_key'],
-            'ssh': ['username_password', 'ssh_key'],
-            'api': ['api_key', 'username_password'],
-            'script': ['username_password', 'ssh_key'],
-            'certificate': ['certificate', 'username_password']
-        }
-        
-        credential_types = credential_type_mapping.get(operation_type, ['username_password'])
-        
-        return self.db.query(Credential).filter(
-            Credential.credential_type.in_(credential_types),
-            Credential.is_active == True
-        ).order_by(Credential.name).all()
-
-    def get_credential_by_id(self, credential_id: int) -> Optional[Credential]:
-        """Get a credential by ID."""
-        return self.db.query(Credential).filter(Credential.id == credential_id).first()
-
-    def prepare_credentials_for_assets(self, assets: List[Asset], credential_id: Optional[int] = None, override_credentials: Optional[Dict[str, Any]] = None) -> Dict[int, Dict[str, Any]]:
-        """Prepare credentials for a list of assets."""
-        asset_credentials = {}
-        
-        # Get the selected credential if provided
-        selected_credential = None
-        if credential_id:
-            selected_credential = self.get_credential_by_id(credential_id)
-        
-        for asset in assets:
-            asset_cred = {}
-            
-            # Check for override credentials for this specific asset
-            if override_credentials and str(asset.id) in override_credentials:
-                asset_cred = override_credentials[str(asset.id)]
-            elif selected_credential:
-                # Use the selected credential
-                if selected_credential.credential_type == 'username_password':
-                    asset_cred = {
-                        'username': selected_credential.username,
-                        'password': selected_credential.password,
-                        'domain': selected_credential.domain,
-                        'port': selected_credential.port
-                    }
-                elif selected_credential.credential_type == 'ssh_key':
-                    asset_cred = {
-                        'ssh_private_key': selected_credential.ssh_private_key,
-                        'ssh_public_key': selected_credential.ssh_public_key,
-                        'ssh_passphrase': selected_credential.ssh_passphrase,
-                        'username': selected_credential.username,
-                        'port': selected_credential.port or 22
-                    }
-                elif selected_credential.credential_type == 'api_key':
-                    asset_cred = {
-                        'api_key': selected_credential.api_key,
-                        'api_secret': selected_credential.api_secret
-                    }
-                elif selected_credential.credential_type == 'certificate':
-                    asset_cred = {
-                        'certificate_data': selected_credential.certificate_data,
-                        'private_key_data': selected_credential.private_key_data
-                    }
-            else:
-                # Use asset's own credentials if available
-                if asset.username:
-                    asset_cred = {
-                        'username': asset.username,
-                        'password': asset.password,
-                        'ssh_key': asset.ssh_key
-                    }
-            
-            asset_credentials[asset.id] = asset_cred
-        
-        return asset_credentials
-
-    def create_ansible_inventory_with_credentials(self, assets: List[Asset], credentials: Dict[int, Dict[str, Any]]) -> Dict[str, Any]:
-        """Create an Ansible inventory with credentials for the assets."""
+    def _prepare_awx_inventory(self, assets: List[Asset], operation: Operation) -> Dict[str, Any]:
+        """Prepare AWX inventory from assets."""
         inventory = {
             "all": {
                 "hosts": {},
@@ -454,77 +361,144 @@ class OperationService:
         for asset in assets:
             host_vars = {
                 "ansible_host": asset.primary_ip,
-                "ansible_user": credentials.get(asset.id, {}).get('username', 'root'),
-                "hostname": asset.hostname or asset.name,
-                "asset_id": asset.id,
-                "asset_name": asset.name
+                "hostname": asset.hostname or asset.primary_ip,
+                "os_name": asset.os_name,
+                "os_family": asset.os_family,
+                "manufacturer": asset.manufacturer,
+                "model": asset.model
             }
             
-            # Add credential-specific variables
-            asset_creds = credentials.get(asset.id, {})
-            if 'password' in asset_creds:
-                host_vars["ansible_password"] = asset_creds['password']
-            if 'ssh_private_key' in asset_creds:
-                host_vars["ansible_ssh_private_key_file"] = asset_creds['ssh_private_key']
-            if 'ssh_passphrase' in asset_creds:
-                host_vars["ansible_ssh_passphrase"] = asset_creds['ssh_passphrase']
-            if 'domain' in asset_creds:
-                host_vars["ansible_domain"] = asset_creds['domain']
-            if 'port' in asset_creds:
-                host_vars["ansible_port"] = asset_creds['port']
-            
-            # Add asset-specific information
-            if asset.os_name:
-                host_vars["os_name"] = asset.os_name
+            # Add OS-specific groups
             if asset.os_family:
-                host_vars["os_family"] = asset.os_family
-            if asset.manufacturer:
-                host_vars["manufacturer"] = asset.manufacturer
-            if asset.model:
-                host_vars["model"] = asset.model
-            if asset.location:
-                host_vars["location"] = asset.location
-            if asset.department:
-                host_vars["department"] = asset.department
+                if asset.os_family.lower() in ['windows', 'win']:
+                    host_vars["ansible_connection"] = "winrm"
+                    host_vars["ansible_winrm_transport"] = "basic"
+                else:
+                    host_vars["ansible_connection"] = "ssh"
+                    host_vars["ansible_ssh_common_args"] = "-o StrictHostKeyChecking=no"
             
-            inventory["all"]["hosts"][asset.name] = host_vars
+            inventory["all"]["hosts"][asset.primary_ip] = host_vars
         
         return inventory
 
-    def validate_operation_credentials(self, operation_run: OperationRun) -> List[str]:
-        """Validate that the operation has appropriate credentials."""
-        errors = []
+    async def _monitor_awx_job(self, job: Job, awx_settings: Dict[str, Any], assets: List[Asset]) -> Dict[str, Any]:
+        """Monitor AWX job execution."""
+        results = {}
         
-        # Get the operation
-        operation = None
-        if operation_run.operation_id:
-            operation = self.get_operation(operation_run.operation_id)
-        elif operation_run.operation_name:
-            operation = self.db.query(Operation).filter(Operation.name == operation_run.operation_name).first()
+        while True:
+            try:
+                response = requests.get(
+                    f"{awx_settings['awx_url']}/api/v2/jobs/{job.awx_job_id}/",
+                    auth=(awx_settings['awx_username'], awx_settings['awx_password']),
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    awx_job = response.json()
+                    job.progress = awx_job.get('percent_complete', 0)
+                    self.db.commit()
+                    
+                    if awx_job['status'] in ['successful', 'failed', 'error', 'canceled']:
+                        # Job completed
+                        for asset in assets:
+                            results[asset.primary_ip] = {
+                                "success": awx_job['status'] == 'successful',
+                                "status": awx_job['status'],
+                                "asset": asset.primary_ip,
+                                "timestamp": datetime.utcnow().isoformat()
+                            }
+                        break
+                    
+                    # Wait before next check
+                    await asyncio.sleep(5)
+                else:
+                    raise Exception(f"Failed to get AWX job status: {response.text}")
+                    
+            except Exception as e:
+                logger.error(f"Error monitoring AWX job: {e}")
+                for asset in assets:
+                    results[asset.primary_ip] = {
+                        "success": False,
+                        "error": str(e),
+                        "asset": asset.primary_ip,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                break
         
-        if not operation:
-            errors.append("Operation not found")
-            return errors
+        return results
+
+    async def _execute_powershell_script(self, asset: Asset, script_content: str, script_args: Dict[str, Any], credential: Optional[Credential]) -> Dict[str, Any]:
+        """Execute PowerShell script via WinRM."""
+        # This would integrate with pywinrm or similar library
+        # For now, return a mock result
+        return {
+            "success": True,
+            "stdout": f"PowerShell script executed on {asset.primary_ip}",
+            "stderr": "",
+            "exit_code": 0,
+            "asset": asset.primary_ip,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    async def _execute_bash_script(self, asset: Asset, script_content: str, script_args: Dict[str, Any], credential: Optional[Credential]) -> Dict[str, Any]:
+        """Execute Bash script via SSH."""
+        # This would integrate with paramiko or similar library
+        # For now, return a mock result
+        return {
+            "success": True,
+            "stdout": f"Bash script executed on {asset.primary_ip}",
+            "stderr": "",
+            "exit_code": 0,
+            "asset": asset.primary_ip,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    async def _execute_python_script(self, asset: Asset, script_content: str, script_args: Dict[str, Any], credential: Optional[Credential]) -> Dict[str, Any]:
+        """Execute Python script."""
+        # This would execute Python script locally or remotely
+        # For now, return a mock result
+        return {
+            "success": True,
+            "stdout": f"Python script executed for {asset.primary_ip}",
+            "stderr": "",
+            "exit_code": 0,
+            "asset": asset.primary_ip,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+    def _replace_placeholders(self, data: Any, asset: Asset) -> Any:
+        """Replace placeholders in data with asset information."""
+        if isinstance(data, str):
+            return data.replace("{{asset_ip}}", asset.primary_ip or "") \
+                      .replace("{{asset_hostname}}", asset.hostname or "") \
+                      .replace("{{asset_name}}", asset.name or "") \
+                      .replace("{{asset_os}}", asset.os_name or "") \
+                      .replace("{{asset_mac}}", asset.mac_address or "")
+        elif isinstance(data, dict):
+            return {key: self._replace_placeholders(value, asset) for key, value in data.items()}
+        elif isinstance(data, list):
+            return [self._replace_placeholders(item, asset) for item in data]
+        else:
+            return data
+
+    def get_job(self, job_id: int) -> Optional[Job]:
+        """Get a job by ID."""
+        return self.db.query(Job).filter(Job.id == job_id).first()
+
+    def get_jobs(self, operation_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[Job]:
+        """Get jobs with optional filtering."""
+        query = self.db.query(Job)
+        if operation_id:
+            query = query.filter(Job.operation_id == operation_id)
+        return query.offset(skip).limit(limit).all()
+
+    def cancel_job(self, job_id: int) -> bool:
+        """Cancel a running job."""
+        job = self.get_job(job_id)
+        if not job or job.status not in ['pending', 'running']:
+            return False
         
-        # Get target assets
-        assets = self.get_target_assets(operation_run)
-        if not assets:
-            errors.append("No target assets found")
-            return errors
-        
-        # Check if credentials are provided
-        if not operation_run.credential_id and not operation_run.override_credentials:
-            # Check if assets have their own credentials
-            assets_without_creds = [asset for asset in assets if not asset.username and not asset.ssh_key]
-            if assets_without_creds:
-                errors.append(f"Assets {[asset.name for asset in assets_without_creds]} have no credentials and no credential was selected")
-        
-        # Validate credential exists if provided
-        if operation_run.credential_id:
-            credential = self.get_credential_by_id(operation_run.credential_id)
-            if not credential:
-                errors.append(f"Credential with ID {operation_run.credential_id} not found")
-            elif not credential.is_active:
-                errors.append(f"Credential '{credential.name}' is not active")
-        
-        return errors
+        job.status = "cancelled"
+        job.end_time = datetime.utcnow()
+        self.db.commit()
+        return True

@@ -647,10 +647,14 @@ def list_operations(
     return service.get_operations(skip=skip, limit=limit, is_active=is_active)
 
 @router.post("/operations", response_model=schemas.Operation)
-def create_operation(operation: schemas.OperationCreate, db: Session = Depends(get_db)):
+def create_operation(
+    operation: schemas.OperationCreate, 
+    current_user: User = Depends(require_operations_write),
+    db: Session = Depends(get_db)
+):
     """Create a new operation."""
     service = OperationService(db)
-    return service.create_operation(operation)
+    return service.create_operation(operation, current_user.id)
 
 @router.get("/operations/{operation_id}", response_model=schemas.Operation)
 def get_operation(operation_id: int, db: Session = Depends(get_db)):
@@ -662,7 +666,12 @@ def get_operation(operation_id: int, db: Session = Depends(get_db)):
     return operation
 
 @router.put("/operations/{operation_id}", response_model=schemas.Operation)
-def update_operation(operation_id: int, operation: schemas.OperationUpdate, db: Session = Depends(get_db)):
+def update_operation(
+    operation_id: int, 
+    operation: schemas.OperationUpdate, 
+    current_user: User = Depends(require_operations_write),
+    db: Session = Depends(get_db)
+):
     """Update an operation."""
     service = OperationService(db)
     updated_operation = service.update_operation(operation_id, operation)
@@ -671,7 +680,11 @@ def update_operation(operation_id: int, operation: schemas.OperationUpdate, db: 
     return updated_operation
 
 @router.delete("/operations/{operation_id}", status_code=204)
-def delete_operation(operation_id: int, db: Session = Depends(get_db)):
+def delete_operation(
+    operation_id: int, 
+    current_user: User = Depends(require_operations_write),
+    db: Session = Depends(get_db)
+):
     """Delete an operation."""
     service = OperationService(db)
     if not service.delete_operation(operation_id):
@@ -698,17 +711,14 @@ def execute_operation(
 @router.post("/operations/run", response_model=schemas.Job)
 def run_operation(
     operation_run: schemas.OperationRun,
-    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_operations_execute),
     db: Session = Depends(get_db)
 ):
-    """Run an operation on specified targets (legacy endpoint)."""
+    """Run an operation on specified targets."""
     service = OperationService(db)
     
     # Create and start the job
-    job = service.run_operation(operation_run)
-    
-    # Execute the job in the background
-    background_tasks.add_task(service.execute_job, job.id)
+    job = service.run_operation(operation_run, current_user.id)
     
     return job
 
@@ -716,15 +726,21 @@ def run_operation(
 def list_jobs(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
+    operation_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
+    current_user: User = Depends(require_operations_read),
     db: Session = Depends(get_db)
 ):
-    """List jobs."""
+    """List operation jobs."""
     service = OperationService(db)
-    return service.get_jobs(skip=skip, limit=limit, status=status)
+    return service.get_jobs(skip=skip, limit=limit, operation_id=operation_id)
 
 @router.get("/jobs/{job_id}", response_model=schemas.Job)
-def get_job(job_id: int, db: Session = Depends(get_db)):
+def get_job(
+    job_id: int,
+    current_user: User = Depends(require_operations_read),
+    db: Session = Depends(get_db)
+):
     """Get a job by ID."""
     service = OperationService(db)
     job = service.get_job(job_id)
@@ -732,13 +748,19 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
-@router.post("/jobs/{job_id}/cancel", status_code=200)
-def cancel_job(job_id: int, db: Session = Depends(get_db)):
+@router.post("/jobs/{job_id}/cancel")
+def cancel_job(
+    job_id: int,
+    current_user: User = Depends(require_operations_execute),
+    db: Session = Depends(get_db)
+):
     """Cancel a running job."""
     service = OperationService(db)
     if not service.cancel_job(job_id):
-        raise HTTPException(status_code=404, detail="Job not found or not cancellable")
+        raise HTTPException(status_code=404, detail="Job not found or cannot be cancelled")
     return {"message": "Job cancelled successfully"}
+
+
 
 # Asset Group routes
 @router.get("/asset-groups", response_model=List[schemas.AssetGroup])

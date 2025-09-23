@@ -236,36 +236,59 @@ class Operation(Base):
     description = Column(Text, nullable=True)
     
     # Operation type and configuration
-    operation_type = Column(String(50), nullable=False)  # awx_playbook, api_call, script, etc.
+    operation_type = Column(String(50), nullable=False)  # awx, api, script
     
     # AWX Tower integration
-    awx_url = Column(String(500), nullable=True)
-    awx_playbook_id = Column(Integer, nullable=True)
-    awx_playbook_name = Column(String(255), nullable=True)
+    awx_job_template_id = Column(String(50), nullable=True)
+    awx_job_template_name = Column(String(255), nullable=True)
     awx_extra_vars = Column(JSON, nullable=True)
+    awx_inventory_source = Column(String(50), default="assets")  # assets, asset_groups, labels
+    awx_limit = Column(String(255), nullable=True)
+    awx_tags = Column(String(255), nullable=True)
+    awx_skip_tags = Column(String(255), nullable=True)
+    awx_verbosity = Column(Integer, default=0)
     
-    # Generic API configuration
+    # API configuration
     api_url = Column(String(500), nullable=True)
-    api_method = Column(String(10), nullable=True)  # GET, POST, PUT, DELETE
+    api_method = Column(String(10), nullable=True)  # GET, POST, PUT, DELETE, PATCH
     api_headers = Column(JSON, nullable=True)
     api_body = Column(JSON, nullable=True)
+    api_auth_type = Column(String(20), default="none")  # none, basic, bearer, api_key
+    api_auth_credentials = Column(String(500), nullable=True)
+    api_timeout = Column(Integer, default=30)
     
     # Script execution
-    script_path = Column(String(500), nullable=True)
+    script_type = Column(String(20), nullable=True)  # powershell, bash, python, cmd
+    script_content = Column(Text, nullable=True)
+    script_file_path = Column(String(500), nullable=True)
     script_args = Column(JSON, nullable=True)
+    script_timeout = Column(Integer, default=300)
+    script_working_directory = Column(String(500), nullable=True)
     
     # Target configuration
-    target_group_id = Column(Integer, ForeignKey("asset_groups.id"), nullable=True)
-    target_labels = Column(JSON, nullable=True)  # List of label IDs to target
+    target_type = Column(String(20), default="assets")  # assets, asset_groups, labels
+    target_assets = Column(JSON, nullable=True)  # List of asset IDs
+    target_asset_groups = Column(JSON, nullable=True)  # List of asset group IDs
+    target_labels = Column(JSON, nullable=True)  # List of label IDs
+    
+    # Credentials
+    credential_id = Column(Integer, ForeignKey("credentials.id"), nullable=True)
+    
+    # Scheduling
+    schedule_enabled = Column(Boolean, default=False)
+    schedule_cron = Column(String(100), nullable=True)
+    schedule_timezone = Column(String(50), default="UTC")
     
     # Status and metadata
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
     jobs = relationship("Job", back_populates="operation", cascade="all, delete-orphan")
-    target_group = relationship("AssetGroup", back_populates="operations")
+    credential = relationship("Credential", back_populates="operations")
+    creator = relationship("User", foreign_keys=[created_by])
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -281,27 +304,42 @@ class Job(Base):
     status = Column(String(20), default="pending", index=True)  # pending, running, completed, failed, cancelled
     progress = Column(Integer, default=0)  # Percentage completion
     current_asset = Column(String(255), nullable=True)  # Currently processing asset
+    total_assets = Column(Integer, default=0)  # Total number of assets to process
+    processed_assets = Column(Integer, default=0)  # Number of assets processed
     
     # Results and logging
-    results = Column(JSON, nullable=True)  # Structured results
+    results = Column(JSON, nullable=True)  # Structured results per asset
     error_message = Column(Text, nullable=True)
     log_output = Column(Text, nullable=True)
+    summary = Column(JSON, nullable=True)  # Job execution summary
     
     # AWX specific fields
-    awx_job_id = Column(Integer, nullable=True)  # AWX job ID if applicable
+    awx_job_id = Column(String(50), nullable=True)  # AWX job ID if applicable
     awx_job_url = Column(String(500), nullable=True)
+    awx_inventory_id = Column(String(50), nullable=True)
+    
+    # API specific fields
+    api_response_status = Column(Integer, nullable=True)
+    api_response_headers = Column(JSON, nullable=True)
+    api_response_body = Column(Text, nullable=True)
+    
+    # Script specific fields
+    script_exit_code = Column(Integer, nullable=True)
+    script_stdout = Column(Text, nullable=True)
+    script_stderr = Column(Text, nullable=True)
     
     # Timing
     start_time = Column(DateTime, nullable=True)
     end_time = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Additional parameters
     params = Column(JSON, nullable=True)
-    created_by = Column(String(100), nullable=True)
     
     # Relationships
     operation = relationship("Operation", back_populates="jobs")
+    creator = relationship("User", foreign_keys=[created_by])
 
 class Settings(Base):
     __tablename__ = "settings"

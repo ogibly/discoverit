@@ -77,6 +77,46 @@ const AdminSettings = () => {
     timeout_seconds: 300
   });
 
+  // LDAP configuration state
+  const [ldapConfigs, setLdapConfigs] = useState([]);
+  const [showLDAPModal, setShowLDAPModal] = useState(false);
+  const [editingLDAP, setEditingLDAP] = useState(null);
+  const [ldapForm, setLdapForm] = useState({
+    name: '',
+    server_url: '',
+    bind_dn: '',
+    bind_password: '',
+    user_search_base: '',
+    user_search_filter: '',
+    group_search_base: '',
+    group_search_filter: '',
+    is_default: false,
+    is_active: true
+  });
+
+  // IP Range management state
+  const [ipRanges, setIpRanges] = useState([]);
+  const [showIPRangeModal, setShowIPRangeModal] = useState(false);
+  const [editingIPRange, setEditingIPRange] = useState(null);
+  const [ipRangeForm, setIpRangeForm] = useState({
+    name: '',
+    description: '',
+    ip_range: '',
+    range_type: 'cidr',
+    is_restrictive: true,
+    priority: 0,
+    is_active: true
+  });
+
+  // Role management state
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
+  const [roleForm, setRoleForm] = useState({
+    name: '',
+    description: '',
+    permissions: []
+  });
+
   useEffect(() => {
     if (hasPermission('admin')) {
       fetchSettings();
@@ -89,7 +129,7 @@ const AdminSettings = () => {
   // Handle tab parameter from URL
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['system', 'users', 'scanners', 'operations'].includes(tabParam)) {
+    if (tabParam && ['system', 'users', 'ldap', 'ip-ranges', 'permissions', 'scanners', 'operations'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -357,6 +397,39 @@ const AdminSettings = () => {
     resetScannerForm();
   };
 
+  // LDAP management functions (placeholder)
+  const handleCreateLDAP = async () => {
+    console.log('Create LDAP config:', ldapForm);
+    // TODO: Implement LDAP creation
+  };
+
+  const handleDeleteLDAP = async (ldapId) => {
+    console.log('Delete LDAP config:', ldapId);
+    // TODO: Implement LDAP deletion
+  };
+
+  // IP Range management functions (placeholder)
+  const handleCreateIPRange = async () => {
+    console.log('Create IP range:', ipRangeForm);
+    // TODO: Implement IP range creation
+  };
+
+  const handleDeleteIPRange = async (rangeId) => {
+    console.log('Delete IP range:', rangeId);
+    // TODO: Implement IP range deletion
+  };
+
+  // Role management functions (placeholder)
+  const handleCreateRole = async () => {
+    console.log('Create role:', roleForm);
+    // TODO: Implement role creation
+  };
+
+  const handleDeleteRole = async (roleId) => {
+    console.log('Delete role:', roleId);
+    // TODO: Implement role deletion
+  };
+
   return (
     <div className="h-screen bg-background flex flex-col">
       <PageHeader
@@ -391,9 +464,12 @@ const AdminSettings = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="system">System Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
+            <TabsTrigger value="ip-ranges">IP Ranges</TabsTrigger>
+            <TabsTrigger value="permissions">Permissions</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
             <TabsTrigger value="operations">Operations</TabsTrigger>
           </TabsList>
@@ -577,6 +653,151 @@ const AdminSettings = () => {
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteUser(user.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* LDAP Integration Tab */}
+          <TabsContent value="ldap" className="space-y-6">
+            <Card className="surface-elevated">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-subheading text-foreground flex items-center">
+                      <span className="mr-2">🔐</span>
+                      LDAP Configuration
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Configure LDAP authentication and user synchronization
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowLDAPModal(true)}>
+                    Add LDAP Server
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">🔐</div>
+                  <h3 className="text-subheading text-foreground mb-2">LDAP Integration</h3>
+                  <p className="text-body text-muted-foreground mb-4">
+                    Configure LDAP servers for centralized authentication and user management.
+                  </p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Active Directory integration</p>
+                    <p>• User synchronization</p>
+                    <p>• Group-based role mapping</p>
+                    <p>• Secure authentication</p>
+                  </div>
+                  <Button onClick={() => setShowLDAPModal(true)} className="mt-4">
+                    Configure LDAP Server
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* IP Ranges Management Tab */}
+          <TabsContent value="ip-ranges" className="space-y-6">
+            <Card className="surface-elevated">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-subheading text-foreground flex items-center">
+                      <span className="mr-2">🌐</span>
+                      IP Range Management
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Define IP ranges and assign access permissions to users
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowIPRangeModal(true)}>
+                    Add IP Range
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">🌐</div>
+                  <h3 className="text-subheading text-foreground mb-2">IP Range Access Control</h3>
+                  <p className="text-body text-muted-foreground mb-4">
+                    Create IP ranges and control user access to specific network segments.
+                  </p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• CIDR notation support</p>
+                    <p>• IP range definitions</p>
+                    <p>• User access restrictions</p>
+                    <p>• Priority-based rules</p>
+                  </div>
+                  <Button onClick={() => setShowIPRangeModal(true)} className="mt-4">
+                    Create IP Range
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Permissions Management Tab */}
+          <TabsContent value="permissions" className="space-y-6">
+            <Card className="surface-elevated">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-subheading text-foreground flex items-center">
+                      <span className="mr-2">🛡️</span>
+                      Role & Permission Management
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Manage user roles and define granular permissions
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowRoleModal(true)}>
+                    Add Role
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {roles.map((role) => (
+                    <div key={role.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                          <span className="text-primary-foreground font-semibold">
+                            {role.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-subheading text-foreground">{role.name}</h3>
+                          <p className="text-body text-muted-foreground">{role.description || 'No description'}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge className="bg-info text-info-foreground">
+                              {role.permissions?.length || 0} permissions
+                            </Badge>
+                            <Badge className="bg-success text-success-foreground">
+                              {users.filter(u => u.role_id === role.id).length} users
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowRoleModal(true)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteRole(role.id)}
                         >
                           Delete
                         </Button>

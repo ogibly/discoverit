@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -21,6 +21,7 @@ const ScanNotifications = ({
 }) => {
   const [notifications, setNotifications] = useState([]);
   const [isEnabled, setIsEnabled] = useState(true);
+  const previousStatusRef = useRef(null);
 
   // Position classes
   const positionClasses = {
@@ -35,10 +36,11 @@ const ScanNotifications = ({
     if (!isEnabled || !activeScanTask) return;
 
     const currentStatus = activeScanTask.status;
-    const lastNotification = notifications[notifications.length - 1];
+    const previousStatus = previousStatusRef.current;
 
-    // Only show notification if status changed
-    if (!lastNotification || lastNotification.scanId !== activeScanTask.id || lastNotification.status !== currentStatus) {
+    // Only show notification if status actually changed
+    if (previousStatus !== currentStatus) {
+      previousStatusRef.current = currentStatus;
       let notification = null;
 
       switch (currentStatus) {

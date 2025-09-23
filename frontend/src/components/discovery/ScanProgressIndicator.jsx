@@ -133,11 +133,11 @@ const ScanProgressIndicator = ({
             Progress
           </span>
           <span className={cn("font-medium", classes.text)}>
-            {scanTask.progress || 0}%
+            {Math.round(scanTask.progress || 0)}%
           </span>
         </div>
         <Progress 
-          value={scanTask.progress || 0} 
+          value={Math.round(scanTask.progress || 0)} 
           className={cn(classes.progress)}
         />
       </div>
@@ -159,6 +159,12 @@ const ScanProgressIndicator = ({
               <p className="font-mono">{scanTask.current_ip}</p>
             </div>
           )}
+          <div>
+            <span>Progress:</span>
+            <p className="font-medium text-foreground">
+              {Math.round(scanTask.progress || 0)}%
+            </p>
+          </div>
           <div>
             <span>Discovered:</span>
             <p className="font-medium text-foreground">

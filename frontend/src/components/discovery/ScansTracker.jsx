@@ -115,41 +115,39 @@ const ScansTracker = ({
   if (isCollapsed) {
     return (
       <div className={cn("fixed bottom-4 right-4 z-50", className)}>
-        <Card className="w-80 shadow-lg border-2 border-primary/20">
-          <CardContent className="p-4">
+        <Card className="w-64 shadow-lg border border-primary/20 bg-background/95 backdrop-blur-sm">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  {hasActiveScan ? (
-                    <>
-                      <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Scan Running</p>
+              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                {hasActiveScan ? (
+                  <>
+                    <Activity className="w-4 h-4 text-blue-500 animate-pulse flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-foreground truncate">Scan Running</p>
                         <p className="text-xs text-muted-foreground">
-                          {activeScanTask.progress || 0}% • {formatDuration(activeScanTask.start_time)}
+                          {Math.round(activeScanTask.progress || 0)}% • {formatDuration(activeScanTask.start_time)}
                         </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">No Active Scans</p>
-                        <p className="text-xs text-muted-foreground">
-                          {recentScans.length} recent scans
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-foreground">No Active Scans</p>
+                      <p className="text-xs text-muted-foreground">
+                        {recentScans.length} recent
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsCollapsed(false)}
-                className="h-8 w-8 p-0"
+                className="h-6 w-6 p-0 flex-shrink-0"
               >
-                <ChevronUp className="w-4 h-4" />
+                <ChevronUp className="w-3 h-3" />
               </Button>
             </div>
           </CardContent>

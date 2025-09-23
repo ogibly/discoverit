@@ -33,11 +33,13 @@ const OperationsManagement = () => {
     setViewMode,
     selectedItems,
     setSelectedItems,
-    clearSelection
+    clearSelection,
+    filteredAndSortedItems
   } = listState;
   
-  // Alias for consistency with component usage
+  // Aliases for consistency with component usage
   const selectedOperations = selectedItems;
+  const filteredOperations = filteredAndSortedItems();
   
   // Selection handlers
   const toggleOperationSelection = (operationId) => {

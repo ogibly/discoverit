@@ -126,7 +126,7 @@ const ScansTracker = ({
                       <div>
                         <p className="text-sm font-medium text-foreground">Scan Running</p>
                         <p className="text-xs text-muted-foreground">
-                          {activeScanTask.progress}% • {formatDuration(activeScanTask.start_time)}
+                          {activeScanTask.progress || 0}% • {formatDuration(activeScanTask.start_time)}
                         </p>
                       </div>
                     </>

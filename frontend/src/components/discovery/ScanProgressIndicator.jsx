@@ -133,11 +133,11 @@ const ScanProgressIndicator = ({
             Progress
           </span>
           <span className={cn("font-medium", classes.text)}>
-            {scanTask.progress}%
+            {scanTask.progress || 0}%
           </span>
         </div>
         <Progress 
-          value={scanTask.progress} 
+          value={scanTask.progress || 0} 
           className={cn(classes.progress)}
         />
       </div>

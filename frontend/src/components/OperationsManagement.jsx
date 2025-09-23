@@ -37,9 +37,18 @@ const OperationsManagement = () => {
     filteredAndSortedItems
   } = listState;
   
+  const createModal = useModalState();
+  const editModal = useModalState();
+  
   // Aliases for consistency with component usage
   const selectedOperations = selectedItems;
   const filteredOperations = filteredAndSortedItems();
+  
+  // Modal state aliases
+  const showCreateModal = createModal.isOpen;
+  const setShowCreateModal = createModal.setIsOpen;
+  const showEditModal = editModal.isOpen;
+  const setShowEditModal = editModal.setIsOpen;
   
   // Selection handlers
   const toggleOperationSelection = (operationId) => {
@@ -54,8 +63,14 @@ const OperationsManagement = () => {
     setSelectedItems(operationIds);
   };
   
-  const createModal = useModalState();
-  const editModal = useModalState();
+  // Check if all operations are selected
+  const allSelected = filteredOperations.length > 0 && filteredOperations.every(op => selectedItems.includes(op.id));
+  
+  // Modal handlers
+  const handleCreateNew = () => {
+    formState.resetForm();
+    createModal.openModal();
+  };
   
   const initialForm = {
     name: '',
@@ -225,11 +240,6 @@ const OperationsManagement = () => {
   // Action handlers
   const handleEditOperation = (operation) => {
     editModal.openModal(operation);
-  };
-
-  const handleCreateNew = () => {
-    formState.resetForm();
-    createModal.openModal();
   };
 
   const getOperationTypeIcon = (type) => {

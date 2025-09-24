@@ -32,9 +32,12 @@ class OperationService:
         """Get an operation by ID."""
         return self.db.query(Operation).filter(Operation.id == operation_id).first()
 
-    def get_operations(self, skip: int = 0, limit: int = 100) -> List[Operation]:
+    def get_operations(self, skip: int = 0, limit: int = 100, is_active: Optional[bool] = None) -> List[Operation]:
         """Get all operations with pagination."""
-        return self.db.query(Operation).offset(skip).limit(limit).all()
+        query = self.db.query(Operation)
+        if is_active is not None:
+            query = query.filter(Operation.is_active == is_active)
+        return query.offset(skip).limit(limit).all()
 
     def update_operation(self, operation_id: int, operation_data: OperationUpdate) -> Optional[Operation]:
         """Update an operation."""
@@ -485,11 +488,13 @@ class OperationService:
         """Get a job by ID."""
         return self.db.query(Job).filter(Job.id == job_id).first()
 
-    def get_jobs(self, operation_id: Optional[int] = None, skip: int = 0, limit: int = 100) -> List[Job]:
+    def get_jobs(self, operation_id: Optional[int] = None, skip: int = 0, limit: int = 100, status: Optional[str] = None) -> List[Job]:
         """Get jobs with optional filtering."""
         query = self.db.query(Job)
         if operation_id:
             query = query.filter(Job.operation_id == operation_id)
+        if status:
+            query = query.filter(Job.status == status)
         return query.offset(skip).limit(limit).all()
 
     def cancel_job(self, job_id: int) -> bool:

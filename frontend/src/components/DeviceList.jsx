@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import ActionsDropdown from "./ActionsDropdown";
+import React, { useState } from "react";
+import StandardList from "./common/StandardList";
+import { Button } from "./ui/Button";
+import { Badge } from "./ui/Badge";
+import { cn } from "../utils/cn";
 
 export default React.memo(function DeviceList({
 	devices,
@@ -11,97 +14,282 @@ export default React.memo(function DeviceList({
 	onDeleteSelected,
 	onCreateAsset,
 	onSelectAll,
+	onViewDevice,
+	onConvertToAsset,
 }) {
-	const [currentPage, setCurrentPage] = useState(1);
-	const [itemsPerPage, setItemsPerPage] = useState(10); // Set a fixed itemsPerPage
+	const [searchValue, setSearchValue] = useState("");
+	const [filterValue, setFilterValue] = useState("all");
+	const [sortValue, setSortValue] = useState("last_seen");
+	const [sortOrder, setSortOrder] = useState("desc");
+	const [viewMode, setViewMode] = useState("table");
 
-	const sortedDevices = [...devices].sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
-	const totalPages = Math.ceil(sortedDevices.length / itemsPerPage);
-	const paginatedDevices = sortedDevices.slice(
-		(currentPage - 1) * itemsPerPage,
-		currentPage * itemsPerPage
-	);
+	const filterOptions = [
+		{ value: "all", label: "All Devices", icon: "📱" },
+		{ value: "online", label: "Online", icon: "🟢" },
+		{ value: "offline", label: "Offline", icon: "🔴" },
+		{ value: "unknown", label: "Unknown", icon: "❓" },
+	];
 
-	const allSelected = paginatedDevices.length > 0 && paginatedDevices.every(d => selectedDevices.includes(d.id));
+	const sortOptions = [
+		{ value: "last_seen", label: "Last Seen" },
+		{ value: "ip_address", label: "IP Address" },
+		{ value: "hostname", label: "Hostname" },
+		{ value: "device_type", label: "Device Type" },
+	];
 
-	return (
-		<div className="flex flex-col h-full flex-grow">
-			{/* Converted to TailwindCSS */}
-			<div className="flex flex-col flex-grow overflow-hidden border border-slate-800 rounded-lg bg-slate-900/50">
-				<div className="flex-grow overflow-y-auto">
-					<table className="w-full text-sm text-left text-slate-300">
-						<thead className="text-xs text-slate-400 uppercase bg-slate-800">
-							<tr>
-								<th scope="col" className="p-4">
-									<input
-										type="checkbox"
-										className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
-										checked={allSelected}
-										onChange={() => onSelectAll(paginatedDevices.map(d => d.id))}
-									/>
-								</th>
-								<th scope="col" className="px-6 py-3">IP</th>
-								<th scope="col" className="px-6 py-3">MAC</th>
-								<th scope="col" className="px-6 py-3"></th>
-							</tr>
-						</thead>
-						<tbody>
-							{paginatedDevices.map((device) => (
-								<tr
-									key={device.id}
-									className={`border-b border-slate-800 transition-colors duration-150 ${selectedDevice && selectedDevice.id === device.id ? "bg-blue-600/20 hover:bg-blue-600/30" : "hover:bg-slate-800/50"}`}
-								>
-									<td className="w-4 p-4">
-										<input
-											type="checkbox"
-											className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
-											checked={selectedDevices.includes(device.id)}
-											onChange={() => onSelectDevice(device.id)}
-										/>
-									</td>
-									<td onClick={() => onSelect(device)} className="px-6 py-4 cursor-pointer">{device.ip}</td>
-									<td className="px-6 py-4">{device.mac}</td>
-									<td className="px-6 py-4">
-										<button
-											onClick={() => onDelete(device.id)}
-											className="font-medium text-red-500 hover:underline"
-										>
-											Delete
-										</button>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-				<div className="flex items-center justify-center p-4 border-t border-slate-800">
-					<button
-						onClick={() => setCurrentPage(currentPage - 1)}
-						disabled={currentPage === 1}
-						className="px-3 py-1 text-sm font-medium text-slate-300 bg-slate-800 rounded-l-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						Previous
-					</button>
-					<div className="flex items-center mx-2 overflow-x-auto">
-						{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-							<button
-								key={page}
-								onClick={() => setCurrentPage(page)}
-								className={`px-3 py-1 mx-1 text-sm font-medium rounded-md ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
-							>
-								{page}
-							</button>
-						))}
+	const statistics = [
+		{
+			value: devices.length,
+			label: "Total Devices",
+			color: "text-primary",
+			icon: "📱",
+			bgColor: "bg-primary/20",
+			iconColor: "text-primary"
+		},
+		{
+			value: devices.filter(d => d.status === 'online').length,
+			label: "Online",
+			color: "text-success",
+			icon: "🟢",
+			bgColor: "bg-success/20",
+			iconColor: "text-success"
+		},
+		{
+			value: devices.filter(d => d.status === 'offline').length,
+			label: "Offline",
+			color: "text-error",
+			icon: "🔴",
+			bgColor: "bg-error/20",
+			iconColor: "text-error"
+		},
+		{
+			value: selectedDevices.length,
+			label: "Selected",
+			color: "text-warning",
+			icon: "✓",
+			bgColor: "bg-warning/20",
+			iconColor: "text-warning"
+		}
+	];
+
+	const getDeviceTypeIcon = (deviceType) => {
+		switch (deviceType) {
+			case 'router': return '🌐';
+			case 'switch': return '🔀';
+			case 'server': return '🖥️';
+			case 'workstation': return '💻';
+			case 'printer': return '🖨️';
+			default: return '📱';
+		}
+	};
+
+	const getDeviceTypeColor = (deviceType) => {
+		switch (deviceType) {
+			case 'router': return 'bg-blue-500/20 text-blue-600';
+			case 'switch': return 'bg-green-500/20 text-green-600';
+			case 'server': return 'bg-purple-500/20 text-purple-600';
+			case 'workstation': return 'bg-orange-500/20 text-orange-600';
+			case 'printer': return 'bg-pink-500/20 text-pink-600';
+			default: return 'bg-gray-500/20 text-gray-600';
+		}
+	};
+
+	const getStatusColor = (status) => {
+		switch (status) {
+			case 'online': return 'bg-success text-success-foreground';
+			case 'offline': return 'bg-error text-error-foreground';
+			case 'unknown': return 'bg-warning text-warning-foreground';
+			default: return 'bg-muted text-muted-foreground';
+		}
+	};
+
+	const getStatusText = (status) => {
+		switch (status) {
+			case 'online': return 'Online';
+			case 'offline': return 'Offline';
+			case 'unknown': return 'Unknown';
+			default: return 'New';
+		}
+	};
+
+	const formatLastSeen = (lastSeen) => {
+		if (!lastSeen) return 'Never';
+		const date = new Date(lastSeen);
+		return date.toLocaleDateString() + ', ' + date.toLocaleTimeString();
+	};
+
+	const renderDeviceCard = (device) => (
+		<div className="surface-interactive p-6 rounded-lg border border-border">
+			<div className="flex items-start justify-between mb-4">
+				<div className="flex items-center space-x-3">
+					<div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-lg", getDeviceTypeColor(device.device_type))}>
+						{getDeviceTypeIcon(device.device_type)}
 					</div>
-					<button
-						onClick={() => setCurrentPage(currentPage + 1)}
-						disabled={currentPage === totalPages}
-						className="px-3 py-1 text-sm font-medium text-slate-300 bg-slate-800 rounded-r-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+				</div>
+				<Badge className={cn("text-xs", getStatusColor(device.status))}>
+					{getStatusText(device.status)}
+				</Badge>
+			</div>
+
+			<div className="space-y-3">
+				<div>
+					<h3 className="text-subheading text-foreground truncate">
+						{device.hostname || device.ip_address || 'Unknown Device'}
+					</h3>
+					<p className="text-caption text-muted-foreground">
+						{device.ip_address || 'Unknown IP'}
+					</p>
+				</div>
+
+				<div className="space-y-2 text-caption text-muted-foreground">
+					{device.mac_address && (
+						<div className="flex justify-between">
+							<span>MAC:</span>
+							<span className="font-mono">{device.mac_address}</span>
+						</div>
+					)}
+					{device.device_type && (
+						<div className="flex justify-between">
+							<span>Type:</span>
+							<span className="capitalize">{device.device_type}</span>
+						</div>
+					)}
+					<div className="flex justify-between">
+						<span>Last Seen:</span>
+						<span>{formatLastSeen(device.last_seen)}</span>
+					</div>
+					{device.response_time && (
+						<div className="flex justify-between">
+							<span>Response:</span>
+							<span className="font-mono">{device.response_time}ms</span>
+						</div>
+					)}
+				</div>
+
+				<div className="flex space-x-2 pt-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onViewDevice ? onViewDevice(device) : onSelect(device)}
+						className="flex-1 text-xs"
 					>
-						Next
-					</button>
+						View
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onConvertToAsset ? onConvertToAsset(device) : onCreateAsset(device)}
+						className="flex-1 text-xs"
+					>
+						Convert
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onDelete(device.id)}
+						className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+					>
+						Delete
+					</Button>
 				</div>
 			</div>
 		</div>
+	);
+
+	const renderDeviceRow = (device) => (
+		<>
+			<td className="px-6 py-4">
+				<div className="flex items-center space-x-3">
+					<div className={cn("w-8 h-8 rounded-md flex items-center justify-center text-sm", getDeviceTypeColor(device.device_type))}>
+						{getDeviceTypeIcon(device.device_type)}
+					</div>
+					<div>
+						<div className="text-body font-medium text-foreground">
+							{device.hostname || 'Unknown Device'}
+						</div>
+						{device.mac_address && (
+							<div className="text-caption text-muted-foreground font-mono">
+								{device.mac_address}
+							</div>
+						)}
+					</div>
+				</div>
+			</td>
+			<td className="px-6 py-4">
+				<span className="text-body text-foreground font-mono">{device.ip_address || 'Unknown'}</span>
+			</td>
+			<td className="px-6 py-4">
+				<span className="text-body text-foreground capitalize">{device.device_type || 'Unknown'}</span>
+			</td>
+			<td className="px-6 py-4">
+				<Badge className={cn("text-xs", getStatusColor(device.status))}>
+					{getStatusText(device.status)}
+				</Badge>
+			</td>
+			<td className="px-6 py-4">
+				<span className="text-body text-muted-foreground">{formatLastSeen(device.last_seen)}</span>
+			</td>
+			<td className="px-6 py-4">
+				<div className="flex space-x-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onViewDevice ? onViewDevice(device) : onSelect(device)}
+						className="text-xs"
+					>
+						View
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onConvertToAsset ? onConvertToAsset(device) : onCreateAsset(device)}
+						className="text-xs"
+					>
+						Convert
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onDelete(device.id)}
+						className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+					>
+						Delete
+					</Button>
+				</div>
+			</td>
+		</>
+	);
+
+	return (
+		<StandardList
+			items={devices}
+			title="Discovered Devices"
+			subtitle="Manage and convert discovered network devices"
+			itemName="device"
+			itemNamePlural="devices"
+			searchPlaceholder="Search devices by IP, hostname, MAC, OS, or manufacturer..."
+			searchValue={searchValue}
+			onSearchChange={setSearchValue}
+			filterOptions={filterOptions}
+			filterValue={filterValue}
+			onFilterChange={setFilterValue}
+			sortOptions={sortOptions}
+			sortValue={sortValue}
+			onSortChange={setSortValue}
+			sortOrder={sortOrder}
+			onSortOrderChange={setSortOrder}
+			viewMode={viewMode}
+			onViewModeChange={setViewMode}
+			selectedItems={selectedDevices}
+			onItemSelect={onSelectDevice}
+			onSelectAll={onSelectAll}
+			onBulkDelete={onDeleteSelected}
+			statistics={statistics}
+			renderItemCard={renderDeviceCard}
+			renderItemRow={renderDeviceRow}
+			emptyStateIcon="🔍"
+			emptyStateTitle="No devices found"
+			emptyStateDescription="Start a network discovery scan to find devices on your network."
+		/>
 	);
 });

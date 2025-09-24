@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import ActionsDropdown from "./ActionsDropdown";
+import React, { useState } from "react";
+import StandardList from "./common/StandardList";
+import { Button } from "./ui/Button";
+import { Badge } from "./ui/Badge";
+import { cn } from "../utils/cn";
 
 export default function AssetGroupList({
 	assetGroups,
@@ -10,111 +13,229 @@ export default function AssetGroupList({
 	onSelectAssetGroup,
 	onDeleteSelected,
 	onSelectAll,
+	onCreateAssetGroup,
 }) {
-	const [filter, setFilter] = useState("");
-	const [currentPage, setCurrentPage] = useState(1);
-	const [itemsPerPage, setItemsPerPage] = useState(10);
+	const [searchValue, setSearchValue] = useState("");
+	const [filterValue, setFilterValue] = useState("all");
+	const [sortValue, setSortValue] = useState("name");
+	const [sortOrder, setSortOrder] = useState("asc");
+	const [viewMode, setViewMode] = useState("table");
 
-	const filteredAssetGroups = assetGroups.filter((group) => {
-		if (!filter) return true;
-		if (!group.labels) return false;
-		return group.labels.some((label) =>
-			label.name.toLowerCase().includes(filter.toLowerCase())
-		);
-	});
+	const filterOptions = [
+		{ value: "all", label: "All Groups", icon: "📁" },
+		{ value: "active", label: "Active", icon: "✅" },
+		{ value: "inactive", label: "Inactive", icon: "❌" },
+	];
 
-	const sortedAssetGroups = [...filteredAssetGroups].sort((a, b) => a.name.localeCompare(b.name));
-	const totalPages = Math.ceil(sortedAssetGroups.length / itemsPerPage);
-	const paginatedAssetGroups = sortedAssetGroups.slice(
-		(currentPage - 1) * itemsPerPage,
-		currentPage * itemsPerPage
-	);
+	const sortOptions = [
+		{ value: "name", label: "Name" },
+		{ value: "created_at", label: "Created Date" },
+		{ value: "asset_count", label: "Asset Count" },
+	];
 
-	const allSelected = paginatedAssetGroups.length > 0 && paginatedAssetGroups.every(ag => selectedAssetGroups.includes(ag.id));
+	const statistics = [
+		{
+			value: assetGroups.length,
+			label: "Total Groups",
+			color: "text-primary",
+			icon: "📁",
+			bgColor: "bg-primary/20",
+			iconColor: "text-primary"
+		},
+		{
+			value: assetGroups.filter(ag => ag.is_active !== false).length,
+			label: "Active",
+			color: "text-success",
+			icon: "✅",
+			bgColor: "bg-success/20",
+			iconColor: "text-success"
+		},
+		{
+			value: assetGroups.filter(ag => ag.is_active === false).length,
+			label: "Inactive",
+			color: "text-error",
+			icon: "❌",
+			bgColor: "bg-error/20",
+			iconColor: "text-error"
+		},
+		{
+			value: selectedAssetGroups.length,
+			label: "Selected",
+			color: "text-warning",
+			icon: "✓",
+			bgColor: "bg-warning/20",
+			iconColor: "text-warning"
+		}
+	];
 
-	return (
-		<div className="flex flex-col h-full">
-			<div className="flex flex-col flex-grow overflow-hidden border border-slate-800 rounded-lg bg-slate-900/50">
-				<div className="flex-grow overflow-y-auto">
-					<table className="w-full text-sm text-left text-slate-300">
-						<thead className="text-xs text-slate-400 uppercase bg-slate-800">
-							<tr>
-								<th scope="col" className="p-4">
-									<input
-										type="checkbox"
-										className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
-										checked={allSelected}
-										onChange={() => onSelectAll(paginatedAssetGroups.map(ag => ag.id))}
-									/>
-								</th>
-								<th scope="col" className="px-6 py-3">Name</th>
-								<th scope="col" className="px-6 py-3">Labels</th>
-								<th scope="col" className="px-6 py-3"></th>
-							</tr>
-						</thead>
-						<tbody>
-							{paginatedAssetGroups.map((group) => (
-								<tr
-									key={group.id}
-									className={`border-b border-slate-800 transition-colors duration-150 ${selectedAssetGroup && selectedAssetGroup.id === group.id ? "bg-blue-600/20 hover:bg-blue-600/30" : "hover:bg-slate-800/50"}`}
-								>
-									<td className="w-4 p-4">
-										<input
-											type="checkbox"
-											className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
-											checked={selectedAssetGroups.includes(group.id)}
-											onChange={() => onSelectAssetGroup(group.id)}
-										/>
-									</td>
-									<td onClick={() => onSelect(group)} className="px-6 py-4 cursor-pointer">{group.name}</td>
-									<td className="px-6 py-4">
-										{group.labels && group.labels.map(label => (
-											<span key={label.id} className="inline-block bg-slate-700 text-slate-200 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">
-												{label.name}
-											</span>
-										))}
-									</td>
-									<td className="px-6 py-4">
-										<button
-											onClick={() => onDelete(group.id)}
-											className="font-medium text-red-500 hover:underline"
-										>
-											Delete
-										</button>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
+	const renderAssetGroupCard = (group) => (
+		<div className="surface-interactive p-6 rounded-lg border border-border">
+			<div className="flex items-start justify-between mb-4">
+				<div className="flex items-center space-x-3">
+					<div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-lg">
+						📁
+					</div>
 				</div>
-				<div className="flex items-center justify-center p-4 border-t border-slate-800">
-					<button
-						onClick={() => setCurrentPage(currentPage - 1)}
-						disabled={currentPage === 1}
-						className="px-3 py-1 text-sm font-medium text-slate-300 bg-slate-800 rounded-l-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						Previous
-					</button>
-					<div className="flex items-center mx-2">
-						{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-							<button
-								key={page}
-								onClick={() => setCurrentPage(page)}
-								className={`px-3 py-1 mx-1 text-sm font-medium rounded-md ${currentPage === page ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
-							>
-								{page}
-							</button>
+				<Badge className={cn("text-xs", group.is_active !== false ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
+					{group.is_active !== false ? 'Active' : 'Inactive'}
+				</Badge>
+			</div>
+
+			<div className="space-y-3">
+				<div>
+					<h3 className="text-subheading text-foreground truncate">
+						{group.name}
+					</h3>
+					<p className="text-caption text-muted-foreground">
+						{group.description || 'No description'}
+					</p>
+				</div>
+
+				<div className="space-y-2 text-caption text-muted-foreground">
+					<div className="flex justify-between">
+						<span>Assets:</span>
+						<span>{group.assets?.length || 0}</span>
+					</div>
+					<div className="flex justify-between">
+						<span>Labels:</span>
+						<span>{group.labels?.length || 0}</span>
+					</div>
+					{group.created_at && (
+						<div className="flex justify-between">
+							<span>Created:</span>
+							<span>{new Date(group.created_at).toLocaleDateString()}</span>
+						</div>
+					)}
+				</div>
+
+				{group.labels && group.labels.length > 0 && (
+					<div className="flex flex-wrap gap-1">
+						{group.labels.map(label => (
+							<Badge key={label.id} variant="secondary" className="text-xs">
+								{label.name}
+							</Badge>
 						))}
 					</div>
-					<button
-						onClick={() => setCurrentPage(currentPage + 1)}
-						disabled={currentPage === totalPages}
-						className="px-3 py-1 text-sm font-medium text-slate-300 bg-slate-800 rounded-r-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+				)}
+
+				<div className="flex space-x-2 pt-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onSelect(group)}
+						className="flex-1 text-xs"
 					>
-						Next
-					</button>
+						View
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onDelete(group.id)}
+						className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+					>
+						Delete
+					</Button>
 				</div>
 			</div>
 		</div>
+	);
+
+	const renderAssetGroupRow = (group) => (
+		<>
+			<td className="px-6 py-4">
+				<div className="flex items-center space-x-3">
+					<div className="w-8 h-8 rounded-md bg-primary/20 flex items-center justify-center text-sm">
+						📁
+					</div>
+					<div>
+						<div className="text-body font-medium text-foreground">
+							{group.name}
+						</div>
+						<div className="text-caption text-muted-foreground">
+							{group.description || 'No description'}
+						</div>
+					</div>
+				</div>
+			</td>
+			<td className="px-6 py-4">
+				<span className="text-body text-foreground">
+					{group.assets?.length || 0} assets
+				</span>
+			</td>
+			<td className="px-6 py-4">
+				<div className="flex flex-wrap gap-1">
+					{group.labels && group.labels.map(label => (
+						<Badge key={label.id} variant="secondary" className="text-xs">
+							{label.name}
+						</Badge>
+					))}
+				</div>
+			</td>
+			<td className="px-6 py-4">
+				<Badge className={cn("text-xs", group.is_active !== false ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
+					{group.is_active !== false ? 'Active' : 'Inactive'}
+				</Badge>
+			</td>
+			<td className="px-6 py-4">
+				<span className="text-body text-muted-foreground">
+					{group.created_at ? new Date(group.created_at).toLocaleDateString() : '-'}
+				</span>
+			</td>
+			<td className="px-6 py-4">
+				<div className="flex space-x-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onSelect(group)}
+						className="text-xs"
+					>
+						View
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onDelete(group.id)}
+						className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+					>
+						Delete
+					</Button>
+				</div>
+			</td>
+		</>
+	);
+
+	return (
+		<StandardList
+			items={assetGroups}
+			title="Asset Groups"
+			subtitle="Organize your assets into groups"
+			itemName="group"
+			itemNamePlural="groups"
+			searchPlaceholder="Search asset groups by name, description, or labels..."
+			searchValue={searchValue}
+			onSearchChange={setSearchValue}
+			filterOptions={filterOptions}
+			filterValue={filterValue}
+			onFilterChange={setFilterValue}
+			sortOptions={sortOptions}
+			sortValue={sortValue}
+			onSortChange={setSortValue}
+			sortOrder={sortOrder}
+			onSortOrderChange={setSortOrder}
+			viewMode={viewMode}
+			onViewModeChange={setViewMode}
+			selectedItems={selectedAssetGroups}
+			onItemSelect={onSelectAssetGroup}
+			onSelectAll={onSelectAll}
+			onCreateClick={onCreateAssetGroup}
+			createButtonText="Create Asset Group"
+			onBulkDelete={onDeleteSelected}
+			statistics={statistics}
+			renderItemCard={renderAssetGroupCard}
+			renderItemRow={renderAssetGroupRow}
+			emptyStateIcon="📁"
+			emptyStateTitle="No asset groups found"
+			emptyStateDescription="Create your first asset group to organize your assets."
+		/>
 	);
 }

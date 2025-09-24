@@ -733,7 +733,7 @@ def list_jobs(
 ):
     """List operation jobs."""
     service = OperationService(db)
-    return service.get_jobs(skip=skip, limit=limit, operation_id=operation_id)
+    return service.get_jobs(skip=skip, limit=limit, operation_id=operation_id, status=status)
 
 @router.get("/jobs/{job_id}", response_model=schemas.Job)
 def get_job(

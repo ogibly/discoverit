@@ -10,6 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { HelpIcon } from './ui';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
+import LabelManager from './LabelManager';
+import LabelFilter from './LabelFilter';
+import StandardList from './common/StandardList';
 
 const AssetsInterface = () => {
   const {
@@ -32,7 +35,8 @@ const AssetsInterface = () => {
     toggleAssetGroupSelection,
     selectAllAssetGroups,
     fetchAssets,
-    fetchAssetGroups
+    fetchAssetGroups,
+    api
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('assets');
@@ -45,6 +49,10 @@ const AssetsInterface = () => {
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
   const [viewMode, setViewMode] = useState('table');
+  
+  // Labels state
+  const [allLabels, setAllLabels] = useState([]);
+  const [selectedLabels, setSelectedLabels] = useState([]);
 
   // Form states
   const [assetForm, setAssetForm] = useState({
@@ -258,6 +266,492 @@ const AssetsInterface = () => {
     return isActive !== false ? 'bg-green-500/20 text-green-600' : 'bg-red-500/20 text-red-600';
   };
 
+  const getAssetTypeIcon = (deviceType) => {
+    switch (deviceType) {
+      case 'router': return '🌐';
+      case 'switch': return '🔀';
+      case 'server': return '🖥️';
+      case 'workstation': return '💻';
+      case 'printer': return '🖨️';
+      default: return '📱';
+    }
+  };
+
+  const getAssetTypeColor = (deviceType) => {
+    switch (deviceType) {
+      case 'router': return 'bg-blue-500/20 text-blue-600';
+      case 'switch': return 'bg-green-500/20 text-green-600';
+      case 'server': return 'bg-purple-500/20 text-purple-600';
+      case 'workstation': return 'bg-orange-500/20 text-orange-600';
+      case 'printer': return 'bg-pink-500/20 text-pink-600';
+      default: return 'bg-gray-500/20 text-gray-600';
+    }
+  };
+
+  const renderAssetCard = (asset) => (
+    <div className="surface-interactive p-6 rounded-lg border border-border">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-lg", getAssetTypeColor(asset.device_type))}>
+            {getAssetTypeIcon(asset.device_type)}
+          </div>
+        </div>
+        <Badge className={cn("text-xs", asset.is_active !== false ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
+          {asset.is_active !== false ? 'Active' : 'Inactive'}
+        </Badge>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-subheading text-foreground truncate">
+            {asset.name}
+          </h3>
+          <p className="text-caption text-muted-foreground">
+            {asset.description || 'No description'}
+          </p>
+        </div>
+
+        <div className="space-y-2 text-caption text-muted-foreground">
+          {asset.ip_address && (
+            <div className="flex justify-between">
+              <span>IP:</span>
+              <span className="font-mono">{asset.ip_address}</span>
+            </div>
+          )}
+          {asset.mac_address && (
+            <div className="flex justify-between">
+              <span>MAC:</span>
+              <span className="font-mono">{asset.mac_address}</span>
+            </div>
+          )}
+          {asset.device_type && (
+            <div className="flex justify-between">
+              <span>Type:</span>
+              <span className="capitalize">{asset.device_type}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span>Labels:</span>
+            <span>{asset.labels?.length || 0}</span>
+          </div>
+          {asset.created_at && (
+            <div className="flex justify-between">
+              <span>Created:</span>
+              <span>{new Date(asset.created_at).toLocaleDateString()}</span>
+            </div>
+          )}
+        </div>
+
+        {asset.labels && asset.labels.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {asset.labels.map(label => (
+              <Badge key={label.id} variant="secondary" className="text-xs">
+                {label.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="flex space-x-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedAsset(asset)}
+            className="flex-1 text-xs"
+          >
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setAssetForm({
+                name: asset.name || '',
+                description: asset.description || '',
+                ip_address: asset.ip_address || '',
+                mac_address: asset.mac_address || '',
+                device_type: asset.device_type || '',
+                manufacturer: asset.manufacturer || '',
+                model: asset.model || '',
+                serial_number: asset.serial_number || '',
+                location: asset.location || '',
+                is_active: asset.is_active !== false
+              });
+              setShowEditModal(true);
+            }}
+            className="flex-1 text-xs"
+          >
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDeleteAsset(asset.id)}
+            className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAssetRow = (asset) => (
+    <>
+      <td className="px-6 py-4">
+        <div className="flex items-center space-x-3">
+          <div className={cn("w-8 h-8 rounded-md flex items-center justify-center text-sm", getAssetTypeColor(asset.device_type))}>
+            {getAssetTypeIcon(asset.device_type)}
+          </div>
+          <div>
+            <div className="text-body font-medium text-foreground">
+              {asset.name}
+            </div>
+            <div className="text-caption text-muted-foreground">
+              {asset.description || 'No description'}
+            </div>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-body text-foreground font-mono">
+          {asset.ip_address || '-'}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-body text-foreground font-mono">
+          {asset.mac_address || '-'}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex flex-wrap gap-1">
+          {asset.labels && asset.labels.map(label => (
+            <Badge key={label.id} variant="secondary" className="text-xs">
+              {label.name}
+            </Badge>
+          ))}
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <Badge className={cn("text-xs", asset.is_active !== false ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
+          {asset.is_active !== false ? 'Active' : 'Inactive'}
+        </Badge>
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-body text-muted-foreground">
+          {asset.created_at ? new Date(asset.created_at).toLocaleDateString() : '-'}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedAsset(asset)}
+            className="text-xs"
+          >
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setAssetForm({
+                name: asset.name || '',
+                description: asset.description || '',
+                ip_address: asset.ip_address || '',
+                mac_address: asset.mac_address || '',
+                device_type: asset.device_type || '',
+                manufacturer: asset.manufacturer || '',
+                model: asset.model || '',
+                serial_number: asset.serial_number || '',
+                location: asset.location || '',
+                is_active: asset.is_active !== false
+              });
+              setShowEditModal(true);
+            }}
+            className="text-xs"
+          >
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDeleteAsset(asset.id)}
+            className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+          >
+            Delete
+          </Button>
+        </div>
+      </td>
+    </>
+  );
+
+  const renderAssetGroupCard = (group) => (
+    <div className="surface-interactive p-6 rounded-lg border border-border">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-lg">
+            📁
+          </div>
+        </div>
+        <Badge className={cn("text-xs", group.is_active !== false ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
+          {group.is_active !== false ? 'Active' : 'Inactive'}
+        </Badge>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-subheading text-foreground truncate">
+            {group.name}
+          </h3>
+          <p className="text-caption text-muted-foreground">
+            {group.description || 'No description'}
+          </p>
+        </div>
+
+        <div className="space-y-2 text-caption text-muted-foreground">
+          <div className="flex justify-between">
+            <span>Assets:</span>
+            <span>{group.assets?.length || 0}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Labels:</span>
+            <span>{group.labels?.length || 0}</span>
+          </div>
+          {group.created_at && (
+            <div className="flex justify-between">
+              <span>Created:</span>
+              <span>{new Date(group.created_at).toLocaleDateString()}</span>
+            </div>
+          )}
+        </div>
+
+        {group.labels && group.labels.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {group.labels.map(label => (
+              <Badge key={label.id} variant="secondary" className="text-xs">
+                {label.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="flex space-x-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedAssetGroups([group.id])}
+            className="flex-1 text-xs"
+          >
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setGroupForm({
+                name: group.name || '',
+                description: group.description || '',
+                asset_ids: group.assets?.map(a => a.id) || []
+              });
+              setShowEditGroupModal(true);
+            }}
+            className="flex-1 text-xs"
+          >
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDeleteGroup(group.id)}
+            className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAssetGroupRow = (group) => (
+    <>
+      <td className="px-6 py-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-md bg-primary/20 flex items-center justify-center text-sm">
+            📁
+          </div>
+          <div>
+            <div className="text-body font-medium text-foreground">
+              {group.name}
+            </div>
+            <div className="text-caption text-muted-foreground">
+              {group.description || 'No description'}
+            </div>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-body text-foreground">
+          {group.assets?.length || 0} assets
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex flex-wrap gap-1">
+          {group.labels && group.labels.map(label => (
+            <Badge key={label.id} variant="secondary" className="text-xs">
+              {label.name}
+            </Badge>
+          ))}
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <Badge className={cn("text-xs", group.is_active !== false ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
+          {group.is_active !== false ? 'Active' : 'Inactive'}
+        </Badge>
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-body text-muted-foreground">
+          {group.created_at ? new Date(group.created_at).toLocaleDateString() : '-'}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedAssetGroups([group.id])}
+            className="text-xs"
+          >
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setGroupForm({
+                name: group.name || '',
+                description: group.description || '',
+                asset_ids: group.assets?.map(a => a.id) || []
+              });
+              setShowEditGroupModal(true);
+            }}
+            className="text-xs"
+          >
+            Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDeleteGroup(group.id)}
+            className="text-xs text-error hover:text-error hover:bg-error/10 border-error/20"
+          >
+            Delete
+          </Button>
+        </div>
+      </td>
+    </>
+  );
+
+  // Filter and sort options for assets
+  const assetFilterOptions = [
+    { value: "all", label: "All Assets", icon: "📱" },
+    { value: "active", label: "Active", icon: "✅" },
+    { value: "inactive", label: "Inactive", icon: "❌" },
+  ];
+
+  const assetSortOptions = [
+    { value: "name", label: "Name" },
+    { value: "ip_address", label: "IP Address" },
+    { value: "device_type", label: "Device Type" },
+    { value: "created_at", label: "Created Date" },
+  ];
+
+  // Filter and sort options for asset groups
+  const groupFilterOptions = [
+    { value: "all", label: "All Groups", icon: "📁" },
+    { value: "active", label: "Active", icon: "✅" },
+    { value: "inactive", label: "Inactive", icon: "❌" },
+  ];
+
+  const groupSortOptions = [
+    { value: "name", label: "Name" },
+    { value: "created_at", label: "Created Date" },
+    { value: "asset_count", label: "Asset Count" },
+  ];
+
+  // Statistics for assets
+  const assetStatistics = [
+    {
+      value: assets.length,
+      label: "Total Assets",
+      color: "text-primary",
+      icon: "📱",
+      bgColor: "bg-primary/20",
+      iconColor: "text-primary"
+    },
+    {
+      value: assets.filter(a => a.is_active !== false).length,
+      label: "Active",
+      color: "text-success",
+      icon: "✅",
+      bgColor: "bg-success/20",
+      iconColor: "text-success"
+    },
+    {
+      value: assets.filter(a => a.is_active === false).length,
+      label: "Inactive",
+      color: "text-error",
+      icon: "❌",
+      bgColor: "bg-error/20",
+      iconColor: "text-error"
+    },
+    {
+      value: selectedAssets.length,
+      label: "Selected",
+      color: "text-warning",
+      icon: "✓",
+      bgColor: "bg-warning/20",
+      iconColor: "text-warning"
+    }
+  ];
+
+  // Statistics for asset groups
+  const groupStatistics = [
+    {
+      value: assetGroups.length,
+      label: "Total Groups",
+      color: "text-primary",
+      icon: "📁",
+      bgColor: "bg-primary/20",
+      iconColor: "text-primary"
+    },
+    {
+      value: assetGroups.filter(ag => ag.is_active !== false).length,
+      label: "Active",
+      color: "text-success",
+      icon: "✅",
+      bgColor: "bg-success/20",
+      iconColor: "text-success"
+    },
+    {
+      value: assetGroups.filter(ag => ag.is_active === false).length,
+      label: "Inactive",
+      color: "text-error",
+      icon: "❌",
+      bgColor: "bg-error/20",
+      iconColor: "text-error"
+    },
+    {
+      value: selectedAssetGroups.length,
+      label: "Selected",
+      color: "text-warning",
+      icon: "✓",
+      bgColor: "bg-warning/20",
+      iconColor: "text-warning"
+    }
+  ];
+
   // Calculate statistics
   const totalAssets = assets.length;
   const activeAssets = assets.filter(asset => asset.is_active !== false).length;
@@ -288,62 +782,6 @@ const AssetsInterface = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
-          {/* Asset Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Assets</p>
-                    <p className="text-2xl font-bold text-foreground">{totalAssets}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                    <span className="text-primary text-lg">📊</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Active Assets</p>
-                    <p className="text-2xl font-bold text-green-600">{activeAssets}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-green-600 text-lg">✅</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Inactive Assets</p>
-                    <p className="text-2xl font-bold text-red-600">{inactiveAssets}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-red-600 text-lg">❌</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Asset Groups</p>
-                    <p className="text-2xl font-bold text-blue-600">{totalGroups}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 text-lg">📁</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -352,59 +790,92 @@ const AssetsInterface = () => {
             </TabsList>
 
             <TabsContent value="assets" className="space-y-6">
-              {/* Search and Filter Controls */}
-              <Card className="surface-elevated">
-                <CardContent className="p-6">
-                  <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Search assets by name, IP, description, manufacturer, model, or labels..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                      >
-                        <option value="all">All Assets</option>
-                        <option value="active">Active Assets</option>
-                        <option value="inactive">Inactive Assets</option>
-                      </select>
-                      <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                      >
-                        <option value="name">Name</option>
-                        <option value="ip">IP Address</option>
-                        <option value="type">Device Type</option>
-                        <option value="manufacturer">Manufacturer</option>
-                      </select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                        className="px-3"
-                      >
-                        {sortOrder === 'asc' ? '↑' : '↓'}
-                      </Button>
-                      <Button onClick={() => setShowCreateModal(true)}>
-                        Create Asset
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <StandardList
+                items={filteredAssets}
+                loading={loading.assets}
+                title="Assets"
+                subtitle="Manage your network assets"
+                itemName="asset"
+                itemNamePlural="assets"
+                searchPlaceholder="Search assets by name, IP, description, manufacturer, model, or labels..."
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                filterOptions={assetFilterOptions}
+                filterValue={filterStatus}
+                onFilterChange={setFilterStatus}
+                sortOptions={assetSortOptions}
+                sortValue={sortBy}
+                onSortChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderChange={setSortOrder}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                selectedItems={selectedAssets}
+                onItemSelect={toggleAssetSelection}
+                onSelectAll={selectAllAssets}
+                onCreateClick={() => setShowCreateModal(true)}
+                createButtonText="Create Asset"
+                onBulkDelete={bulkDeleteAssets}
+                statistics={assetStatistics}
+                renderItemCard={renderAssetCard}
+                renderItemRow={renderAssetRow}
+                emptyStateIcon="📱"
+                emptyStateTitle="No assets found"
+                emptyStateDescription="Create your first asset to get started."
+              />
+            </TabsContent>
 
-              {/* View Toggle */}
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-foreground">View:</span>
-                  <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+            <TabsContent value="groups" className="space-y-6">
+              <StandardList
+                items={filteredGroups}
+                loading={loading.assetGroups}
+                title="Asset Groups"
+                subtitle="Organize your assets into groups"
+                itemName="group"
+                itemNamePlural="groups"
+                searchPlaceholder="Search asset groups by name, description, or labels..."
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                filterOptions={groupFilterOptions}
+                filterValue={filterStatus}
+                onFilterChange={setFilterStatus}
+                sortOptions={groupSortOptions}
+                sortValue={sortBy}
+                onSortChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderChange={setSortOrder}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                selectedItems={selectedAssetGroups}
+                onItemSelect={toggleAssetGroupSelection}
+                onSelectAll={selectAllAssetGroups}
+                onCreateClick={() => setShowGroupModal(true)}
+                createButtonText="Create Asset Group"
+                onBulkDelete={(groupIds) => {
+                  if (window.confirm(`Are you sure you want to delete ${groupIds.length} asset groups?`)) {
+                    groupIds.forEach(id => deleteAssetGroup(id));
+                  }
+                }}
+                statistics={groupStatistics}
+                renderItemCard={renderAssetGroupCard}
+                renderItemRow={renderAssetGroupRow}
+                emptyStateIcon="📁"
+                emptyStateTitle="No asset groups found"
+                emptyStateDescription="Create your first asset group to organize your assets."
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Create Asset Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create Asset"
+        size="lg"
+      >
+        <div className="space-y-4">
                     <Button
                       variant={viewMode === 'grid' ? 'default' : 'ghost'}
                       size="sm"

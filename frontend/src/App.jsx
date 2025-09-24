@@ -13,6 +13,7 @@ import LabManagement from './components/LabManagement';
 import AssetsInterface from './components/AssetsInterface';
 import AssetDetail from './components/AssetDetail';
 import OperationsManagement from './components/OperationsManagement';
+import AWXIntegration from './components/AWXIntegration';
 import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
@@ -174,6 +175,26 @@ const Navigation = () => {
                 </div>
                 <span className="font-medium">Global Settings</span>
               </Link>
+              
+              <Link
+                to="/awx"
+                className={cn(
+                  "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 group",
+                  location.pathname === '/awx'
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                )}
+              >
+                <div className={cn(
+                  "transition-all duration-200",
+                  location.pathname === '/awx' ? "scale-105" : "group-hover:scale-105"
+                )}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                  </svg>
+                </div>
+                <span className="font-medium">AWX Integration</span>
+              </Link>
             </div>
           </div>
         )}
@@ -329,6 +350,11 @@ const AppContent = () => {
           <Route path="/settings" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/scanners" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/operations-management" element={<Navigate to="/admin-settings?tab=operations" replace />} />
+          <Route path="/awx" element={
+            <ProtectedRoute requiredPermission="admin">
+              <AWXIntegration />
+            </ProtectedRoute>
+          } />
           <Route path="/workflow" element={<WorkflowGuide />} />
         </Routes>
       </div>

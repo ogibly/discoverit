@@ -9,6 +9,7 @@ import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import OperationsManagement from './OperationsManagement';
+import AWXIntegration from './AWXIntegration';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
 

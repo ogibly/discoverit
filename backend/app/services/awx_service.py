@@ -196,6 +196,130 @@ class AWXService:
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to cancel AWX job: {e}")
 
+    def get_job_templates(self) -> List[Dict[str, Any]]:
+        """Get all available job templates."""
+        try:
+            response = requests.get(
+                f"{self.awx_url}/api/v2/job_templates/",
+                headers=self._get_headers(),
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json().get('results', [])
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get AWX job templates: {e}")
+
+    def get_inventories(self) -> List[Dict[str, Any]]:
+        """Get all available inventories."""
+        try:
+            response = requests.get(
+                f"{self.awx_url}/api/v2/inventories/",
+                headers=self._get_headers(),
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json().get('results', [])
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get AWX inventories: {e}")
+
+    def get_credentials(self) -> List[Dict[str, Any]]:
+        """Get all available credentials."""
+        try:
+            response = requests.get(
+                f"{self.awx_url}/api/v2/credentials/",
+                headers=self._get_headers(),
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json().get('results', [])
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get AWX credentials: {e}")
+
+    def get_projects(self) -> List[Dict[str, Any]]:
+        """Get all available projects."""
+        try:
+            response = requests.get(
+                f"{self.awx_url}/api/v2/projects/",
+                headers=self._get_headers(),
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json().get('results', [])
+
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get AWX projects: {e}")
+
+    def create_operation_with_predefined_vars(self, operation_data: Dict[str, Any], 
+                                            assets: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Create an AWX operation with predefined variables."""
+        # Add predefined variables to extra_vars
+        predefined_vars = {
+            "asset_variables": {
+                "asset_ip": "{{ ansible_host }}",
+                "asset_name": "{{ inventory_hostname }}",
+                "asset_hostname": "{{ hostname | default(inventory_hostname) }}",
+                "asset_os": "{{ ansible_distribution | default('Unknown') }}",
+                "asset_mac": "{{ ansible_default_ipv4.macaddress | default('Unknown') }}",
+                "asset_manufacturer": "{{ ansible_system_vendor | default('Unknown') }}",
+                "asset_model": "{{ ansible_product_name | default('Unknown') }}"
+            },
+            "credential_variables": {
+                "credential_username": "{{ ansible_user }}",
+                "credential_password": "{{ ansible_password | default('') }}",
+                "credential_ssh_key": "{{ ansible_ssh_private_key_file | default('') }}",
+                "credential_domain": "{{ ansible_domain | default('') }}"
+            },
+            "system_variables": {
+                "operation_id": operation_data.get('id', ''),
+                "operation_name": operation_data.get('name', ''),
+                "timestamp": datetime.utcnow().isoformat(),
+                "user_id": operation_data.get('user_id', ''),
+                "user_name": operation_data.get('user_name', '')
+            },
+            "inventory_variables": {
+                "inventory_ips": ",".join([asset.get('primary_ip', '') for asset in assets]),
+                "inventory_count": str(len(assets)),
+                "inventory_groups": ",".join(set([asset.get('asset_group', 'default') for asset in assets]))
+            }
+        }
+
+        # Merge predefined variables with operation extra_vars
+        extra_vars = operation_data.get('extra_vars', {})
+        extra_vars.update(predefined_vars)
+
+        # Create inventory from assets
+        inventory_name = f"operation_inventory_{operation_data.get('name', 'unknown')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        inventory = self.create_inventory(inventory_name, assets)
+
+        try:
+            # Launch job with the specified template
+            job = self.launch_job(
+                operation_data['job_template_id'],
+                inventory['id'],
+                extra_vars,
+                operation_data.get('credential_ids', [])
+            )
+
+            return {
+                "job_id": job['id'],
+                "job_url": f"{self.awx_url}/#/jobs/playbook/{job['id']}",
+                "inventory_id": inventory['id'],
+                "template_id": operation_data['job_template_id'],
+                "status": job['status'],
+                "extra_vars": extra_vars
+            }
+
+        except Exception as e:
+            # Clean up on error
+            try:
+                self._cleanup_resources(inventory['id'])
+            except:
+                pass
+            raise e
+
     def run_playbook_on_assets(self, playbook_name: str, assets: List[Dict[str, Any]], 
                               extra_vars: Optional[Dict[str, Any]] = None,
                               job_name: Optional[str] = None) -> Dict[str, Any]:

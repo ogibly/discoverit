@@ -921,6 +921,182 @@ def test_awx_connection(
     except Exception as e:
         return {"success": False, "error": f"Unexpected error: {str(e)}"}
 
+@router.get("/awx/job-templates")
+def get_awx_job_templates(
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Get AWX job templates."""
+    try:
+        from .services.awx_service import AWXService
+        from .services.asset_service import AssetService
+        
+        asset_service = AssetService(db)
+        awx_settings = asset_service.get_awx_settings()
+        
+        if not awx_settings.get('awx_connected'):
+            raise HTTPException(status_code=400, detail="AWX not connected")
+        
+        awx_service = AWXService(
+            awx_settings['awx_url'],
+            awx_settings['awx_username'],
+            awx_settings['awx_password']
+        )
+        
+        templates = awx_service.get_job_templates()
+        return {"success": True, "templates": templates}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get job templates: {str(e)}")
+
+@router.get("/awx/inventories")
+def get_awx_inventories(
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Get AWX inventories."""
+    try:
+        from .services.awx_service import AWXService
+        from .services.asset_service import AssetService
+        
+        asset_service = AssetService(db)
+        awx_settings = asset_service.get_awx_settings()
+        
+        if not awx_settings.get('awx_connected'):
+            raise HTTPException(status_code=400, detail="AWX not connected")
+        
+        awx_service = AWXService(
+            awx_settings['awx_url'],
+            awx_settings['awx_username'],
+            awx_settings['awx_password']
+        )
+        
+        inventories = awx_service.get_inventories()
+        return {"success": True, "inventories": inventories}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get inventories: {str(e)}")
+
+@router.get("/awx/credentials")
+def get_awx_credentials(
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Get AWX credentials."""
+    try:
+        from .services.awx_service import AWXService
+        from .services.asset_service import AssetService
+        
+        asset_service = AssetService(db)
+        awx_settings = asset_service.get_awx_settings()
+        
+        if not awx_settings.get('awx_connected'):
+            raise HTTPException(status_code=400, detail="AWX not connected")
+        
+        awx_service = AWXService(
+            awx_settings['awx_url'],
+            awx_settings['awx_username'],
+            awx_settings['awx_password']
+        )
+        
+        credentials = awx_service.get_credentials()
+        return {"success": True, "credentials": credentials}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get credentials: {str(e)}")
+
+@router.get("/awx/projects")
+def get_awx_projects(
+    current_user: User = Depends(require_settings_read),
+    db: Session = Depends(get_db)
+):
+    """Get AWX projects."""
+    try:
+        from .services.awx_service import AWXService
+        from .services.asset_service import AssetService
+        
+        asset_service = AssetService(db)
+        awx_settings = asset_service.get_awx_settings()
+        
+        if not awx_settings.get('awx_connected'):
+            raise HTTPException(status_code=400, detail="AWX not connected")
+        
+        awx_service = AWXService(
+            awx_settings['awx_url'],
+            awx_settings['awx_username'],
+            awx_settings['awx_password']
+        )
+        
+        projects = awx_service.get_projects()
+        return {"success": True, "projects": projects}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get projects: {str(e)}")
+
+@router.post("/awx/create-operation")
+def create_awx_operation(
+    operation_data: dict,
+    current_user: User = Depends(require_settings_write),
+    db: Session = Depends(get_db)
+):
+    """Create an AWX operation with predefined variables."""
+    try:
+        from .services.awx_service import AWXService
+        from .services.asset_service import AssetService
+        from .services.operation_service import OperationService
+        
+        asset_service = AssetService(db)
+        operation_service = OperationService(db)
+        awx_settings = asset_service.get_awx_settings()
+        
+        if not awx_settings.get('awx_connected'):
+            raise HTTPException(status_code=400, detail="AWX not connected")
+        
+        awx_service = AWXService(
+            awx_settings['awx_url'],
+            awx_settings['awx_username'],
+            awx_settings['awx_password']
+        )
+        
+        # Get target assets
+        assets = []
+        if operation_data.get('target_assets'):
+            assets = asset_service.get_assets_by_ids(operation_data['target_assets'])
+        elif operation_data.get('target_asset_groups'):
+            assets = asset_service.get_assets_by_group_ids(operation_data['target_asset_groups'])
+        elif operation_data.get('target_labels'):
+            assets = asset_service.get_assets_by_label_ids(operation_data['target_labels'])
+        
+        # Add user information to operation data
+        operation_data['user_id'] = current_user.id
+        operation_data['user_name'] = current_user.username
+        
+        # Create AWX operation
+        awx_result = awx_service.create_operation_with_predefined_vars(operation_data, assets)
+        
+        # Create operation record in database
+        operation = operation_service.create_operation({
+            'name': operation_data['name'],
+            'description': operation_data.get('description', ''),
+            'operation_type': 'awx',
+            'awx_job_template_id': operation_data['job_template_id'],
+            'awx_job_template_name': operation_data.get('job_template_name', ''),
+            'awx_extra_vars': operation_data.get('extra_vars', {}),
+            'target_assets': operation_data.get('target_assets', []),
+            'target_asset_groups': operation_data.get('target_asset_groups', []),
+            'target_labels': operation_data.get('target_labels', []),
+            'is_active': True
+        })
+        
+        return {
+            "success": True,
+            "operation": operation,
+            "awx_result": awx_result
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create AWX operation: {str(e)}")
+
 # Utility routes
 @router.get("/suggest-subnet")
 def suggest_subnet():

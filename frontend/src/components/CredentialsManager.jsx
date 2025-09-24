@@ -93,16 +93,8 @@ const CredentialsManager = () => {
 
   const statistics = [
     {
-      value: credentials.length,
-      label: "Total Credentials",
-      color: "text-primary",
-      icon: "🔑",
-      bgColor: "bg-primary/20",
-      iconColor: "text-primary"
-    },
-    {
       value: credentials.filter(c => c.is_active).length,
-      label: "Active",
+      label: "Active Credentials",
       color: "text-success",
       icon: "✅",
       bgColor: "bg-success/20",
@@ -110,11 +102,19 @@ const CredentialsManager = () => {
     },
     {
       value: credentials.filter(c => !c.is_active).length,
-      label: "Inactive",
+      label: "Inactive Credentials",
       color: "text-error",
       icon: "❌",
       bgColor: "bg-error/20",
       iconColor: "text-error"
+    },
+    {
+      value: new Set(credentials.map(c => c.credential_type)).size,
+      label: "Credential Types",
+      color: "text-primary",
+      icon: "🔑",
+      bgColor: "bg-primary/20",
+      iconColor: "text-primary"
     },
     {
       value: selectedCredentials.length,
@@ -417,24 +417,6 @@ const CredentialsManager = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <PageHeader
-        title="Credentials"
-        subtitle="Manage authentication credentials for your assets"
-        metrics={[
-          { value: credentials.length, label: "Total Credentials", color: "text-primary" },
-          { value: credentials.filter(c => c.is_active).length, label: "Active", color: "text-success" },
-          { value: credentials.filter(c => !c.is_active).length, label: "Inactive", color: "text-warning" }
-        ]}
-        actions={[
-          {
-            label: "Create Credential",
-            icon: "➕",
-            onClick: () => setShowCreateModal(true),
-            variant: "default"
-          }
-        ]}
-      />
-
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <StandardList

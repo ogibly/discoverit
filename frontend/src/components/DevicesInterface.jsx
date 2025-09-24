@@ -10,6 +10,7 @@ import { Progress } from './ui/Progress';
 import { HelpIcon, CollapsibleGuidance } from './ui';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
+import StandardList from './common/StandardList';
 
 const DevicesInterface = () => {
   const {
@@ -162,6 +163,221 @@ const DevicesInterface = () => {
   const convertedDevices = totalDevices - newDevices;
   const deviceTypes = [...new Set(discoveredDevices.map(device => device.os_name).filter(Boolean))].length;
 
+  // Filter options for StandardList
+  const deviceFilterOptions = [
+    { value: 'all', label: 'All Devices', icon: '📱' },
+    { value: 'new', label: 'New Devices', icon: '🆕' },
+    { value: 'converted', label: 'Converted to Assets', icon: '✅' }
+  ];
+
+  // Sort options for StandardList
+  const deviceSortOptions = [
+    { value: 'last_seen', label: 'Last Seen' },
+    { value: 'primary_ip', label: 'IP Address' },
+    { value: 'hostname', label: 'Hostname' },
+    { value: 'os_name', label: 'Operating System' }
+  ];
+
+  // Statistics for StandardList
+  const deviceStatistics = [
+    {
+      value: totalDevices,
+      label: "Total Devices",
+      color: "text-primary",
+      icon: "📱",
+      bgColor: "bg-primary/20",
+      iconColor: "text-primary"
+    },
+    {
+      value: newDevices,
+      label: "New Devices",
+      color: "text-blue-600",
+      icon: "🆕",
+      bgColor: "bg-blue-500/20",
+      iconColor: "text-blue-600"
+    },
+    {
+      value: convertedDevices,
+      label: "Converted",
+      color: "text-green-600",
+      icon: "✅",
+      bgColor: "bg-green-500/20",
+      iconColor: "text-green-600"
+    },
+    {
+      value: deviceTypes,
+      label: "Device Types",
+      color: "text-purple-600",
+      icon: "🔧",
+      bgColor: "bg-purple-500/20",
+      iconColor: "text-purple-600"
+    }
+  ];
+
+  // Render functions for StandardList
+  const renderDeviceCard = (device) => {
+    const status = getDeviceStatus(device);
+    return (
+      <Card className="surface-interactive group hover:shadow-lg transition-all duration-200">
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <span className="text-3xl">{getDeviceIcon(device)}</span>
+              <div>
+                <h4 className="font-semibold text-foreground">
+                  {device.hostname || 'Unknown Device'}
+                </h4>
+                <p className="text-sm text-muted-foreground font-mono">
+                  {device.primary_ip}
+                </p>
+              </div>
+            </div>
+            <Badge className={cn("text-xs", getStatusColor(status))}>
+              {status === 'new' ? 'New' : 'Converted'}
+            </Badge>
+          </div>
+          
+          <div className="space-y-3 text-sm">
+            {device.os_name && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">OS:</span>
+                <span className="text-foreground font-medium">{device.os_name}</span>
+              </div>
+            )}
+            {device.manufacturer && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Manufacturer:</span>
+                <span className="text-foreground font-medium">{device.manufacturer}</span>
+              </div>
+            )}
+            {device.mac_address && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">MAC:</span>
+                <span className="text-foreground font-mono text-xs">{device.mac_address}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Last Seen:</span>
+              <span className="text-foreground text-xs">
+                {new Date(device.last_seen).toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex space-x-2 mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedDevice(device);
+                setShowDeviceModal(true);
+              }}
+              className="flex-1"
+            >
+              Explore
+            </Button>
+            {status === 'new' && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleConvertToAsset(device)}
+                className="flex-1"
+              >
+                Convert to Asset
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderDeviceRow = (device) => {
+    const status = getDeviceStatus(device);
+    return (
+      <>
+        <td className="px-6 py-4">
+          <div className="flex items-center space-x-3">
+            <span className="text-lg">{getDeviceIcon(device)}</span>
+            <div>
+              <div className="font-medium text-foreground">
+                {device.hostname || 'Unknown Device'}
+              </div>
+              {device.manufacturer && (
+                <div className="text-sm text-muted-foreground">
+                  {device.manufacturer}
+                </div>
+              )}
+            </div>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <span className="font-mono text-sm text-foreground">{device.primary_ip}</span>
+        </td>
+        <td className="px-6 py-4">
+          <span className="text-sm text-foreground">{device.os_name || 'Unknown'}</span>
+        </td>
+        <td className="px-6 py-4">
+          <Badge className={cn("text-xs", getStatusColor(status))}>
+            {status === 'new' ? 'New' : 'Converted'}
+          </Badge>
+        </td>
+        <td className="px-6 py-4">
+          <span className="text-sm text-muted-foreground">
+            {new Date(device.last_seen).toLocaleString()}
+          </span>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedDevice(device);
+                setShowDeviceModal(true);
+              }}
+            >
+              Explore
+            </Button>
+            {status === 'new' && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleConvertToAsset(device)}
+              >
+                Convert
+              </Button>
+            )}
+          </div>
+        </td>
+      </>
+    );
+  };
+
+  // Custom table headers for devices
+  const deviceTableHeaders = (
+    <>
+      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+        Device
+      </th>
+      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+        IP Address
+      </th>
+      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+        OS
+      </th>
+      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+        Status
+      </th>
+      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+        Last Seen
+      </th>
+      <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+        Actions
+      </th>
+    </>
+  );
+
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <PageHeader
@@ -176,140 +392,11 @@ const DevicesInterface = () => {
           </span>
         }
         subtitle="Discover, explore, and manage network devices"
-        metrics={[
-          { value: totalDevices, label: "Total Devices", color: "text-primary" },
-          { value: newDevices, label: "New", color: "text-blue-600" },
-          { value: convertedDevices, label: "Converted", color: "text-green-600" }
-        ]}
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col p-6">
-        <div className="space-y-6 flex-shrink-0">
-          {/* Device Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Devices</p>
-                    <p className="text-2xl font-bold text-foreground">{totalDevices}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                    <span className="text-primary text-lg">📱</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">New Devices</p>
-                    <p className="text-2xl font-bold text-blue-600">{newDevices}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 text-lg">🆕</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Converted to Assets</p>
-                    <p className="text-2xl font-bold text-green-600">{convertedDevices}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-green-600 text-lg">✅</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Device Types</p>
-                    <p className="text-2xl font-bold text-foreground">{deviceTypes}</p>
-                  </div>
-                  <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-purple-600 text-lg">🔧</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Search and Filter Controls */}
-          <Card className="surface-elevated">
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-4">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Search devices by IP, hostname, MAC, OS, or manufacturer..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex items-center space-x-3">
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                  >
-                    <option value="all">All Devices</option>
-                    <option value="new">New Devices</option>
-                    <option value="converted">Converted to Assets</option>
-                  </select>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                  >
-                    <option value="last_seen">Last Seen</option>
-                    <option value="ip">IP Address</option>
-                    <option value="hostname">Hostname</option>
-                    <option value="os_name">Operating System</option>
-                  </select>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                    className="px-3"
-                  >
-                    {sortOrder === 'asc' ? '↑' : '↓'}
-                  </Button>
-                  
-                  {/* View Toggle - Integrated into toolbar */}
-                  <div className="flex items-center space-x-2 border-l border-border pl-3">
-                    <span className="text-sm font-medium text-foreground">View:</span>
-                    <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                      <Button
-                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('grid')}
-                        className="text-xs font-medium transition-all duration-200 h-8 px-3"
-                      >
-                        ⊞
-                      </Button>
-                      <Button
-                        variant={viewMode === 'table' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('table')}
-                        className="text-xs font-medium transition-all duration-200 h-8 px-3"
-                      >
-                        ☰
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
           {/* Active Scan Status */}
           {activeScanTask && (
             <Card className="surface-elevated border-blue-200 bg-blue-50/50">
@@ -320,7 +407,7 @@ const DevicesInterface = () => {
                     <div>
                       <h4 className="text-sm font-semibold text-blue-900">Active Discovery</h4>
                       <p className="text-xs text-blue-700">
-                        {activeScanTask.name} • {activeScanTask.target} • {activeScanTask.progress}% complete
+                        {activeScanTask.name} • {activeScanTask.target} • {Math.round(activeScanTask.progress || 0)}% complete
                       </p>
                     </div>
                   </div>
@@ -337,242 +424,41 @@ const DevicesInterface = () => {
             </Card>
           )}
 
-          {/* Device List */}
-          {filteredDevices.length === 0 ? (
-            <Card className="surface-elevated">
-              <CardContent className="p-12 text-center">
-                <div className="text-4xl mb-4">📱</div>
-                <h3 className="text-subheading text-foreground mb-2">No devices found</h3>
-                <p className="text-body text-muted-foreground">
-                  {searchTerm ? 'Try adjusting your search criteria.' : 'Start a network discovery scan to find devices.'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {/* Bulk Actions */}
-              {selectedDevices.length > 0 && (
-                <Card className="surface-elevated border-primary/20 bg-primary/5">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedDevices.length === filteredDevices.length}
-                          onChange={handleSelectAll}
-                          className="form-checkbox h-4 w-4 text-primary rounded"
-                        />
-                        <span className="text-sm font-medium text-foreground">
-                          {selectedDevices.length} device{selectedDevices.length !== 1 ? 's' : ''} selected
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
-                          Bulk Convert to Assets
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Export Selected
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Device Count */}
-              <div className="flex justify-end items-center mb-4">
-                <div className="text-sm text-muted-foreground">
-                  {filteredDevices.length} device{filteredDevices.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-
-              {/* Device Grid/Table */}
-              {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredDevices.map((device) => {
-                    const status = getDeviceStatus(device);
-                    return (
-                      <Card key={device.id} className="surface-interactive group hover:shadow-lg transition-all duration-200">
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                checked={selectedDevices.includes(device.id)}
-                                onChange={() => toggleDeviceSelection(device.id)}
-                                className="form-checkbox h-4 w-4 text-primary rounded"
-                              />
-                              <span className="text-3xl">{getDeviceIcon(device)}</span>
-                              <div>
-                                <h4 className="font-semibold text-foreground">
-                                  {device.hostname || 'Unknown Device'}
-                                </h4>
-                                <p className="text-sm text-muted-foreground font-mono">
-                                  {device.primary_ip}
-                                </p>
-                              </div>
-                            </div>
-                            <Badge className={cn("text-xs", getStatusColor(status))}>
-                              {status === 'new' ? 'New' : 'Converted'}
-                            </Badge>
-                          </div>
-                          
-                          <div className="space-y-3 text-sm">
-                            {device.os_name && (
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">OS:</span>
-                                <span className="text-foreground font-medium">{device.os_name}</span>
-                              </div>
-                            )}
-                            {device.manufacturer && (
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Manufacturer:</span>
-                                <span className="text-foreground font-medium">{device.manufacturer}</span>
-                              </div>
-                            )}
-                            {device.mac_address && (
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">MAC:</span>
-                                <span className="text-foreground font-mono text-xs">{device.mac_address}</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Last Seen:</span>
-                              <span className="text-foreground text-xs">
-                                {new Date(device.last_seen).toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex space-x-2 mt-6">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedDevice(device);
-                                setShowDeviceModal(true);
-                              }}
-                              className="flex-1"
-                            >
-                              Explore
-                            </Button>
-                            {status === 'new' && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleConvertToAsset(device)}
-                                className="flex-1"
-                              >
-                                Convert to Asset
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              ) : (
-                <Card className="surface-elevated">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="border-b border-border">
-                          <tr className="text-left">
-                            <th className="px-6 py-4 w-12">
-                              <input
-                                type="checkbox"
-                                checked={selectedDevices.length === filteredDevices.length}
-                                onChange={handleSelectAll}
-                                className="form-checkbox h-4 w-4 text-primary rounded"
-                              />
-                            </th>
-                            <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Device</th>
-                            <th className="px-6 py-4 text-sm font-medium text-muted-foreground">IP Address</th>
-                            <th className="px-6 py-4 text-sm font-medium text-muted-foreground">OS</th>
-                            <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
-                            <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Last Seen</th>
-                            <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredDevices.map((device) => {
-                            const status = getDeviceStatus(device);
-                            return (
-                              <tr key={device.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                                <td className="px-6 py-4">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedDevices.includes(device.id)}
-                                    onChange={() => toggleDeviceSelection(device.id)}
-                                    className="form-checkbox h-4 w-4 text-primary rounded"
-                                  />
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center space-x-3">
-                                    <span className="text-lg">{getDeviceIcon(device)}</span>
-                                    <div>
-                                      <div className="font-medium text-foreground">
-                                        {device.hostname || 'Unknown Device'}
-                                      </div>
-                                      {device.manufacturer && (
-                                        <div className="text-sm text-muted-foreground">
-                                          {device.manufacturer}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <span className="font-mono text-sm text-foreground">{device.primary_ip}</span>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <span className="text-sm text-foreground">{device.os_name || 'Unknown'}</span>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <Badge className={cn("text-xs", getStatusColor(status))}>
-                                    {status === 'new' ? 'New' : 'Converted'}
-                                  </Badge>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <span className="text-sm text-muted-foreground">
-                                    {new Date(device.last_seen).toLocaleString()}
-                                  </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="flex space-x-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setSelectedDevice(device);
-                                        setShowDeviceModal(true);
-                                      }}
-                                    >
-                                      Explore
-                                    </Button>
-                                    {status === 'new' && (
-                                      <Button
-                                        variant="default"
-                                        size="sm"
-                                        onClick={() => handleConvertToAsset(device)}
-                                      >
-                                        Convert
-                                      </Button>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          )}
+          {/* StandardList Component */}
+          <StandardList
+            items={filteredDevices}
+            loading={false}
+            title="Network Devices"
+            subtitle="Discover, explore, and manage network devices"
+            itemName="device"
+            itemNamePlural="devices"
+            searchPlaceholder="Search devices by IP, hostname, MAC, OS, or manufacturer..."
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            filterOptions={deviceFilterOptions}
+            filterValue={filterType}
+            onFilterChange={setFilterType}
+            sortOptions={deviceSortOptions}
+            sortValue={sortBy}
+            onSortChange={setSortBy}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            selectedItems={selectedDevices}
+            onItemSelect={toggleDeviceSelection}
+            onSelectAll={selectAllDevices}
+            onCreateClick={() => {/* No create action for devices */}}
+            createButtonText=""
+            onBulkDelete={() => {/* No bulk delete for devices */}}
+            statistics={deviceStatistics}
+            renderItemCard={renderDeviceCard}
+            renderItemRow={renderDeviceRow}
+            tableHeaders={deviceTableHeaders}
+            emptyStateIcon="📱"
+            emptyStateTitle="No devices found"
+            emptyStateDescription={searchTerm ? 'Try adjusting your search criteria.' : 'Start a network discovery scan to find devices.'}
+          />
         </div>
       </div>
 

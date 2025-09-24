@@ -10,3 +10,4 @@ python-jose[cryptography]
 python-ldap
 ldap3
 ipaddress
+pydantic-settings

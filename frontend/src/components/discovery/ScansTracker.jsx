@@ -109,7 +109,7 @@ const ScansTracker = ({
     }
   };
 
-  const recentScans = scanTasks?.slice(0, 5) || [];
+  const recentScans = scanTasks?.slice(0, 3) || [];
   const hasActiveScan = activeScanTask && activeScanTask.status === 'running';
 
   if (isCollapsed) {
@@ -165,7 +165,7 @@ const ScansTracker = ({
 
   return (
     <div className={cn("fixed bottom-0 left-0 right-0 z-30 transition-all duration-300", className)}>
-      <Card className="mx-4 mb-4 shadow-lg border border-border/50 bg-background/95 backdrop-blur-sm max-h-96">
+      <Card className="mx-4 mb-4 shadow-lg border border-border/50 bg-background/95 backdrop-blur-sm max-h-80">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center space-x-2">
@@ -186,7 +186,7 @@ const ScansTracker = ({
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-3 max-h-80 overflow-y-auto">
+        <CardContent className="space-y-3 max-h-64 overflow-y-auto">
           {/* Active Scan */}
           {hasActiveScan && (
             <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">

@@ -772,11 +772,6 @@ const AssetsInterface = () => {
           </span>
         }
         subtitle="Manage your asset inventory and organize them into groups"
-        metrics={[
-          { value: totalAssets, label: "Total Assets", color: "text-primary" },
-          { value: activeAssets, label: "Active", color: "text-green-600" },
-          { value: totalGroups, label: "Asset Groups", color: "text-blue-600" }
-        ]}
       />
 
       {/* Main Content */}

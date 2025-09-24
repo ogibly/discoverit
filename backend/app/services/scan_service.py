@@ -145,7 +145,9 @@ class ScanService:
                 # Update current IP and progress
                 task.current_ip = ip
                 task.completed_ips = i
-                task.progress = int((i / total_ips) * 100) if total_ips > 0 else 0
+                # Ensure progress never exceeds 100%
+                progress = int((i / total_ips) * 100) if total_ips > 0 else 0
+                task.progress = min(progress, 100)
                 self.db.commit()
                 
                 # Get the appropriate scanner for this IP

@@ -52,6 +52,7 @@ const StandardList = ({
   renderItem = () => null,
   renderItemCard = () => null,
   renderItemRow = () => null,
+  tableHeaders = null,
   
   // Empty state
   emptyStateIcon = "📋",
@@ -376,9 +377,9 @@ const StandardList = ({
             /* Table View */
             <Card className="surface-elevated">
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
+                <div className="overflow-auto max-h-96">
                   <table className="w-full">
-                    <thead className="bg-muted/30 border-b border-border">
+                    <thead className="bg-muted/30 border-b border-border sticky top-0 z-10">
                       <tr>
                         <th className="px-6 py-3 text-left">
                           <input
@@ -389,9 +390,11 @@ const StandardList = ({
                           />
                         </th>
                         {renderItemRow && (
-                          <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
-                            {itemNamePlural}
-                          </th>
+                          tableHeaders ? tableHeaders : (
+                            <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+                              {itemNamePlural}
+                            </th>
+                          )
                         )}
                       </tr>
                     </thead>

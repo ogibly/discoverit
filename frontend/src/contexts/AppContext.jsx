@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback } 
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000/api/v2';
+const API_BASE = import.meta.env.VITE_API_BASE || '/api/v2';
 
 // Initial state
 const initialState = {

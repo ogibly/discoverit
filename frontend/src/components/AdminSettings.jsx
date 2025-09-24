@@ -632,13 +632,6 @@ const AdminSettings = () => {
       <PageHeader
         title="Admin Settings"
         subtitle="Manage system settings, users, and configurations"
-        actions={[
-          {
-            label: "Administrator",
-            variant: "secondary",
-            className: "bg-primary text-primary-foreground"
-          }
-        ]}
       />
 
       {/* Status Message */}

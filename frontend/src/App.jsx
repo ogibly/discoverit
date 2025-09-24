@@ -17,6 +17,7 @@ import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
 import ScanStatusTracker from './components/ScanStatusTracker';
+import SidebarScanTracker from './components/SidebarScanTracker';
 import AdminSettings from './components/AdminSettings';
 import { cn } from './utils/cn';
 
@@ -217,6 +218,9 @@ const Navigation = () => {
           </div>
         </div>
       )}
+
+      {/* Scan Tracker */}
+      <SidebarScanTracker />
 
       {/* Sophisticated Footer */}
       <div className="px-4 py-4 border-t border-border">

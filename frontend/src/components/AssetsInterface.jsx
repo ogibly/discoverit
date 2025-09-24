@@ -876,31 +876,128 @@ const AssetsInterface = () => {
         size="lg"
       >
         <div className="space-y-4">
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
-                    >
-                      ⊞
-                    </Button>
-                    <Button
-                      variant={viewMode === 'table' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('table')}
-                      className="text-xs font-medium transition-all duration-200 h-8 px-3"
-                    >
-                      ☰
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {filteredAssets.length} asset{filteredAssets.length !== 1 ? 's' : ''}
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Name *
+              </label>
+              <Input
+                value={assetForm.name}
+                onChange={(e) => setAssetForm({...assetForm, name: e.target.value})}
+                placeholder="Asset name"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                IP Address *
+              </label>
+              <Input
+                value={assetForm.primary_ip}
+                onChange={(e) => setAssetForm({...assetForm, primary_ip: e.target.value})}
+                placeholder="192.168.1.100"
+                className="w-full"
+              />
+            </div>
+          </div>
 
-              {/* Asset List */}
-              {filteredAssets.length === 0 ? (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                MAC Address
+              </label>
+              <Input
+                value={assetForm.mac_address}
+                onChange={(e) => setAssetForm({...assetForm, mac_address: e.target.value})}
+                placeholder="00:11:22:33:44:55"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Hostname
+              </label>
+              <Input
+                value={assetForm.hostname}
+                onChange={(e) => setAssetForm({...assetForm, hostname: e.target.value})}
+                placeholder="hostname"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Operating System
+              </label>
+              <Input
+                value={assetForm.os}
+                onChange={(e) => setAssetForm({...assetForm, os: e.target.value})}
+                placeholder="Windows 10, Ubuntu 20.04, etc."
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Device Type
+              </label>
+              <Input
+                value={assetForm.device_type}
+                onChange={(e) => setAssetForm({...assetForm, device_type: e.target.value})}
+                placeholder="Server, Workstation, Router, etc."
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Location
+            </label>
+            <Input
+              value={assetForm.location}
+              onChange={(e) => setAssetForm({...assetForm, location: e.target.value})}
+              placeholder="Building, Room, Rack, etc."
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Notes
+            </label>
+            <textarea
+              value={assetForm.notes}
+              onChange={(e) => setAssetForm({...assetForm, notes: e.target.value})}
+              placeholder="Additional notes about this asset"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              rows={3}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={assetForm.is_active}
+              onChange={(e) => setAssetForm({...assetForm, is_active: e.target.checked})}
+              className="rounded border-border text-primary focus:ring-ring"
+            />
+            <span className="text-sm text-foreground">Active</span>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t border-border">
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" onClick={handleCreateAsset}>
+              Create Asset
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Asset Modal */}
                 <Card className="surface-elevated">
                   <CardContent className="p-12 text-center">
                     <div className="text-4xl mb-4">📊</div>

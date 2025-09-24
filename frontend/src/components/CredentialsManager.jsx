@@ -84,13 +84,6 @@ const CredentialsManager = () => {
     { value: 'certificate', label: 'Certificate', icon: '📜' }
   ];
 
-  const sortOptions = [
-    { value: 'name', label: 'Name' },
-    { value: 'credential_type', label: 'Type' },
-    { value: 'created_at', label: 'Created Date' },
-    { value: 'is_active', label: 'Status' }
-  ];
-
   const statistics = [
     {
       value: credentials.filter(c => c.is_active).length,
@@ -752,7 +745,6 @@ const CredentialsManager = () => {
           </div>
         </form>
       </Modal>
-        </div>
       </div>
     </div>
   );

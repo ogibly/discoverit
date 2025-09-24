@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
@@ -254,12 +254,12 @@ const AssetsInterface = () => {
   };
 
   const getAssetIcon = (asset) => {
-    if (asset.device_type === 'router') return '🌐';
-    if (asset.device_type === 'switch') return '🔀';
-    if (asset.device_type === 'server') return '🖥️';
-    if (asset.device_type === 'workstation') return '💻';
-    if (asset.device_type === 'printer') return '🖨️';
-    return '📱';
+    if (asset.device_type === 'router') return 'ðŸŒ';
+    if (asset.device_type === 'switch') return 'ðŸ”€';
+    if (asset.device_type === 'server') return 'ðŸ–¥ï¸';
+    if (asset.device_type === 'workstation') return 'ðŸ’»';
+    if (asset.device_type === 'printer') return 'ðŸ–¨ï¸';
+    return 'ðŸ“±';
   };
 
   const getStatusColor = (isActive) => {
@@ -268,12 +268,12 @@ const AssetsInterface = () => {
 
   const getAssetTypeIcon = (deviceType) => {
     switch (deviceType) {
-      case 'router': return '🌐';
-      case 'switch': return '🔀';
-      case 'server': return '🖥️';
-      case 'workstation': return '💻';
-      case 'printer': return '🖨️';
-      default: return '📱';
+      case 'router': return 'ðŸŒ';
+      case 'switch': return 'ðŸ”€';
+      case 'server': return 'ðŸ–¥ï¸';
+      case 'workstation': return 'ðŸ’»';
+      case 'printer': return 'ðŸ–¨ï¸';
+      default: return 'ðŸ“±';
     }
   };
 
@@ -492,7 +492,7 @@ const AssetsInterface = () => {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-lg">
-            📁
+            ðŸ“
           </div>
         </div>
         <Badge className={cn("text-xs", group.is_active !== false ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground")}>
@@ -579,7 +579,7 @@ const AssetsInterface = () => {
       <td className="px-6 py-4">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-md bg-primary/20 flex items-center justify-center text-sm">
-            📁
+            ðŸ“
           </div>
           <div>
             <div className="text-body font-medium text-foreground">
@@ -655,9 +655,9 @@ const AssetsInterface = () => {
 
   // Filter and sort options for assets
   const assetFilterOptions = [
-    { value: "all", label: "All Assets", icon: "📱" },
-    { value: "active", label: "Active", icon: "✅" },
-    { value: "inactive", label: "Inactive", icon: "❌" },
+    { value: "all", label: "All Assets", icon: "ðŸ“±" },
+    { value: "active", label: "Active", icon: "âœ…" },
+    { value: "inactive", label: "Inactive", icon: "âŒ" },
   ];
 
   const assetSortOptions = [
@@ -669,9 +669,9 @@ const AssetsInterface = () => {
 
   // Filter and sort options for asset groups
   const groupFilterOptions = [
-    { value: "all", label: "All Groups", icon: "📁" },
-    { value: "active", label: "Active", icon: "✅" },
-    { value: "inactive", label: "Inactive", icon: "❌" },
+    { value: "all", label: "All Groups", icon: "ðŸ“" },
+    { value: "active", label: "Active", icon: "âœ…" },
+    { value: "inactive", label: "Inactive", icon: "âŒ" },
   ];
 
   const groupSortOptions = [
@@ -686,7 +686,7 @@ const AssetsInterface = () => {
       value: assets.length,
       label: "Total Assets",
       color: "text-primary",
-      icon: "📱",
+      icon: "ðŸ“±",
       bgColor: "bg-primary/20",
       iconColor: "text-primary"
     },
@@ -694,7 +694,7 @@ const AssetsInterface = () => {
       value: assets.filter(a => a.is_active !== false).length,
       label: "Active",
       color: "text-success",
-      icon: "✅",
+      icon: "âœ…",
       bgColor: "bg-success/20",
       iconColor: "text-success"
     },
@@ -702,7 +702,7 @@ const AssetsInterface = () => {
       value: assets.filter(a => a.is_active === false).length,
       label: "Inactive",
       color: "text-error",
-      icon: "❌",
+      icon: "âŒ",
       bgColor: "bg-error/20",
       iconColor: "text-error"
     },
@@ -710,7 +710,7 @@ const AssetsInterface = () => {
       value: selectedAssets.length,
       label: "Selected",
       color: "text-warning",
-      icon: "✓",
+      icon: "âœ“",
       bgColor: "bg-warning/20",
       iconColor: "text-warning"
     }
@@ -722,7 +722,7 @@ const AssetsInterface = () => {
       value: assetGroups.length,
       label: "Total Groups",
       color: "text-primary",
-      icon: "📁",
+      icon: "ðŸ“",
       bgColor: "bg-primary/20",
       iconColor: "text-primary"
     },
@@ -730,7 +730,7 @@ const AssetsInterface = () => {
       value: assetGroups.filter(ag => ag.is_active !== false).length,
       label: "Active",
       color: "text-success",
-      icon: "✅",
+      icon: "âœ…",
       bgColor: "bg-success/20",
       iconColor: "text-success"
     },
@@ -738,7 +738,7 @@ const AssetsInterface = () => {
       value: assetGroups.filter(ag => ag.is_active === false).length,
       label: "Inactive",
       color: "text-error",
-      icon: "❌",
+      icon: "âŒ",
       bgColor: "bg-error/20",
       iconColor: "text-error"
     },
@@ -746,7 +746,7 @@ const AssetsInterface = () => {
       value: selectedAssetGroups.length,
       label: "Selected",
       color: "text-warning",
-      icon: "✓",
+      icon: "âœ“",
       bgColor: "bg-warning/20",
       iconColor: "text-warning"
     }
@@ -819,7 +819,7 @@ const AssetsInterface = () => {
                 statistics={assetStatistics}
                 renderItemCard={renderAssetCard}
                 renderItemRow={renderAssetRow}
-                emptyStateIcon="📱"
+                emptyStateIcon="ðŸ“±"
                 emptyStateTitle="No assets found"
                 emptyStateDescription="Create your first asset to get started."
               />
@@ -859,7 +859,7 @@ const AssetsInterface = () => {
                 statistics={groupStatistics}
                 renderItemCard={renderAssetGroupCard}
                 renderItemRow={renderAssetGroupRow}
-                emptyStateIcon="📁"
+                emptyStateIcon="ðŸ“"
                 emptyStateTitle="No asset groups found"
                 emptyStateDescription="Create your first asset group to organize your assets."
               />
@@ -998,626 +998,6 @@ const AssetsInterface = () => {
       </Modal>
 
       {/* Edit Asset Modal */}
-                <Card className="surface-elevated">
-                  <CardContent className="p-12 text-center">
-                    <div className="text-4xl mb-4">📊</div>
-                    <h3 className="text-subheading text-foreground mb-2">No assets found</h3>
-                    <p className="text-body text-muted-foreground">
-                      {searchTerm ? 'Try adjusting your search criteria.' : 'Create your first asset to get started.'}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  {/* Bulk Actions */}
-                  {selectedAssets.length > 0 && (
-                    <Card className="surface-elevated border-primary/20 bg-primary/5">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedAssets.length === filteredAssets.length}
-                              onChange={handleSelectAll}
-                              className="form-checkbox h-4 w-4 text-primary rounded"
-                            />
-                            <span className="text-sm font-medium text-foreground">
-                              {selectedAssets.length} asset{selectedAssets.length !== 1 ? 's' : ''} selected
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm">
-                              Bulk Edit
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              Export Selected
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => {
-                                if (window.confirm(`Are you sure you want to delete ${selectedAssets.length} assets?`)) {
-                                  bulkDeleteAssets(selectedAssets);
-                                }
-                              }}
-                            >
-                              Delete Selected
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Asset Grid/Table */}
-                  {viewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {filteredAssets.map((asset) => (
-                        <Card key={asset.id} className="surface-interactive group hover:shadow-lg transition-all duration-200">
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedAssets.includes(asset.id)}
-                                  onChange={() => toggleAssetSelection(asset.id)}
-                                  className="form-checkbox h-4 w-4 text-primary rounded"
-                                />
-                                <span className="text-3xl">{getAssetIcon(asset)}</span>
-                                <div>
-                                  <h4 className="font-semibold text-foreground">
-                                    {asset.name || 'Unnamed Asset'}
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground font-mono">
-                                    {asset.primary_ip}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge className={cn("text-xs", getStatusColor(asset.is_active))}>
-                                {asset.is_active !== false ? 'Active' : 'Inactive'}
-                              </Badge>
-                            </div>
-                            
-                            <div className="space-y-3 text-sm">
-                              {asset.device_type && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Type:</span>
-                                  <span className="text-foreground font-medium capitalize">{asset.device_type}</span>
-                                </div>
-                              )}
-                              {asset.manufacturer && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Manufacturer:</span>
-                                  <span className="text-foreground font-medium">{asset.manufacturer}</span>
-                                </div>
-                              )}
-                              {asset.model && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Model:</span>
-                                  <span className="text-foreground font-medium">{asset.model}</span>
-                                </div>
-                              )}
-                              {asset.location && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Location:</span>
-                                  <span className="text-foreground font-medium">{asset.location}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Labels Display */}
-                            {asset.tags && asset.tags.length > 0 && (
-                              <div className="mt-3">
-                                <div className="flex flex-wrap gap-1">
-                                  {asset.tags.map((tag, index) => (
-                                    <span
-                                      key={index}
-                                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="flex space-x-2 mt-6">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  console.log('Edit button clicked for asset:', asset);
-                                  setSelectedAsset(asset);
-                                  setAssetForm(asset);
-                                  setShowEditModal(true);
-                                }}
-                                className="flex-1"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteAsset(asset.id)}
-                                className="flex-1"
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <Card className="surface-elevated">
-                      <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead className="border-b border-border">
-                              <tr className="text-left">
-                                <th className="px-6 py-4 w-12">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedAssets.length === filteredAssets.length}
-                                    onChange={handleSelectAll}
-                                    className="form-checkbox h-4 w-4 text-primary rounded"
-                                  />
-                                </th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Asset</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">IP Address</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Type</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Manufacturer</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {filteredAssets.map((asset) => (
-                                <tr key={asset.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                                  <td className="px-6 py-4">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedAssets.includes(asset.id)}
-                                      onChange={() => toggleAssetSelection(asset.id)}
-                                      className="form-checkbox h-4 w-4 text-primary rounded"
-                                    />
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex items-center space-x-3">
-                                      <span className="text-lg">{getAssetIcon(asset)}</span>
-                                      <div>
-                                        <div className="font-medium text-foreground">
-                                          {asset.name || 'Unnamed Asset'}
-                                        </div>
-                                        {asset.description && (
-                                          <div className="text-sm text-muted-foreground">
-                                            {asset.description}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span className="font-mono text-sm text-foreground">{asset.primary_ip}</span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span className="text-sm text-foreground capitalize">{asset.device_type || 'Unknown'}</span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span className="text-sm text-foreground">{asset.manufacturer || 'Unknown'}</span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <Badge className={cn("text-xs", getStatusColor(asset.is_active))}>
-                                      {asset.is_active !== false ? 'Active' : 'Inactive'}
-                                    </Badge>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex space-x-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          console.log('Edit button clicked for asset (table):', asset);
-                                          setSelectedAsset(asset);
-                                          setAssetForm(asset);
-                                          setShowEditModal(true);
-                                        }}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDeleteAsset(asset.id)}
-                                      >
-                                        Delete
-                                      </Button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
-            </TabsContent>
-
-            <TabsContent value="groups" className="space-y-6">
-              {/* Search and Filter Controls */}
-              <Card className="surface-elevated">
-                <CardContent className="p-6">
-                  <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Search asset groups by name, description, or labels..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                        className="px-3"
-                      >
-                        {sortOrder === 'asc' ? '↑' : '↓'}
-                      </Button>
-                      <Button onClick={() => setShowGroupModal(true)}>
-                        Create Asset Group
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Asset Groups List */}
-              {filteredGroups.length === 0 ? (
-                <Card className="surface-elevated">
-                  <CardContent className="p-12 text-center">
-                    <div className="text-4xl mb-4">📁</div>
-                    <h3 className="text-subheading text-foreground mb-2">No asset groups found</h3>
-                    <p className="text-body text-muted-foreground">
-                      {searchTerm ? 'Try adjusting your search criteria.' : 'Create your first asset group to organize your assets.'}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  {/* Bulk Actions */}
-                  {selectedAssetGroups.length > 0 && (
-                    <Card className="surface-elevated border-primary/20 bg-primary/5">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedAssetGroups.length === filteredGroups.length}
-                              onChange={handleSelectAll}
-                              className="form-checkbox h-4 w-4 text-primary rounded"
-                            />
-                            <span className="text-sm font-medium text-foreground">
-                              {selectedAssetGroups.length} group{selectedAssetGroups.length !== 1 ? 's' : ''} selected
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm">
-                              Bulk Edit
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              Export Selected
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Asset Groups Grid/Table */}
-                  {viewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {filteredGroups.map((group) => (
-                        <Card key={group.id} className="surface-interactive group hover:shadow-lg transition-all duration-200">
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedAssetGroups.includes(group.id)}
-                                  onChange={() => toggleAssetGroupSelection(group.id)}
-                                  className="form-checkbox h-4 w-4 text-primary rounded"
-                                />
-                                <span className="text-3xl">📁</span>
-                                <div>
-                                  <h4 className="font-semibold text-foreground">
-                                    {group.name}
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {group.asset_count || 0} assets
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {group.description && (
-                              <div className="mb-4">
-                                <p className="text-sm text-muted-foreground">
-                                  {group.description}
-                                </p>
-                              </div>
-                            )}
-
-                            <div className="flex space-x-2 mt-6">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedAssetGroups([group.id]);
-                                  setGroupForm(group);
-                                  setShowEditGroupModal(true);
-                                }}
-                                className="flex-1"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteGroup(group.id)}
-                                className="flex-1"
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <Card className="surface-elevated">
-                      <CardContent className="p-0">
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead className="border-b border-border">
-                              <tr className="text-left">
-                                <th className="px-6 py-4 w-12">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedAssetGroups.length === filteredGroups.length}
-                                    onChange={handleSelectAll}
-                                    className="form-checkbox h-4 w-4 text-primary rounded"
-                                  />
-                                </th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Group Name</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Description</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Asset Count</th>
-                                <th className="px-6 py-4 text-sm font-medium text-muted-foreground">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {filteredGroups.map((group) => (
-                                <tr key={group.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                                  <td className="px-6 py-4">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedAssetGroups.includes(group.id)}
-                                      onChange={() => toggleAssetGroupSelection(group.id)}
-                                      className="form-checkbox h-4 w-4 text-primary rounded"
-                                    />
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex items-center space-x-3">
-                                      <span className="text-lg">📁</span>
-                                      <div className="font-medium text-foreground">
-                                        {group.name}
-                                      </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span className="text-sm text-foreground">{group.description || 'No description'}</span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span className="text-sm text-foreground">{group.asset_count || 0}</span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex space-x-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          setSelectedAssetGroups([group.id]);
-                                          setGroupForm(group);
-                                          setShowEditGroupModal(true);
-                                        }}
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDeleteGroup(group.id)}
-                                      >
-                                        Delete
-                                      </Button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-
-      {/* Create Asset Modal */}
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Create Asset"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Name *
-              </label>
-              <Input
-                value={assetForm.name}
-                onChange={(e) => setAssetForm({...assetForm, name: e.target.value})}
-                placeholder="Asset name"
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                IP Address *
-              </label>
-              <Input
-                value={assetForm.primary_ip}
-                onChange={(e) => setAssetForm({...assetForm, primary_ip: e.target.value})}
-                placeholder="192.168.1.100"
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Device Type
-              </label>
-              <select
-                value={assetForm.device_type}
-                onChange={(e) => setAssetForm({...assetForm, device_type: e.target.value})}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              >
-                <option value="">Select type</option>
-                <option value="router">Router</option>
-                <option value="switch">Switch</option>
-                <option value="server">Server</option>
-                <option value="workstation">Workstation</option>
-                <option value="printer">Printer</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Manufacturer
-              </label>
-              <Input
-                value={assetForm.manufacturer}
-                onChange={(e) => setAssetForm({...assetForm, manufacturer: e.target.value})}
-                placeholder="Manufacturer"
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Model
-              </label>
-              <Input
-                value={assetForm.model}
-                onChange={(e) => setAssetForm({...assetForm, model: e.target.value})}
-                placeholder="Model"
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Location
-              </label>
-              <Input
-                value={assetForm.location}
-                onChange={(e) => setAssetForm({...assetForm, location: e.target.value})}
-                placeholder="Location"
-                className="w-full"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Description
-            </label>
-            <textarea
-              value={assetForm.description}
-              onChange={(e) => setAssetForm({...assetForm, description: e.target.value})}
-              placeholder="Asset description"
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              rows={3}
-            />
-          </div>
-          
-          {/* Jira-style Labels */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Labels
-            </label>
-            <div className="space-y-2">
-              <Input
-                placeholder="Type a label and press Enter to add"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const newLabel = e.target.value.trim();
-                    if (newLabel && !assetForm.tags.includes(newLabel)) {
-                      setAssetForm({
-                        ...assetForm,
-                        tags: [...assetForm.tags, newLabel]
-                      });
-                      e.target.value = '';
-                    }
-                  }
-                }}
-                className="w-full"
-              />
-              {assetForm.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {assetForm.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAssetForm({
-                            ...assetForm,
-                            tags: assetForm.tags.filter((_, i) => i !== index)
-                          });
-                        }}
-                        className="ml-1 text-blue-600 hover:text-blue-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex justify-end space-x-3 pt-4 border-t border-border">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateAsset}>
-              Create Asset
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Edit Asset Modal */}
       <Modal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -1648,125 +1028,98 @@ const AssetsInterface = () => {
                 className="w-full"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                MAC Address
+              </label>
+              <Input
+                value={assetForm.mac_address}
+                onChange={(e) => setAssetForm({...assetForm, mac_address: e.target.value})}
+                placeholder="00:11:22:33:44:55"
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Hostname
+              </label>
+              <Input
+                value={assetForm.hostname}
+                onChange={(e) => setAssetForm({...assetForm, hostname: e.target.value})}
+                placeholder="hostname"
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Operating System
+              </label>
+              <Input
+                value={assetForm.os}
+                onChange={(e) => setAssetForm({...assetForm, os: e.target.value})}
+                placeholder="Windows 10, Ubuntu 20.04, etc."
+                className="w-full"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Device Type
               </label>
-              <select
+              <Input
                 value={assetForm.device_type}
                 onChange={(e) => setAssetForm({...assetForm, device_type: e.target.value})}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              >
-                <option value="">Select type</option>
-                <option value="router">Router</option>
-                <option value="switch">Switch</option>
-                <option value="server">Server</option>
-                <option value="workstation">Workstation</option>
-                <option value="printer">Printer</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Manufacturer
-              </label>
-              <Input
-                value={assetForm.manufacturer}
-                onChange={(e) => setAssetForm({...assetForm, manufacturer: e.target.value})}
-                placeholder="Manufacturer"
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Model
-              </label>
-              <Input
-                value={assetForm.model}
-                onChange={(e) => setAssetForm({...assetForm, model: e.target.value})}
-                placeholder="Model"
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Location
-              </label>
-              <Input
-                value={assetForm.location}
-                onChange={(e) => setAssetForm({...assetForm, location: e.target.value})}
-                placeholder="Location"
+                placeholder="Server, Workstation, Router, etc."
                 className="w-full"
               />
             </div>
           </div>
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Description
+              Location
+            </label>
+            <Input
+              value={assetForm.location}
+              onChange={(e) => setAssetForm({...assetForm, location: e.target.value})}
+              placeholder="Building, Room, Rack, etc."
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Notes
             </label>
             <textarea
-              value={assetForm.description}
-              onChange={(e) => setAssetForm({...assetForm, description: e.target.value})}
-              placeholder="Asset description"
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              value={assetForm.notes}
+              onChange={(e) => setAssetForm({...assetForm, notes: e.target.value})}
+              placeholder="Additional notes about this asset"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               rows={3}
             />
           </div>
-          
-          {/* Jira-style Labels */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Labels
-            </label>
-            <div className="space-y-2">
-              <Input
-                placeholder="Type a label and press Enter to add"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const newLabel = e.target.value.trim();
-                    if (newLabel && !assetForm.tags.includes(newLabel)) {
-                      setAssetForm({
-                        ...assetForm,
-                        tags: [...assetForm.tags, newLabel]
-                      });
-                      e.target.value = '';
-                    }
-                  }
-                }}
-                className="w-full"
-              />
-              {assetForm.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {assetForm.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAssetForm({
-                            ...assetForm,
-                            tags: assetForm.tags.filter((_, i) => i !== index)
-                          });
-                        }}
-                        className="ml-1 text-blue-600 hover:text-blue-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={assetForm.is_active}
+              onChange={(e) => setAssetForm({...assetForm, is_active: e.target.checked})}
+              className="rounded border-border text-primary focus:ring-ring"
+            />
+            <span className="text-sm text-foreground">Active</span>
           </div>
+
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateAsset}>
+            <Button type="submit" onClick={handleUpdateAsset}>
               Update Asset
             </Button>
           </div>
@@ -1788,10 +1141,11 @@ const AssetsInterface = () => {
             <Input
               value={groupForm.name}
               onChange={(e) => setGroupForm({...groupForm, name: e.target.value})}
-              placeholder="Asset group name"
-              className="w-full"
+              placeholder="Enter group name"
+              required
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               Description
@@ -1799,66 +1153,52 @@ const AssetsInterface = () => {
             <textarea
               value={groupForm.description}
               onChange={(e) => setGroupForm({...groupForm, description: e.target.value})}
-              placeholder="Group description"
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              placeholder="Enter group description"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               rows={3}
             />
           </div>
-          
-          {/* Jira-style Labels */}
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Labels
+              Assets
             </label>
-            <div className="space-y-2">
-              <Input
-                placeholder="Type a label and press Enter to add"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const newLabel = e.target.value.trim();
-                    if (newLabel && !groupForm.tags?.includes(newLabel)) {
-                      setGroupForm({
-                        ...groupForm,
-                        tags: [...(groupForm.tags || []), newLabel]
-                      });
-                      e.target.value = '';
-                    }
-                  }
-                }}
-                className="w-full"
-              />
-              {groupForm.tags && groupForm.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {groupForm.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setGroupForm({
-                            ...groupForm,
-                            tags: groupForm.tags.filter((_, i) => i !== index)
-                          });
-                        }}
-                        className="ml-1 text-green-600 hover:text-green-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
+            <div className="space-y-2 max-h-40 overflow-y-auto border border-border rounded-md p-3">
+              {assets.map((asset) => (
+                <div key={asset.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={groupForm.asset_ids.includes(asset.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGroupForm({...groupForm, asset_ids: [...groupForm.asset_ids, asset.id]});
+                      } else {
+                        setGroupForm({...groupForm, asset_ids: groupForm.asset_ids.filter(id => id !== asset.id)});
+                      }
+                    }}
+                    className="rounded border-border text-primary focus:ring-ring"
+                  />
+                  <span className="text-sm text-foreground">{asset.name}</span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={groupForm.is_active}
+              onChange={(e) => setGroupForm({...groupForm, is_active: e.target.checked})}
+              className="rounded border-border text-primary focus:ring-ring"
+            />
+            <span className="text-sm text-foreground">Active</span>
+          </div>
+
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowGroupModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateGroup}>
+            <Button type="submit" onClick={handleCreateGroup}>
               Create Group
             </Button>
           </div>
@@ -1880,10 +1220,11 @@ const AssetsInterface = () => {
             <Input
               value={groupForm.name}
               onChange={(e) => setGroupForm({...groupForm, name: e.target.value})}
-              placeholder="Asset group name"
-              className="w-full"
+              placeholder="Enter group name"
+              required
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               Description
@@ -1891,66 +1232,52 @@ const AssetsInterface = () => {
             <textarea
               value={groupForm.description}
               onChange={(e) => setGroupForm({...groupForm, description: e.target.value})}
-              placeholder="Group description"
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              placeholder="Enter group description"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               rows={3}
             />
           </div>
-          
-          {/* Jira-style Labels */}
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Labels
+              Assets
             </label>
-            <div className="space-y-2">
-              <Input
-                placeholder="Type a label and press Enter to add"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const newLabel = e.target.value.trim();
-                    if (newLabel && !groupForm.tags?.includes(newLabel)) {
-                      setGroupForm({
-                        ...groupForm,
-                        tags: [...(groupForm.tags || []), newLabel]
-                      });
-                      e.target.value = '';
-                    }
-                  }
-                }}
-                className="w-full"
-              />
-              {groupForm.tags && groupForm.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {groupForm.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setGroupForm({
-                            ...groupForm,
-                            tags: groupForm.tags.filter((_, i) => i !== index)
-                          });
-                        }}
-                        className="ml-1 text-green-600 hover:text-green-800"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
+            <div className="space-y-2 max-h-40 overflow-y-auto border border-border rounded-md p-3">
+              {assets.map((asset) => (
+                <div key={asset.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={groupForm.asset_ids.includes(asset.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setGroupForm({...groupForm, asset_ids: [...groupForm.asset_ids, asset.id]});
+                      } else {
+                        setGroupForm({...groupForm, asset_ids: groupForm.asset_ids.filter(id => id !== asset.id)});
+                      }
+                    }}
+                    className="rounded border-border text-primary focus:ring-ring"
+                  />
+                  <span className="text-sm text-foreground">{asset.name}</span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={groupForm.is_active}
+              onChange={(e) => setGroupForm({...groupForm, is_active: e.target.checked})}
+              className="rounded border-border text-primary focus:ring-ring"
+            />
+            <span className="text-sm text-foreground">Active</span>
+          </div>
+
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => setShowEditGroupModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateGroup}>
+            <Button type="submit" onClick={handleUpdateGroup}>
               Update Group
             </Button>
           </div>

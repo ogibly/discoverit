@@ -4,6 +4,7 @@ import { AppProvider, useApp } from './contexts/AppContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import DevicesInterface from './components/DevicesInterface';
@@ -334,13 +335,15 @@ const AppContent = () => {
 // Root App Component
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppProvider>
-          <AppContent />
-        </AppProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppProvider>
+            <AppContent />
+          </AppProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

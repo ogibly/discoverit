@@ -1,3 +1,4 @@
+// UI Components
 export { Badge } from './Badge';
 export { Button } from './Button';
 export { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from './Card';
@@ -9,3 +10,10 @@ export { ProgressiveDisclosure } from './ProgressiveDisclosure';
 export { Progress } from './Progress';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { Tooltip } from './Tooltip';
+
+// Common Components
+export { default as ErrorBoundary } from '../common/ErrorBoundary';
+export { default as LoadingSpinner } from '../common/LoadingSpinner';
+export { default as StandardList } from '../common/StandardList';
+export { default as FormModal } from '../common/FormModal';
+export { default as StatusIndicator } from '../common/StatusIndicator';

@@ -1,86 +1,113 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+import logging
+import os
+from datetime import datetime
+
 from . import models
-from .database import engine, Base, SessionLocal
+from .config import settings
+from .database import engine, Base, SessionLocal, get_db
 from .routes_v2 import router
 from .services.auth_service import AuthService
-from datetime import datetime
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager for startup and shutdown events."""
+    # Startup
+    logger.info("Starting DiscoverIT API...")
+    
+    try:
+        # Create database tables
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created/verified")
+        
+        # Initialize authentication system
+        db = SessionLocal()
+        try:
+            auth_service = AuthService(db)
+            
+            # Initialize default roles
+            auth_service.initialize_default_roles()
+            logger.info("Default roles initialized")
+            
+            # Create default admin user
+            auth_service.create_default_admin()
+            logger.info("Default admin user created")
+            
+            # Initialize default settings
+            _initialize_default_settings(db)
+            logger.info("Default settings initialized")
+            
+        finally:
+            db.close()
+            
+        logger.info("DiscoverIT API startup completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Startup failed: {e}")
+        raise HTTPException(status_code=500, detail="Application startup failed")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down DiscoverIT API...")
+
+def _initialize_default_settings(db: SessionLocal):
+    """Initialize default application settings."""
+    db_settings = db.query(models.Settings).first()
+    if not db_settings:
+        # Default scanner configuration optimized for containerized environments
+        default_scanners = [
+            {
+                "name": "Default Scanner",
+                "url": settings.default_scanner_url,
+                "subnets": settings.default_subnets,
+                "is_active": True,
+                "max_concurrent_scans": 3,
+                "timeout_seconds": settings.scan_timeout
+            }
+        ]
+        new_settings = models.Settings(
+            scanners=default_scanners,
+            default_subnet=settings.default_subnets[0],
+            scan_timeout=settings.scan_timeout,
+            max_concurrent_scans=settings.max_concurrent_scans,
+            auto_discovery_enabled=True,
+            max_discovery_depth=settings.max_discovery_depth
+        )
+        db.add(new_settings)
+        db.commit()
+    elif not db_settings.default_subnet:
+        db_settings.default_subnet = settings.default_subnets[0]
+        if not hasattr(db_settings, 'max_discovery_depth') or db_settings.max_discovery_depth is None:
+            db_settings.max_discovery_depth = settings.max_discovery_depth
+        db.commit()
 
 app = FastAPI(
     title="DiscoverIT API",
     description="Network device discovery and management API",
     version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
-@app.on_event("startup")
-def startup_event():
-    """Initialize the application on startup."""
-    # Create database tables
-    Base.metadata.create_all(bind=engine)
-    
-    # Initialize authentication system
-    db = SessionLocal()
-    try:
-        auth_service = AuthService(db)
-        
-        # Initialize default roles
-        auth_service.initialize_default_roles()
-        
-        # Create default admin user
-        auth_service.create_default_admin()
-        
-        # Initialize default settings
-        settings = db.query(models.Settings).first()
-        if not settings:
-            # Default scanner configuration optimized for containerized environments
-            default_scanners = [
-                {
-                    "name": "Default Scanner",
-                    "url": "http://scanner:8001",
-                    "subnets": [
-                        "172.18.0.0/16",    # Docker Compose default network
-                        "172.17.0.0/16",    # Docker default bridge network
-                        "192.168.0.0/16",   # Common home/office networks
-                        "10.0.0.0/8",       # Common corporate networks
-                        "172.16.0.0/12"     # Private network range
-                    ],
-                    "is_active": True,
-                    "max_concurrent_scans": 3,
-                    "timeout_seconds": 300
-                }
-            ]
-            new_settings = models.Settings(
-                scanners=default_scanners,
-                default_subnet="172.18.0.0/16",
-                scan_timeout=300,
-                max_concurrent_scans=5,
-                auto_discovery_enabled=True,
-                max_discovery_depth=3  # Default depth limit
-            )
-            db.add(new_settings)
-            db.commit()
-        elif not settings.default_subnet:
-            settings.default_subnet = "172.18.0.0/16"
-            if not hasattr(settings, 'max_discovery_depth') or settings.max_discovery_depth is None:
-                settings.max_discovery_depth = 3
-            db.commit()
-    finally:
-        db.close()
-
-@app.on_event("shutdown")
-def shutdown_event():
-    """Cleanup on application shutdown."""
-    pass
-
-# CORS middleware
+# CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://frontend:5173"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Include API routes

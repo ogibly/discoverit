@@ -154,6 +154,25 @@ const ScanResultsModal = ({
     return new Date(timestamp).toLocaleString();
   };
 
+  const formatDuration = (startTime, endTime = null) => {
+    if (!startTime) return '0s';
+    
+    const start = new Date(startTime);
+    const end = endTime ? new Date(endTime) : new Date();
+    const diffMs = end - start;
+    
+    // Handle negative durations (shouldn't happen but just in case)
+    if (diffMs < 0) return '0s';
+    
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffSecs = Math.floor((diffMs % 60000) / 1000);
+    
+    if (diffMins > 0) {
+      return `${diffMins}m ${diffSecs}s`;
+    }
+    return `${diffSecs}s`;
+  };
+
   const handleSelectDevice = (deviceId) => {
     setSelectedDevices(prev => 
       prev.includes(deviceId) 
@@ -237,7 +256,7 @@ const ScanResultsModal = ({
               <div>
                 <span className="text-muted-foreground">Duration:</span>
                 <span className="ml-2">
-                  {formatTimestamp(scanTask.start_time)} - {scanTask.end_time ? formatTimestamp(scanTask.end_time) : 'Running'}
+                  {formatDuration(scanTask.start_time, scanTask.end_time)}
                 </span>
               </div>
               <div>
@@ -325,7 +344,12 @@ const ScanResultsModal = ({
             <div className="text-center py-8 text-muted-foreground">
               <Network className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No devices found</p>
-              <p className="text-sm">Try adjusting your search or filter criteria</p>
+              <p className="text-sm">
+                {cleanResults.length === 0 
+                  ? 'This scan did not discover any devices on the target network'
+                  : 'Try adjusting your search or filter criteria'
+                }
+              </p>
             </div>
           ) : (
             filteredResults.map((device) => (

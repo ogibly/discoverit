@@ -5,6 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { cn } from '../../utils/cn';
+import { formatTimestamp as formatTimestampUtil } from '../../utils/formatters';
 import { 
   X, 
   Download, 
@@ -151,7 +152,7 @@ const ScanResultsModal = ({
   };
 
   const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
+    return formatTimestampUtil(timestamp);
   };
 
   const formatDuration = (startTime, endTime = null) => {

@@ -6,6 +6,7 @@ import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { cn } from '../utils/cn';
+import { formatTimestamp as formatTimestampUtil } from '../utils/formatters';
 
 const AssetDetail = ({ asset }) => {
   const { deleteAsset, updateAsset } = useApp();
@@ -201,7 +202,7 @@ const AssetDetail = ({ asset }) => {
                 <label className="block text-caption font-medium text-foreground mb-1">
                   Created
                 </label>
-                <div className="text-body text-foreground">{new Date(asset.created_at).toLocaleString()}</div>
+                <div className="text-body text-foreground">{formatTimestampUtil(asset.created_at)}</div>
               </div>
             </div>
             

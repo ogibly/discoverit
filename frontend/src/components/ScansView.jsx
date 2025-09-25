@@ -7,7 +7,7 @@ import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
 import { Input } from './ui/Input';
 import { cn } from '../utils/cn';
-import { formatScanProgress, getCappedProgress } from '../utils/formatters';
+import { formatScanProgress, getCappedProgress, formatTimestamp as formatTimestampUtil } from '../utils/formatters';
 import { 
   ArrowLeft,
   Search,
@@ -135,7 +135,7 @@ const ScansView = () => {
   };
 
   const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
+    return formatTimestampUtil(timestamp);
   };
 
   const handleViewResults = (scanId) => {

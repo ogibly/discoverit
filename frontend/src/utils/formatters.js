@@ -40,6 +40,54 @@ export const formatDateTime = (date, options = {}) => {
   }
 };
 
+// Timezone-aware timestamp formatting
+export const formatTimestamp = (timestamp, options = {}) => {
+  if (!timestamp) return '-';
+  
+  const defaultOptions = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+    ...options
+  };
+  
+  try {
+    let date;
+    
+    // Handle different timestamp formats from the backend
+    if (typeof timestamp === 'string') {
+      // If it's an ISO string without timezone info, assume it's UTC
+      if (!timestamp.includes('Z') && !timestamp.includes('+') && !timestamp.includes('-', 10)) {
+        // Add 'Z' to indicate UTC
+        date = new Date(timestamp + 'Z');
+      } else {
+        // Already has timezone info
+        date = new Date(timestamp);
+      }
+    } else {
+      // Assume it's already a Date object or timestamp
+      date = new Date(timestamp);
+    }
+    
+    // Validate the date
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid timestamp:', timestamp);
+      return '-';
+    }
+    
+    // Format in user's local timezone
+    return date.toLocaleString(undefined, defaultOptions);
+  } catch (error) {
+    console.warn('Error formatting timestamp:', timestamp, error);
+    return '-';
+  }
+};
+
 // Relative time formatting
 export const formatRelativeTime = (date) => {
   if (!date) return '-';

@@ -9,6 +9,7 @@ import { Modal } from './ui/Modal';
 import { Progress } from './ui/Progress';
 import { HelpIcon, CollapsibleGuidance } from './ui';
 import { cn } from '../utils/cn';
+import { formatTimestamp as formatTimestampUtil } from '../utils/formatters';
 import { formatScanProgress, getCappedProgress } from '../utils/formatters';
 import PageHeader from './PageHeader';
 import StandardList from './common/StandardList';
@@ -260,7 +261,7 @@ const DevicesInterface = () => {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Last Seen:</span>
               <span className="text-foreground text-xs">
-                {new Date(device.last_seen).toLocaleString()}
+                {formatTimestampUtil(device.last_seen)}
               </span>
             </div>
           </div>
@@ -325,7 +326,7 @@ const DevicesInterface = () => {
         </td>
         <td className="px-6 py-4">
           <span className="text-sm text-muted-foreground">
-            {new Date(device.last_seen).toLocaleString()}
+            {formatTimestampUtil(device.last_seen)}
           </span>
         </td>
         <td className="px-6 py-4">
@@ -526,7 +527,7 @@ const DevicesInterface = () => {
                   Last Seen
                 </label>
                 <p className="text-sm text-foreground bg-muted p-3 rounded-md">
-                  {new Date(selectedDevice.last_seen).toLocaleString()}
+                  {formatTimestampUtil(selectedDevice.last_seen)}
                 </p>
               </div>
               <div>

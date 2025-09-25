@@ -410,13 +410,17 @@ const CredentialsManager = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <PageHeader
+        title="Credentials"
+        subtitle="Manage authentication credentials for your assets"
+      />
+      
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <StandardList
           items={credentials}
           loading={loading.credentials}
-          title="Credentials"
-          subtitle="Manage authentication credentials for your assets"
+          showHeader={false}
           itemName="credential"
           itemNamePlural="credentials"
           searchPlaceholder="Search credentials by name or description..."
@@ -441,6 +445,28 @@ const CredentialsManager = () => {
           statistics={statistics}
           renderItemCard={renderCredentialCard}
           renderItemRow={renderCredentialRow}
+          tableHeaders={
+            <>
+              <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+                Credential
+              </th>
+              <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+                Type
+              </th>
+              <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+                Domain
+              </th>
+              <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+                Created
+              </th>
+              <th className="px-6 py-3 text-left text-caption font-medium text-muted-foreground">
+                Actions
+              </th>
+            </>
+          }
           emptyStateIcon="🔑"
           emptyStateTitle="No credentials found"
           emptyStateDescription="Create your first credential to authenticate with your assets."

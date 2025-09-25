@@ -13,6 +13,7 @@ const StandardList = ({
   // Configuration
   title = "Items",
   subtitle = "Manage your items",
+  showHeader = true,
   itemName = "item",
   itemNamePlural = "items",
   
@@ -161,26 +162,28 @@ const StandardList = ({
   return (
     <div className={cn("space-y-6", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-heading text-foreground">{title}</h2>
-          <p className="text-caption text-muted-foreground mt-1">
-            {subtitle}
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          {statistics.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className={cn("text-2xl font-bold", stat.color || "text-primary")}>
-                {stat.value}
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-heading text-foreground">{title}</h2>
+            <p className="text-caption text-muted-foreground mt-1">
+              {subtitle}
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            {statistics.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className={cn("text-2xl font-bold", stat.color || "text-primary")}>
+                  {stat.value}
+                </div>
+                <div className="text-caption text-muted-foreground">
+                  {stat.label}
+                </div>
               </div>
-              <div className="text-caption text-muted-foreground">
-                {stat.label}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search and Filter Controls */}
       <Card className="surface-elevated">

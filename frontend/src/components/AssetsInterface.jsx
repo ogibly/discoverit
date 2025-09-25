@@ -655,7 +655,7 @@ const AssetsInterface = () => {
 
   // Filter and sort options for assets
   const assetFilterOptions = [
-    { value: "all", label: "All Assets", icon: "ðŸ“±" },
+    { value: "all", label: "All Assets", icon: "📱" },
     { value: "active", label: "Active", icon: "âœ…" },
     { value: "inactive", label: "Inactive", icon: "âŒ" },
   ];
@@ -817,6 +817,7 @@ const AssetsInterface = () => {
               <StandardList
                 items={filteredAssets}
                 loading={loading.assets}
+                showHeader={false}
                 itemName="asset"
                 itemNamePlural="assets"
                 searchPlaceholder="Search assets by name, IP, description, manufacturer, model, or labels..."
@@ -851,6 +852,7 @@ const AssetsInterface = () => {
               <StandardList
                 items={filteredGroups}
                 loading={loading.assetGroups}
+                showHeader={false}
                 itemName="group"
                 itemNamePlural="groups"
                 searchPlaceholder="Search asset groups by name, description, or labels..."

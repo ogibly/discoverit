@@ -234,35 +234,40 @@ const StandardList = ({
               <Button onClick={onCreateClick} className="ml-2">
                 {createButtonText}
               </Button>
+              
+              {/* View Toggle - Integrated into toolbar */}
+              <div className="flex items-center space-x-2 border-l border-border pl-3">
+                <span className="text-sm font-medium text-foreground">View:</span>
+                <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewModeChange('grid')}
+                    className={cn(
+                      "text-xs font-medium transition-all duration-200 h-8 px-3",
+                      viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    ⊞
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewModeChange('table')}
+                    className={cn(
+                      "text-xs font-medium transition-all duration-200 h-8 px-3",
+                      viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    ☰
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Statistics Cards */}
-      {statistics.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {statistics.map((stat, index) => (
-            <Card key={index} className="surface-elevated">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-caption text-muted-foreground">{stat.label}</p>
-                    <p className={cn("text-2xl font-bold", stat.color || "text-primary")}>
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", stat.bgColor || "bg-primary/20")}>
-                    <span className={cn("text-lg", stat.iconColor || "text-primary")}>
-                      {stat.icon}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
 
       {/* Bulk Actions */}
       {selectedItems.length > 0 && (
@@ -311,6 +316,7 @@ const StandardList = ({
       )}
 
       {/* Content */}
+      <div className="mt-4">
       {loading ? (
         <Card className="surface-elevated">
           <CardContent className="p-12 text-center">
@@ -330,39 +336,6 @@ const StandardList = ({
         </Card>
       ) : (
         <>
-          {/* View Toggle */}
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-foreground">View:</span>
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onViewModeChange('grid')}
-                  className={cn(
-                    "text-xs font-medium transition-all duration-200 h-8 px-3",
-                    viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ⊞
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onViewModeChange('table')}
-                  className={cn(
-                    "text-xs font-medium transition-all duration-200 h-8 px-3",
-                    viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  ☰
-                </Button>
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredAndSortedItems.length} {filteredAndSortedItems.length === 1 ? itemName : itemNamePlural}
-            </div>
-          </div>
 
           {/* Grid View */}
           {viewMode === 'grid' ? (
@@ -464,6 +437,7 @@ const StandardList = ({
           )}
         </>
       )}
+      </div>
     </div>
   );
 };

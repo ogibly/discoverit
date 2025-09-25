@@ -115,6 +115,8 @@ export const LiveProgressTracker = ({ activeScanTask, onComplete, onCancel }) =>
 
 // Results View Component
 export const ResultsView = ({ discoveredDevices, onNewScan, onViewDevice }) => {
+  const [viewMode, setViewMode] = useState('grid');
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -122,38 +124,113 @@ export const ResultsView = ({ discoveredDevices, onNewScan, onViewDevice }) => {
         <p className="text-muted-foreground">Work with your discovered devices</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {discoveredDevices.slice(0, 6).map((device) => (
-          <Card key={device.id} className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-foreground">
-                  {device.hostname || device.primary_ip}
-                </h4>
-                <Badge variant={device.is_device ? "default" : "secondary"}>
-                  {device.is_device ? "Device" : "IP"}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                {device.primary_ip}
-              </p>
-              {device.os_name && (
-                <p className="text-xs text-muted-foreground">
-                  OS: {device.os_name}
-                </p>
+      {/* Toolbar with integrated view toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-foreground">View:</span>
+          <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                "text-xs font-medium transition-all duration-200 h-8 px-3",
+                viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="mt-2 w-full"
-                onClick={() => onViewDevice(device)}
-              >
-                View Details
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+            >
+              ⊞
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className={cn(
+                "text-xs font-medium transition-all duration-200 h-8 px-3",
+                viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              ☰
+            </Button>
+          </div>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {discoveredDevices.length} device{discoveredDevices.length !== 1 ? 's' : ''}
+        </div>
       </div>
+
+      {/* Device List */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {discoveredDevices.slice(0, 6).map((device) => (
+            <Card key={device.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-foreground">
+                    {device.hostname || device.primary_ip}
+                  </h4>
+                  <Badge variant={device.is_device ? "default" : "secondary"}>
+                    {device.is_device ? "Device" : "IP"}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {device.primary_ip}
+                </p>
+                {device.os_name && (
+                  <p className="text-xs text-muted-foreground">
+                    OS: {device.os_name}
+                  </p>
+                )}
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="mt-2 w-full"
+                  onClick={() => onViewDevice(device)}
+                >
+                  View Details
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {discoveredDevices.slice(0, 10).map((device) => (
+            <Card key={device.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div>
+                      <h4 className="font-semibold text-foreground">
+                        {device.hostname || device.primary_ip}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {device.primary_ip}
+                      </p>
+                    </div>
+                    {device.os_name && (
+                      <div className="text-sm text-muted-foreground">
+                        OS: {device.os_name}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={device.is_device ? "default" : "secondary"}>
+                      {device.is_device ? "Device" : "IP"}
+                    </Badge>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => onViewDevice(device)}
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="text-center">
         <Button onClick={onNewScan} size="lg" className="px-8">

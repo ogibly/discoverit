@@ -115,7 +115,7 @@ const ScansTracker = ({
 
   if (isCollapsed) {
     return (
-      <div className={cn("fixed bottom-0 left-0 right-0 z-30 transition-all duration-300", className)}>
+      <div className={cn("fixed bottom-0 left-64 right-0 z-30 transition-all duration-300", className)}>
         <Card className="mx-4 mb-4 shadow-lg border border-border/50 bg-background/95 backdrop-blur-sm">
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
@@ -165,7 +165,7 @@ const ScansTracker = ({
   }
 
   return (
-    <div className={cn("fixed bottom-0 left-0 right-0 z-30 transition-all duration-300", className)}>
+    <div className={cn("fixed bottom-0 left-64 right-0 z-30 transition-all duration-300", className)}>
       <Card className="mx-4 mb-4 shadow-lg border border-border/50 bg-background/95 backdrop-blur-sm max-h-80">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">

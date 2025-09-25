@@ -394,6 +394,11 @@ const DevicesInterface = () => {
           </span>
         }
         subtitle="Discover, explore, and manage network devices"
+        metrics={deviceStatistics.map(stat => ({
+          value: stat.value,
+          label: stat.label,
+          color: stat.color.replace('text-', '')
+        }))}
       />
 
       {/* Main Content */}
@@ -451,7 +456,6 @@ const DevicesInterface = () => {
             onCreateClick={() => {/* No create action for devices */}}
             createButtonText=""
             onBulkDelete={() => {/* No bulk delete for devices */}}
-            statistics={deviceStatistics}
             renderItemCard={renderDeviceCard}
             renderItemRow={renderDeviceRow}
             tableHeaders={deviceTableHeaders}

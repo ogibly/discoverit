@@ -596,13 +596,19 @@ const AdminSettings = () => {
 
   const createApiKey = async () => {
     try {
+      // Prepare the form data, converting empty string to null for expires_at
+      const formData = {
+        ...apiKeyForm,
+        expires_at: apiKeyForm.expires_at === '' ? null : apiKeyForm.expires_at
+      };
+      
       const response = await fetch('/api/v2/api-keys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(apiKeyForm)
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) {

@@ -32,7 +32,6 @@ class User(Base):
     # Relationships
     role = relationship("Role", back_populates="users")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
-    created_assets = relationship("Asset", back_populates="creator")
     created_labels = relationship("Label", back_populates="creator")
     created_credentials = relationship("Credential", back_populates="creator")
     created_ldap_configs = relationship("LDAPConfig", back_populates="creator")
@@ -99,13 +98,11 @@ class Asset(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     custom_fields = Column(JSON, nullable=True)
     scan_data = Column(JSON, nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
-    creator = relationship("User", back_populates="created_assets")
     scans = relationship("Scan", back_populates="asset", cascade="all, delete-orphan")
     labels = relationship("Label", secondary="asset_label_association", back_populates="assets")
-    asset_groups = relationship("AssetGroup", secondary="asset_group_association", back_populates="assets")
+    groups = relationship("AssetGroup", secondary="asset_group_association", back_populates="assets")
     ip_addresses = relationship("IPAddress", back_populates="asset", cascade="all, delete-orphan")
 
 
@@ -137,7 +134,7 @@ class AssetGroup(Base):
     custom_fields = Column(JSON, nullable=True)
     
     # Relationships
-    assets = relationship("Asset", secondary="asset_group_association", back_populates="asset_groups")
+    assets = relationship("Asset", secondary="asset_group_association", back_populates="groups")
     labels = relationship("Label", secondary="asset_group_label_association", back_populates="asset_groups")
 
 

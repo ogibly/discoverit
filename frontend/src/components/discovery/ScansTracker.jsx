@@ -36,7 +36,6 @@ const ScansTracker = ({
   const navigate = useNavigate();
   const [expandedScan, setExpandedScan] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [recentScansCount, setRecentScansCount] = useState(3);
   const [currentTime, setCurrentTime] = useState(new Date());
   const intervalRef = useRef(null);
 
@@ -143,19 +142,13 @@ const ScansTracker = ({
     }
   };
 
-  const recentScans = scanTasks?.slice(0, recentScansCount) || [];
+  const recentScans = scanTasks?.slice(0, 3) || [];
   const hasActiveScan = activeScanTask && activeScanTask.status === 'running';
 
   const handleViewAllScans = () => {
     navigate('/scans');
   };
 
-  const handleToggleRecentScansCount = () => {
-    const counts = [1, 3, 5, 10];
-    const currentIndex = counts.indexOf(recentScansCount);
-    const nextIndex = (currentIndex + 1) % counts.length;
-    setRecentScansCount(counts[nextIndex]);
-  };
 
   if (isCollapsed) {
     return (
@@ -227,14 +220,6 @@ const ScansTracker = ({
               </Badge>
             </CardTitle>
             <div className="flex items-center space-x-2">
-              <Badge 
-                variant="outline" 
-                className="text-xs cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={handleToggleRecentScansCount}
-                title="Click to change number of recent scans shown"
-              >
-                {recentScansCount}
-              </Badge>
               <Button
                 variant="ghost"
                 size="sm"

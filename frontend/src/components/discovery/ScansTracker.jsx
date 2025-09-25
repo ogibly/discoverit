@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
 import { cn } from '../../utils/cn';
 import { formatScanProgress, getCappedProgress } from '../../utils/formatters';
 import ScanProgressIndicator from './ScanProgressIndicator';
@@ -20,7 +22,9 @@ import {
   ChevronUp,
   Activity,
   Network,
-  Zap
+  Zap,
+  Settings,
+  ExternalLink
 } from 'lucide-react';
 
 const ScansTracker = ({ 
@@ -31,8 +35,10 @@ const ScansTracker = ({
   onDownloadResults,
   className = "" 
 }) => {
+  const navigate = useNavigate();
   const [expandedScan, setExpandedScan] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [recentScansCount, setRecentScansCount] = useState(3);
 
   // Auto-expand active scan
   useEffect(() => {
@@ -110,8 +116,12 @@ const ScansTracker = ({
     }
   };
 
-  const recentScans = scanTasks?.slice(0, 3) || [];
+  const recentScans = scanTasks?.slice(0, recentScansCount) || [];
   const hasActiveScan = activeScanTask && activeScanTask.status === 'running';
+
+  const handleViewAllScans = () => {
+    navigate('/scans');
+  };
 
   if (isCollapsed) {
     return (
@@ -172,18 +182,40 @@ const ScansTracker = ({
             <CardTitle className="text-base flex items-center space-x-2">
               <Activity className="w-4 h-4 text-primary" />
               <span>Scan Tracker</span>
-              <Badge variant="outline" className="text-xs ml-2">
+              <Badge 
+                variant="outline" 
+                className="text-xs ml-2 cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={handleViewAllScans}
+                title="Click to view all scans"
+              >
                 {scanTasks?.length || 0} scans
+                <ExternalLink className="w-3 h-3 ml-1" />
               </Badge>
             </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCollapsed(true)}
-              className="h-7 w-7 p-0 hover:bg-accent/50"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
+                <Settings className="w-3 h-3 text-muted-foreground" />
+                <Select value={recentScansCount.toString()} onValueChange={(value) => setRecentScansCount(parseInt(value))}>
+                  <SelectTrigger className="h-7 w-16 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCollapsed(true)}
+                className="h-7 w-7 p-0 hover:bg-accent/50"
+              >
+                <ChevronDown className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
 

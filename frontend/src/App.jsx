@@ -18,6 +18,7 @@ import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
 import AdminSettings from './components/AdminSettings';
+import ScansView from './components/ScansView';
 import { cn } from './utils/cn';
 
 // Sophisticated Navigation Component
@@ -350,6 +351,11 @@ const AppContent = () => {
             </ProtectedRoute>
           } />
           <Route path="/workflow" element={<WorkflowGuide />} />
+          <Route path="/scans" element={
+            <ProtectedRoute requiredPermission="assets:read">
+              <ScansView />
+            </ProtectedRoute>
+          } />
         </Routes>
       </div>
     </div>

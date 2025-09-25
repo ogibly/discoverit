@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -28,77 +29,35 @@ import {
 
 const ScansView = () => {
   const navigate = useNavigate();
-  const [scans, setScans] = useState([]);
+  const { scanTasks, fetchScanTasks, cancelScanTask } = useApp();
   const [filteredScans, setFilteredScans] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading scans data
     const loadScans = async () => {
       setLoading(true);
-      // In a real app, this would fetch from an API
-      setTimeout(() => {
-        const mockScans = [
-          {
-            id: 1,
-            name: 'Discovery Scan - 172.16.0.0/30',
-            target: '172.16.0.0/30',
-            scan_type: 'comprehensive',
-            status: 'completed',
-            start_time: '2025-01-25T06:13:20Z',
-            end_time: '2025-01-25T06:15:45Z',
-            progress: 100,
-            discovered_devices: 4,
-            total_ips: 4,
-            completed_ips: 4
-          },
-          {
-            id: 2,
-            name: 'Quick Network Scan',
-            target: '192.168.1.0/24',
-            scan_type: 'quick',
-            status: 'running',
-            start_time: '2025-01-25T06:20:00Z',
-            end_time: null,
-            progress: 65,
-            discovered_devices: 12,
-            total_ips: 254,
-            completed_ips: 165
-          },
-          {
-            id: 3,
-            name: 'Lab Environment Scan',
-            target: '10.0.0.0/16',
-            scan_type: 'comprehensive',
-            status: 'failed',
-            start_time: '2025-01-25T05:45:00Z',
-            end_time: '2025-01-25T06:00:00Z',
-            progress: 25,
-            discovered_devices: 0,
-            total_ips: 65534,
-            completed_ips: 16383,
-            error_message: 'Network timeout'
-          }
-        ];
-        setScans(mockScans);
-        setFilteredScans(mockScans);
+      try {
+        await fetchScanTasks();
         setLoading(false);
-      }, 1000);
+      } catch (error) {
+        console.error('Failed to load scans:', error);
+        setLoading(false);
+      }
     };
 
     loadScans();
-  }, []);
+  }, [fetchScanTasks]);
 
   useEffect(() => {
-    let filtered = scans;
+    let filtered = scanTasks || [];
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(scan =>
-        scan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        scan.target.toLowerCase().includes(searchTerm.toLowerCase())
+        (scan.name && scan.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (scan.target && scan.target.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -108,7 +67,7 @@ const ScansView = () => {
     }
 
     setFilteredScans(filtered);
-  }, [scans, searchTerm, statusFilter]);
+  }, [scanTasks, searchTerm, statusFilter]);
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -181,17 +140,39 @@ const ScansView = () => {
 
   const handleViewResults = (scanId) => {
     // Navigate to scan results view
-    console.log('View results for scan:', scanId);
+    navigate(`/discovery?scanId=${scanId}`);
   };
 
-  const handleDownloadResults = (scanId) => {
-    // Download scan results
-    console.log('Download results for scan:', scanId);
+  const handleDownloadResults = async (scanId) => {
+    try {
+      // In a real app, this would trigger a download
+      const response = await fetch(`/api/v2/scans/${scanId}/download`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scan-${scanId}-results.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        console.error('Failed to download scan results');
+      }
+    } catch (error) {
+      console.error('Error downloading scan results:', error);
+    }
   };
 
-  const handleCancelScan = (scanId) => {
-    // Cancel running scan
-    console.log('Cancel scan:', scanId);
+  const handleCancelScan = async (scanId) => {
+    try {
+      await cancelScanTask(scanId);
+      // Refresh the scans list
+      await fetchScanTasks();
+    } catch (error) {
+      console.error('Failed to cancel scan:', error);
+    }
   };
 
   if (loading) {
@@ -231,7 +212,7 @@ const ScansView = () => {
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="text-sm">
-              {filteredScans.length} of {scans.length} scans
+              {filteredScans.length} of {scanTasks?.length || 0} scans
             </Badge>
           </div>
         </div>
@@ -292,7 +273,7 @@ const ScansView = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-3 mb-2">
                           <h3 className="text-lg font-semibold text-foreground truncate">
-                            {scan.name}
+                            {scan.name || `Scan ${scan.id}`}
                           </h3>
                           <Badge className={cn("text-xs", getStatusColor(scan.status))}>
                             {scan.status}
@@ -328,7 +309,7 @@ const ScansView = () => {
                             <HardDrive className="w-4 h-4 text-muted-foreground" />
                             <div>
                               <p className="text-muted-foreground">Discovered</p>
-                              <p className="font-medium">{scan.discovered_devices} devices</p>
+                              <p className="font-medium">{scan.discovered_devices || 0} devices</p>
                             </div>
                           </div>
                         </div>
@@ -341,7 +322,7 @@ const ScansView = () => {
                             </div>
                             <Progress value={getCappedProgress(scan.progress)} className="h-2" />
                             <p className="text-xs text-muted-foreground mt-1">
-                              {scan.completed_ips} of {scan.total_ips} IPs scanned
+                              {scan.completed_ips || 0} of {scan.total_ips || 0} IPs scanned
                             </p>
                           </div>
                         )}

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
 import { cn } from '../../utils/cn';
 import { formatScanProgress, getCappedProgress } from '../../utils/formatters';
 import ScanProgressIndicator from './ScanProgressIndicator';
@@ -23,7 +22,6 @@ import {
   Activity,
   Network,
   Zap,
-  Settings,
   ExternalLink
 } from 'lucide-react';
 
@@ -123,6 +121,13 @@ const ScansTracker = ({
     navigate('/scans');
   };
 
+  const handleToggleRecentScansCount = () => {
+    const counts = [1, 3, 5, 10];
+    const currentIndex = counts.indexOf(recentScansCount);
+    const nextIndex = (currentIndex + 1) % counts.length;
+    setRecentScansCount(counts[nextIndex]);
+  };
+
   if (isCollapsed) {
     return (
       <div className={cn("fixed bottom-0 left-64 right-0 z-30 transition-all duration-300", className)}>
@@ -193,20 +198,14 @@ const ScansTracker = ({
               </Badge>
             </CardTitle>
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
-                <Settings className="w-3 h-3 text-muted-foreground" />
-                <Select value={recentScansCount.toString()} onValueChange={(value) => setRecentScansCount(parseInt(value))}>
-                  <SelectTrigger className="h-7 w-16 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1</SelectItem>
-                    <SelectItem value="3">3</SelectItem>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Badge 
+                variant="outline" 
+                className="text-xs cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={handleToggleRecentScansCount}
+                title="Click to change number of recent scans shown"
+              >
+                {recentScansCount}
+              </Badge>
               <Button
                 variant="ghost"
                 size="sm"

@@ -82,6 +82,15 @@ const AdminSettings = () => {
     timeout_seconds: 300
   });
 
+  // Satellite scanner management state
+  const [satelliteScanners, setSatelliteScanners] = useState([]);
+  const [scannerHealth, setScannerHealth] = useState({});
+  const [scannerNetworkInfo, setScannerNetworkInfo] = useState({});
+  const [scannerLogs, setScannerLogs] = useState({});
+  const [showTroubleshootModal, setShowTroubleshootModal] = useState(false);
+  const [selectedScannerForTroubleshoot, setSelectedScannerForTroubleshoot] = useState(null);
+  const [troubleshootResults, setTroubleshootResults] = useState({});
+
   // LDAP configuration state
   const [ldapConfigs, setLdapConfigs] = useState([]);
   const [showLDAPModal, setShowLDAPModal] = useState(false);
@@ -130,8 +139,24 @@ const AdminSettings = () => {
       fetchScannerConfigsAPI();
       loadLDAPConfigs();
       loadIPRanges();
+      fetchSatelliteScanners();
     }
   }, [hasPermission]);
+
+  // Auto-refresh satellite scanner data every 30 seconds
+  useEffect(() => {
+    if (hasPermission('admin') && activeTab === 'scanners') {
+      const interval = setInterval(() => {
+        fetchSatelliteScanners();
+        // Check health for all scanners
+        satelliteScanners.forEach(scanner => {
+          checkScannerHealth(scanner.id);
+        });
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [hasPermission, activeTab, satelliteScanners]);
 
   // Load LDAP configurations
   const loadLDAPConfigs = async () => {
@@ -404,6 +429,138 @@ const AdminSettings = () => {
         setTimeout(() => setStatusMessage(null), 5000);
       }
     }
+  };
+
+  // Satellite scanner management functions
+  const fetchSatelliteScanners = async () => {
+    try {
+      const response = await fetch('/api/v2/scanners', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const scanners = await response.json();
+        setSatelliteScanners(scanners);
+      }
+    } catch (error) {
+      console.error('Failed to fetch satellite scanners:', error);
+    }
+  };
+
+  const checkScannerHealth = async (scannerId) => {
+    try {
+      const response = await fetch(`/api/v2/scanners/${scannerId}/health`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const health = await response.json();
+        setScannerHealth(prev => ({ ...prev, [scannerId]: health }));
+        return health;
+      }
+    } catch (error) {
+      console.error('Failed to check scanner health:', error);
+      setScannerHealth(prev => ({ 
+        ...prev, 
+        [scannerId]: { status: 'error', message: 'Health check failed' }
+      }));
+    }
+  };
+
+  const getScannerNetworkInfo = async (scannerId) => {
+    try {
+      const scanner = satelliteScanners.find(s => s.id === scannerId);
+      if (!scanner) return;
+
+      const response = await fetch(`${scanner.url}/network-info`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const networkInfo = await response.json();
+        setScannerNetworkInfo(prev => ({ ...prev, [scannerId]: networkInfo }));
+        return networkInfo;
+      }
+    } catch (error) {
+      console.error('Failed to get scanner network info:', error);
+      setScannerNetworkInfo(prev => ({ 
+        ...prev, 
+        [scannerId]: { error: 'Failed to fetch network information' }
+      }));
+    }
+  };
+
+  const refreshScannerNetworks = async (scannerId) => {
+    try {
+      const scanner = satelliteScanners.find(s => s.id === scannerId);
+      if (!scanner) return;
+
+      const response = await fetch(`${scanner.url}/refresh-networks`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setStatusMessage(`Network refresh ${result.status}: ${result.message}`);
+        setTimeout(() => setStatusMessage(null), 3000);
+        // Refresh network info
+        getScannerNetworkInfo(scannerId);
+      }
+    } catch (error) {
+      console.error('Failed to refresh scanner networks:', error);
+      setStatusMessage('Failed to refresh scanner networks');
+      setTimeout(() => setStatusMessage(null), 3000);
+    }
+  };
+
+  const getScannerLogs = async (scannerId, lines = 100) => {
+    try {
+      const scanner = satelliteScanners.find(s => s.id === scannerId);
+      if (!scanner) return;
+
+      const response = await fetch(`${scanner.url}/logs?lines=${lines}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const logs = await response.json();
+        setScannerLogs(prev => ({ ...prev, [scannerId]: logs }));
+        return logs;
+      }
+    } catch (error) {
+      console.error('Failed to get scanner logs:', error);
+      setScannerLogs(prev => ({ 
+        ...prev, 
+        [scannerId]: { error: 'Failed to fetch logs' }
+      }));
+    }
+  };
+
+  const runTroubleshootDiagnostics = async (scannerId) => {
+    const scanner = satelliteScanners.find(s => s.id === scannerId);
+    if (!scanner) return;
+
+    setTroubleshootResults(prev => ({ ...prev, [scannerId]: { status: 'running' } }));
+
+    const diagnostics = {
+      health: await checkScannerHealth(scannerId),
+      networkInfo: await getScannerNetworkInfo(scannerId),
+      logs: await getScannerLogs(scannerId, 50)
+    };
+
+    setTroubleshootResults(prev => ({ ...prev, [scannerId]: { status: 'completed', ...diagnostics } }));
+  };
+
+  const openTroubleshootModal = (scanner) => {
+    setSelectedScannerForTroubleshoot(scanner);
+    setShowTroubleshootModal(true);
+    runTroubleshootDiagnostics(scanner.id);
   };
 
   const resetScannerForm = () => {
@@ -1291,37 +1448,122 @@ const AdminSettings = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {scannerConfigs.map((config) => (
-                      <div key={config.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-subheading text-foreground">{config.name}</h3>
-                            {config.is_default && (
-                              <Badge className="bg-primary text-primary-foreground text-xs">
-                                Default
-                              </Badge>
-                            )}
+                    {scannerConfigs.map((config) => {
+                      const health = scannerHealth[config.id];
+                      const networkInfo = scannerNetworkInfo[config.id];
+                      const isHealthy = health?.status === 'healthy';
+                      
+                      return (
+                        <div key={config.id} className="p-4 bg-muted/30 rounded-md border border-border">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h3 className="text-subheading text-foreground">{config.name}</h3>
+                                {config.is_default && (
+                                  <Badge className="bg-primary text-primary-foreground text-xs">
+                                    Default
+                                  </Badge>
+                                )}
+                                <Badge className={isHealthy ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
+                                  {isHealthy ? '🟢 Online' : '🔴 Offline'}
+                                </Badge>
+                              </div>
+                              <p className="text-body text-muted-foreground mb-2">{config.url}</p>
+                              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                <span>Subnets: {config.subnets?.length || 0}</span>
+                                {networkInfo?.subnets && (
+                                  <span>Detected: {networkInfo.subnets.length}</span>
+                                )}
+                                {health?.response_time && (
+                                  <span>Response: {Math.round(health.response_time * 1000)}ms</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => checkScannerHealth(config.id)}
+                                disabled={!config.is_active}
+                              >
+                                🔍 Health
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => getScannerNetworkInfo(config.id)}
+                                disabled={!config.is_active}
+                              >
+                                🌐 Networks
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => openTroubleshootModal(config)}
+                                disabled={!config.is_active}
+                              >
+                                🔧 Troubleshoot
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleEditScanner(config)}>
+                                Edit
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(config.id)}>
+                                Delete
+                              </Button>
+                            </div>
                           </div>
-                          <p className="text-body text-muted-foreground mb-2">{config.url}</p>
-                          <div className="flex items-center space-x-2">
-                            <Badge className={config.is_active ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
-                              {config.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              Subnets: {config.subnets?.length || 0}
-                            </span>
-                          </div>
+                          
+                          {/* Health Status */}
+                          {health && (
+                            <div className="mb-3 p-2 bg-muted/50 rounded text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">Health Status:</span>
+                                <span className={isHealthy ? 'text-success' : 'text-error'}>
+                                  {health.message}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Network Information */}
+                          {networkInfo && !networkInfo.error && (
+                            <div className="mb-3 p-2 bg-muted/50 rounded text-xs">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-medium">Network Info:</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => refreshScannerNetworks(config.id)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  🔄 Refresh
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <span className="text-muted-foreground">Subnets:</span>
+                                  <div className="text-xs">
+                                    {networkInfo.subnets?.map((subnet, idx) => (
+                                      <div key={idx} className="truncate">{subnet}</div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Interfaces:</span>
+                                  <div className="text-xs">
+                                    {networkInfo.interfaces?.map((iface, idx) => (
+                                      <div key={idx} className="truncate">
+                                        {iface.name} {iface.is_up ? '🟢' : '🔴'}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEditScanner(config)}>
-                            Edit
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(config.id)}>
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -1797,6 +2039,197 @@ const AdminSettings = () => {
             {editingLDAP ? 'Update' : 'Create'}
           </Button>
         </div>
+      </Modal>
+
+      {/* Troubleshooting Modal */}
+      <Modal
+        isOpen={showTroubleshootModal}
+        onClose={() => setShowTroubleshootModal(false)}
+        title={`Troubleshoot Scanner: ${selectedScannerForTroubleshoot?.name}`}
+        size="large"
+      >
+        {selectedScannerForTroubleshoot && (
+          <div className="space-y-6">
+            {/* Scanner Info */}
+            <div className="p-4 bg-muted/30 rounded-md">
+              <h3 className="text-subheading text-foreground mb-2">Scanner Information</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Name:</span>
+                  <div className="font-medium">{selectedScannerForTroubleshoot.name}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">URL:</span>
+                  <div className="font-medium">{selectedScannerForTroubleshoot.url}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Status:</span>
+                  <div className="font-medium">
+                    <Badge className={selectedScannerForTroubleshoot.is_active ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
+                      {selectedScannerForTroubleshoot.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Subnets:</span>
+                  <div className="font-medium">{selectedScannerForTroubleshoot.subnets?.length || 0}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Diagnostic Results */}
+            {troubleshootResults[selectedScannerForTroubleshoot.id] && (
+              <div className="space-y-4">
+                {troubleshootResults[selectedScannerForTroubleshoot.id].status === 'running' && (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Running diagnostics...</p>
+                  </div>
+                )}
+
+                {troubleshootResults[selectedScannerForTroubleshoot.id].status === 'completed' && (
+                  <>
+                    {/* Health Check Results */}
+                    <div className="p-4 bg-muted/30 rounded-md">
+                      <h3 className="text-subheading text-foreground mb-3 flex items-center">
+                        🔍 Health Check Results
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => checkScannerHealth(selectedScannerForTroubleshoot.id)}
+                          className="ml-2 h-6 px-2 text-xs"
+                        >
+                          🔄 Refresh
+                        </Button>
+                      </h3>
+                      {troubleshootResults[selectedScannerForTroubleshoot.id].health && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Status:</span>
+                            <Badge className={troubleshootResults[selectedScannerForTroubleshoot.id].health.status === 'healthy' ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
+                              {troubleshootResults[selectedScannerForTroubleshoot.id].health.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Message:</span>
+                            <span className="text-sm">{troubleshootResults[selectedScannerForTroubleshoot.id].health.message}</span>
+                          </div>
+                          {troubleshootResults[selectedScannerForTroubleshoot.id].health.response_time && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Response Time:</span>
+                              <span className="text-sm">{Math.round(troubleshootResults[selectedScannerForTroubleshoot.id].health.response_time * 1000)}ms</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Network Information */}
+                    <div className="p-4 bg-muted/30 rounded-md">
+                      <h3 className="text-subheading text-foreground mb-3 flex items-center">
+                        🌐 Network Information
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => getScannerNetworkInfo(selectedScannerForTroubleshoot.id)}
+                          className="ml-2 h-6 px-2 text-xs"
+                        >
+                          🔄 Refresh
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => refreshScannerNetworks(selectedScannerForTroubleshoot.id)}
+                          className="ml-1 h-6 px-2 text-xs"
+                        >
+                          🔄 Refresh Networks
+                        </Button>
+                      </h3>
+                      {troubleshootResults[selectedScannerForTroubleshoot.id].networkInfo && (
+                        <div className="space-y-3">
+                          {troubleshootResults[selectedScannerForTroubleshoot.id].networkInfo.error ? (
+                            <div className="text-error text-sm">
+                              Error: {troubleshootResults[selectedScannerForTroubleshoot.id].networkInfo.error}
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <span className="text-sm font-medium">Detected Subnets:</span>
+                                <div className="mt-1 space-y-1">
+                                  {troubleshootResults[selectedScannerForTroubleshoot.id].networkInfo.subnets?.map((subnet, idx) => (
+                                    <div key={idx} className="text-sm bg-muted/50 px-2 py-1 rounded">{subnet}</div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium">Network Interfaces:</span>
+                                <div className="mt-1 space-y-1">
+                                  {troubleshootResults[selectedScannerForTroubleshoot.id].networkInfo.interfaces?.map((iface, idx) => (
+                                    <div key={idx} className="text-sm bg-muted/50 px-2 py-1 rounded flex items-center justify-between">
+                                      <span>{iface.name}</span>
+                                      <div className="flex items-center space-x-2">
+                                        <span className={iface.is_up ? 'text-success' : 'text-error'}>
+                                          {iface.is_up ? '🟢 Up' : '🔴 Down'}
+                                        </span>
+                                        {iface.speed > 0 && (
+                                          <span className="text-xs text-muted-foreground">{iface.speed}Mbps</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recent Logs */}
+                    <div className="p-4 bg-muted/30 rounded-md">
+                      <h3 className="text-subheading text-foreground mb-3 flex items-center">
+                        📋 Recent Logs
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => getScannerLogs(selectedScannerForTroubleshoot.id, 100)}
+                          className="ml-2 h-6 px-2 text-xs"
+                        >
+                          🔄 Refresh
+                        </Button>
+                      </h3>
+                      {troubleshootResults[selectedScannerForTroubleshoot.id].logs && (
+                        <div className="space-y-2">
+                          {troubleshootResults[selectedScannerForTroubleshoot.id].logs.error ? (
+                            <div className="text-error text-sm">
+                              Error: {troubleshootResults[selectedScannerForTroubleshoot.id].logs.error}
+                            </div>
+                          ) : (
+                            <div className="bg-black/50 text-green-400 p-3 rounded text-xs font-mono max-h-64 overflow-y-auto">
+                              {troubleshootResults[selectedScannerForTroubleshoot.id].logs.logs?.map((log, idx) => (
+                                <div key={idx} className="mb-1">{log}</div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowTroubleshootModal(false)}>
+                Close
+              </Button>
+              <Button onClick={() => runTroubleshootDiagnostics(selectedScannerForTroubleshoot.id)}>
+                🔄 Run Diagnostics Again
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

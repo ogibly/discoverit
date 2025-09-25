@@ -153,22 +153,35 @@ const AWXIntegration = () => {
       setLoading(true);
       setConnectionStatus('testing');
       
-      // This would be an API call to test AWX connection
-      // const result = await testAWXConnectionAPI(awxSettings);
+      // Test AWX connection via API
+      const result = await fetch('/api/v2/awx/test-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(awxSettings)
+      });
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const data = await result.json();
       
-      setConnectionStatus('connected');
-      setAwxSettings(prev => ({ ...prev, awx_connected: true }));
-      
-      // Load AWX resources
-      await loadAWXResources();
+      if (data.success) {
+        setConnectionStatus('connected');
+        setAwxSettings(prev => ({ ...prev, awx_connected: true }));
+        
+        // Load AWX resources
+        await loadAWXResources();
+      } else {
+        setConnectionStatus('failed');
+        setAwxSettings(prev => ({ ...prev, awx_connected: false }));
+        alert(`Connection failed: ${data.error}`);
+      }
       
     } catch (error) {
       console.error('AWX connection test failed:', error);
       setConnectionStatus('failed');
       setAwxSettings(prev => ({ ...prev, awx_connected: false }));
+      alert('Connection test failed: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -176,32 +189,47 @@ const AWXIntegration = () => {
 
   const loadAWXResources = async () => {
     try {
-      // Load job templates, inventories, credentials, and projects
-      // These would be API calls to AWX
-      setJobTemplates([
-        { id: 1, name: 'Deploy Web Application', description: 'Deploy web application to servers' },
-        { id: 2, name: 'Security Hardening', description: 'Apply security hardening to systems' },
-        { id: 3, name: 'Backup Configuration', description: 'Backup system configurations' }
+      // Load job templates, inventories, credentials, and projects from AWX API
+      const [templatesRes, inventoriesRes, credentialsRes, projectsRes] = await Promise.all([
+        fetch('/api/v2/awx/job-templates', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('/api/v2/awx/inventories', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('/api/v2/awx/credentials', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('/api/v2/awx/projects', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        })
       ]);
-      
-      setInventories([
-        { id: 1, name: 'Production Servers', description: 'Production environment servers' },
-        { id: 2, name: 'Development Servers', description: 'Development environment servers' }
-      ]);
-      
-      setCredentialsAWX([
-        { id: 1, name: 'SSH Key - Production', credential_type: 'ssh' },
-        { id: 2, name: 'Windows Credentials', credential_type: 'windows' },
-        { id: 3, name: 'API Token', credential_type: 'api' }
-      ]);
-      
-      setProjects([
-        { id: 1, name: 'Infrastructure Playbooks', description: 'Infrastructure automation playbooks' },
-        { id: 2, name: 'Security Playbooks', description: 'Security and compliance playbooks' }
-      ]);
+
+      const templatesData = await templatesRes.json();
+      const inventoriesData = await inventoriesRes.json();
+      const credentialsData = await credentialsRes.json();
+      const projectsData = await projectsRes.json();
+
+      if (templatesData.success) {
+        setJobTemplates(templatesData.templates);
+      }
+      if (inventoriesData.success) {
+        setInventories(inventoriesData.inventories);
+      }
+      if (credentialsData.success) {
+        setCredentialsAWX(credentialsData.credentials);
+      }
+      if (projectsData.success) {
+        setProjects(projectsData.projects);
+      }
       
     } catch (error) {
       console.error('Failed to load AWX resources:', error);
+      // Fallback to empty arrays on error
+      setJobTemplates([]);
+      setInventories([]);
+      setCredentialsAWX([]);
+      setProjects([]);
     }
   };
 
@@ -227,16 +255,29 @@ const AWXIntegration = () => {
         }
       };
 
-      // This would be an API call to create the operation
-      // await createOperationAPI(operationData);
+      // Create operation via API
+      const result = await fetch('/api/v2/awx/create-operation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(operationData)
+      });
+
+      const data = await result.json();
       
-      console.log('Creating operation:', operationData);
-      
-      setShowCreateOperationModal(false);
-      resetOperationForm();
+      if (data.success) {
+        alert('AWX operation created successfully!');
+        setShowCreateOperationModal(false);
+        resetOperationForm();
+      } else {
+        throw new Error(data.error || 'Failed to create operation');
+      }
       
     } catch (error) {
       console.error('Failed to create operation:', error);
+      alert('Failed to create operation: ' + error.message);
     } finally {
       setLoading(false);
     }

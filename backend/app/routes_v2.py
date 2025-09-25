@@ -442,6 +442,63 @@ def get_scan_results(task_id: int, db: Session = Depends(get_db)):
         "results": results
     }
 
+@router.get("/scan-tasks/{task_id}/download")
+def download_scan_results(task_id: int, db: Session = Depends(get_db)):
+    """Download scan results as JSON file."""
+    from fastapi.responses import JSONResponse
+    import json
+    from datetime import datetime
+    
+    service = ScanService(db)
+    task = service.get_scan_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Scan task not found")
+    
+    # Get scan results
+    from .models import Scan
+    scans = db.query(Scan).filter(Scan.scan_task_id == task_id).all()
+    
+    # Prepare download data
+    results = []
+    for scan in scans:
+        asset = scan.asset
+        if asset:
+            results.append({
+                "id": asset.id,
+                "ip": asset.primary_ip,
+                "hostname": asset.hostname,
+                "mac": asset.mac_address,
+                "os": asset.os_name,
+                "vendor": asset.manufacturer,
+                "device_type": asset.model,
+                "status": "up" if asset.is_active else "down",
+                "last_seen": asset.last_seen.isoformat() if asset.last_seen else None,
+                "discovered_at": asset.created_at.isoformat() if asset.created_at else None,
+                "scan_timestamp": scan.timestamp.isoformat() if scan.timestamp else None,
+                "scan_status": scan.status
+            })
+    
+    download_data = {
+        "scan_task_id": task_id,
+        "scan_name": task.name,
+        "scan_status": task.status,
+        "scan_target": task.target,
+        "scan_type": task.scan_type,
+        "start_time": task.start_time.isoformat() if task.start_time else None,
+        "end_time": task.end_time.isoformat() if task.end_time else None,
+        "total_devices": len(results),
+        "exported_at": datetime.utcnow().isoformat(),
+        "results": results
+    }
+    
+    # Return as downloadable JSON
+    return JSONResponse(
+        content=download_data,
+        headers={
+            "Content-Disposition": f"attachment; filename=scan-results-{task_id}-{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        }
+    )
+
 @router.get("/devices")
 def get_discovered_devices(
     skip: int = Query(0, ge=0),

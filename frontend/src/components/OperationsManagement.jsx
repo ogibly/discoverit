@@ -250,9 +250,29 @@ const OperationsManagement = () => {
     }
   };
 
-  const handleRunOperation = (operation) => {
-    setRunningOperation(operation);
-    setShowRunModal(true);
+  const handleRunOperation = async (operation) => {
+    try {
+      setLoading(true);
+      
+      // Prepare operation data for execution
+      const operationData = {
+        operation_id: operation.id,
+        target_assets: operation.target_assets || [],
+        target_asset_groups: operation.target_asset_groups || [],
+        target_labels: operation.target_labels || [],
+        extra_vars: operation.extra_vars || {}
+      };
+
+      // Run the operation
+      await runOperation(operationData);
+      alert('Operation started successfully!');
+      
+    } catch (error) {
+      console.error('Failed to run operation:', error);
+      alert('Failed to run operation: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetForm = () => {

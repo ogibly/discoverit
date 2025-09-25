@@ -20,6 +20,38 @@ const SidebarScanTracker = () => {
   const { activeScanTask, scanTasks, cancelScanTask } = useApp();
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const handleViewResults = (scanId) => {
+    // Navigate to discovery page with results view
+    window.location.href = `/discovery?scan=${scanId}`;
+  };
+
+  const handleDownloadResults = async (scanId) => {
+    try {
+      const response = await fetch(`/api/v2/scan-tasks/${scanId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scan-results-${scanId}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Failed to download scan results');
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download scan results');
+    }
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'running':
@@ -142,6 +174,7 @@ const SidebarScanTracker = () => {
                           variant="outline"
                           size="sm"
                           className="flex-1 h-5 text-xs"
+                          onClick={() => handleViewResults(scan.id)}
                         >
                           <Eye className="w-3 h-3 mr-1" />
                           View
@@ -150,6 +183,7 @@ const SidebarScanTracker = () => {
                           variant="outline"
                           size="sm"
                           className="flex-1 h-5 text-xs"
+                          onClick={() => handleDownloadResults(scan.id)}
                         >
                           <Download className="w-3 h-3 mr-1" />
                           Download

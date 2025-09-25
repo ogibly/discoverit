@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -37,12 +37,35 @@ const ScansTracker = ({
   const [expandedScan, setExpandedScan] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [recentScansCount, setRecentScansCount] = useState(3);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const intervalRef = useRef(null);
 
   // Auto-expand active scan
   useEffect(() => {
     if (activeScanTask && activeScanTask.status === 'running') {
       setExpandedScan(activeScanTask.id);
     }
+  }, [activeScanTask]);
+
+  // Update current time every second for stable duration calculation
+  useEffect(() => {
+    if (activeScanTask && activeScanTask.status === 'running') {
+      intervalRef.current = setInterval(() => {
+        setCurrentTime(new Date());
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [activeScanTask]);
 
   const getStatusIcon = (status) => {
@@ -76,9 +99,15 @@ const ScansTracker = ({
   };
 
   const formatDuration = (startTime, endTime = null) => {
+    if (!startTime) return '0s';
+    
     const start = new Date(startTime);
-    const end = endTime ? new Date(endTime) : new Date();
+    const end = endTime ? new Date(endTime) : currentTime;
     const diffMs = end - start;
+    
+    // Handle negative durations (shouldn't happen but just in case)
+    if (diffMs < 0) return '0s';
+    
     const diffMins = Math.floor(diffMs / 60000);
     const diffSecs = Math.floor((diffMs % 60000) / 1000);
     

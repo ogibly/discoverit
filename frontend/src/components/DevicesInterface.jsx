@@ -9,6 +9,7 @@ import { Modal } from './ui/Modal';
 import { Progress } from './ui/Progress';
 import { HelpIcon, CollapsibleGuidance } from './ui';
 import { cn } from '../utils/cn';
+import { formatScanProgress, getCappedProgress } from '../utils/formatters';
 import PageHeader from './PageHeader';
 import StandardList from './common/StandardList';
 
@@ -407,7 +408,7 @@ const DevicesInterface = () => {
                     <div>
                       <h4 className="text-sm font-semibold text-blue-900">Active Discovery</h4>
                       <p className="text-xs text-blue-700">
-                        {activeScanTask.name} • {activeScanTask.target} • {Math.round(activeScanTask.progress || 0)}% complete
+                          {activeScanTask.name} • {activeScanTask.target} • {formatScanProgress(activeScanTask.progress)} complete
                       </p>
                     </div>
                   </div>
@@ -415,11 +416,11 @@ const DevicesInterface = () => {
                     {activeScanTask.status}
                   </Badge>
                 </div>
-                {activeScanTask.progress > 0 && (
-                  <div className="mt-3">
-                    <Progress value={activeScanTask.progress} className="h-2" />
-                  </div>
-                )}
+                  {activeScanTask.progress > 0 && (
+                    <div className="mt-3">
+                      <Progress value={getCappedProgress(activeScanTask.progress)} className="h-2" />
+                    </div>
+                  )}
               </CardContent>
             </Card>
           )}

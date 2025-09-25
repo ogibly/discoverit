@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { cn } from '../../utils/cn';
+import { formatScanProgress, getCappedProgress } from '../../utils/formatters';
 import ScanProgressIndicator from './ScanProgressIndicator';
 import { 
   Play, 
@@ -125,7 +126,7 @@ const ScansTracker = ({
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground">Scan Running</p>
                       <p className="text-xs text-muted-foreground">
-                        {Math.round(activeScanTask.progress || 0)}% • {formatDuration(activeScanTask.start_time)}
+                        {formatScanProgress(activeScanTask.progress)} • {formatDuration(activeScanTask.start_time)}
                       </p>
                     </div>
                   </>
@@ -144,7 +145,7 @@ const ScansTracker = ({
               <div className="flex items-center space-x-2">
                 {hasActiveScan && (
                   <Badge variant="secondary" className="text-xs">
-                    {Math.round(activeScanTask.progress || 0)}%
+                    {formatScanProgress(activeScanTask.progress)}
                   </Badge>
                 )}
                 <Button

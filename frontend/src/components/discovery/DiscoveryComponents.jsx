@@ -5,6 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Input } from '../ui/Input';
 import { cn } from '../../utils/cn';
+import { formatScanProgress, getCappedProgress } from '../../utils/formatters';
 
 // Target Option Component
 export const TargetOption = ({ title, description, icon, onClick }) => (
@@ -43,8 +44,10 @@ export const IntensityOption = ({ title, description, icon, value, selected, onC
 
 // Live Progress Tracker Component
 export const LiveProgressTracker = ({ activeScanTask, onComplete, onCancel }) => {
-  const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState('Initializing...');
+
+  // Use actual scan progress from backend, capped at 100%
+  const progress = getCappedProgress(activeScanTask?.progress);
 
   useEffect(() => {
     if (!activeScanTask) return;
@@ -59,25 +62,18 @@ export const LiveProgressTracker = ({ activeScanTask, onComplete, onCancel }) =>
       'Finalizing results...'
     ];
 
-    let currentPhaseIndex = 0;
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          onComplete();
-          return 100;
-        }
-        return prev + Math.random() * 15;
-      });
+    // Determine current phase based on progress
+    const phaseIndex = Math.min(Math.floor((progress / 100) * phases.length), phases.length - 1);
+    setCurrentPhase(phases[phaseIndex]);
 
-      if (currentPhaseIndex < phases.length - 1) {
-        setCurrentPhase(phases[currentPhaseIndex]);
-        currentPhaseIndex++;
+    // Check if scan is completed
+    if (activeScanTask.status === 'completed' || activeScanTask.status === 'failed') {
+      setCurrentPhase(activeScanTask.status === 'completed' ? 'Scan completed!' : 'Scan failed');
+      if (activeScanTask.status === 'completed') {
+        setTimeout(() => onComplete(), 1000);
       }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [activeScanTask, onComplete]);
+    }
+  }, [activeScanTask, progress, onComplete]);
 
   return (
     <div className="space-y-6">
@@ -97,7 +93,7 @@ export const LiveProgressTracker = ({ activeScanTask, onComplete, onCancel }) =>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{currentPhase}</span>
-                <span className="text-muted-foreground">{Math.round(progress)}%</span>
+                <span className="text-muted-foreground">{formatScanProgress(progress)}</span>
               </div>
               <Progress value={progress} className="h-2" />
             </div>

@@ -96,6 +96,21 @@ export const formatPercentage = (value, total, decimals = 1) => {
   return `${percentage.toFixed(decimals)}%`;
 };
 
+// Scan progress formatting - ensures progress never exceeds 100%
+export const formatScanProgress = (progress, decimals = 0) => {
+  if (progress === null || progress === undefined) return '0%';
+  
+  // Cap progress at 100% and round to specified decimals
+  const cappedProgress = Math.min(Math.max(progress, 0), 100);
+  return `${cappedProgress.toFixed(decimals)}%`;
+};
+
+// Get capped progress value for progress bars
+export const getCappedProgress = (progress) => {
+  if (progress === null || progress === undefined) return 0;
+  return Math.min(Math.max(progress, 0), 100);
+};
+
 // Duration formatting
 export const formatDuration = (seconds) => {
   if (!seconds || seconds < 0) return '0s';

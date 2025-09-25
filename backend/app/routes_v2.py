@@ -1009,12 +1009,12 @@ def sync_scanners_with_settings(db: Session = Depends(get_db)):
 
 # API Key management routes
 @router.get("/api-keys", response_model=List[schemas.APIKey])
-@require_admin
 def list_api_keys(
     skip: int = 0,
     limit: int = 100,
     is_active: Optional[bool] = None,
     search: Optional[str] = None,
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """List API keys with optional filtering."""
@@ -1022,10 +1022,9 @@ def list_api_keys(
     return service.get_api_keys(skip=skip, limit=limit, is_active=is_active, search=search)
 
 @router.post("/api-keys", response_model=schemas.APIKeyWithSecret)
-@require_admin
 def create_api_key(
     key_data: schemas.APIKeyCreate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """Create a new API key."""
@@ -1039,8 +1038,7 @@ def create_api_key(
     )
 
 @router.get("/api-keys/{key_id}", response_model=schemas.APIKey)
-@require_admin
-def get_api_key(key_id: int, db: Session = Depends(get_db)):
+def get_api_key(key_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     """Get an API key by ID."""
     service = APIKeyService(db)
     api_key = service.get_api_key(key_id)
@@ -1049,10 +1047,10 @@ def get_api_key(key_id: int, db: Session = Depends(get_db)):
     return api_key
 
 @router.put("/api-keys/{key_id}", response_model=schemas.APIKey)
-@require_admin
 def update_api_key(
     key_id: int,
     key_data: schemas.APIKeyUpdate,
+    current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """Update an API key."""
@@ -1063,8 +1061,7 @@ def update_api_key(
     return api_key
 
 @router.delete("/api-keys/{key_id}")
-@require_admin
-def delete_api_key(key_id: int, db: Session = Depends(get_db)):
+def delete_api_key(key_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     """Delete an API key."""
     service = APIKeyService(db)
     if not service.delete_api_key(key_id):
@@ -1072,8 +1069,7 @@ def delete_api_key(key_id: int, db: Session = Depends(get_db)):
     return {"message": "API key deleted successfully"}
 
 @router.post("/api-keys/{key_id}/revoke")
-@require_admin
-def revoke_api_key(key_id: int, db: Session = Depends(get_db)):
+def revoke_api_key(key_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     """Revoke an API key."""
     service = APIKeyService(db)
     if not service.revoke_api_key(key_id):
@@ -1081,8 +1077,7 @@ def revoke_api_key(key_id: int, db: Session = Depends(get_db)):
     return {"message": "API key revoked successfully"}
 
 @router.post("/api-keys/{key_id}/regenerate", response_model=schemas.APIKeyWithSecret)
-@require_admin
-def regenerate_api_key(key_id: int, db: Session = Depends(get_db)):
+def regenerate_api_key(key_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     """Regenerate an API key."""
     service = APIKeyService(db)
     try:
@@ -1095,8 +1090,7 @@ def regenerate_api_key(key_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/api-keys/statistics")
-@require_admin
-def get_api_key_statistics(db: Session = Depends(get_db)):
+def get_api_key_statistics(current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     """Get API key statistics."""
     service = APIKeyService(db)
     return service.get_api_key_statistics()

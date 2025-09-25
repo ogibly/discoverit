@@ -17,7 +17,7 @@ import {
 import ScansTracker from './discovery/ScansTracker';
 import ScanResultsModal from './discovery/ScanResultsModal';
 import ScanNotifications from './discovery/ScanNotifications';
-import { useScanUpdates } from '../hooks/useScanUpdates';
+// Removed useScanUpdates import - using AppContext polling instead
 
 const Discovery = () => {
   const {
@@ -68,17 +68,14 @@ const Discovery = () => {
     fetchAvailableScanners();
   }, [fetchScanTasks, fetchActiveScanTask, fetchDiscoveredDevices]);
 
-  // Real-time updates for active scan
-  useScanUpdates(activeScanTask, (updatedTask) => {
-    // Update the active scan task in the context
-    dispatch({ type: 'UPDATE_SCAN_TASK', payload: updatedTask });
-    
-    // If scan completed, refresh all data
-    if (updatedTask.status === 'completed' || updatedTask.status === 'failed') {
+  // Handle scan completion
+  useEffect(() => {
+    if (activeScanTask && (activeScanTask.status === 'completed' || activeScanTask.status === 'failed')) {
+      // Refresh data when scan completes
       fetchScanTasks();
       fetchDiscoveredDevices();
     }
-  });
+  }, [activeScanTask, fetchScanTasks, fetchDiscoveredDevices]);
 
   const fetchAvailableScanners = async () => {
     try {

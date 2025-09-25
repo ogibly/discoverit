@@ -131,7 +131,7 @@ const DevicesInterface = () => {
     if (selectedDevices.length === filteredDevices.length) {
       selectAllDevices([]);
     } else {
-      selectAllDevices(filteredDevices.map(d => d.id));
+      selectAllDevices(filteredDevices.filter(d => d && d.id).map(d => d.id));
     }
   };
 

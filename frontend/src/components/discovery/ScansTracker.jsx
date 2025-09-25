@@ -170,7 +170,7 @@ const ScansTracker = ({
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground">Scan Running</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatScanProgress(activeScanTask.progress)} • {formatDuration(activeScanTask.start_time)}
+                        {formatScanProgress(activeScanTask?.progress)} • {formatDuration(activeScanTask?.start_time)}
                       </p>
                     </div>
                   </>
@@ -189,7 +189,7 @@ const ScansTracker = ({
               <div className="flex items-center space-x-2">
                 {hasActiveScan && (
                   <Badge variant="secondary" className="text-xs">
-                    {formatScanProgress(activeScanTask.progress)}
+                    {formatScanProgress(activeScanTask?.progress)}
                   </Badge>
                 )}
                 <Button
@@ -257,7 +257,7 @@ const ScansTracker = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onCancelScan(activeScanTask.id)}
+                    onClick={() => onCancelScan(activeScanTask?.id)}
                     className="text-xs h-7"
                   >
                     <Square className="w-3 h-3 mr-1" />
@@ -266,7 +266,7 @@ const ScansTracker = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onViewResults(activeScanTask.id)}
+                    onClick={() => onViewResults(activeScanTask?.id)}
                     className="text-xs h-7"
                   >
                     <Eye className="w-3 h-3 mr-1" />

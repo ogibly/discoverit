@@ -228,79 +228,6 @@ class AssetGroup(Base):
     assets = relationship("Asset", secondary=asset_group_association, back_populates="groups")
     labels = relationship("Label", secondary=asset_group_label_association)
 
-class Operation(Base):
-    __tablename__ = "operations"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), index=True, nullable=False)
-    description = Column(Text, nullable=True)
-    
-    # Operation type and configuration
-    operation_type = Column(String(50), nullable=False)  # awx, api, script
-    
-    # AWX Tower integration
-    awx_playbook_id = Column(String(50), nullable=True)
-    awx_playbook_name = Column(String(255), nullable=True)
-    awx_extra_vars = Column(JSON, nullable=True)
-    awx_url = Column(String(500), nullable=True)
-    
-    # API configuration
-    api_url = Column(String(500), nullable=True)
-    api_method = Column(String(10), nullable=True)  # GET, POST, PUT, DELETE, PATCH
-    api_headers = Column(JSON, nullable=True)
-    api_body = Column(JSON, nullable=True)
-    
-    # Script execution
-    script_path = Column(String(500), nullable=True)
-    script_args = Column(JSON, nullable=True)
-    
-    # Target configuration
-    target_group_id = Column(Integer, nullable=True)  # Asset group ID
-    target_labels = Column(JSON, nullable=True)  # List of label IDs
-    
-    # Status and metadata
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    jobs = relationship("Job", back_populates="operation", cascade="all, delete-orphan")
-
-class Job(Base):
-    __tablename__ = "jobs"
-    id = Column(Integer, primary_key=True, index=True)
-    operation_id = Column(Integer, ForeignKey("operations.id", ondelete='CASCADE'), nullable=False)
-    
-    # Target assets and groups
-    asset_ids = Column(JSON, nullable=True)  # List of asset IDs
-    asset_group_ids = Column(JSON, nullable=True)  # List of group IDs
-    target_labels = Column(JSON, nullable=True)  # List of label IDs
-    
-    # Job execution details
-    status = Column(String(20), default="pending", index=True)  # pending, running, completed, failed, cancelled
-    progress = Column(Integer, default=0)  # Percentage completion
-    current_asset = Column(String(255), nullable=True)  # Currently processing asset
-    
-    # Results and logging
-    results = Column(JSON, nullable=True)  # Structured results per asset
-    error_message = Column(Text, nullable=True)
-    log_output = Column(Text, nullable=True)
-    
-    # AWX specific fields
-    awx_job_id = Column(String(50), nullable=True)  # AWX job ID if applicable
-    awx_job_url = Column(String(500), nullable=True)
-    
-    # Timing
-    start_time = Column(DateTime, nullable=True)
-    end_time = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
-    # Additional parameters
-    params = Column(JSON, nullable=True)
-    
-    # Relationships
-    operation = relationship("Operation", back_populates="jobs")
-    creator = relationship("User", foreign_keys=[created_by])
 
 class Settings(Base):
     __tablename__ = "settings"
@@ -310,27 +237,6 @@ class Settings(Base):
     scanners = Column(JSON, nullable=True)  # List of scanner configurations
     default_subnet = Column(String(50), nullable=True, default="172.18.0.0/16")
     
-    # AWX Tower configuration
-    awx_url = Column(String(500), nullable=True)
-    awx_username = Column(String(100), nullable=True)
-    awx_password = Column(String(255), nullable=True)  # Should be encrypted
-    awx_token = Column(String(500), nullable=True)  # Should be encrypted
-    
-    # AWX Job Templates
-    awx_network_discovery_template = Column(String(50), nullable=True)
-    awx_network_discovery_vars = Column(Text, nullable=True)  # JSON string
-    awx_device_config_template = Column(String(50), nullable=True)
-    awx_device_config_vars = Column(Text, nullable=True)  # JSON string
-    awx_security_template = Column(String(50), nullable=True)
-    awx_security_vars = Column(Text, nullable=True)  # JSON string
-    
-    # AWX Workflow Settings
-    awx_auto_config = Column(Boolean, default=False)
-    awx_auto_security = Column(Boolean, default=False)
-    awx_sync_inventory = Column(Boolean, default=False)
-    awx_inventory_id = Column(String(50), nullable=True)
-    awx_sync_interval = Column(Integer, default=30)  # minutes
-    awx_connected = Column(Boolean, default=False)
     
     # Application settings
     scan_timeout = Column(Integer, default=300)  # Default scan timeout in seconds
@@ -622,8 +528,6 @@ class Notification(Base):
     
     # Related entities
     scan_task_id = Column(Integer, ForeignKey("scan_tasks.id", ondelete='SET NULL'), nullable=True)
-    job_id = Column(Integer, ForeignKey("jobs.id", ondelete='SET NULL'), nullable=True)
     
     # Relationships
     scan_task = relationship("ScanTask")
-    job = relationship("Job")

@@ -45,45 +45,19 @@ const WorkflowGuide = () => {
       ]
     },
     {
-      id: 'automation',
-      title: 'Operations & Automation',
-      description: 'Set up automated operations',
-      icon: '⚙️',
+      id: 'monitoring',
+      title: 'Monitoring & Maintenance',
+      description: 'Monitor and maintain your network assets',
+      icon: '📊',
       details: [
-        'Configure operation templates',
-        'Set up automated workflows',
-        'Monitor operation execution',
-        'Manage credentials and access'
+        'Track asset health and status',
+        'Monitor network performance',
+        'Schedule regular maintenance',
+        'Generate reports and analytics'
       ]
     }
   ];
 
-  const operationTypes = [
-    {
-      name: 'Network Scans',
-      description: 'Discover and map network devices',
-      icon: '🌐',
-      examples: ['Port scanning', 'Service detection', 'OS fingerprinting']
-    },
-    {
-      name: 'Asset Management',
-      description: 'Organize and track IT assets',
-      icon: '💻',
-      examples: ['Asset grouping', 'Status tracking', 'Inventory management']
-    },
-    {
-      name: 'Security Operations',
-      description: 'Security monitoring and compliance',
-      icon: '🔒',
-      examples: ['Vulnerability scanning', 'Compliance checks', 'Security audits']
-    },
-    {
-      name: 'Maintenance Tasks',
-      description: 'Automated maintenance operations',
-      icon: '🔧',
-      examples: ['System updates', 'Health checks', 'Backup operations']
-    }
-  ];
 
   const bestPractices = [
     {
@@ -97,13 +71,13 @@ const WorkflowGuide = () => {
       tip: 'Create meaningful group names'
     },
     {
-      title: 'Monitor Operations',
-      description: 'Keep track of all automated operations and their results',
-      tip: 'Set up alerts for failed operations'
+      title: 'Monitor Assets',
+      description: 'Keep track of all your network assets and their status',
+      tip: 'Set up alerts for asset changes'
     },
     {
       title: 'Secure Credentials',
-      description: 'Store and manage credentials securely for automated operations',
+      description: 'Store and manage credentials securely for asset access',
       tip: 'Use strong passwords and rotate regularly'
     }
   ];
@@ -197,47 +171,6 @@ const WorkflowGuide = () => {
             </CardContent>
           </Card>
 
-          {/* Operation Types */}
-          <Card className="surface-elevated">
-            <CardHeader>
-              <CardTitle className="text-subheading text-foreground flex items-center space-x-2">
-                <span>⚡</span>
-                <span>Operation Types</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {operationTypes.map((type, index) => (
-                  <div
-                    key={index}
-                    className="p-4 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="text-2xl flex-shrink-0">{type.icon}</div>
-                      <div className="flex-1">
-                        <h3 className="text-subheading text-foreground font-medium mb-1">
-                          {type.name}
-                        </h3>
-                        <p className="text-body text-muted-foreground mb-3">
-                          {type.description}
-                        </p>
-                        <div className="space-y-1">
-                          {type.examples.map((example, idx) => (
-                            <div key={idx} className="flex items-center space-x-2">
-                              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                              <span className="text-caption text-muted-foreground">
-                                {example}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Best Practices */}
           <Card className="surface-elevated">
@@ -298,15 +231,6 @@ const WorkflowGuide = () => {
                   <span className="text-xs opacity-75">Organize your inventory</span>
                 </Button>
                 
-                <Button 
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-center space-y-2"
-                  onClick={() => window.location.href = '/operations'}
-                >
-                  <span className="text-xl">⚙️</span>
-                  <span>Set Up Operations</span>
-                  <span className="text-xs opacity-75">Configure automation</span>
-                </Button>
               </div>
             </CardContent>
           </Card>

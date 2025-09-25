@@ -146,27 +146,6 @@ class CredentialService:
             )
         ).order_by(Credential.name).all()
 
-    def get_credentials_for_operation(self, operation_type: str) -> List[Credential]:
-        """Get appropriate credentials for a specific operation type."""
-        # Map operation types to credential types
-        credential_type_mapping = {
-            'ansible': ['username_password', 'ssh_key'],
-            'ssh': ['username_password', 'ssh_key'],
-            'api': ['api_key', 'username_password'],
-            'script': ['username_password', 'ssh_key'],
-            'certificate': ['certificate', 'username_password']
-        }
-        
-        credential_types = credential_type_mapping.get(operation_type, ['username_password'])
-        
-        query = self.db.query(Credential).filter(
-            and_(
-                Credential.credential_type.in_(credential_types),
-                Credential.is_active == True
-            )
-        )
-        
-        return query.order_by(Credential.name).all()
 
     def validate_credential_data(self, credential_data: CredentialCreate) -> List[str]:
         """Validate credential data and return list of errors."""

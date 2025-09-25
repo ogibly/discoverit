@@ -8,8 +8,6 @@ import { Input } from './ui/Input';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
-import OperationsManagement from './OperationsManagement';
-import AWXIntegration from './AWXIntegration';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
 
@@ -42,10 +40,6 @@ const AdminSettings = () => {
   
   // System Settings State
   const [settings, setSettings] = useState({
-    awx_url: '',
-    awx_username: '',
-    awx_password: '',
-    awx_token: '',
     default_subnet: '172.18.0.0/16',
     scan_timeout: 300,
     max_concurrent_scans: 5,
@@ -162,7 +156,7 @@ const AdminSettings = () => {
   // Handle tab parameter from URL
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['system', 'users', 'ldap', 'ip-ranges', 'permissions', 'awx', 'scanners', 'operations'].includes(tabParam)) {
+    if (tabParam && ['system', 'users', 'ldap', 'ip-ranges', 'permissions', 'scanners'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -661,9 +655,7 @@ const AdminSettings = () => {
             <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
             <TabsTrigger value="ip-ranges">IP Ranges</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
-            <TabsTrigger value="awx">AWX Integration</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
-            <TabsTrigger value="operations">Operations</TabsTrigger>
           </TabsList>
 
           {/* System Settings Tab */}
@@ -1198,330 +1190,7 @@ const AdminSettings = () => {
             </Card>
           </TabsContent>
 
-          {/* AWX Integration Tab */}
-          <TabsContent value="awx" className="space-y-6">
-            {/* AWX Connection Settings */}
-            <Card className="surface-elevated">
-              <CardHeader>
-                <CardTitle className="text-subheading text-foreground flex items-center">
-                  <span className="mr-2">🔗</span>
-                  AWX/Ansible Tower Connection
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Configure connection to your AWX or Ansible Tower instance
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-body font-medium text-foreground mb-2">
-                      AWX/Tower URL
-                    </label>
-                    <Input
-                      value={settings.awx_url}
-                      onChange={(e) => setSettings({...settings, awx_url: e.target.value})}
-                      placeholder="https://awx.example.com or https://tower.company.com"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Full URL to your AWX or Ansible Tower instance
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-body font-medium text-foreground mb-2">
-                      Username
-                    </label>
-                    <Input
-                      value={settings.awx_username}
-                      onChange={(e) => setSettings({...settings, awx_username: e.target.value})}
-                      placeholder="admin"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-body font-medium text-foreground mb-2">
-                      Password
-                    </label>
-                    <Input
-                      type="password"
-                      value={settings.awx_password}
-                      onChange={(e) => setSettings({...settings, awx_password: e.target.value})}
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-body font-medium text-foreground mb-2">
-                      API Token (Recommended)
-                    </label>
-                    <Input
-                      type="password"
-                      value={settings.awx_token}
-                      onChange={(e) => setSettings({...settings, awx_token: e.target.value})}
-                      placeholder="Optional: More secure than username/password"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Generate from AWX/Tower: User → Tokens → Create Token
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Connection Status</p>
-                    <p className="text-xs text-muted-foreground">
-                      {settings.awx_connected ? 'Connected' : 'Not connected'}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {/* Test connection logic */}}
-                  >
-                    Test Connection
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Job Template Management */}
-            <Card className="surface-elevated">
-              <CardHeader>
-                <CardTitle className="text-subheading text-foreground flex items-center">
-                  <span className="mr-2">📋</span>
-                  Job Template Configuration
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Map discovery operations to AWX job templates
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  {/* Network Discovery Template */}
-                  <div className="p-4 border border-border rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium text-foreground">Network Discovery</h4>
-                        <p className="text-xs text-muted-foreground">Basic network scanning and device discovery</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          settings.awx_network_discovery_template ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {settings.awx_network_discovery_template ? 'Configured' : 'Not Set'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">
-                          Job Template ID
-                        </label>
-                        <Input
-                          value={settings.awx_network_discovery_template || ''}
-                          onChange={(e) => setSettings({...settings, awx_network_discovery_template: e.target.value})}
-                          placeholder="e.g., 15"
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">
-                          Extra Variables
-                        </label>
-                        <Input
-                          value={settings.awx_network_discovery_vars || ''}
-                          onChange={(e) => setSettings({...settings, awx_network_discovery_vars: e.target.value})}
-                          placeholder='{"scan_type": "comprehensive"}'
-                          className="text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Device Configuration Template */}
-                  <div className="p-4 border border-border rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium text-foreground">Device Configuration</h4>
-                        <p className="text-xs text-muted-foreground">Configure discovered devices with Ansible playbooks</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          settings.awx_device_config_template ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {settings.awx_device_config_template ? 'Configured' : 'Not Set'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">
-                          Job Template ID
-                        </label>
-                        <Input
-                          value={settings.awx_device_config_template || ''}
-                          onChange={(e) => setSettings({...settings, awx_device_config_template: e.target.value})}
-                          placeholder="e.g., 23"
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">
-                          Extra Variables
-                        </label>
-                        <Input
-                          value={settings.awx_device_config_vars || ''}
-                          onChange={(e) => setSettings({...settings, awx_device_config_vars: e.target.value})}
-                          placeholder='{"config_type": "baseline"}'
-                          className="text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Security Assessment Template */}
-                  <div className="p-4 border border-border rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium text-foreground">Security Assessment</h4>
-                        <p className="text-xs text-muted-foreground">Run security scans and compliance checks</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          settings.awx_security_template ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {settings.awx_security_template ? 'Configured' : 'Not Set'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">
-                          Job Template ID
-                        </label>
-                        <Input
-                          value={settings.awx_security_template || ''}
-                          onChange={(e) => setSettings({...settings, awx_security_template: e.target.value})}
-                          placeholder="e.g., 31"
-                          className="text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">
-                          Extra Variables
-                        </label>
-                        <Input
-                          value={settings.awx_security_vars || ''}
-                          onChange={(e) => setSettings({...settings, awx_security_vars: e.target.value})}
-                          placeholder='{"scan_profile": "comprehensive"}'
-                          className="text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Workflow Integration */}
-            <Card className="surface-elevated">
-              <CardHeader>
-                <CardTitle className="text-subheading text-foreground flex items-center">
-                  <span className="mr-2">🔄</span>
-                  Workflow Integration
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Configure automated workflows and job chaining
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-body font-medium text-foreground">Auto-trigger Configuration</label>
-                      <p className="text-xs text-muted-foreground">Automatically run device configuration after discovery</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.awx_auto_config || false}
-                        onChange={(e) => setSettings({...settings, awx_auto_config: e.target.checked})}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-body font-medium text-foreground">Security Assessment on New Devices</label>
-                      <p className="text-xs text-muted-foreground">Run security scans on newly discovered devices</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.awx_auto_security || false}
-                        onChange={(e) => setSettings({...settings, awx_auto_security: e.target.checked})}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label className="text-body font-medium text-foreground">Inventory Synchronization</label>
-                      <p className="text-xs text-muted-foreground">Sync discovered devices to AWX inventory</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.awx_sync_inventory || false}
-                        onChange={(e) => setSettings({...settings, awx_sync_inventory: e.target.checked})}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-body font-medium text-foreground mb-2">
-                      AWX Inventory ID
-                    </label>
-                    <Input
-                      value={settings.awx_inventory_id || ''}
-                      onChange={(e) => setSettings({...settings, awx_inventory_id: e.target.value})}
-                      placeholder="e.g., 5"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Target inventory for device synchronization
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-body font-medium text-foreground mb-2">
-                      Sync Interval (minutes)
-                    </label>
-                    <Input
-                      type="number"
-                      value={settings.awx_sync_interval || 30}
-                      onChange={(e) => setSettings({...settings, awx_sync_interval: parseInt(e.target.value)})}
-                      placeholder="30"
-                      min="5"
-                      max="1440"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      How often to sync with AWX inventory
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="pt-4">
-              <Button onClick={saveSettings} disabled={loading} className="w-full md:w-auto">
-                {loading ? 'Saving...' : 'Save AWX Configuration'}
-              </Button>
-            </div>
-          </TabsContent>
 
           {/* Scanner Configs Tab */}
           <TabsContent value="scanners" className="space-y-6">
@@ -1659,10 +1328,6 @@ const AdminSettings = () => {
             </Card>
           </TabsContent>
 
-          {/* Operations Tab */}
-          <TabsContent value="operations" className="space-y-6">
-            <OperationsManagement />
-          </TabsContent>
         </Tabs>
       </div>
 

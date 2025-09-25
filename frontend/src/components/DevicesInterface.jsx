@@ -413,7 +413,7 @@ const DevicesInterface = () => {
                     </div>
                   </div>
                   <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                    {activeScanTask.status}
+                    {activeScanTask.status || 'running'}
                   </Badge>
                 </div>
                   {activeScanTask.progress > 0 && (

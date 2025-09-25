@@ -342,13 +342,13 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Active Operations and Quick Actions */}
+          {/* Recent Activity and Quick Actions */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Active Operations */}
+            {/* Recent Activity */}
             <Card className="surface-elevated">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                  🔄 Active Operations
+                  📊 Recent Activity
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -372,7 +372,7 @@ const Dashboard = () => {
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     <div className="text-2xl mb-1">⏸️</div>
-                    <p className="text-sm">No active operations</p>
+                    <p className="text-sm">No recent activity</p>
                   </div>
                 )}
               </CardContent>
@@ -407,13 +407,6 @@ const Dashboard = () => {
                   >
                     <span className="text-lg">📋</span>
                     <span className="text-xs font-medium">Manage Assets</span>
-                  </Button>
-                  <Button
-                    onClick={() => navigate('/admin-settings?tab=operations')}
-                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-warning hover:bg-warning/90 text-warning-foreground transition-all duration-200"
-                  >
-                    <span className="text-lg">⚙️</span>
-                    <span className="text-xs font-medium">Operations</span>
                   </Button>
                 </div>
               </CardContent>

@@ -30,9 +30,6 @@ const initialState = {
   scanTasks: [],
   activeScanTask: null,
   
-  // Operations & Jobs
-  operations: [],
-  jobs: [],
   
   // UI State
   loading: {
@@ -41,8 +38,6 @@ const initialState = {
     assetGroups: false,
     credentials: false,
     scanTasks: false,
-    operations: false,
-    jobs: false
   },
   error: null,
   statusMessage: null,
@@ -51,7 +46,6 @@ const initialState = {
   modals: {
     assetManager: false,
     assetGroupManager: false,
-    operationModal: false,
     settingsModal: false
   }
 };
@@ -93,14 +87,6 @@ const ActionTypes = {
   SET_ACTIVE_SCAN_TASK: 'SET_ACTIVE_SCAN_TASK',
   UPDATE_SCAN_TASK: 'UPDATE_SCAN_TASK',
   
-  // Operations & Jobs
-  SET_OPERATIONS: 'SET_OPERATIONS',
-  ADD_OPERATION: 'ADD_OPERATION',
-  UPDATE_OPERATION: 'UPDATE_OPERATION',
-  DELETE_OPERATION: 'DELETE_OPERATION',
-  SET_JOBS: 'SET_JOBS',
-  ADD_JOB: 'ADD_JOB',
-  UPDATE_JOB: 'UPDATE_JOB',
   
   // UI State
   SET_LOADING: 'SET_LOADING',
@@ -207,40 +193,12 @@ function appReducer(state, action) {
     case ActionTypes.UPDATE_SCAN_TASK:
       return {
         ...state,
-        scanTasks: state.scanTasks.map(task =>
+        scanTasks: state.scanTasks ? state.scanTasks.map(task =>
           task.id === action.payload.id ? action.payload : task
-        ),
+        ) : [],
         activeScanTask: state.activeScanTask?.id === action.payload.id ? action.payload : state.activeScanTask
       };
     
-    // Operations & Jobs
-    case ActionTypes.SET_OPERATIONS:
-      return { ...state, operations: action.payload };
-    case ActionTypes.ADD_OPERATION:
-      return { ...state, operations: [...state.operations, action.payload] };
-    case ActionTypes.UPDATE_OPERATION:
-      return {
-        ...state,
-        operations: state.operations.map(operation =>
-          operation.id === action.payload.id ? action.payload : operation
-        )
-      };
-    case ActionTypes.DELETE_OPERATION:
-      return {
-        ...state,
-        operations: state.operations.filter(operation => operation.id !== action.payload)
-      };
-    case ActionTypes.SET_JOBS:
-      return { ...state, jobs: action.payload };
-    case ActionTypes.ADD_JOB:
-      return { ...state, jobs: [action.payload, ...state.jobs] };
-    case ActionTypes.UPDATE_JOB:
-      return {
-        ...state,
-        jobs: state.jobs.map(job =>
-          job.id === action.payload.id ? { ...job, ...action.payload } : job
-        )
-      };
     
     // UI State
     case ActionTypes.SET_LOADING:
@@ -698,8 +656,9 @@ export function AppProvider({ children }) {
   const fetchActiveScanTask = useCallback(async () => {
     try {
       const activeScanTask = await apiCall('/scan-tasks/active');
-      dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: activeScanTask });
+      dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: activeScanTask || null });
     } catch (error) {
+      console.log('Failed to fetch scan updates:', error);
       dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: null });
     }
   }, [apiCall]);
@@ -731,100 +690,6 @@ export function AppProvider({ children }) {
   }, [apiCall]);
 
   // Operation actions
-  const fetchOperations = useCallback(async () => {
-    dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'operations', value: true } });
-    try {
-      const operations = await apiCall('/operations');
-      dispatch({ type: ActionTypes.SET_OPERATIONS, payload: operations });
-    } catch (error) {
-      // Error already handled in apiCall
-    } finally {
-      dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'operations', value: false } });
-    }
-  }, [apiCall]);
-
-  const fetchJobs = useCallback(async () => {
-    dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'jobs', value: true } });
-    try {
-      const jobs = await apiCall('/jobs');
-      dispatch({ type: ActionTypes.SET_JOBS, payload: jobs });
-    } catch (error) {
-      // Error already handled in apiCall
-    } finally {
-      dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'jobs', value: false } });
-    }
-  }, [apiCall]);
-
-  const createOperation = useCallback(async (operationData) => {
-    try {
-      const operation = await apiCall('/operations', {
-        method: 'POST',
-        data: operationData
-      });
-      dispatch({ type: ActionTypes.ADD_OPERATION, payload: operation });
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Operation created successfully' });
-      return operation;
-    } catch (error) {
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to create operation' });
-      throw error;
-    }
-  }, [apiCall]);
-
-  const updateOperation = useCallback(async (operationId, operationData) => {
-    try {
-      const operation = await apiCall(`/operations/${operationId}`, {
-        method: 'PUT',
-        data: operationData
-      });
-      dispatch({ type: ActionTypes.UPDATE_OPERATION, payload: operation });
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Operation updated successfully' });
-      return operation;
-    } catch (error) {
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to update operation' });
-      throw error;
-    }
-  }, [apiCall]);
-
-  const deleteOperation = useCallback(async (operationId) => {
-    try {
-      await apiCall(`/operations/${operationId}`, {
-        method: 'DELETE'
-      });
-      dispatch({ type: ActionTypes.DELETE_OPERATION, payload: operationId });
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Operation deleted successfully' });
-    } catch (error) {
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to delete operation' });
-      throw error;
-    }
-  }, [apiCall]);
-
-  const runOperation = useCallback(async (operationData) => {
-    try {
-      const job = await apiCall('/operations/run', {
-        method: 'POST',
-        data: operationData
-      });
-      dispatch({ type: ActionTypes.ADD_JOB, payload: job });
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Operation started successfully' });
-      return job;
-    } catch (error) {
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to start operation' });
-      throw error;
-    }
-  }, [apiCall]);
-
-  const cancelJob = useCallback(async (jobId) => {
-    try {
-      await apiCall(`/jobs/${jobId}/cancel`, {
-        method: 'POST'
-      });
-      dispatch({ type: ActionTypes.UPDATE_JOB, payload: { id: jobId, status: 'cancelled' } });
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Job cancelled successfully' });
-    } catch (error) {
-      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to cancel job' });
-      throw error;
-    }
-  }, [apiCall]);
 
   // Admin/Settings API functions
   const fetchSettings = useCallback(async () => {
@@ -937,10 +802,8 @@ export function AppProvider({ children }) {
     fetchAssets();
     fetchAssetGroups();
     fetchScanTasks();
-    fetchOperations();
-    fetchJobs();
     fetchActiveScanTask();
-  }, [fetchAssets, fetchAssetGroups, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
+  }, [fetchAssets, fetchAssetGroups, fetchScanTasks, fetchActiveScanTask]);
 
   // Selection actions
   const toggleAssetSelection = useCallback((assetId) => {
@@ -978,7 +841,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     // Don't fetch data on initial load - wait for auth-changed event
     // This prevents race conditions with token validation
-  }, [fetchAssets, fetchAssetGroups, fetchScanTasks, fetchOperations, fetchJobs, fetchActiveScanTask]);
+  }, [fetchAssets, fetchAssetGroups, fetchScanTasks, fetchActiveScanTask]);
 
   // Listen for authentication changes
   useEffect(() => {
@@ -1011,13 +874,11 @@ export function AppProvider({ children }) {
 
   // Poll for active scan updates
   useEffect(() => {
-    if (state.activeScanTask) {
-      const interval = setInterval(() => {
-        fetchActiveScanTask();
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [state.activeScanTask, fetchActiveScanTask]);
+    const interval = setInterval(() => {
+      fetchActiveScanTask();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [fetchActiveScanTask]);
 
   // Auto-clear status messages
   useEffect(() => {
@@ -1091,14 +952,6 @@ export function AppProvider({ children }) {
     cancelScanTask,
     cancelScan: cancelScanTask, // Alias for backward compatibility
     
-    // Operation actions
-    fetchOperations,
-    createOperation,
-    updateOperation,
-    deleteOperation,
-    fetchJobs,
-    runOperation,
-    cancelJob,
     
     // Admin/Settings actions
     fetchSettings,

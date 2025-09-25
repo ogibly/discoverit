@@ -9,11 +9,8 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import DevicesInterface from './components/DevicesInterface';
 import Discovery from './components/Discovery';
-import LabManagement from './components/LabManagement';
 import AssetsInterface from './components/AssetsInterface';
 import AssetDetail from './components/AssetDetail';
-import OperationsManagement from './components/OperationsManagement';
-import AWXIntegration from './components/AWXIntegration';
 import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
@@ -48,16 +45,6 @@ const Navigation = () => {
         </svg>
       ), 
       permission: 'assets:read'
-    },
-    { 
-      path: '/labs', 
-      label: 'Lab Management', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      ), 
-      permission: 'admin:read'
     },
     { 
       path: '/devices', 
@@ -175,25 +162,6 @@ const Navigation = () => {
                 <span className="font-medium">Global Settings</span>
               </Link>
               
-              <Link
-                to="/awx"
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 group",
-                  location.pathname === '/awx'
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                )}
-              >
-                <div className={cn(
-                  "transition-all duration-200",
-                  location.pathname === '/awx' ? "scale-105" : "group-hover:scale-105"
-                )}>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                  </svg>
-                </div>
-                <span className="font-medium">AWX Integration</span>
-              </Link>
             </div>
           </div>
         )}
@@ -311,11 +279,6 @@ const AppContent = () => {
               <Discovery />
             </ProtectedRoute>
           } />
-          <Route path="/labs" element={
-            <ProtectedRoute requiredPermission="admin:read">
-              <LabManagement />
-            </ProtectedRoute>
-          } />
           <Route path="/devices" element={
             <ProtectedRoute requiredPermission="assets:read">
               <DevicesInterface />
@@ -344,12 +307,6 @@ const AppContent = () => {
           <Route path="/users" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/settings" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/scanners" element={<Navigate to="/admin-settings" replace />} />
-          <Route path="/operations-management" element={<Navigate to="/admin-settings?tab=operations" replace />} />
-          <Route path="/awx" element={
-            <ProtectedRoute requiredPermission="admin">
-              <AWXIntegration />
-            </ProtectedRoute>
-          } />
           <Route path="/workflow" element={<WorkflowGuide />} />
           <Route path="/scans" element={
             <ProtectedRoute requiredPermission="assets:read">

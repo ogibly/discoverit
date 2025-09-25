@@ -90,4 +90,8 @@ const SelectItem = ({ value, children }) => {
   return { value, children };
 };
 
-export { Select, SelectTrigger, SelectContent, SelectItem };
+const SelectValue = ({ placeholder }) => {
+  return placeholder;
+};
+
+export { Select, SelectTrigger, SelectContent, SelectItem, SelectValue };

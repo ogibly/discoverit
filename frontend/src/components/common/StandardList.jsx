@@ -247,8 +247,14 @@ const StandardList = ({
                       "text-xs font-medium transition-all duration-200 h-8 px-3",
                       viewMode === 'grid' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                     )}
+                    title="Grid View"
                   >
-                    ⊞
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="7" height="7" rx="1"/>
+                      <rect x="14" y="3" width="7" height="7" rx="1"/>
+                      <rect x="3" y="14" width="7" height="7" rx="1"/>
+                      <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
                   </Button>
                   <Button
                     variant="ghost"
@@ -258,8 +264,11 @@ const StandardList = ({
                       "text-xs font-medium transition-all duration-200 h-8 px-3",
                       viewMode === 'table' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                     )}
+                    title="Table View"
                   >
-                    ☰
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
                   </Button>
                 </div>
               </div>

@@ -430,8 +430,6 @@ const DevicesInterface = () => {
           <StandardList
             items={filteredDevices}
             loading={false}
-            title="Network Devices"
-            subtitle="Discover, explore, and manage network devices"
             itemName="device"
             itemNamePlural="devices"
             searchPlaceholder="Search devices by IP, hostname, MAC, OS, or manufacturer..."

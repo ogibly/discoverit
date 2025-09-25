@@ -777,19 +777,46 @@ const AssetsInterface = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
-          {/* Tabs */}
+          {/* Tabs with Statistics */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="assets">Assets</TabsTrigger>
-              <TabsTrigger value="groups">Asset Groups</TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between mb-6">
+              <TabsList className="grid grid-cols-2">
+                <TabsTrigger value="assets">Assets</TabsTrigger>
+                <TabsTrigger value="groups">Asset Groups</TabsTrigger>
+              </TabsList>
+              
+              {/* Statistics */}
+              <div className="flex items-center space-x-6">
+                {activeTab === 'assets' ? (
+                  assetStatistics.map((stat, index) => (
+                    <div key={index} className="text-center">
+                      <div className={`text-2xl font-bold ${stat.color}`}>
+                        {stat.value}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {stat.label}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  groupStatistics.map((stat, index) => (
+                    <div key={index} className="text-center">
+                      <div className={`text-2xl font-bold ${stat.color}`}>
+                        {stat.value}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {stat.label}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
             <TabsContent value="assets" className="space-y-6">
               <StandardList
                 items={filteredAssets}
                 loading={loading.assets}
-                title="Assets"
-                subtitle="Manage your network assets"
                 itemName="asset"
                 itemNamePlural="assets"
                 searchPlaceholder="Search assets by name, IP, description, manufacturer, model, or labels..."
@@ -824,8 +851,6 @@ const AssetsInterface = () => {
               <StandardList
                 items={filteredGroups}
                 loading={loading.assetGroups}
-                title="Asset Groups"
-                subtitle="Organize your assets into groups"
                 itemName="group"
                 itemNamePlural="groups"
                 searchPlaceholder="Search asset groups by name, description, or labels..."

@@ -17,7 +17,6 @@ import AWXIntegration from './components/AWXIntegration';
 import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
-import ScanStatusTracker from './components/ScanStatusTracker';
 import AdminSettings from './components/AdminSettings';
 import { cn } from './utils/cn';
 
@@ -299,8 +298,6 @@ const AppContent = () => {
     <div className="flex h-screen bg-background">
       <Navigation />
       <div className="flex-grow overflow-hidden bg-background">
-        {/* Global Scan Status Tracker */}
-        <ScanStatusTracker position="top-right" compact={true} />
         <Routes>
           <Route path="/dashboard" element={
             <ProtectedRoute requiredPermission="assets:read">

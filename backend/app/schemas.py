@@ -408,6 +408,38 @@ class Token(BaseModel):
     expires_in: int
     user: User
 
+class APIKeyBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    permissions: Optional[List[str]] = None
+    expires_at: Optional[datetime] = None
+    is_active: bool = True
+
+class APIKeyCreate(APIKeyBase):
+    pass
+
+class APIKeyUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    permissions: Optional[List[str]] = None
+    expires_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
+
+class APIKey(APIKeyBase):
+    id: int
+    key_prefix: str
+    last_used: Optional[datetime] = None
+    created_by: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class APIKeyWithSecret(APIKey):
+    """API Key response that includes the actual key (only shown once)"""
+    key: str
+
 class CredentialBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None

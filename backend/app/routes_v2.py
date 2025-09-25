@@ -9,6 +9,7 @@ from .services.asset_service import AssetService
 from .services.scan_service_v2 import ScanServiceV2 as ScanService
 from .services.credential_service import CredentialService
 from .services.scanner_service import ScannerService
+from .services.api_key_service import APIKeyService
 from .services.auth_service import AuthService
 from .auth import (
     get_current_active_user, require_permission, require_permissions, require_admin,
@@ -1005,6 +1006,100 @@ def sync_scanners_with_settings(db: Session = Depends(get_db)):
     """Sync scanner configurations with the Settings table."""
     service = ScannerService(db)
     return service.sync_with_settings()
+
+# API Key management routes
+@router.get("/api-keys", response_model=List[schemas.APIKey])
+@require_admin
+def list_api_keys(
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """List API keys with optional filtering."""
+    service = APIKeyService(db)
+    return service.get_api_keys(skip=skip, limit=limit, is_active=is_active, search=search)
+
+@router.post("/api-keys", response_model=schemas.APIKeyWithSecret)
+@require_admin
+def create_api_key(
+    key_data: schemas.APIKeyCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new API key."""
+    service = APIKeyService(db)
+    api_key, key = service.create_api_key(key_data, current_user.id)
+    
+    # Return the API key with the actual key (only shown once)
+    return schemas.APIKeyWithSecret(
+        **api_key.__dict__,
+        key=key
+    )
+
+@router.get("/api-keys/{key_id}", response_model=schemas.APIKey)
+@require_admin
+def get_api_key(key_id: int, db: Session = Depends(get_db)):
+    """Get an API key by ID."""
+    service = APIKeyService(db)
+    api_key = service.get_api_key(key_id)
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    return api_key
+
+@router.put("/api-keys/{key_id}", response_model=schemas.APIKey)
+@require_admin
+def update_api_key(
+    key_id: int,
+    key_data: schemas.APIKeyUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update an API key."""
+    service = APIKeyService(db)
+    api_key = service.update_api_key(key_id, key_data)
+    if not api_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    return api_key
+
+@router.delete("/api-keys/{key_id}")
+@require_admin
+def delete_api_key(key_id: int, db: Session = Depends(get_db)):
+    """Delete an API key."""
+    service = APIKeyService(db)
+    if not service.delete_api_key(key_id):
+        raise HTTPException(status_code=404, detail="API key not found")
+    return {"message": "API key deleted successfully"}
+
+@router.post("/api-keys/{key_id}/revoke")
+@require_admin
+def revoke_api_key(key_id: int, db: Session = Depends(get_db)):
+    """Revoke an API key."""
+    service = APIKeyService(db)
+    if not service.revoke_api_key(key_id):
+        raise HTTPException(status_code=404, detail="API key not found")
+    return {"message": "API key revoked successfully"}
+
+@router.post("/api-keys/{key_id}/regenerate", response_model=schemas.APIKeyWithSecret)
+@require_admin
+def regenerate_api_key(key_id: int, db: Session = Depends(get_db)):
+    """Regenerate an API key."""
+    service = APIKeyService(db)
+    try:
+        api_key, key = service.regenerate_api_key(key_id)
+        return schemas.APIKeyWithSecret(
+            **api_key.__dict__,
+            key=key
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+@router.get("/api-keys/statistics")
+@require_admin
+def get_api_key_statistics(db: Session = Depends(get_db)):
+    """Get API key statistics."""
+    service = APIKeyService(db)
+    return service.get_api_key_statistics()
 
 # Credential routes
 @router.get("/credentials", response_model=List[schemas.Credential])

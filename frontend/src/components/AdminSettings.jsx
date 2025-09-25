@@ -91,6 +91,19 @@ const AdminSettings = () => {
   const [selectedScannerForTroubleshoot, setSelectedScannerForTroubleshoot] = useState(null);
   const [troubleshootResults, setTroubleshootResults] = useState({});
 
+  // API Key management state
+  const [apiKeys, setApiKeys] = useState([]);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [editingApiKey, setEditingApiKey] = useState(null);
+  const [apiKeyForm, setApiKeyForm] = useState({
+    name: '',
+    description: '',
+    permissions: ['scanner:read', 'scanner:write'],
+    expires_at: '',
+    is_active: true
+  });
+  const [newApiKey, setNewApiKey] = useState(null);
+
   // LDAP configuration state
   const [ldapConfigs, setLdapConfigs] = useState([]);
   const [showLDAPModal, setShowLDAPModal] = useState(false);
@@ -140,6 +153,7 @@ const AdminSettings = () => {
       loadLDAPConfigs();
       loadIPRanges();
       fetchSatelliteScanners();
+      fetchApiKeys();
     }
   }, [hasPermission]);
 
@@ -563,6 +577,120 @@ const AdminSettings = () => {
     runTroubleshootDiagnostics(scanner.id);
   };
 
+  // API Key management functions
+  const fetchApiKeys = async () => {
+    try {
+      const response = await fetch('/api/v2/api-keys', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const keys = await response.json();
+        setApiKeys(keys);
+      }
+    } catch (error) {
+      console.error('Failed to fetch API keys:', error);
+    }
+  };
+
+  const createApiKey = async () => {
+    try {
+      const response = await fetch('/api/v2/api-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(apiKeyForm)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to create API key');
+      }
+
+      const result = await response.json();
+      setNewApiKey(result);
+      setStatusMessage('API key created successfully');
+      setTimeout(() => setStatusMessage(null), 3000);
+      fetchApiKeys();
+    } catch (error) {
+      console.error('Failed to create API key:', error);
+      setStatusMessage('Failed to create API key: ' + error.message);
+      setTimeout(() => setStatusMessage(null), 5000);
+    }
+  };
+
+  const deleteApiKey = async (keyId) => {
+    if (window.confirm('Are you sure you want to delete this API key?')) {
+      try {
+        const response = await fetch(`/api/v2/api-keys/${keyId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to delete API key');
+        }
+
+        setStatusMessage('API key deleted successfully');
+        setTimeout(() => setStatusMessage(null), 3000);
+        fetchApiKeys();
+      } catch (error) {
+        console.error('Failed to delete API key:', error);
+        setStatusMessage('Failed to delete API key: ' + error.message);
+        setTimeout(() => setStatusMessage(null), 5000);
+      }
+    }
+  };
+
+  const revokeApiKey = async (keyId) => {
+    if (window.confirm('Are you sure you want to revoke this API key?')) {
+      try {
+        const response = await fetch(`/api/v2/api-keys/${keyId}/revoke`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to revoke API key');
+        }
+
+        setStatusMessage('API key revoked successfully');
+        setTimeout(() => setStatusMessage(null), 3000);
+        fetchApiKeys();
+      } catch (error) {
+        console.error('Failed to revoke API key:', error);
+        setStatusMessage('Failed to revoke API key: ' + error.message);
+        setTimeout(() => setStatusMessage(null), 5000);
+      }
+    }
+  };
+
+  const resetApiKeyForm = () => {
+    setApiKeyForm({
+      name: '',
+      description: '',
+      permissions: ['scanner:read', 'scanner:write'],
+      expires_at: '',
+      is_active: true
+    });
+    setEditingApiKey(null);
+    setNewApiKey(null);
+  };
+
+  const closeApiKeyModal = () => {
+    setShowApiKeyModal(false);
+    resetApiKeyForm();
+  };
+
   const resetScannerForm = () => {
     setScannerForm({
       name: '',
@@ -813,6 +941,7 @@ const AdminSettings = () => {
             <TabsTrigger value="ip-ranges">IP Ranges</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
+            <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           </TabsList>
 
           {/* System Settings Tab */}
@@ -1570,6 +1699,93 @@ const AdminSettings = () => {
             </Card>
           </TabsContent>
 
+          {/* API Keys Tab */}
+          <TabsContent value="api-keys" className="space-y-6">
+            <Card className="surface-elevated">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-subheading text-foreground flex items-center">
+                      <span className="mr-2">🔑</span>
+                      API Key Management
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Manage API keys for satellite scanners and external integrations
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowApiKeyModal(true)}>
+                    Generate New API Key
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {apiKeys.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">🔑</div>
+                    <h3 className="text-subheading text-foreground mb-2">No API Keys</h3>
+                    <p className="text-body text-muted-foreground mb-4">
+                      Generate API keys to enable satellite scanner authentication and external integrations.
+                    </p>
+                    <Button onClick={() => setShowApiKeyModal(true)}>
+                      Generate Your First API Key
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {apiKeys.map((key) => (
+                      <div key={key.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="text-subheading text-foreground">{key.name}</h3>
+                            <Badge className={key.is_active ? 'bg-success text-success-foreground' : 'bg-error text-error-foreground'}>
+                              {key.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                          <p className="text-body text-muted-foreground mb-2">{key.description}</p>
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <span>Prefix: {key.key_prefix}...</span>
+                            <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
+                            {key.last_used && (
+                              <span>Last Used: {new Date(key.last_used).toLocaleDateString()}</span>
+                            )}
+                            {key.expires_at && (
+                              <span>Expires: {new Date(key.expires_at).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                          <div className="mt-2">
+                            <span className="text-xs text-muted-foreground">Permissions: </span>
+                            {key.permissions?.map((perm, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs mr-1">
+                                {perm}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => revokeApiKey(key.id)}
+                            disabled={!key.is_active}
+                          >
+                            {key.is_active ? 'Revoke' : 'Revoked'}
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => deleteApiKey(key.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
         </Tabs>
       </div>
 
@@ -2230,6 +2446,133 @@ const AdminSettings = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* API Key Modal */}
+      <Modal
+        isOpen={showApiKeyModal}
+        onClose={closeApiKeyModal}
+        title={editingApiKey ? 'Edit API Key' : 'Generate New API Key'}
+      >
+        <div className="space-y-4">
+          {newApiKey ? (
+            // Show the generated API key
+            <div className="space-y-4">
+              <div className="p-4 bg-success/10 border border-success/20 rounded-md">
+                <div className="flex items-center mb-2">
+                  <span className="text-success mr-2">✅</span>
+                  <span className="font-medium text-success">API Key Generated Successfully!</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Copy this API key now. It will not be shown again for security reasons.
+                </p>
+                <div className="bg-muted p-3 rounded border">
+                  <code className="text-sm font-mono break-all">{newApiKey.key}</code>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => navigator.clipboard.writeText(newApiKey.key)}
+                >
+                  📋 Copy to Clipboard
+                </Button>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button onClick={closeApiKeyModal}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // Show the form
+            <div className="space-y-4">
+              <div>
+                <label className="block text-body font-medium text-foreground mb-2">
+                  API Key Name *
+                </label>
+                <Input
+                  value={apiKeyForm.name}
+                  onChange={(e) => setApiKeyForm({...apiKeyForm, name: e.target.value})}
+                  placeholder="e.g., Satellite Scanner - Branch Office"
+                />
+              </div>
+              <div>
+                <label className="block text-body font-medium text-foreground mb-2">
+                  Description
+                </label>
+                <Input
+                  value={apiKeyForm.description}
+                  onChange={(e) => setApiKeyForm({...apiKeyForm, description: e.target.value})}
+                  placeholder="Optional description for this API key"
+                />
+              </div>
+              <div>
+                <label className="block text-body font-medium text-foreground mb-2">
+                  Permissions
+                </label>
+                <div className="space-y-2">
+                  {['scanner:read', 'scanner:write', 'scanner:admin'].map((perm) => (
+                    <label key={perm} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={apiKeyForm.permissions.includes(perm)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setApiKeyForm({
+                              ...apiKeyForm,
+                              permissions: [...apiKeyForm.permissions, perm]
+                            });
+                          } else {
+                            setApiKeyForm({
+                              ...apiKeyForm,
+                              permissions: apiKeyForm.permissions.filter(p => p !== perm)
+                            });
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{perm}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-body font-medium text-foreground mb-2">
+                  Expiration Date (Optional)
+                </label>
+                <Input
+                  type="datetime-local"
+                  value={apiKeyForm.expires_at}
+                  onChange={(e) => setApiKeyForm({...apiKeyForm, expires_at: e.target.value})}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Leave empty for no expiration
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={apiKeyForm.is_active}
+                  onChange={(e) => setApiKeyForm({...apiKeyForm, is_active: e.target.checked})}
+                  className="rounded"
+                />
+                <label htmlFor="is_active" className="text-sm font-medium text-foreground">
+                  Active
+                </label>
+              </div>
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button variant="outline" onClick={closeApiKeyModal}>
+                  Cancel
+                </Button>
+                <Button onClick={createApiKey} disabled={!apiKeyForm.name.trim()}>
+                  Generate API Key
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

@@ -42,6 +42,14 @@ const Dashboard = () => {
       const scannersResponse = await axios.get('/api/v2/scanners');
       setScanners(scannersResponse.data);
       
+      // Fetch satellite scanners
+      try {
+        const satelliteScannersResponse = await axios.get('/api/v2/satellite-scanners');
+        setScanners(prev => [...prev, ...satelliteScannersResponse.data]);
+      } catch (satelliteError) {
+        console.warn('Failed to fetch satellite scanners:', satelliteError);
+      }
+      
       // Fetch scanner health
       const healthResponse = await axios.get('/api/v2/scanners/health/all');
       setScannerHealth(healthResponse.data);

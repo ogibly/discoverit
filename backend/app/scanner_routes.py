@@ -42,6 +42,11 @@ def register_scanner(scanner_data: Dict[str, Any], db: Session = Depends(get_db)
         
         scanners.append(new_scanner)
         settings.scanners = scanners
+        
+        # Mark the JSON field as modified for SQLAlchemy
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(settings, 'scanners')
+        
         db.commit()
         
         return {
@@ -71,6 +76,10 @@ def scanner_heartbeat(heartbeat_data: Dict[str, Any], db: Session = Depends(get_
                     scanner["status"] = "online"
                     scanner["uptime"] = heartbeat_data.get("uptime", 0)
                     break
+            
+            # Mark the JSON field as modified for SQLAlchemy
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(settings, 'scanners')
         
         db.commit()
         return {"status": "success"}
@@ -78,7 +87,7 @@ def scanner_heartbeat(heartbeat_data: Dict[str, Any], db: Session = Depends(get_
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/scanners", response_model=List[Dict[str, Any]])
+@router.get("/satellite-scanners", response_model=List[Dict[str, Any]])
 def list_scanners(db: Session = Depends(get_db)):
     """List all registered scanners."""
     try:
@@ -164,6 +173,10 @@ def update_scanner_networks(scanner_id: str, network_data: Dict[str, Any], db: S
         
         if not scanner_found:
             raise HTTPException(status_code=404, detail="Scanner not found")
+        
+        # Mark the JSON field as modified for SQLAlchemy
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(settings, 'scanners')
         
         db.commit()
         

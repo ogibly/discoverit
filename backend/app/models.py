@@ -36,6 +36,8 @@ class User(Base):
     created_credentials = relationship("Credential", back_populates="creator")
     created_ldap_configs = relationship("LDAPConfig", back_populates="creator")
     created_api_keys = relationship("APIKey", back_populates="creator")
+    created_ip_ranges = relationship("IPRange", back_populates="creator")
+    allowed_ip_ranges = relationship("UserIPRange", foreign_keys="UserIPRange.user_id", back_populates="user")
 
 
 class Role(Base):
@@ -380,5 +382,40 @@ class AssetGroupLabelAssociation(Base):
     id = Column(Integer, primary_key=True, index=True)
     asset_group_id = Column(Integer, ForeignKey("asset_groups.id", ondelete="CASCADE"), nullable=True)
     label_id = Column(Integer, ForeignKey("labels.id", ondelete="CASCADE"), nullable=True)
+
+
+class IPRange(Base):
+    __tablename__ = "ip_ranges"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    ip_range = Column(String(100), nullable=False)
+    ip_start = Column(String(45), nullable=True)
+    ip_end = Column(String(45), nullable=True)
+    range_type = Column(String(20), default="cidr", nullable=False)
+    is_restrictive = Column(Boolean, default=True, nullable=False)
+    priority = Column(Integer, default=0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User", back_populates="created_ip_ranges")
+
+
+class UserIPRange(Base):
+    __tablename__ = "user_ip_ranges"
+    
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    ip_range_id = Column(Integer, ForeignKey("ip_ranges.id", ondelete="CASCADE"), primary_key=True)
+    granted_at = Column(DateTime, default=datetime.utcnow)
+    granted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], back_populates="allowed_ip_ranges")
+    ip_range = relationship("IPRange")
+    granter = relationship("User", foreign_keys=[granted_by])
 
 

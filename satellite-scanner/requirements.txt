@@ -1,0 +1,5 @@
+# DiscoverIT Satellite Scanner Dependencies
+# Minimal, lightweight dependencies for maximum portability
+
+requests>=2.31.0
+psutil>=5.9.0

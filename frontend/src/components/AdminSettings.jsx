@@ -422,7 +422,7 @@ const AdminSettings = () => {
   // Satellite scanner management functions
   const fetchSatelliteScanners = async () => {
     try {
-      const response = await fetch('/api/v2/scanners', {
+      const response = await fetch('/api/v2/satellite-scanners', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

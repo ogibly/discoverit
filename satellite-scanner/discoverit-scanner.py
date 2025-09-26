@@ -356,7 +356,7 @@ class DiscoverITScanner:
             }
             
             response = requests.post(
-                f"{self.config['main_instance_url']}/api/v2/scanners/register",
+                f"{self.config['main_instance_url']}/api/v2/satellite-scanners/register",
                 json=registration_data,
                 headers={"Authorization": f"Bearer {self.config['api_key']}"},
                 timeout=30
@@ -411,7 +411,7 @@ class DiscoverITScanner:
             }
             
             response = requests.post(
-                f"{self.config['main_instance_url']}/api/v2/scanners/{self.config['scanner_id']}/network-update",
+                f"{self.config['main_instance_url']}/api/v2/satellite-scanners/{self.config['scanner_id']}/network-update",
                 json=update_data,
                 headers={"Authorization": f"Bearer {self.config['api_key']}"},
                 timeout=30

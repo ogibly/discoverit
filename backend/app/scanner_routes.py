@@ -12,7 +12,7 @@ from .services.asset_service import AssetService
 
 router = APIRouter()
 
-@router.post("/scanners/register", response_model=Dict[str, Any])
+@router.post("/satellite-scanners/register", response_model=Dict[str, Any])
 def register_scanner(scanner_data: Dict[str, Any], db: Session = Depends(get_db)):
     """Register a new remote scanner."""
     try:
@@ -58,7 +58,7 @@ def register_scanner(scanner_data: Dict[str, Any], db: Session = Depends(get_db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/scanners/heartbeat")
+@router.post("/satellite-scanners/heartbeat")
 def scanner_heartbeat(heartbeat_data: Dict[str, Any], db: Session = Depends(get_db)):
     """Receive heartbeat from remote scanner."""
     try:
@@ -185,7 +185,7 @@ def get_scanner_health(scanner_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/scanners/{scanner_id}/network-update")
+@router.post("/satellite-scanners/{scanner_id}/network-update")
 def update_scanner_networks(scanner_id: str, network_data: Dict[str, Any], db: Session = Depends(get_db)):
     """Update scanner network information from satellite scanner."""
     try:

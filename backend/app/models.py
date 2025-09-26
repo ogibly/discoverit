@@ -37,6 +37,7 @@ class User(Base):
     created_ldap_configs = relationship("LDAPConfig", back_populates="creator")
     created_ip_ranges = relationship("IPRange", back_populates="creator")
     created_api_keys = relationship("APIKey", back_populates="creator")
+    allowed_ip_ranges = relationship("IPRange", secondary="user_ip_ranges", back_populates="users", primaryjoin="User.id == UserIPRange.user_id", secondaryjoin="IPRange.id == UserIPRange.ip_range_id")
 
 
 class Role(Base):
@@ -355,6 +356,7 @@ class IPRange(Base):
     
     # Relationships
     creator = relationship("User", back_populates="created_ip_ranges")
+    users = relationship("User", secondary="user_ip_ranges", back_populates="allowed_ip_ranges", primaryjoin="IPRange.id == UserIPRange.ip_range_id", secondaryjoin="User.id == UserIPRange.user_id")
 
 
 class APIKey(Base):

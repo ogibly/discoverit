@@ -1037,6 +1037,22 @@ def create_api_key(
         key=key
     )
 
+@router.post("/api-keys/{key_id}/regenerate", response_model=schemas.APIKeyWithSecret)
+def regenerate_api_key(
+    key_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Regenerate an API key with a new key value."""
+    service = APIKeyService(db)
+    api_key, new_key = service.regenerate_api_key(key_id)
+    
+    # Return the API key with the new actual key (only shown once)
+    return schemas.APIKeyWithSecret(
+        **api_key.__dict__,
+        key=new_key
+    )
+
 @router.get("/api-keys/{key_id}", response_model=schemas.APIKey)
 def get_api_key(key_id: int, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
     """Get an API key by ID."""

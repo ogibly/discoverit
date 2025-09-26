@@ -59,6 +59,25 @@ class APIKeyService:
         
         return api_key, key
 
+    def regenerate_api_key(self, key_id: int) -> tuple[APIKey, str]:
+        """Regenerate an existing API key with a new key value."""
+        api_key = self.get_api_key(key_id)
+        if not api_key:
+            raise ValueError(f"API key with ID {key_id} not found")
+        
+        # Generate new key
+        new_key, new_key_hash, new_key_prefix = self.generate_api_key()
+        
+        # Update the API key with new hash and prefix
+        api_key.key_hash = new_key_hash
+        api_key.key_prefix = new_key_prefix
+        api_key.updated_at = datetime.utcnow()
+        
+        self.db.commit()
+        self.db.refresh(api_key)
+        
+        return api_key, new_key
+
     def get_api_key(self, key_id: int) -> Optional[APIKey]:
         """Get an API key by ID."""
         return self.db.query(APIKey).filter(APIKey.id == key_id).first()

@@ -237,14 +237,14 @@ class ScanTaskUpdate(BaseModel):
 
 class ScanTask(ScanTaskBase):
     id: int
-    start_time: datetime
+    start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
-    status: str
-    progress: int
+    status: Optional[str] = None
+    progress: Optional[int] = None
     current_ip: Optional[str] = None
-    total_ips: int
-    completed_ips: int
-    discovered_devices: int = 0  # Actual devices discovered (not just IPs scanned)
+    total_ips: Optional[int] = None
+    completed_ips: Optional[int] = None
+    discovered_devices: Optional[int] = None  # Actual devices discovered (not just IPs scanned)
     error_message: Optional[str] = None
     
     class Config:

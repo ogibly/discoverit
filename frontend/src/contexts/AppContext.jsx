@@ -797,6 +797,10 @@ export function AppProvider({ children }) {
     dispatch({ type: ActionTypes.CLEAR_STATUS_MESSAGE });
   }, []);
 
+  const setStatusMessage = useCallback((message) => {
+    dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: message });
+  }, []);
+
   const refreshAllData = useCallback(() => {
     // Refresh all data after authentication
     fetchAssets();
@@ -967,6 +971,7 @@ export function AppProvider({ children }) {
     // UI actions
     setModal,
     closeModal,
+    setStatusMessage,
     clearStatusMessage,
     refreshAllData,
     

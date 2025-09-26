@@ -14,6 +14,7 @@ import PageHeader from './PageHeader';
 const AdminSettings = () => {
   const { 
     statusMessage, 
+    setStatusMessage,
     clearStatusMessage,
     fetchSettings: fetchSettingsAPI,
     updateSettings: updateSettingsAPI,
@@ -580,14 +581,21 @@ const AdminSettings = () => {
   // API Key management functions
   const fetchApiKeys = async () => {
     try {
+      console.log('Fetching API keys...');
       const response = await fetch('/api/v2/api-keys', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      console.log('API keys response status:', response.status);
       if (response.ok) {
         const keys = await response.json();
+        console.log('API keys received:', keys);
         setApiKeys(keys);
+      } else {
+        console.error('API keys fetch failed with status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
       }
     } catch (error) {
       console.error('Failed to fetch API keys:', error);
@@ -675,6 +683,34 @@ const AdminSettings = () => {
       } catch (error) {
         console.error('Failed to revoke API key:', error);
         setStatusMessage('Failed to revoke API key: ' + error.message);
+        setTimeout(() => setStatusMessage(null), 5000);
+      }
+    }
+  };
+
+  const regenerateApiKey = async (keyId) => {
+    if (window.confirm('Are you sure you want to regenerate this API key? The old key will no longer work.')) {
+      try {
+        const response = await fetch(`/api/v2/api-keys/${keyId}/regenerate`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to regenerate API key');
+        }
+
+        const result = await response.json();
+        setNewApiKey(result);
+        setStatusMessage('API key regenerated successfully');
+        setTimeout(() => setStatusMessage(null), 3000);
+        fetchApiKeys();
+      } catch (error) {
+        console.error('Failed to regenerate API key:', error);
+        setStatusMessage('Failed to regenerate API key: ' + error.message);
         setTimeout(() => setStatusMessage(null), 5000);
       }
     }
@@ -1777,6 +1813,14 @@ const AdminSettings = () => {
                             {key.is_active ? 'Revoke' : 'Revoked'}
                           </Button>
                           <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => regenerateApiKey(key.id)}
+                            disabled={!key.is_active}
+                          >
+                            🔄 Regenerate
+                          </Button>
+                          <Button 
                             variant="destructive" 
                             size="sm" 
                             onClick={() => deleteApiKey(key.id)}
@@ -2479,7 +2523,31 @@ const AdminSettings = () => {
                   variant="outline" 
                   size="sm" 
                   className="mt-2"
-                  onClick={() => navigator.clipboard.writeText(newApiKey.key)}
+                  onClick={async () => {
+                    try {
+                      // Try modern clipboard API first
+                      if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(newApiKey.key);
+                        setStatusMessage('API key copied to clipboard!');
+                      } else {
+                        // Fallback for older browsers or non-HTTPS contexts
+                        const textArea = document.createElement('textarea');
+                        textArea.value = newApiKey.key;
+                        textArea.style.position = 'fixed';
+                        textArea.style.left = '-999999px';
+                        textArea.style.top = '-999999px';
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        setStatusMessage('API key copied to clipboard!');
+                      }
+                    } catch (error) {
+                      console.error('Failed to copy to clipboard:', error);
+                      setStatusMessage('Failed to copy to clipboard. Please copy manually.');
+                    }
+                  }}
                 >
                   📋 Copy to Clipboard
                 </Button>

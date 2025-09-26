@@ -142,6 +142,49 @@ def get_scanner_status(scanner_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/satellite-scanners/{scanner_id}/health")
+def get_scanner_health(scanner_id: str, db: Session = Depends(get_db)):
+    """Get health status of a specific satellite scanner."""
+    try:
+        service = AssetService(db)
+        settings = service.get_settings()
+        if not settings or not settings.scanners:
+            raise HTTPException(status_code=404, detail="Scanner not found")
+        
+        for scanner in settings.scanners:
+            if scanner.get("id") == scanner_id:
+                # Calculate health based on last heartbeat
+                last_heartbeat = scanner.get("last_heartbeat")
+                status = scanner.get("status", "unknown")
+                is_active = scanner.get("is_active", False)
+                
+                # Determine health status
+                if not is_active:
+                    health_status = "inactive"
+                elif status == "online":
+                    health_status = "healthy"
+                elif status == "offline":
+                    health_status = "unhealthy"
+                else:
+                    health_status = "unknown"
+                
+                return {
+                    "scanner_id": scanner_id,
+                    "name": scanner.get("name"),
+                    "url": scanner.get("url"),
+                    "status": health_status,
+                    "last_heartbeat": last_heartbeat,
+                    "uptime": scanner.get("uptime", 0),
+                    "is_active": is_active,
+                    "network_info": scanner.get("network_info", {}),
+                    "dynamic_network_monitoring": scanner.get("dynamic_network_monitoring", False)
+                }
+        
+        raise HTTPException(status_code=404, detail="Scanner not found")
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/scanners/{scanner_id}/network-update")
 def update_scanner_networks(scanner_id: str, network_data: Dict[str, Any], db: Session = Depends(get_db)):
     """Update scanner network information from satellite scanner."""

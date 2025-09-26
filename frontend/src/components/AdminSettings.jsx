@@ -438,7 +438,13 @@ const AdminSettings = () => {
 
   const checkScannerHealth = async (scannerId) => {
     try {
-      const response = await fetch(`/api/v2/scanners/${scannerId}/health`, {
+      // Check if this is a satellite scanner (has an 'id' field that starts with 'scanner_')
+      const isSatelliteScanner = satelliteScanners.some(s => s.id === scannerId);
+      const endpoint = isSatelliteScanner 
+        ? `/api/v2/satellite-scanners/${scannerId}/health`
+        : `/api/v2/scanners/${scannerId}/health`;
+      
+      const response = await fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -1424,7 +1430,7 @@ const AdminSettings = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {scannerConfigs.length === 0 ? (
+                {satelliteScanners.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-4">🛰️</div>
                     <h3 className="text-subheading text-foreground mb-2">No Satellite Scanners</h3>
@@ -1437,7 +1443,7 @@ const AdminSettings = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {scannerConfigs.map((config) => {
+                    {satelliteScanners.map((config) => {
                       const health = scannerHealth[config.id];
                       const networkInfo = scannerNetworkInfo[config.id];
                       const isHealthy = health?.status === 'healthy';

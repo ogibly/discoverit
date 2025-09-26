@@ -30,10 +30,6 @@ const AdminSettings = () => {
     deleteLDAPConfig,
     testLDAPConnection,
     syncLDAPUsers,
-    fetchIPRanges,
-    createIPRange,
-    updateIPRange,
-    deleteIPRange
   } = useApp();
   const { hasPermission } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -122,19 +118,6 @@ const AdminSettings = () => {
     is_active: true
   });
 
-  // IP Range management state
-  const [ipRanges, setIpRanges] = useState([]);
-  const [showIPRangeModal, setShowIPRangeModal] = useState(false);
-  const [editingIPRange, setEditingIPRange] = useState(null);
-  const [ipRangeForm, setIpRangeForm] = useState({
-    name: '',
-    description: '',
-    ip_range: '',
-    range_type: 'cidr',
-    is_restrictive: true,
-    priority: 0,
-    is_active: true
-  });
 
   // Role management state
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -152,7 +135,6 @@ const AdminSettings = () => {
       fetchRoles();
       fetchScannerConfigsAPI();
       loadLDAPConfigs();
-      loadIPRanges();
       fetchSatelliteScanners();
       fetchApiKeys();
     }
@@ -183,20 +165,11 @@ const AdminSettings = () => {
     }
   };
 
-  // Load IP ranges
-  const loadIPRanges = async () => {
-    try {
-      const ranges = await fetchIPRanges();
-      setIpRanges(ranges);
-    } catch (error) {
-      console.error('Failed to load IP ranges:', error);
-    }
-  };
 
   // Handle tab parameter from URL
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['system', 'users', 'ldap', 'ip-ranges', 'permissions', 'scanners'].includes(tabParam)) {
+    if (tabParam && ['system', 'users', 'ldap', 'permissions', 'scanners'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -857,76 +830,6 @@ const AdminSettings = () => {
     }
   };
 
-  // IP Range management functions
-  const handleCreateIPRange = async () => {
-    try {
-      const range = await createIPRange(ipRangeForm);
-      setIpRanges([...ipRanges, range]);
-      setShowIPRangeModal(false);
-      setIpRangeForm({
-        name: '',
-        description: '',
-        ip_range: '',
-        range_type: 'cidr',
-        is_restrictive: true,
-        priority: 0,
-        is_active: true
-      });
-      alert('IP Range created successfully!');
-    } catch (error) {
-      console.error('Failed to create IP range:', error);
-      alert('Failed to create IP range: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
-  const handleEditIPRange = (range) => {
-    setEditingIPRange(range);
-    setIpRangeForm({
-      name: range.name,
-      description: range.description,
-      ip_range: range.ip_range,
-      range_type: range.range_type,
-      is_restrictive: range.is_restrictive,
-      priority: range.priority,
-      is_active: range.is_active
-    });
-    setShowIPRangeModal(true);
-  };
-
-  const handleUpdateIPRange = async () => {
-    try {
-      const range = await updateIPRange(editingIPRange.id, ipRangeForm);
-      setIpRanges(ipRanges.map(r => r.id === editingIPRange.id ? range : r));
-      setShowIPRangeModal(false);
-      setEditingIPRange(null);
-      setIpRangeForm({
-        name: '',
-        description: '',
-        ip_range: '',
-        range_type: 'cidr',
-        is_restrictive: true,
-        priority: 0,
-        is_active: true
-      });
-      alert('IP Range updated successfully!');
-    } catch (error) {
-      console.error('Failed to update IP range:', error);
-      alert('Failed to update IP range: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
-  const handleDeleteIPRange = async (rangeId) => {
-    if (confirm('Are you sure you want to delete this IP range?')) {
-      try {
-        await deleteIPRange(rangeId);
-        setIpRanges(ipRanges.filter(r => r.id !== rangeId));
-        alert('IP Range deleted successfully!');
-      } catch (error) {
-        console.error('Failed to delete IP range:', error);
-        alert('Failed to delete IP range: ' + (error.response?.data?.detail || error.message));
-      }
-    }
-  };
 
   // Role management functions (placeholder)
   const handleCreateRole = async () => {
@@ -980,7 +883,6 @@ const AdminSettings = () => {
             <TabsTrigger value="system">System Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
-            <TabsTrigger value="ip-ranges">IP Ranges</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
@@ -1368,90 +1270,6 @@ const AdminSettings = () => {
             </Card>
           </TabsContent>
 
-          {/* IP Ranges Management Tab */}
-          <TabsContent value="ip-ranges" className="space-y-6">
-            <Card className="surface-elevated">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-subheading text-foreground flex items-center">
-                      <span className="mr-2">🌐</span>
-                      IP Range Management
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Define IP ranges and assign access permissions to users
-                    </p>
-                  </div>
-                  <Button onClick={() => setShowIPRangeModal(true)}>
-                    Add IP Range
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {ipRanges.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-4">🌐</div>
-                    <h3 className="text-subheading text-foreground mb-2">IP Range Access Control</h3>
-                    <p className="text-body text-muted-foreground mb-4">
-                      Create IP ranges and control user access to specific network segments.
-                    </p>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>• CIDR notation support</p>
-                      <p>• IP range definitions</p>
-                      <p>• User access restrictions</p>
-                      <p>• Priority-based rules</p>
-                    </div>
-                    <Button onClick={() => setShowIPRangeModal(true)} className="mt-4">
-                      Create IP Range
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {ipRanges.map((range) => (
-                      <div key={range.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                            <span className="text-primary-foreground font-semibold">IP</span>
-                          </div>
-                          <div>
-                            <h3 className="text-subheading text-foreground">{range.name}</h3>
-                            <p className="text-body text-muted-foreground">{range.ip_range}</p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge className={range.is_active ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}>
-                                {range.is_active ? 'Active' : 'Inactive'}
-                              </Badge>
-                              <Badge className={range.is_restrictive ? "bg-warning text-warning-foreground" : "bg-info text-info-foreground"}>
-                                {range.is_restrictive ? 'Restrictive' : 'Permissive'}
-                              </Badge>
-                              <Badge className="bg-secondary text-secondary-foreground">
-                                Priority: {range.priority}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditIPRange(range)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteIPRange(range.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Permissions Management Tab */}
           <TabsContent value="permissions" className="space-y-6">
@@ -2031,130 +1849,6 @@ const AdminSettings = () => {
         </div>
       </Modal>
 
-      {/* IP Range Modal */}
-      <Modal
-        isOpen={showIPRangeModal}
-        onClose={() => {
-          setShowIPRangeModal(false);
-          setEditingIPRange(null);
-          setIpRangeForm({
-            name: '',
-            description: '',
-            ip_range: '',
-            range_type: 'cidr',
-            is_restrictive: true,
-            priority: 0,
-            is_active: true
-          });
-        }}
-        title={editingIPRange ? 'Edit IP Range' : 'Add IP Range'}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Range Name *
-            </label>
-            <Input
-              value={ipRangeForm.name}
-              onChange={(e) => setIpRangeForm({...ipRangeForm, name: e.target.value})}
-              placeholder="e.g., Corporate Network"
-            />
-          </div>
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Description
-            </label>
-            <Input
-              value={ipRangeForm.description}
-              onChange={(e) => setIpRangeForm({...ipRangeForm, description: e.target.value})}
-              placeholder="Description of this IP range"
-            />
-          </div>
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              IP Range *
-            </label>
-            <Input
-              value={ipRangeForm.ip_range}
-              onChange={(e) => setIpRangeForm({...ipRangeForm, ip_range: e.target.value})}
-              placeholder="e.g., 192.168.1.0/24 or 10.0.1.1-10.0.1.100"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Supports CIDR notation (192.168.1.0/24) or IP ranges (10.0.1.1-10.0.1.100)
-            </p>
-          </div>
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Range Type
-            </label>
-            <select
-              value={ipRangeForm.range_type}
-              onChange={(e) => setIpRangeForm({...ipRangeForm, range_type: e.target.value})}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
-              <option value="cidr">CIDR</option>
-              <option value="range">IP Range</option>
-              <option value="single">Single IP</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-body font-medium text-foreground mb-2">
-              Priority
-            </label>
-            <Input
-              type="number"
-              value={ipRangeForm.priority}
-              onChange={(e) => setIpRangeForm({...ipRangeForm, priority: parseInt(e.target.value) || 0})}
-              placeholder="0"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Higher numbers have higher priority (0 = lowest priority)
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ipRangeForm.is_restrictive}
-                onChange={(e) => setIpRangeForm({...ipRangeForm, is_restrictive: e.target.checked})}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              <span className="ml-3 text-sm font-medium text-foreground">Restrictive</span>
-            </label>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ipRangeForm.is_active}
-                onChange={(e) => setIpRangeForm({...ipRangeForm, is_active: e.target.checked})}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              <span className="ml-3 text-sm font-medium text-foreground">Active</span>
-            </label>
-          </div>
-        </div>
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" onClick={() => {
-            setShowIPRangeModal(false);
-            setEditingIPRange(null);
-            setIpRangeForm({
-              name: '',
-              description: '',
-              ip_range: '',
-              range_type: 'cidr',
-              is_restrictive: true,
-              priority: 0,
-              is_active: true
-            });
-          }}>
-            Cancel
-          </Button>
-          <Button onClick={editingIPRange ? handleUpdateIPRange : handleCreateIPRange}>
-            {editingIPRange ? 'Update' : 'Create'}
-          </Button>
-        </div>
-      </Modal>
 
       {/* LDAP Modal */}
       <Modal

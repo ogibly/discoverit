@@ -604,41 +604,6 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
-  // IP Range actions
-  const fetchIPRanges = useCallback(async () => {
-    try {
-      const ranges = await apiCall('/ip-ranges');
-      return ranges;
-    } catch (error) {
-      throw error;
-    }
-  }, [apiCall]);
-
-  const createIPRange = useCallback(async (rangeData) => {
-    try {
-      const range = await apiCall('/ip-ranges', { method: 'POST', data: rangeData });
-      return range;
-    } catch (error) {
-      throw error;
-    }
-  }, [apiCall]);
-
-  const updateIPRange = useCallback(async (rangeId, rangeData) => {
-    try {
-      const range = await apiCall(`/ip-ranges/${rangeId}`, { method: 'PUT', data: rangeData });
-      return range;
-    } catch (error) {
-      throw error;
-    }
-  }, [apiCall]);
-
-  const deleteIPRange = useCallback(async (rangeId) => {
-    try {
-      await apiCall(`/ip-ranges/${rangeId}`, { method: 'DELETE' });
-    } catch (error) {
-      throw error;
-    }
-  }, [apiCall]);
 
   // Scan Task actions
   const fetchScanTasks = useCallback(async () => {
@@ -942,11 +907,6 @@ export function AppProvider({ children }) {
     testLDAPConnection,
     syncLDAPUsers,
     
-    // IP Range actions
-    fetchIPRanges,
-    createIPRange,
-    updateIPRange,
-    deleteIPRange,
     
     // Scan Task actions
     fetchScanTasks,

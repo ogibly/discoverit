@@ -35,9 +35,7 @@ class User(Base):
     created_labels = relationship("Label", back_populates="creator")
     created_credentials = relationship("Credential", back_populates="creator")
     created_ldap_configs = relationship("LDAPConfig", back_populates="creator")
-    created_ip_ranges = relationship("IPRange", back_populates="creator")
     created_api_keys = relationship("APIKey", back_populates="creator")
-    allowed_ip_ranges = relationship("IPRange", secondary="user_ip_ranges", back_populates="users", primaryjoin="User.id == UserIPRange.user_id", secondaryjoin="IPRange.id == UserIPRange.ip_range_id")
 
 
 class Role(Base):
@@ -337,28 +335,6 @@ class LDAPSyncLog(Base):
     ldap_config = relationship("LDAPConfig", back_populates="sync_logs")
 
 
-class IPRange(Base):
-    __tablename__ = "ip_ranges"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True, nullable=False)
-    description = Column(Text, nullable=True)
-    ip_range = Column(String(100), nullable=False)
-    ip_start = Column(String(45), nullable=True)
-    ip_end = Column(String(45), nullable=True)
-    range_type = Column(String(20), nullable=True)
-    is_restrictive = Column(Boolean, default=False)
-    priority = Column(Integer, default=0)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
-    # Relationships
-    creator = relationship("User", back_populates="created_ip_ranges")
-    users = relationship("User", secondary="user_ip_ranges", back_populates="allowed_ip_ranges", primaryjoin="IPRange.id == UserIPRange.ip_range_id", secondaryjoin="User.id == UserIPRange.user_id")
-
-
 class APIKey(Base):
     __tablename__ = "api_keys"
     
@@ -406,16 +382,3 @@ class AssetGroupLabelAssociation(Base):
     label_id = Column(Integer, ForeignKey("labels.id", ondelete="CASCADE"), nullable=True)
 
 
-class UserIPRange(Base):
-    __tablename__ = "user_ip_ranges"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    ip_range_id = Column(Integer, ForeignKey("ip_ranges.id", ondelete="CASCADE"), nullable=False)
-    granted_at = Column(DateTime, default=datetime.utcnow)
-    granted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
-    __table_args__ = (
-        Index('ix_user_ip_ranges_user_id', 'user_id'),
-        Index('ix_user_ip_ranges_ip_range_id', 'ip_range_id'),
-    )

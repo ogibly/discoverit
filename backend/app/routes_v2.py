@@ -45,17 +45,6 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Check IP restrictions
-    client_ip = request.client.host if request.client else "127.0.0.1"
-    from .services.ldap_service import IPRangeService
-    ip_service = IPRangeService(db)
-    
-    if not ip_service.check_user_ip_access(user, client_ip):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Access denied from IP address {client_ip}",
-        )
-    
     # Create access token
     access_token = auth_service.create_access_token(user.id)
     
@@ -1317,98 +1306,6 @@ def get_ldap_sync_logs(
     from .services.ldap_service import LDAPService
     service = LDAPService(db)
     return service.get_sync_logs(config_id=config_id, limit=limit)
-
-# IP Range Management routes
-@router.get("/ip-ranges", response_model=List[schemas.IPRange])
-def list_ip_ranges(
-    skip: int = 0,
-    limit: int = 100,
-    is_active: Optional[bool] = None,
-    current_user: User = Depends(require_settings_read),
-    db: Session = Depends(get_db)
-):
-    """List IP ranges."""
-    from .services.ldap_service import IPRangeService
-    service = IPRangeService(db)
-    return service.get_ip_ranges(skip=skip, limit=limit, is_active=is_active)
-
-@router.post("/ip-ranges", response_model=schemas.IPRange)
-def create_ip_range(
-    ip_range: schemas.IPRangeCreate,
-    current_user: User = Depends(require_settings_write),
-    db: Session = Depends(get_db)
-):
-    """Create a new IP range."""
-    from .services.ldap_service import IPRangeService
-    service = IPRangeService(db)
-    return service.create_ip_range(ip_range.dict(), current_user.id)
-
-@router.get("/ip-ranges/{range_id}", response_model=schemas.IPRange)
-def get_ip_range(
-    range_id: int,
-    current_user: User = Depends(require_settings_read),
-    db: Session = Depends(get_db)
-):
-    """Get IP range by ID."""
-    from .services.ldap_service import IPRangeService
-    service = IPRangeService(db)
-    ip_range = service.get_ip_range(range_id)
-    if not ip_range:
-        raise HTTPException(status_code=404, detail="IP range not found")
-    return ip_range
-
-@router.put("/ip-ranges/{range_id}", response_model=schemas.IPRange)
-def update_ip_range(
-    range_id: int,
-    ip_range: schemas.IPRangeUpdate,
-    current_user: User = Depends(require_settings_write),
-    db: Session = Depends(get_db)
-):
-    """Update IP range."""
-    from .services.ldap_service import IPRangeService
-    service = IPRangeService(db)
-    updated_range = service.update_ip_range(range_id, ip_range.dict(exclude_unset=True))
-    if not updated_range:
-        raise HTTPException(status_code=404, detail="IP range not found")
-    return updated_range
-
-@router.delete("/ip-ranges/{range_id}")
-def delete_ip_range(
-    range_id: int,
-    current_user: User = Depends(require_settings_write),
-    db: Session = Depends(get_db)
-):
-    """Delete IP range."""
-    from .services.ldap_service import IPRangeService
-    service = IPRangeService(db)
-    if not service.delete_ip_range(range_id):
-        raise HTTPException(status_code=404, detail="IP range not found")
-
-@router.post("/users/{user_id}/ip-ranges/{range_id}")
-def assign_ip_range_to_user(
-    user_id: int,
-    range_id: int,
-    current_user: User = Depends(require_users_write),
-    db: Session = Depends(get_db)
-):
-    """Assign IP range to user."""
-    from .services.ldap_service import IPRangeService
-    service = IPRangeService(db)
-    if not service.assign_ip_range_to_user(user_id, range_id, current_user.id):
-        raise HTTPException(status_code=404, detail="User or IP range not found")
-
-@router.delete("/users/{user_id}/ip-ranges/{range_id}")
-def remove_ip_range_from_user(
-    user_id: int,
-    range_id: int,
-    current_user: User = Depends(require_users_write),
-    db: Session = Depends(get_db)
-):
-    """Remove IP range from user."""
-    from .services.ldap_service import IPRangeService
-    service = IPRangeService(db)
-    if not service.remove_ip_range_from_user(user_id, range_id):
-        raise HTTPException(status_code=404, detail="User or IP range not found")
 
 @router.get("/health")
 def health_check():

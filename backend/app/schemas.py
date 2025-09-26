@@ -609,41 +609,6 @@ class LDAPConfig(LDAPConfigBase):
     class Config:
         from_attributes = True
 
-# IP Range Schemas
-class IPRangeBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    ip_range: str = Field(..., min_length=1, max_length=100)
-    ip_start: Optional[str] = None
-    ip_end: Optional[str] = None
-    range_type: str = Field(default="cidr", pattern="^(cidr|range|single)$")
-    is_restrictive: bool = True
-    priority: int = Field(default=0, ge=0, le=1000)
-    is_active: bool = True
-
-class IPRangeCreate(IPRangeBase):
-    pass
-
-class IPRangeUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    ip_range: Optional[str] = Field(None, min_length=1, max_length=100)
-    ip_start: Optional[str] = None
-    ip_end: Optional[str] = None
-    range_type: Optional[str] = Field(None, pattern="^(cidr|range|single)$")
-    is_restrictive: Optional[bool] = None
-    priority: Optional[int] = Field(None, ge=0, le=1000)
-    is_active: Optional[bool] = None
-
-class IPRange(IPRangeBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    created_by: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
-
 # LDAP Sync Log Schema
 class LDAPSyncLog(BaseModel):
     id: int
@@ -659,16 +624,6 @@ class LDAPSyncLog(BaseModel):
     errors_count: int
     error_message: Optional[str] = None
     error_details: Optional[Dict[str, Any]] = None
-    
-    class Config:
-        from_attributes = True
-
-# User IP Range Assignment Schema
-class UserIPRangeAssignment(BaseModel):
-    user_id: int
-    ip_range_id: int
-    granted_at: datetime
-    granted_by: Optional[int] = None
     
     class Config:
         from_attributes = True

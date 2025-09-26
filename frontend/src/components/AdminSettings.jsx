@@ -468,13 +468,15 @@ const AdminSettings = () => {
       const scanner = satelliteScanners.find(s => s.id === scannerId);
       if (!scanner) return;
 
-      const response = await fetch(`${scanner.url}/network-info`, {
+      // Get network info from the backend instead of directly from the scanner
+      const response = await fetch(`/api/v2/satellite-scanners/${scannerId}/health`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       if (response.ok) {
-        const networkInfo = await response.json();
+        const healthData = await response.json();
+        const networkInfo = healthData.network_info || {};
         setScannerNetworkInfo(prev => ({ ...prev, [scannerId]: networkInfo }));
         return networkInfo;
       }
@@ -517,16 +519,17 @@ const AdminSettings = () => {
       const scanner = satelliteScanners.find(s => s.id === scannerId);
       if (!scanner) return;
 
-      const response = await fetch(`${scanner.url}/logs?lines=${lines}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (response.ok) {
-        const logs = await response.json();
-        setScannerLogs(prev => ({ ...prev, [scannerId]: logs }));
-        return logs;
-      }
+      // Satellite scanners don't provide HTTP log endpoints
+      // Show a message that logs are not available via web interface
+      const logs = {
+        message: "Logs are not available via web interface for satellite scanners.",
+        note: "Check the satellite scanner's local log files or console output for detailed logs.",
+        last_heartbeat: scanner.last_heartbeat,
+        status: scanner.status
+      };
+      
+      setScannerLogs(prev => ({ ...prev, [scannerId]: logs }));
+      return logs;
     } catch (error) {
       console.error('Failed to get scanner logs:', error);
       setScannerLogs(prev => ({ 

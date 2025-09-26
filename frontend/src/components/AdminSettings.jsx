@@ -438,11 +438,38 @@ const AdminSettings = () => {
 
   const checkScannerHealth = async (scannerId) => {
     try {
+      // Skip health check if scannerId is undefined or null
+      if (!scannerId) {
+        console.warn('Skipping health check for scanner with undefined ID');
+        return;
+      }
+
+      // Find the scanner to check if it has a real ID
+      const scanner = satelliteScanners.find(s => (s.id || s.name) === scannerId);
+      if (!scanner) {
+        console.warn('Scanner not found for health check:', scannerId);
+        return;
+      }
+
+      // Only check health for scanners that have a real ID (satellite scanners)
+      if (!scanner.id) {
+        // For scanners without ID (like Default Scanner), show a simple status
+        const health = {
+          scanner_id: scannerId,
+          name: scanner.name,
+          url: scanner.url,
+          status: 'default',
+          message: 'Default scanner - health monitoring not available'
+        };
+        setScannerHealth(prev => ({ ...prev, [scannerId]: health }));
+        return health;
+      }
+
       // Check if this is a satellite scanner (has an 'id' field that starts with 'scanner_')
-      const isSatelliteScanner = satelliteScanners.some(s => s.id === scannerId);
+      const isSatelliteScanner = scanner.id && scanner.id.startsWith('scanner_');
       const endpoint = isSatelliteScanner 
-        ? `/api/v2/satellite-scanners/${scannerId}/health`
-        : `/api/v2/scanners/${scannerId}/health`;
+        ? `/api/v2/satellite-scanners/${scanner.id}/health`
+        : `/api/v2/scanners/${scanner.id}/health`;
       
       const response = await fetch(endpoint, {
         headers: {
@@ -465,11 +492,28 @@ const AdminSettings = () => {
 
   const getScannerNetworkInfo = async (scannerId) => {
     try {
-      const scanner = satelliteScanners.find(s => s.id === scannerId);
+      // Skip if scannerId is undefined or null
+      if (!scannerId) {
+        console.warn('Skipping network info for scanner with undefined ID');
+        return;
+      }
+
+      const scanner = satelliteScanners.find(s => (s.id || s.name) === scannerId);
       if (!scanner) return;
 
+      // Only get network info for scanners that have a real ID (satellite scanners)
+      if (!scanner.id) {
+        // For scanners without ID (like Default Scanner), show default network info
+        const networkInfo = {
+          subnets: scanner.subnets || [],
+          message: 'Default scanner - using configured subnets'
+        };
+        setScannerNetworkInfo(prev => ({ ...prev, [scannerId]: networkInfo }));
+        return networkInfo;
+      }
+
       // Get network info from the backend instead of directly from the scanner
-      const response = await fetch(`/api/v2/satellite-scanners/${scannerId}/health`, {
+      const response = await fetch(`/api/v2/satellite-scanners/${scanner.id}/health`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -516,14 +560,23 @@ const AdminSettings = () => {
 
   const getScannerLogs = async (scannerId, lines = 100) => {
     try {
-      const scanner = satelliteScanners.find(s => s.id === scannerId);
+      // Skip if scannerId is undefined or null
+      if (!scannerId) {
+        console.warn('Skipping logs for scanner with undefined ID');
+        return;
+      }
+
+      const scanner = satelliteScanners.find(s => (s.id || s.name) === scannerId);
       if (!scanner) return;
 
-      // Satellite scanners don't provide HTTP log endpoints
-      // Show a message that logs are not available via web interface
+      // Show appropriate message based on scanner type
       const logs = {
-        message: "Logs are not available via web interface for satellite scanners.",
-        note: "Check the satellite scanner's local log files or console output for detailed logs.",
+        message: scanner.id 
+          ? "Logs are not available via web interface for satellite scanners."
+          : "Logs are not available via web interface for default scanners.",
+        note: scanner.id 
+          ? "Check the satellite scanner's local log files or console output for detailed logs."
+          : "Check the main DiscoverIT backend logs for default scanner activity.",
         last_heartbeat: scanner.last_heartbeat,
         status: scanner.status
       };
@@ -1447,8 +1500,10 @@ const AdminSettings = () => {
                 ) : (
                   <div className="space-y-4">
                     {satelliteScanners.map((config) => {
-                      const health = scannerHealth[config.id];
-                      const networkInfo = scannerNetworkInfo[config.id];
+                      // Use ID if available, otherwise use name as fallback identifier
+                      const scannerId = config.id || config.name;
+                      const health = scannerHealth[scannerId];
+                      const networkInfo = scannerNetworkInfo[scannerId];
                       const isHealthy = health?.status === 'healthy';
                       
                       return (
@@ -1481,7 +1536,7 @@ const AdminSettings = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                onClick={() => checkScannerHealth(config.id)}
+                                onClick={() => checkScannerHealth(scannerId)}
                                 disabled={!config.is_active}
                               >
                                 🔍 Health
@@ -1489,7 +1544,7 @@ const AdminSettings = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                onClick={() => getScannerNetworkInfo(config.id)}
+                                onClick={() => getScannerNetworkInfo(scannerId)}
                                 disabled={!config.is_active}
                               >
                                 🌐 Networks
@@ -1505,7 +1560,7 @@ const AdminSettings = () => {
                               <Button variant="outline" size="sm" onClick={() => handleEditScanner(config)}>
                                 Edit
                               </Button>
-                              <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(config.id)}>
+                              <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(scannerId)}>
                                 Delete
                               </Button>
                             </div>
@@ -1531,7 +1586,7 @@ const AdminSettings = () => {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  onClick={() => refreshScannerNetworks(config.id)}
+                                  onClick={() => refreshScannerNetworks(scannerId)}
                                   className="h-6 px-2 text-xs"
                                 >
                                   🔄 Refresh

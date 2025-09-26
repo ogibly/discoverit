@@ -89,8 +89,8 @@ const Login = () => {
           <div className="bg-muted/30 border border-border rounded-md p-4">
             <h3 className="text-sm font-medium text-foreground mb-2">Demo Credentials</h3>
             <div className="text-xs text-muted-foreground space-y-1">
-              <div><strong>Admin:</strong> admin / admin123</div>
-              <div><strong>User:</strong> user / user123</div>
+              <div><strong>Admin:</strong> admin / admin</div>
+              <div><strong>User:</strong> user / user</div>
             </div>
           </div>
         </div>

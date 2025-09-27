@@ -18,6 +18,7 @@ import ScansTracker from './discovery/ScansTracker';
 import ScanResultsModal from './discovery/ScanResultsModal';
 import ScanNotifications from './discovery/ScanNotifications';
 import DiscoveryWizard from './discovery/DiscoveryWizard';
+import SatelliteScannerDashboard from './scanners/SatelliteScannerDashboard';
 import { 
   Zap, 
   Target, 
@@ -26,7 +27,8 @@ import {
   BarChart3,
   Clock,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Satellite
 } from 'lucide-react';
 // Removed useScanUpdates import - using AppContext polling instead
 
@@ -61,6 +63,7 @@ const Discovery = () => {
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedScanTask, setSelectedScanTask] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [showSatelliteDashboard, setShowSatelliteDashboard] = useState(false);
   const [discoveryMode, setDiscoveryMode] = useState('wizard'); // 'wizard' or 'quick'
 
   // Step definitions
@@ -553,6 +556,14 @@ const Discovery = () => {
             
             <div className="flex items-center space-x-2">
               <Button
+                variant="outline"
+                onClick={() => setShowSatelliteDashboard(true)}
+                className="flex items-center space-x-2"
+              >
+                <Satellite className="w-4 h-4" />
+                <span>Manage Scanners</span>
+              </Button>
+              <Button
                 onClick={() => setShowWizard(true)}
                 className="flex items-center space-x-2"
               >
@@ -639,6 +650,13 @@ const Discovery = () => {
         <DiscoveryWizard
           onComplete={handleWizardComplete}
           onCancel={() => setShowWizard(false)}
+        />
+      )}
+
+      {/* Satellite Scanner Dashboard Modal */}
+      {showSatelliteDashboard && (
+        <SatelliteScannerDashboard
+          onClose={() => setShowSatelliteDashboard(false)}
         />
       )}
     </div>

@@ -1,10 +1,11 @@
 """
 Database models for DiscoverIT application.
 """
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Index
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Index, Float, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
+import enum
 from .database import Base
 
 
@@ -417,5 +418,231 @@ class UserIPRange(Base):
     user = relationship("User", foreign_keys=[user_id], back_populates="allowed_ip_ranges")
     ip_range = relationship("IPRange")
     granter = relationship("User", foreign_keys=[granted_by])
+
+
+# Enterprise Enhancement Models
+
+class ScanTemplate(Base):
+    """Predefined scan configurations for different scenarios."""
+    __tablename__ = "scan_templates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    scan_config = Column(JSON, nullable=False)  # Complete scan configuration
+    scan_type = Column(String(50), nullable=False)  # quick, standard, comprehensive, custom
+    is_system = Column(Boolean, default=False)  # System templates vs user templates
+    is_active = Column(Boolean, default=True)
+    usage_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User")
+
+
+class AssetTemplate(Base):
+    """Predefined asset templates for different device types."""
+    __tablename__ = "asset_templates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    device_type = Column(String(100), nullable=False)  # server, workstation, switch, router, etc.
+    template_data = Column(JSON, nullable=False)  # Asset field defaults and structure
+    custom_fields_schema = Column(JSON, nullable=True)  # Custom field definitions
+    auto_apply_rules = Column(JSON, nullable=True)  # Rules for auto-applying this template
+    is_system = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    usage_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User")
+
+
+class AuditLog(Base):
+    """Comprehensive audit logging for compliance and security."""
+    __tablename__ = "audit_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    action = Column(String(100), nullable=False, index=True)  # CREATE, UPDATE, DELETE, LOGIN, etc.
+    resource_type = Column(String(50), nullable=False, index=True)  # asset, scan, user, etc.
+    resource_id = Column(Integer, nullable=True, index=True)
+    resource_name = Column(String(255), nullable=True)
+    details = Column(JSON, nullable=True)  # Additional context and changes
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    success = Column(Boolean, default=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    # Relationships
+    user = relationship("User")
+
+
+class Webhook(Base):
+    """Webhook configurations for external integrations."""
+    __tablename__ = "webhooks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    url = Column(String(500), nullable=False)
+    events = Column(JSON, nullable=False)  # List of events to trigger webhook
+    secret = Column(String(255), nullable=True)  # Webhook secret for verification
+    is_active = Column(Boolean, default=True)
+    retry_count = Column(Integer, default=3)
+    timeout_seconds = Column(Integer, default=30)
+    last_triggered = Column(DateTime, nullable=True)
+    success_count = Column(Integer, default=0)
+    failure_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User")
+
+
+class WebhookDelivery(Base):
+    """Webhook delivery attempts and results."""
+    __tablename__ = "webhook_deliveries"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    webhook_id = Column(Integer, ForeignKey("webhooks.id", ondelete="CASCADE"), nullable=False)
+    event_type = Column(String(100), nullable=False)
+    payload = Column(JSON, nullable=False)
+    response_status = Column(Integer, nullable=True)
+    response_body = Column(Text, nullable=True)
+    success = Column(Boolean, default=False)
+    error_message = Column(Text, nullable=True)
+    attempt_count = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    delivered_at = Column(DateTime, nullable=True)
+    
+    # Relationships
+    webhook = relationship("Webhook")
+
+
+class NetworkTopology(Base):
+    """Network topology and device relationships."""
+    __tablename__ = "network_topology"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    source_asset_id = Column(Integer, ForeignKey("assets.id", ondelete="CASCADE"), nullable=False)
+    target_asset_id = Column(Integer, ForeignKey("assets.id", ondelete="CASCADE"), nullable=False)
+    relationship_type = Column(String(50), nullable=False)  # connected_to, depends_on, etc.
+    connection_details = Column(JSON, nullable=True)  # Port, protocol, etc.
+    discovered_at = Column(DateTime, default=datetime.utcnow)
+    last_verified = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    source_asset = relationship("Asset", foreign_keys=[source_asset_id])
+    target_asset = relationship("Asset", foreign_keys=[target_asset_id])
+
+
+class AssetMetric(Base):
+    """Asset performance and health metrics."""
+    __tablename__ = "asset_metrics"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    asset_id = Column(Integer, ForeignKey("assets.id", ondelete="CASCADE"), nullable=False)
+    metric_type = Column(String(50), nullable=False, index=True)  # cpu, memory, disk, network, etc.
+    metric_name = Column(String(100), nullable=False)
+    value = Column(Float, nullable=False)
+    unit = Column(String(20), nullable=True)  # %, MB, GB, etc.
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    metadata = Column(JSON, nullable=True)  # Additional metric context
+    
+    # Relationships
+    asset = relationship("Asset")
+
+
+class ComplianceRule(Base):
+    """Compliance rules and policies."""
+    __tablename__ = "compliance_rules"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    rule_type = Column(String(50), nullable=False)  # security, configuration, inventory, etc.
+    framework = Column(String(100), nullable=True)  # SOX, HIPAA, PCI-DSS, etc.
+    rule_definition = Column(JSON, nullable=False)  # Rule logic and conditions
+    severity = Column(String(20), default="medium")  # low, medium, high, critical
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User")
+
+
+class ComplianceCheck(Base):
+    """Compliance check results."""
+    __tablename__ = "compliance_checks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    rule_id = Column(Integer, ForeignKey("compliance_rules.id", ondelete="CASCADE"), nullable=False)
+    asset_id = Column(Integer, ForeignKey("assets.id", ondelete="CASCADE"), nullable=True)
+    asset_group_id = Column(Integer, ForeignKey("asset_groups.id", ondelete="CASCADE"), nullable=True)
+    status = Column(String(20), nullable=False)  # pass, fail, warning, error
+    details = Column(JSON, nullable=True)  # Check results and evidence
+    checked_at = Column(DateTime, default=datetime.utcnow, index=True)
+    checked_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    rule = relationship("ComplianceRule")
+    asset = relationship("Asset")
+    asset_group = relationship("AssetGroup")
+    checker = relationship("User")
+
+
+class NotificationRule(Base):
+    """Notification rules for events and alerts."""
+    __tablename__ = "notification_rules"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    event_types = Column(JSON, nullable=False)  # List of events to monitor
+    conditions = Column(JSON, nullable=True)  # Additional conditions
+    notification_methods = Column(JSON, nullable=False)  # email, webhook, in-app, etc.
+    recipients = Column(JSON, nullable=False)  # User IDs, email addresses, etc.
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    creator = relationship("User")
+
+
+class Notification(Base):
+    """Notification delivery records."""
+    __tablename__ = "notifications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    rule_id = Column(Integer, ForeignKey("notification_rules.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    event_type = Column(String(100), nullable=False)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    notification_method = Column(String(50), nullable=False)
+    status = Column(String(20), default="pending")  # pending, sent, failed, read
+    sent_at = Column(DateTime, nullable=True)
+    read_at = Column(DateTime, nullable=True)
+    error_message = Column(Text, nullable=True)
+    metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    # Relationships
+    rule = relationship("NotificationRule")
+    user = relationship("User")
 
 

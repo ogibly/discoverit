@@ -628,6 +628,314 @@ class LDAPSyncLog(BaseModel):
     class Config:
         from_attributes = True
 
+# Enterprise Enhancement Schemas
+
+class ScanTemplateBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    scan_config: Dict[str, Any] = Field(..., description="Complete scan configuration")
+    scan_type: str = Field(..., description="quick, standard, comprehensive, custom")
+    is_system: bool = False
+
+class ScanTemplateCreate(ScanTemplateBase):
+    pass
+
+class ScanTemplateUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    scan_config: Optional[Dict[str, Any]] = None
+    scan_type: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class ScanTemplate(ScanTemplateBase):
+    id: int
+    is_active: bool
+    usage_count: int
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class AssetTemplateBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    device_type: str = Field(..., description="server, workstation, switch, router, etc.")
+    template_data: Dict[str, Any] = Field(..., description="Asset field defaults and structure")
+    custom_fields_schema: Optional[Dict[str, Any]] = None
+    auto_apply_rules: Optional[Dict[str, Any]] = None
+    is_system: bool = False
+
+class AssetTemplateCreate(AssetTemplateBase):
+    pass
+
+class AssetTemplateUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    device_type: Optional[str] = None
+    template_data: Optional[Dict[str, Any]] = None
+    custom_fields_schema: Optional[Dict[str, Any]] = None
+    auto_apply_rules: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+class AssetTemplate(AssetTemplateBase):
+    id: int
+    is_active: bool
+    usage_count: int
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class AuditLogBase(BaseModel):
+    action: str = Field(..., description="CREATE, UPDATE, DELETE, LOGIN, etc.")
+    resource_type: str = Field(..., description="asset, scan, user, etc.")
+    resource_id: Optional[int] = None
+    resource_name: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    success: bool = True
+    error_message: Optional[str] = None
+
+class AuditLogCreate(AuditLogBase):
+    user_id: Optional[int] = None
+
+class AuditLog(AuditLogBase):
+    id: int
+    user_id: Optional[int] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class WebhookBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    url: str = Field(..., description="Webhook endpoint URL")
+    events: List[str] = Field(..., description="List of events to trigger webhook")
+    secret: Optional[str] = None
+    retry_count: int = Field(default=3, ge=0, le=10)
+    timeout_seconds: int = Field(default=30, ge=5, le=300)
+
+class WebhookCreate(WebhookBase):
+    pass
+
+class WebhookUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    url: Optional[str] = None
+    events: Optional[List[str]] = None
+    secret: Optional[str] = None
+    is_active: Optional[bool] = None
+    retry_count: Optional[int] = Field(None, ge=0, le=10)
+    timeout_seconds: Optional[int] = Field(None, ge=5, le=300)
+
+class Webhook(WebhookBase):
+    id: int
+    is_active: bool
+    last_triggered: Optional[datetime] = None
+    success_count: int
+    failure_count: int
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class WebhookDelivery(BaseModel):
+    id: int
+    webhook_id: int
+    event_type: str
+    payload: Dict[str, Any]
+    response_status: Optional[int] = None
+    response_body: Optional[str] = None
+    success: bool
+    error_message: Optional[str] = None
+    attempt_count: int
+    created_at: datetime
+    delivered_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+class NetworkTopologyBase(BaseModel):
+    source_asset_id: int
+    target_asset_id: int
+    relationship_type: str = Field(..., description="connected_to, depends_on, etc.")
+    connection_details: Optional[Dict[str, Any]] = None
+
+class NetworkTopologyCreate(NetworkTopologyBase):
+    pass
+
+class NetworkTopology(NetworkTopologyBase):
+    id: int
+    discovered_at: datetime
+    last_verified: Optional[datetime] = None
+    is_active: bool
+    
+    class Config:
+        from_attributes = True
+
+class AssetMetricBase(BaseModel):
+    asset_id: int
+    metric_type: str = Field(..., description="cpu, memory, disk, network, etc.")
+    metric_name: str
+    value: float
+    unit: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+class AssetMetricCreate(AssetMetricBase):
+    pass
+
+class AssetMetric(AssetMetricBase):
+    id: int
+    timestamp: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ComplianceRuleBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    rule_type: str = Field(..., description="security, configuration, inventory, etc.")
+    framework: Optional[str] = None
+    rule_definition: Dict[str, Any] = Field(..., description="Rule logic and conditions")
+    severity: str = Field(default="medium", description="low, medium, high, critical")
+
+class ComplianceRuleCreate(ComplianceRuleBase):
+    pass
+
+class ComplianceRuleUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    rule_type: Optional[str] = None
+    framework: Optional[str] = None
+    rule_definition: Optional[Dict[str, Any]] = None
+    severity: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class ComplianceRule(ComplianceRuleBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class ComplianceCheckBase(BaseModel):
+    rule_id: int
+    asset_id: Optional[int] = None
+    asset_group_id: Optional[int] = None
+    status: str = Field(..., description="pass, fail, warning, error")
+    details: Optional[Dict[str, Any]] = None
+
+class ComplianceCheckCreate(ComplianceCheckBase):
+    pass
+
+class ComplianceCheck(ComplianceCheckBase):
+    id: int
+    checked_at: datetime
+    checked_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class NotificationRuleBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    event_types: List[str] = Field(..., description="List of events to monitor")
+    conditions: Optional[Dict[str, Any]] = None
+    notification_methods: List[str] = Field(..., description="email, webhook, in-app, etc.")
+    recipients: List[str] = Field(..., description="User IDs, email addresses, etc.")
+
+class NotificationRuleCreate(NotificationRuleBase):
+    pass
+
+class NotificationRuleUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    event_types: Optional[List[str]] = None
+    conditions: Optional[Dict[str, Any]] = None
+    notification_methods: Optional[List[str]] = None
+    recipients: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+
+class NotificationRule(NotificationRuleBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class NotificationBase(BaseModel):
+    event_type: str
+    title: str
+    message: str
+    notification_method: str
+    metadata: Optional[Dict[str, Any]] = None
+
+class NotificationCreate(NotificationBase):
+    rule_id: Optional[int] = None
+    user_id: Optional[int] = None
+
+class Notification(NotificationBase):
+    id: int
+    rule_id: Optional[int] = None
+    user_id: Optional[int] = None
+    status: str
+    sent_at: Optional[datetime] = None
+    read_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# Bulk Operations Schemas
+class BulkAssetCreate(BaseModel):
+    assets: List[Dict[str, Any]] = Field(..., description="List of asset data objects")
+    template_id: Optional[int] = None
+    apply_labels: Optional[List[int]] = None
+    apply_groups: Optional[List[int]] = None
+
+class BulkAssetUpdate(BaseModel):
+    asset_ids: List[int] = Field(..., description="List of asset IDs to update")
+    updates: Dict[str, Any] = Field(..., description="Fields to update")
+    apply_labels: Optional[List[int]] = None
+    apply_groups: Optional[List[int]] = None
+
+class BulkOperationResult(BaseModel):
+    success_count: int
+    failure_count: int
+    errors: List[Dict[str, Any]] = []
+    created_ids: Optional[List[int]] = None
+    updated_ids: Optional[List[int]] = None
+
+# Enhanced Discovery Schemas
+class DiscoveryConfig(BaseModel):
+    target: str = Field(..., description="IP range or subnet to scan")
+    scan_type: str = Field(default="standard", description="quick, standard, comprehensive")
+    discovery_depth: int = Field(default=2, ge=1, le=5)
+    scan_template_id: Optional[int] = None
+    scanner_id: Optional[int] = None
+    credentials: Optional[List[int]] = None
+    schedule: Optional[Dict[str, Any]] = None
+
+class DiscoveryResult(BaseModel):
+    scan_task_id: int
+    discovered_devices: int
+    scan_duration: float
+    success_rate: float
+    errors: List[str] = []
+
 # Update forward references
 AssetGroup.update_forward_refs()
 Asset.update_forward_refs()

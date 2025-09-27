@@ -208,3 +208,4 @@ This is a satellite component of DiscoverIT. For contributions, please refer to 
 ---
 
 **Made with ❤️ for the DiscoverIT project**
+

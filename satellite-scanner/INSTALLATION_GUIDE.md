@@ -177,3 +177,4 @@ This is a **complete rewrite** from the previous installer with:
 ---
 
 **This is the new standard for DiscoverIT satellite scanners - elegant, simple, and powerful!**
+

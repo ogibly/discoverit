@@ -11,3 +11,4 @@ python-ldap
 ldap3
 ipaddress
 pydantic-settings
+aiohttp

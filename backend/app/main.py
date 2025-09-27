@@ -10,6 +10,7 @@ from .config import settings
 from .database import engine, Base, SessionLocal, get_db
 from .routes_v2 import router
 from .scanner_routes import router as scanner_router
+from .routes_enterprise import router as enterprise_router
 from .services.auth_service import AuthService
 
 # Configure logging
@@ -46,6 +47,12 @@ async def lifespan(app: FastAPI):
             # Initialize default settings
             _initialize_default_settings(db)
             logger.info("Default settings initialized")
+            
+            # Initialize default templates
+            from .services.template_service import TemplateService
+            template_service = TemplateService(db)
+            template_service.create_default_templates()
+            logger.info("Default templates initialized")
             
         finally:
             db.close()
@@ -114,6 +121,7 @@ app.add_middleware(
 # Include API routes
 app.include_router(router, prefix="/api/v2", tags=["v2"])
 app.include_router(scanner_router, prefix="/api/v2", tags=["scanners"])
+app.include_router(enterprise_router, prefix="/api/v2", tags=["enterprise"])
 
 # Legacy routes removed - only v2 API is used
 

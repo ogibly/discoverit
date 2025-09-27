@@ -3,7 +3,7 @@ import { X, Save, TestTube } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { Textarea } from '../ui/Textarea';
+import { FormTextarea } from '../common/FormModal';
 import { Card } from '../ui/Card';
 import { useApi } from '../../hooks/useApi';
 
@@ -188,21 +188,15 @@ const ComplianceRuleForm = ({ rule, isOpen, onClose, onSave }) => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description *
-            </label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Describe what this rule checks for"
-              rows={3}
-              className={errors.description ? 'border-red-500' : ''}
-            />
-            {errors.description && (
-              <p className="text-sm text-red-600 mt-1">{errors.description}</p>
-            )}
-          </div>
+          <FormTextarea
+            label="Description *"
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            placeholder="Describe what this rule checks for"
+            rows={3}
+            error={errors.description}
+            className={errors.description ? 'border-red-500' : ''}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -242,11 +236,12 @@ const ComplianceRuleForm = ({ rule, isOpen, onClose, onSave }) => {
               Rule Expression *
             </label>
             <div className="space-y-2">
-              <Textarea
+              <FormTextarea
                 value={formData.rule_expression}
                 onChange={(e) => handleInputChange('rule_expression', e.target.value)}
                 placeholder="Enter the rule expression (e.g., asset.operating_system == 'Windows' AND asset.last_scan_date < datetime.now() - timedelta(days=30))"
                 rows={4}
+                error={errors.rule_expression}
                 className={errors.rule_expression ? 'border-red-500' : ''}
               />
               <div className="flex items-center justify-between">
@@ -264,22 +259,15 @@ const ComplianceRuleForm = ({ rule, isOpen, onClose, onSave }) => {
                 </Button>
               </div>
             </div>
-            {errors.rule_expression && (
-              <p className="text-sm text-red-600 mt-1">{errors.rule_expression}</p>
-            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Remediation Guidance
-            </label>
-            <Textarea
-              value={formData.remediation_guidance}
-              onChange={(e) => handleInputChange('remediation_guidance', e.target.value)}
-              placeholder="Provide guidance on how to fix compliance issues"
-              rows={3}
-            />
-          </div>
+          <FormTextarea
+            label="Remediation Guidance"
+            value={formData.remediation_guidance}
+            onChange={(e) => handleInputChange('remediation_guidance', e.target.value)}
+            placeholder="Provide guidance on how to fix compliance issues"
+            rows={3}
+          />
 
           <div className="flex items-center space-x-2">
             <input

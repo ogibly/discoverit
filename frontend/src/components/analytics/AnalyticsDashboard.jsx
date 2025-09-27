@@ -45,7 +45,7 @@ const AnalyticsDashboard = ({ onClose }) => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/v2/analytics/dashboard');
+      const response = await api.get('/analytics/dashboard');
       setDashboardData(response.data);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -61,7 +61,7 @@ const AnalyticsDashboard = ({ onClose }) => {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
       
-      const response = await api.post('/api/v2/analytics/reports', {
+      const response = await api.post('/analytics/reports', {
         report_type: reportType,
         start_date: startDate.toISOString(),
         end_date: new Date().toISOString()

@@ -31,7 +31,14 @@ import {
 const AnalyticsDashboard = ({ onClose }) => {
   const { api } = useApp();
   
-  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    asset_metrics: { total_assets: 0, active_assets: 0, managed_assets: 0, asset_types: [], locations: [] },
+    scan_metrics: { total_scans: 0, successful_scans: 0, failed_scans: 0, avg_duration: 0 },
+    user_metrics: { total_users: 0, active_users: 0, admin_users: 0 },
+    security_metrics: { vulnerabilities: 0, compliance_score: 0, security_incidents: 0 },
+    performance_metrics: { avg_response_time: 0, uptime: 0, error_rate: 0 },
+    compliance_metrics: { total_rules: 0, passed_checks: 0, failed_checks: 0 }
+  });
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [selectedReport, setSelectedReport] = useState('overview');
@@ -46,9 +53,17 @@ const AnalyticsDashboard = ({ onClose }) => {
     setLoading(true);
     try {
       const response = await api.get('/analytics/dashboard');
-      setDashboardData(response.data);
+      setDashboardData(response.data || {
+        asset_metrics: { total_assets: 0, active_assets: 0, managed_assets: 0, asset_types: [], locations: [] },
+        scan_metrics: { total_scans: 0, successful_scans: 0, failed_scans: 0, avg_duration: 0 },
+        user_metrics: { total_users: 0, active_users: 0, admin_users: 0 },
+        security_metrics: { vulnerabilities: 0, compliance_score: 0, security_incidents: 0 },
+        performance_metrics: { avg_response_time: 0, uptime: 0, error_rate: 0 },
+        compliance_metrics: { total_rules: 0, passed_checks: 0, failed_checks: 0 }
+      });
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      // Keep default data on error
     } finally {
       setLoading(false);
     }

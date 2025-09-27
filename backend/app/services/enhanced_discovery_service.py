@@ -16,9 +16,9 @@ from ..schemas import AssetCreate, AssetMetricCreate, NetworkTopologyCreate
 from .base_service import BaseService
 
 
-class EnhancedDiscoveryService(BaseService):
+class EnhancedDiscoveryService:
     def __init__(self, db: Session):
-        super().__init__(db)
+        self.db = db
 
     async def perform_enhanced_discovery(
         self,

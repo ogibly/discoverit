@@ -8,6 +8,7 @@ export { Input } from './Input';
 export { Modal } from './Modal';
 export { ProgressiveDisclosure } from './ProgressiveDisclosure';
 export { Progress } from './Progress';
+export { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './Select';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { Tooltip } from './Tooltip';
 

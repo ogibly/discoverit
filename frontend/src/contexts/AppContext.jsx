@@ -30,6 +30,11 @@ const initialState = {
   scanTasks: [],
   activeScanTask: null,
   
+  // Templates and Scanners
+  scanTemplates: [],
+  assetTemplates: [],
+  availableScanners: [],
+  
   
   // UI State
   loading: {
@@ -86,6 +91,11 @@ const ActionTypes = {
   SET_SCAN_TASKS: 'SET_SCAN_TASKS',
   SET_ACTIVE_SCAN_TASK: 'SET_ACTIVE_SCAN_TASK',
   UPDATE_SCAN_TASK: 'UPDATE_SCAN_TASK',
+  
+  // Templates and Scanners
+  SET_SCAN_TEMPLATES: 'SET_SCAN_TEMPLATES',
+  SET_ASSET_TEMPLATES: 'SET_ASSET_TEMPLATES',
+  SET_AVAILABLE_SCANNERS: 'SET_AVAILABLE_SCANNERS',
   
   
   // UI State
@@ -198,6 +208,14 @@ function appReducer(state, action) {
         ) : [],
         activeScanTask: state.activeScanTask?.id === action.payload.id ? action.payload : state.activeScanTask
       };
+    
+    // Templates and Scanners
+    case ActionTypes.SET_SCAN_TEMPLATES:
+      return { ...state, scanTemplates: action.payload };
+    case ActionTypes.SET_ASSET_TEMPLATES:
+      return { ...state, assetTemplates: action.payload };
+    case ActionTypes.SET_AVAILABLE_SCANNERS:
+      return { ...state, availableScanners: action.payload };
     
     
     // UI State
@@ -749,6 +767,37 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  // Template and Scanner functions
+  const fetchScanTemplates = useCallback(async () => {
+    try {
+      const templates = await apiCall('/scan-templates');
+      dispatch({ type: ActionTypes.SET_SCAN_TEMPLATES, payload: templates });
+      return templates;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const fetchAssetTemplates = useCallback(async () => {
+    try {
+      const templates = await apiCall('/asset-templates');
+      dispatch({ type: ActionTypes.SET_ASSET_TEMPLATES, payload: templates });
+      return templates;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
+  const fetchAvailableScanners = useCallback(async () => {
+    try {
+      const scanners = await apiCall('/scanners');
+      dispatch({ type: ActionTypes.SET_AVAILABLE_SCANNERS, payload: scanners });
+      return scanners;
+    } catch (error) {
+      throw error;
+    }
+  }, [apiCall]);
+
   // UI actions
   const setModal = useCallback((name, value) => {
     dispatch({ type: ActionTypes.SET_MODAL, payload: { name, value } });
@@ -915,6 +964,11 @@ export function AppProvider({ children }) {
     startScan: createScanTask, // Alias for backward compatibility
     cancelScanTask,
     cancelScan: cancelScanTask, // Alias for backward compatibility
+    
+    // Template and Scanner actions
+    fetchScanTemplates,
+    fetchAssetTemplates,
+    fetchAvailableScanners,
     
     
     // Admin/Settings actions

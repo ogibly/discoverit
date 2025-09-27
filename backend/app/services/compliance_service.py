@@ -9,9 +9,9 @@ from ..schemas import ComplianceRuleCreate, ComplianceRuleUpdate, ComplianceChec
 from .base_service import BaseService
 
 
-class ComplianceService(BaseService):
+class ComplianceService:
     def __init__(self, db: Session):
-        super().__init__(db)
+        self.db = db
 
     def get_compliance_rules(
         self,

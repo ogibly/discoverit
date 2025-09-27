@@ -14,9 +14,9 @@ from ..schemas import WebhookCreate, WebhookUpdate
 from .base_service import BaseService
 
 
-class WebhookService(BaseService):
+class WebhookService:
     def __init__(self, db: Session):
-        super().__init__(db)
+        self.db = db
 
     def get_webhooks(
         self,

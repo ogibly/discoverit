@@ -12,9 +12,9 @@ from ..models import (
 from .base_service import BaseService
 
 
-class AnalyticsService(BaseService):
+class AnalyticsService:
     def __init__(self, db: Session):
-        super().__init__(db)
+        self.db = db
 
     def get_dashboard_metrics(self) -> Dict[str, Any]:
         """Get comprehensive dashboard metrics."""

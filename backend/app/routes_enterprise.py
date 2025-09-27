@@ -11,6 +11,7 @@ from .services.template_service import TemplateService
 from .services.webhook_service import WebhookService
 from .services.asset_service import AssetService
 from .services.analytics_service import AnalyticsService
+from .services.compliance_service import ComplianceService
 from .auth import (
     get_current_active_user, require_permission, require_permissions, require_admin,
     require_assets_read, require_assets_write, require_discovery_read, require_discovery_write,
@@ -676,3 +677,226 @@ def generate_report(
     """Generate comprehensive reports."""
     service = AnalyticsService(db)
     return service.generate_report(report_type, start_date, end_date, filters)
+
+# Compliance Routes
+@router.get("/compliance/rules", response_model=List[schemas.ComplianceRule])
+def get_compliance_rules(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    rule_type: Optional[str] = Query(None),
+    framework: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get compliance rules."""
+    service = ComplianceService(db)
+    return service.get_compliance_rules(
+        skip=skip,
+        limit=limit,
+        rule_type=rule_type,
+        framework=framework,
+        is_active=is_active
+    )
+
+@router.get("/compliance/rules/{rule_id}", response_model=schemas.ComplianceRule)
+def get_compliance_rule(
+    rule_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get a compliance rule by ID."""
+    service = ComplianceService(db)
+    rule = service.get_compliance_rule(rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Compliance rule not found")
+    return rule
+
+@router.post("/compliance/rules", response_model=schemas.ComplianceRule)
+def create_compliance_rule(
+    rule_data: schemas.ComplianceRuleCreate,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Create a new compliance rule."""
+    service = ComplianceService(db)
+    audit_service = AuditService(db)
+    
+    rule = service.create_compliance_rule(rule_data, current_user.id)
+    
+    # Log the action
+    audit_service.log_action(
+        action="CREATE",
+        resource_type="compliance_rule",
+        user_id=current_user.id,
+        resource_id=rule.id,
+        resource_name=rule.name
+    )
+    
+    return rule
+
+@router.put("/compliance/rules/{rule_id}", response_model=schemas.ComplianceRule)
+def update_compliance_rule(
+    rule_id: int,
+    rule_data: schemas.ComplianceRuleUpdate,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Update a compliance rule."""
+    service = ComplianceService(db)
+    audit_service = AuditService(db)
+    
+    rule = service.update_compliance_rule(rule_id, rule_data)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Compliance rule not found")
+    
+    # Log the action
+    audit_service.log_action(
+        action="UPDATE",
+        resource_type="compliance_rule",
+        user_id=current_user.id,
+        resource_id=rule.id,
+        resource_name=rule.name
+    )
+    
+    return rule
+
+@router.delete("/compliance/rules/{rule_id}", status_code=204)
+def delete_compliance_rule(
+    rule_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Delete a compliance rule."""
+    service = ComplianceService(db)
+    audit_service = AuditService(db)
+    
+    rule = service.get_compliance_rule(rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Compliance rule not found")
+    
+    service.delete_compliance_rule(rule_id)
+    
+    # Log the action
+    audit_service.log_action(
+        action="DELETE",
+        resource_type="compliance_rule",
+        user_id=current_user.id,
+        resource_id=rule_id,
+        resource_name=rule.name
+    )
+
+@router.post("/compliance/checks", response_model=schemas.ComplianceCheck)
+def run_compliance_check(
+    rule_id: int,
+    asset_id: Optional[int] = None,
+    asset_group_id: Optional[int] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Run a compliance check."""
+    service = ComplianceService(db)
+    audit_service = AuditService(db)
+    
+    check = service.run_compliance_check(rule_id, asset_id, asset_group_id, current_user.id)
+    
+    # Log the action
+    audit_service.log_action(
+        action="COMPLIANCE_CHECK",
+        resource_type="compliance_check",
+        user_id=current_user.id,
+        resource_id=check.id,
+        details={
+            "rule_id": rule_id,
+            "asset_id": asset_id,
+            "asset_group_id": asset_group_id,
+            "status": check.status
+        }
+    )
+    
+    return check
+
+@router.post("/compliance/checks/run-all")
+def run_all_compliance_checks(
+    asset_id: Optional[int] = None,
+    asset_group_id: Optional[int] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Run all compliance checks."""
+    service = ComplianceService(db)
+    audit_service = AuditService(db)
+    
+    checks = service.run_all_compliance_checks(asset_id, asset_group_id, current_user.id)
+    
+    # Log the action
+    audit_service.log_action(
+        action="COMPLIANCE_CHECK_ALL",
+        resource_type="compliance_check",
+        user_id=current_user.id,
+        details={
+            "asset_id": asset_id,
+            "asset_group_id": asset_group_id,
+            "checks_run": len(checks)
+        }
+    )
+    
+    return {"checks_run": len(checks), "checks": checks}
+
+@router.get("/compliance/checks", response_model=List[schemas.ComplianceCheck])
+def get_compliance_checks(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    rule_id: Optional[int] = Query(None),
+    asset_id: Optional[int] = Query(None),
+    asset_group_id: Optional[int] = Query(None),
+    status: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get compliance checks."""
+    service = ComplianceService(db)
+    return service.get_compliance_checks(
+        skip=skip,
+        limit=limit,
+        rule_id=rule_id,
+        asset_id=asset_id,
+        asset_group_id=asset_group_id,
+        status=status,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+@router.get("/compliance/summary")
+def get_compliance_summary(
+    asset_id: Optional[int] = Query(None),
+    asset_group_id: Optional[int] = Query(None),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get compliance summary."""
+    service = ComplianceService(db)
+    return service.get_compliance_summary(asset_id, asset_group_id)
+
+@router.post("/compliance/initialize-defaults")
+def initialize_default_compliance_rules(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Initialize default compliance rules."""
+    service = ComplianceService(db)
+    audit_service = AuditService(db)
+    
+    service.create_default_compliance_rules()
+    
+    # Log the action
+    audit_service.log_action(
+        action="INITIALIZE",
+        resource_type="compliance_rules",
+        user_id=current_user.id,
+        details={"rules": "default_compliance_rules"}
+    )
+    
+    return {"message": "Default compliance rules initialized successfully"}

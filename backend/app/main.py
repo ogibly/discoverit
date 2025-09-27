@@ -12,6 +12,7 @@ from .routes_v2 import router
 from .scanner_routes import router as scanner_router
 from .routes_enterprise import router as enterprise_router
 from .services.auth_service import AuthService
+from .middleware.audit_middleware import AuditMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -117,6 +118,9 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"]
 )
+
+# Audit middleware for comprehensive logging
+app.add_middleware(AuditMiddleware)
 
 # Include API routes
 app.include_router(router, prefix="/api/v2", tags=["v2"])

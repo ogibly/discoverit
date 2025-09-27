@@ -10,6 +10,7 @@ from .services.audit_service import AuditService
 from .services.template_service import TemplateService
 from .services.webhook_service import WebhookService
 from .services.asset_service import AssetService
+from .services.analytics_service import AnalyticsService
 from .auth import (
     get_current_active_user, require_permission, require_permissions, require_admin,
     require_assets_read, require_assets_write, require_discovery_read, require_discovery_write,
@@ -618,3 +619,60 @@ def initialize_default_templates(
     )
     
     return {"message": "Default templates initialized successfully"}
+
+# Analytics Routes
+@router.get("/analytics/dashboard")
+def get_dashboard_metrics(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive dashboard metrics."""
+    service = AnalyticsService(db)
+    return service.get_dashboard_metrics()
+
+@router.get("/analytics/assets")
+def get_asset_analytics(
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    group_by: str = Query("day", description="day, week, month"),
+    current_user: User = Depends(require_assets_read),
+    db: Session = Depends(get_db)
+):
+    """Get detailed asset analytics."""
+    service = AnalyticsService(db)
+    return service.get_asset_analytics(start_date, end_date, group_by)
+
+@router.get("/analytics/scans")
+def get_scan_analytics(
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    current_user: User = Depends(require_discovery_read),
+    db: Session = Depends(get_db)
+):
+    """Get detailed scan analytics."""
+    service = AnalyticsService(db)
+    return service.get_scan_analytics(start_date, end_date)
+
+@router.get("/analytics/security")
+def get_security_analytics(
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get security analytics."""
+    service = AnalyticsService(db)
+    return service.get_security_analytics(start_date, end_date)
+
+@router.post("/analytics/reports")
+def generate_report(
+    report_type: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    filters: Optional[Dict[str, Any]] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive reports."""
+    service = AnalyticsService(db)
+    return service.generate_report(report_type, start_date, end_date, filters)

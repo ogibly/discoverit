@@ -557,7 +557,7 @@ class AssetMetric(Base):
     value = Column(Float, nullable=False)
     unit = Column(String(20), nullable=True)  # %, MB, GB, etc.
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
-    metadata = Column(JSON, nullable=True)  # Additional metric context
+    metric_metadata = Column(JSON, nullable=True)  # Additional metric context
     
     # Relationships
     asset = relationship("Asset")
@@ -638,7 +638,7 @@ class Notification(Base):
     sent_at = Column(DateTime, nullable=True)
     read_at = Column(DateTime, nullable=True)
     error_message = Column(Text, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    notification_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     # Relationships

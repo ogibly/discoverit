@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'enterprise_enhancement_001'
-down_revision = 'h1a2b3c4d5e6_add_discovery_depth_and_scanner_ids_to_scan_tasks'
+down_revision = 'h1a2b3c4d5e6'
 branch_labels = None
 depends_on = None
 
@@ -142,7 +142,7 @@ def upgrade():
         sa.Column('value', sa.Float(), nullable=False),
         sa.Column('unit', sa.String(length=20), nullable=True),
         sa.Column('timestamp', sa.DateTime(), nullable=True),
-        sa.Column('metadata', sa.JSON(), nullable=True),
+        sa.Column('metric_metadata', sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(['asset_id'], ['assets.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
@@ -214,7 +214,7 @@ def upgrade():
         sa.Column('sent_at', sa.DateTime(), nullable=True),
         sa.Column('read_at', sa.DateTime(), nullable=True),
         sa.Column('error_message', sa.Text(), nullable=True),
-        sa.Column('metadata', sa.JSON(), nullable=True),
+        sa.Column('notification_metadata', sa.JSON(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(['rule_id'], ['notification_rules.id'], ),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),

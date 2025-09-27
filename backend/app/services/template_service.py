@@ -5,12 +5,9 @@ from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from ..models import ScanTemplate, AssetTemplate, User
 from ..schemas import ScanTemplateCreate, ScanTemplateUpdate, AssetTemplateCreate, AssetTemplateUpdate
-from .base_service import BaseService
-
-
-class TemplateService(BaseService):
+class TemplateService:
     def __init__(self, db: Session):
-        super().__init__(db)
+        self.db = db
 
     # Scan Template Methods
     def get_scan_templates(

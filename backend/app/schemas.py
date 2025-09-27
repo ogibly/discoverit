@@ -785,7 +785,7 @@ class AssetMetricBase(BaseModel):
     metric_name: str
     value: float
     unit: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metric_metadata: Optional[Dict[str, Any]] = None
 
 class AssetMetricCreate(AssetMetricBase):
     pass
@@ -880,7 +880,7 @@ class NotificationBase(BaseModel):
     title: str
     message: str
     notification_method: str
-    metadata: Optional[Dict[str, Any]] = None
+    notification_metadata: Optional[Dict[str, Any]] = None
 
 class NotificationCreate(NotificationBase):
     rule_id: Optional[int] = None

@@ -10,9 +10,6 @@ import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import PageHeader from './PageHeader';
-import AnalyticsDashboard from './analytics/AnalyticsDashboard';
-import ComplianceDashboard from './compliance/ComplianceDashboard';
-import { BarChart3, Shield } from 'lucide-react';
 
 const Dashboard = () => {
   const {
@@ -31,9 +28,6 @@ const Dashboard = () => {
   const [scannerHealth, setScannerHealth] = useState([]);
   const [loadingScanners, setLoadingScanners] = useState(true);
   
-  // Analytics state
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const [showCompliance, setShowCompliance] = useState(false);
   
   useEffect(() => {
     fetchAssets();
@@ -234,27 +228,6 @@ const Dashboard = () => {
         ]}
       />
 
-      {/* Analytics Button */}
-      <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-end space-x-2">
-            <Button
-              onClick={() => setShowAnalytics(true)}
-              className="flex items-center space-x-2"
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span>Enterprise Analytics</span>
-            </Button>
-            <Button
-              onClick={() => setShowCompliance(true)}
-              className="flex items-center space-x-2"
-            >
-              <Shield className="w-4 h-4" />
-              <span>Compliance Dashboard</span>
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
@@ -452,19 +425,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Analytics Dashboard Modal */}
-      {showAnalytics && (
-        <AnalyticsDashboard
-          onClose={() => setShowAnalytics(false)}
-        />
-      )}
-
-      {/* Compliance Dashboard Modal */}
-      {showCompliance && (
-        <ComplianceDashboard
-          onClose={() => setShowCompliance(false)}
-        />
-      )}
     </div>
   );
 };

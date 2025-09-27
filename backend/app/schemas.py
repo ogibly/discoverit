@@ -779,129 +779,9 @@ class NetworkTopology(NetworkTopologyBase):
     class Config:
         from_attributes = True
 
-class AssetMetricBase(BaseModel):
-    asset_id: int
-    metric_type: str = Field(..., description="cpu, memory, disk, network, etc.")
-    metric_name: str
-    value: float
-    unit: Optional[str] = None
-    metric_metadata: Optional[Dict[str, Any]] = None
-
-class AssetMetricCreate(AssetMetricBase):
-    pass
-
-class AssetMetric(AssetMetricBase):
-    id: int
-    timestamp: datetime
-    
-    class Config:
-        from_attributes = True
-
-class ComplianceRuleBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    rule_type: str = Field(..., description="security, configuration, inventory, etc.")
-    framework: Optional[str] = None
-    rule_definition: Dict[str, Any] = Field(..., description="Rule logic and conditions")
-    severity: str = Field(default="medium", description="low, medium, high, critical")
-
-class ComplianceRuleCreate(ComplianceRuleBase):
-    pass
-
-class ComplianceRuleUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    rule_type: Optional[str] = None
-    framework: Optional[str] = None
-    rule_definition: Optional[Dict[str, Any]] = None
-    severity: Optional[str] = None
-    is_active: Optional[bool] = None
-
-class ComplianceRule(ComplianceRuleBase):
-    id: int
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-    created_by: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
-
-class ComplianceCheckBase(BaseModel):
-    rule_id: int
-    asset_id: Optional[int] = None
-    asset_group_id: Optional[int] = None
-    status: str = Field(..., description="pass, fail, warning, error")
-    details: Optional[Dict[str, Any]] = None
-
-class ComplianceCheckCreate(ComplianceCheckBase):
-    pass
-
-class ComplianceCheck(ComplianceCheckBase):
-    id: int
-    checked_at: datetime
-    checked_by: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
-
-class NotificationRuleBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    event_types: List[str] = Field(..., description="List of events to monitor")
-    conditions: Optional[Dict[str, Any]] = None
-    notification_methods: List[str] = Field(..., description="email, webhook, in-app, etc.")
-    recipients: List[str] = Field(..., description="User IDs, email addresses, etc.")
-
-class NotificationRuleCreate(NotificationRuleBase):
-    pass
-
-class NotificationRuleUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    event_types: Optional[List[str]] = None
-    conditions: Optional[Dict[str, Any]] = None
-    notification_methods: Optional[List[str]] = None
-    recipients: Optional[List[str]] = None
-    is_active: Optional[bool] = None
-
-class NotificationRule(NotificationRuleBase):
-    id: int
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-    created_by: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
-
-class NotificationBase(BaseModel):
-    event_type: str
-    title: str
-    message: str
-    notification_method: str
-    notification_metadata: Optional[Dict[str, Any]] = None
-
-class NotificationCreate(NotificationBase):
-    rule_id: Optional[int] = None
-    user_id: Optional[int] = None
-
-class Notification(NotificationBase):
-    id: int
-    rule_id: Optional[int] = None
-    user_id: Optional[int] = None
-    status: str
-    sent_at: Optional[datetime] = None
-    read_at: Optional[datetime] = None
-    error_message: Optional[str] = None
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
 # Bulk Operations Schemas
 class BulkAssetCreate(BaseModel):
-    assets: List[Dict[str, Any]] = Field(..., description="List of asset data objects")
+    assets: List[Dict[str, Any]] = Field(..., description="List of asset data dictionaries")
     template_id: Optional[int] = None
     apply_labels: Optional[List[int]] = None
     apply_groups: Optional[List[int]] = None
@@ -921,12 +801,12 @@ class BulkOperationResult(BaseModel):
 
 # Enhanced Discovery Schemas
 class DiscoveryConfig(BaseModel):
-    target: str = Field(..., description="IP range or subnet to scan")
-    scan_type: str = Field(default="standard", description="quick, standard, comprehensive")
-    discovery_depth: int = Field(default=2, ge=1, le=5)
-    scan_template_id: Optional[int] = None
-    scanner_id: Optional[int] = None
+    target: str = Field(..., description="Target network or IP range")
+    scan_type: str = Field(default="comprehensive", description="Type of discovery scan")
+    discovery_depth: int = Field(default=2, ge=1, le=5, description="Network discovery depth")
+    scanner_id: Optional[str] = None
     credentials: Optional[List[int]] = None
+    scan_template_id: Optional[int] = None
     schedule: Optional[Dict[str, Any]] = None
 
 class DiscoveryResult(BaseModel):

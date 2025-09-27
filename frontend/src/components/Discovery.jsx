@@ -17,6 +17,17 @@ import {
 import ScansTracker from './discovery/ScansTracker';
 import ScanResultsModal from './discovery/ScanResultsModal';
 import ScanNotifications from './discovery/ScanNotifications';
+import DiscoveryWizard from './discovery/DiscoveryWizard';
+import { 
+  Zap, 
+  Target, 
+  Settings, 
+  Network, 
+  BarChart3,
+  Clock,
+  CheckCircle,
+  AlertTriangle
+} from 'lucide-react';
 // Removed useScanUpdates import - using AppContext polling instead
 
 const Discovery = () => {
@@ -49,6 +60,8 @@ const Discovery = () => {
   const [isCheckingScanner, setIsCheckingScanner] = useState(false);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedScanTask, setSelectedScanTask] = useState(null);
+  const [showWizard, setShowWizard] = useState(false);
+  const [discoveryMode, setDiscoveryMode] = useState('wizard'); // 'wizard' or 'quick'
 
   // Step definitions
   const steps = [
@@ -199,6 +212,14 @@ const Discovery = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleWizardComplete = (result) => {
+    setShowWizard(false);
+    setShowResults(true);
+    // Refresh data to show the new scan
+    fetchScanTasks();
+    fetchActiveScanTask();
   };
 
   const handleStep5 = async () => {
@@ -503,6 +524,46 @@ const Discovery = () => {
         subtitle="Discover and analyze devices in your network"
       />
 
+      {/* Discovery Mode Selector */}
+      <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={discoveryMode === 'wizard' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDiscoveryMode('wizard')}
+                  className="flex items-center space-x-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Guided Wizard</span>
+                </Button>
+                <Button
+                  variant={discoveryMode === 'quick' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDiscoveryMode('quick')}
+                  className="flex items-center space-x-2"
+                >
+                  <Zap className="w-4 h-4" />
+                  <span>Quick Scan</span>
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setShowWizard(true)}
+                className="flex items-center space-x-2"
+              >
+                <Target className="w-4 h-4" />
+                <span>Start New Discovery</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-auto p-6 pb-24">
         <div className="max-w-4xl mx-auto">
           {/* Progress Steps */}
@@ -572,6 +633,14 @@ const Discovery = () => {
         scanTasks={scanTasks}
         position="top-right"
       />
+
+      {/* Discovery Wizard Modal */}
+      {showWizard && (
+        <DiscoveryWizard
+          onComplete={handleWizardComplete}
+          onCancel={() => setShowWizard(false)}
+        />
+      )}
     </div>
   );
 };

@@ -13,6 +13,20 @@ import PageHeader from './PageHeader';
 import LabelManager from './LabelManager';
 import LabelFilter from './LabelFilter';
 import StandardList from './common/StandardList';
+import BulkAssetManager from './assets/BulkAssetManager';
+import SmartAssetGrouping from './assets/SmartAssetGrouping';
+import { 
+  Users, 
+  Settings, 
+  Brain, 
+  Edit, 
+  Trash2, 
+  Plus,
+  Download,
+  Upload,
+  Filter,
+  Search
+} from 'lucide-react';
 
 const AssetsInterface = () => {
   const {
@@ -48,6 +62,8 @@ const AssetsInterface = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [showBulkManager, setShowBulkManager] = useState(false);
+  const [showSmartGrouping, setShowSmartGrouping] = useState(false);
   const [viewMode, setViewMode] = useState('table');
   
   // Labels state
@@ -813,6 +829,47 @@ const AssetsInterface = () => {
               </div>
             </div>
 
+            {/* Enterprise Action Buttons */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBulkManager(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Bulk Operations</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSmartGrouping(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <Brain className="w-4 h-4" />
+                  <span>Smart Grouping</span>
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Import</span>
+                </Button>
+              </div>
+            </div>
+
             <TabsContent value="assets" className="space-y-6">
               <StandardList
                 items={filteredAssets}
@@ -1305,6 +1362,29 @@ const AssetsInterface = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Bulk Asset Manager Modal */}
+      {showBulkManager && (
+        <BulkAssetManager
+          onClose={() => setShowBulkManager(false)}
+          onSuccess={() => {
+            setShowBulkManager(false);
+            fetchAssets();
+            fetchAssetGroups();
+          }}
+        />
+      )}
+
+      {/* Smart Asset Grouping Modal */}
+      {showSmartGrouping && (
+        <SmartAssetGrouping
+          onClose={() => setShowSmartGrouping(false)}
+          onSuccess={() => {
+            setShowSmartGrouping(false);
+            fetchAssetGroups();
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,0 +1,728 @@
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../../contexts/AppContext';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { Progress } from '../ui/Progress';
+import { cn } from '../../utils/cn';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Target, 
+  Settings, 
+  Zap, 
+  CheckCircle,
+  AlertCircle,
+  Network,
+  Clock,
+  Shield
+} from 'lucide-react';
+
+const DiscoveryWizard = ({ onComplete, onCancel }) => {
+  const {
+    availableScanners,
+    scanTemplates,
+    assetTemplates,
+    fetchScanTemplates,
+    fetchAssetTemplates,
+    createScanTask
+  } = useApp();
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [wizardData, setWizardData] = useState({
+    // Step 1: Target Selection
+    target: '',
+    targetType: 'subnet', // subnet, range, single
+    targetValidation: null,
+    
+    // Step 2: Scan Configuration
+    scanType: 'standard',
+    discoveryDepth: 2,
+    scanTemplateId: null,
+    customConfig: {},
+    
+    // Step 3: Scanner Selection
+    scannerId: null,
+    scannerRecommendation: null,
+    
+    // Step 4: Advanced Options
+    credentials: [],
+    schedule: null,
+    notifications: true,
+    
+    // Step 5: Review & Launch
+    estimatedDuration: 0,
+    estimatedDevices: 0
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const steps = [
+    {
+      id: 1,
+      title: 'Target Selection',
+      description: 'Choose what to scan',
+      icon: Target,
+      component: TargetSelectionStep
+    },
+    {
+      id: 2,
+      title: 'Scan Configuration',
+      description: 'Configure scan parameters',
+      icon: Settings,
+      component: ScanConfigurationStep
+    },
+    {
+      id: 3,
+      title: 'Scanner Selection',
+      description: 'Choose optimal scanner',
+      icon: Network,
+      component: ScannerSelectionStep
+    },
+    {
+      id: 4,
+      title: 'Advanced Options',
+      description: 'Set additional options',
+      icon: Shield,
+      component: AdvancedOptionsStep
+    },
+    {
+      id: 5,
+      title: 'Review & Launch',
+      description: 'Review and start scan',
+      icon: CheckCircle,
+      component: ReviewLaunchStep
+    }
+  ];
+
+  useEffect(() => {
+    fetchScanTemplates();
+    fetchAssetTemplates();
+  }, [fetchScanTemplates, fetchAssetTemplates]);
+
+  const updateWizardData = (updates) => {
+    setWizardData(prev => ({ ...prev, ...updates }));
+    // Clear errors when data changes
+    setErrors({});
+  };
+
+  const validateStep = (step) => {
+    const newErrors = {};
+    
+    switch (step) {
+      case 1:
+        if (!wizardData.target) {
+          newErrors.target = 'Target is required';
+        } else if (!validateTarget(wizardData.target)) {
+          newErrors.target = 'Invalid target format';
+        }
+        break;
+      case 2:
+        if (!wizardData.scanType) {
+          newErrors.scanType = 'Scan type is required';
+        }
+        break;
+      case 3:
+        if (!wizardData.scannerId) {
+          newErrors.scannerId = 'Scanner selection is required';
+        }
+        break;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateTarget = (target) => {
+    // Basic validation for IP addresses, ranges, and subnets
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+    const subnetRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+    const rangeRegex = /^(\d{1,3}\.){3}\d{1,3}-(\d{1,3}\.){3}\d{1,3}$/;
+    
+    return ipRegex.test(target) || subnetRegex.test(target) || rangeRegex.test(target);
+  };
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      if (currentStep < steps.length) {
+        setCurrentStep(currentStep + 1);
+      }
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleLaunch = async () => {
+    setLoading(true);
+    try {
+      const scanConfig = {
+        name: `Discovery Scan - ${wizardData.target}`,
+        target: wizardData.target,
+        scan_type: wizardData.scanType,
+        discovery_depth: wizardData.discoveryDepth,
+        scan_template_id: wizardData.scanTemplateId,
+        scanner_id: wizardData.scannerId,
+        credentials: wizardData.credentials,
+        schedule: wizardData.schedule
+      };
+
+      const result = await createScanTask(scanConfig);
+      onComplete(result);
+    } catch (error) {
+      setErrors({ general: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const CurrentStepComponent = steps[currentStep - 1].component;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-slate-800 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white">Discovery Wizard</h2>
+              <p className="text-slate-400 mt-1">
+                Step {currentStep} of {steps.length}: {steps[currentStep - 1].title}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="text-slate-400 hover:text-white"
+            >
+              ✕
+            </Button>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="mt-4">
+            <Progress value={(currentStep / steps.length) * 100} className="h-2" />
+          </div>
+        </div>
+
+        {/* Step Navigation */}
+        <div className="border-b border-slate-800 p-4">
+          <div className="flex justify-between">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              const isActive = currentStep === step.id;
+              const isCompleted = currentStep > step.id;
+              
+              return (
+                <div
+                  key={step.id}
+                  className={cn(
+                    "flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors",
+                    isActive && "bg-blue-600 text-white",
+                    isCompleted && "bg-green-600 text-white",
+                    !isActive && !isCompleted && "text-slate-400 hover:text-slate-300"
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{step.title}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step Content */}
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
+          <CurrentStepComponent
+            data={wizardData}
+            updateData={updateWizardData}
+            errors={errors}
+            availableScanners={availableScanners}
+            scanTemplates={scanTemplates}
+            assetTemplates={assetTemplates}
+          />
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-slate-800 p-6">
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className="flex items-center space-x-2"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </Button>
+            
+            <div className="flex space-x-2">
+              <Button variant="ghost" onClick={onCancel}>
+                Cancel
+              </Button>
+              {currentStep === steps.length ? (
+                <Button
+                  onClick={handleLaunch}
+                  disabled={loading}
+                  className="flex items-center space-x-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Launching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4" />
+                      <span>Launch Scan</span>
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={nextStep}
+                  className="flex items-center space-x-2"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Step Components
+const TargetSelectionStep = ({ data, updateData, errors }) => {
+  const [targetSuggestions, setTargetSuggestions] = useState([]);
+
+  const commonTargets = [
+    '192.168.1.0/24',
+    '192.168.0.0/24',
+    '10.0.0.0/24',
+    '172.16.0.0/24'
+  ];
+
+  const handleTargetChange = (value) => {
+    updateData({ target: value });
+    
+    // Generate suggestions based on input
+    if (value.length > 0) {
+      const suggestions = commonTargets.filter(target => 
+        target.toLowerCase().includes(value.toLowerCase())
+      );
+      setTargetSuggestions(suggestions);
+    } else {
+      setTargetSuggestions(commonTargets);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-2">Select Target</h3>
+        <p className="text-slate-400 mb-4">
+          Enter the IP address, range, or subnet you want to scan
+        </p>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Target
+            </label>
+            <Input
+              value={data.target}
+              onChange={(e) => handleTargetChange(e.target.value)}
+              placeholder="e.g., 192.168.1.0/24, 10.0.0.1-10.0.0.100"
+              className={cn(
+                "w-full",
+                errors.target && "border-red-500"
+              )}
+            />
+            {errors.target && (
+              <p className="text-red-500 text-sm mt-1">{errors.target}</p>
+            )}
+          </div>
+
+          {targetSuggestions.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Common Targets
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {targetSuggestions.map((suggestion) => (
+                  <Badge
+                    key={suggestion}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-blue-600 hover:text-white"
+                    onClick={() => updateData({ target: suggestion })}
+                  >
+                    {suggestion}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-slate-800 rounded-lg p-4">
+        <h4 className="text-sm font-medium text-white mb-2">Target Types</h4>
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <div className="font-medium text-slate-300">Single IP</div>
+            <div className="text-slate-500">192.168.1.1</div>
+          </div>
+          <div>
+            <div className="font-medium text-slate-300">IP Range</div>
+            <div className="text-slate-500">192.168.1.1-192.168.1.100</div>
+          </div>
+          <div>
+            <div className="font-medium text-slate-300">Subnet</div>
+            <div className="text-slate-500">192.168.1.0/24</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
+  const scanTypes = [
+    { value: 'quick', label: 'Quick Discovery', description: 'Fast ping scan to find active hosts', duration: '1-2 min' },
+    { value: 'standard', label: 'Standard Scan', description: 'Port and service discovery', duration: '5-10 min' },
+    { value: 'comprehensive', label: 'Comprehensive Scan', description: 'Full analysis with vulnerability detection', duration: '15-30 min' }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-2">Scan Configuration</h3>
+        <p className="text-slate-400 mb-4">
+          Choose the type of scan and configure parameters
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-3">
+            Scan Type
+          </label>
+          <div className="grid grid-cols-1 gap-3">
+            {scanTypes.map((type) => (
+              <div
+                key={type.value}
+                className={cn(
+                  "border rounded-lg p-4 cursor-pointer transition-colors",
+                  data.scanType === type.value
+                    ? "border-blue-500 bg-blue-500/10"
+                    : "border-slate-700 hover:border-slate-600"
+                )}
+                onClick={() => updateData({ scanType: type.value })}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-white">{type.label}</div>
+                    <div className="text-sm text-slate-400">{type.description}</div>
+                  </div>
+                  <Badge variant="outline">{type.duration}</Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Discovery Depth
+          </label>
+          <div className="flex items-center space-x-4">
+            <input
+              type="range"
+              min="1"
+              max="5"
+              value={data.discoveryDepth}
+              onChange={(e) => updateData({ discoveryDepth: parseInt(e.target.value) })}
+              className="flex-1"
+            />
+            <span className="text-white font-medium">{data.discoveryDepth}</span>
+          </div>
+          <div className="text-sm text-slate-400 mt-1">
+            {data.discoveryDepth === 1 && "Basic ping scan only"}
+            {data.discoveryDepth === 2 && "Standard port and service discovery"}
+            {data.discoveryDepth === 3 && "Comprehensive analysis with OS detection"}
+            {data.discoveryDepth >= 4 && "Deep analysis with vulnerability scanning"}
+          </div>
+        </div>
+
+        {scanTemplates && scanTemplates.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Scan Template (Optional)
+            </label>
+            <select
+              value={data.scanTemplateId || ''}
+              onChange={(e) => updateData({ scanTemplateId: e.target.value ? parseInt(e.target.value) : null })}
+              className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white"
+            >
+              <option value="">Use default configuration</option>
+              {scanTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name} - {template.description}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ScannerSelectionStep = ({ data, updateData, errors, availableScanners }) => {
+  const getScannerRecommendation = () => {
+    if (!data.target || !availableScanners) return null;
+    
+    // Simple recommendation logic - in real implementation, this would be more sophisticated
+    const targetIP = data.target.split('/')[0];
+    const targetOctets = targetIP.split('.').slice(0, 2).join('.');
+    
+    return availableScanners.find(scanner => 
+      scanner.subnets && scanner.subnets.some(subnet => 
+        subnet.includes(targetOctets)
+      )
+    ) || availableScanners[0];
+  };
+
+  useEffect(() => {
+    const recommendation = getScannerRecommendation();
+    if (recommendation && !data.scannerId) {
+      updateData({ 
+        scannerId: recommendation.id,
+        scannerRecommendation: recommendation
+      });
+    }
+  }, [data.target, availableScanners]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-2">Scanner Selection</h3>
+        <p className="text-slate-400 mb-4">
+          Choose the optimal scanner for your target network
+        </p>
+      </div>
+
+      {data.scannerRecommendation && (
+        <div className="bg-blue-500/10 border border-blue-500 rounded-lg p-4">
+          <div className="flex items-center space-x-2 mb-2">
+            <CheckCircle className="w-5 h-5 text-blue-500" />
+            <span className="font-medium text-blue-400">Recommended Scanner</span>
+          </div>
+          <div className="text-sm text-slate-300">
+            {data.scannerRecommendation.name} - Best match for your target network
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {availableScanners?.map((scanner) => (
+          <div
+            key={scanner.id}
+            className={cn(
+              "border rounded-lg p-4 cursor-pointer transition-colors",
+              data.scannerId === scanner.id
+                ? "border-blue-500 bg-blue-500/10"
+                : "border-slate-700 hover:border-slate-600"
+            )}
+            onClick={() => updateData({ scannerId: scanner.id })}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium text-white">{scanner.name}</div>
+                <div className="text-sm text-slate-400">
+                  {scanner.url} • {scanner.subnets?.length || 0} subnets
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant={scanner.is_active ? "default" : "secondary"}>
+                  {scanner.is_active ? "Active" : "Inactive"}
+                </Badge>
+                {data.scannerId === scanner.id && (
+                  <CheckCircle className="w-5 h-5 text-blue-500" />
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {errors.scannerId && (
+        <div className="bg-red-500/10 border border-red-500 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <span className="text-red-400">{errors.scannerId}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AdvancedOptionsStep = ({ data, updateData }) => {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-2">Advanced Options</h3>
+        <p className="text-slate-400 mb-4">
+          Configure additional scan options and notifications
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Notifications
+          </label>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="notifications"
+              checked={data.notifications}
+              onChange={(e) => updateData({ notifications: e.target.checked })}
+              className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="notifications" className="text-sm text-slate-300">
+              Send notifications when scan completes
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Schedule (Optional)
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Start Time</label>
+              <Input
+                type="datetime-local"
+                className="w-full"
+                onChange={(e) => updateData({ 
+                  schedule: { ...data.schedule, start_time: e.target.value }
+                })}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Recurrence</label>
+              <select className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white">
+                <option value="">One-time</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ReviewLaunchStep = ({ data, errors }) => {
+  const estimatedDuration = data.scanType === 'quick' ? 2 : data.scanType === 'standard' ? 10 : 20;
+  const estimatedDevices = data.target.includes('/24') ? 254 : data.target.includes('/16') ? 65534 : 1;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-white mb-2">Review & Launch</h3>
+        <p className="text-slate-400 mb-4">
+          Review your scan configuration before launching
+        </p>
+      </div>
+
+      {errors.general && (
+        <div className="bg-red-500/10 border border-red-500 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-red-500" />
+            <span className="text-red-400">{errors.general}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div className="bg-slate-800 rounded-lg p-4">
+            <h4 className="font-medium text-white mb-3">Scan Configuration</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Target:</span>
+                <span className="text-white">{data.target}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Scan Type:</span>
+                <span className="text-white capitalize">{data.scanType}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Discovery Depth:</span>
+                <span className="text-white">{data.discoveryDepth}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-800 rounded-lg p-4">
+            <h4 className="font-medium text-white mb-3">Scanner</h4>
+            <div className="text-sm">
+              <div className="text-slate-400">Selected Scanner:</div>
+              <div className="text-white">
+                {data.scannerId ? `Scanner ${data.scannerId}` : 'Default Scanner'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-slate-800 rounded-lg p-4">
+            <h4 className="font-medium text-white mb-3">Estimated Results</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Duration:</span>
+                <span className="text-white">{estimatedDuration} minutes</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Expected Devices:</span>
+                <span className="text-white">{estimatedDevices}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Notifications:</span>
+                <span className="text-white">{data.notifications ? 'Enabled' : 'Disabled'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-500/10 border border-blue-500 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Clock className="w-5 h-5 text-blue-500" />
+              <span className="font-medium text-blue-400">Ready to Launch</span>
+            </div>
+            <div className="text-sm text-slate-300">
+              Your scan is configured and ready to start. Click "Launch Scan" to begin discovery.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DiscoveryWizard;

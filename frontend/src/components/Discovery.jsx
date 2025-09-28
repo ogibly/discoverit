@@ -71,9 +71,22 @@ const Discovery = () => {
     }
   };
 
-  const handleDownloadResults = (scanId) => {
-    // Download scan results - this will be handled by the modal
-    console.log('Download results for scan:', scanId);
+  const handleDownloadResults = async (scanId) => {
+    try {
+      // Create download URL for scan results
+      const downloadUrl = `/api/v2/scan-tasks/${scanId}/download`;
+      
+      // Create a temporary link element and trigger download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `scan-results-${scanId}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to download scan results:', error);
+      alert('Failed to download scan results. Please try again.');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -94,6 +107,23 @@ const Discovery = () => {
       case 'cancelled': return <Clock className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
+  };
+
+  const formatScanDate = (startTime) => {
+    // Handle null/undefined start_time
+    if (!startTime) return 'Pending';
+    
+    const date = new Date(startTime);
+    if (isNaN(date.getTime())) return 'Invalid date';
+    
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
+    if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
+    
+    return date.toLocaleDateString();
   };
 
   return (
@@ -208,7 +238,7 @@ const Discovery = () => {
                           <div>
                             <p className="font-medium text-foreground">{task.name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {task.target} • {new Date(task.start_time).toLocaleDateString()}
+                              {task.target} • {formatScanDate(task.start_time)}
                             </p>
                           </div>
                         </div>

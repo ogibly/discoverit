@@ -602,7 +602,8 @@ def convert_device_to_asset(
         # Create the asset
         asset = models.Asset(
             name=asset_data.name,
-            primary_ip=ip_address,
+            description=asset_data.description,
+            primary_ip=asset_data.primary_ip or ip_address,  # Use provided IP or fallback to scan data
             mac_address=asset_data.mac_address,
             hostname=asset_data.hostname,
             os_name=asset_data.os_name,
@@ -611,12 +612,31 @@ def convert_device_to_asset(
             manufacturer=asset_data.manufacturer,
             model=asset_data.model,
             is_managed=asset_data.is_managed,
+            is_active=asset_data.is_active,
             scan_data=scan_data,
             last_seen=scan.timestamp
         )
         
         db.add(asset)
         db.flush()  # Get the asset ID
+        
+        # Handle IP addresses if provided
+        if asset_data.ip_addresses:
+            for ip_addr in asset_data.ip_addresses:
+                if ip_addr and ip_addr != asset.primary_ip:  # Don't duplicate primary IP
+                    ip_address_obj = models.IPAddress(
+                        asset_id=asset.id,
+                        ip_address=ip_addr,
+                        is_primary=False
+                    )
+                    db.add(ip_address_obj)
+        
+        # Handle labels if provided
+        if asset_data.labels:
+            for label_id in asset_data.labels:
+                label = db.query(models.Label).filter(models.Label.id == label_id).first()
+                if label:
+                    asset.labels.append(label)
         
         # Link the scan to the new asset
         scan.asset_id = asset.id

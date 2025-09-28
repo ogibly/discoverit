@@ -277,23 +277,36 @@ const DevicesInterface = () => {
 
   const handleConvertToAsset = async (device) => {
     try {
+      // Ensure we have valid data for asset creation
+      const ipAddress = device.ipAddress || device.primary_ip || 'Unknown';
+      const hostname = device.hostname || null;
+      const deviceName = hostname || `Device ${ipAddress}`;
+      
+      // Validate required fields
+      if (!ipAddress || ipAddress === 'Unknown') {
+        throw new Error('Cannot convert device: Invalid IP address');
+      }
+      
       const assetData = {
-        name: device.hostname || `Device ${device.ipAddress}`,
-        description: `Converted from discovered device (${device.deviceType})`,
-        primary_ip: device.ipAddress,
-        mac_address: device.macAddress,
-        hostname: device.hostname,
-        os_name: device.osName,
-        manufacturer: device.manufacturer,
-        model: device.model,
+        name: deviceName,
+        description: `Converted from discovered device (${device.deviceType || 'Unknown Type'})`,
+        primary_ip: ipAddress,
+        mac_address: device.macAddress || null,
+        hostname: hostname,
+        os_name: device.osName || null,
+        manufacturer: device.manufacturer || null,
+        model: device.model || null,
         is_managed: false,
-        is_active: true
+        is_active: true,
+        ip_addresses: [ipAddress], // Add to ip_addresses array as required by schema
+        labels: [] // Add empty labels array as required by schema
       };
       
       await convertDeviceToAsset(device.id, assetData);
       setShowDeviceModal(false);
     } catch (error) {
       console.error('Failed to convert device to asset:', error);
+      alert(`Failed to convert device to asset: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -409,7 +422,7 @@ const DevicesInterface = () => {
               </div>
                 <div className="text-sm text-muted-foreground">
               {device.deviceType}
-            </div>
+                </div>
             </div>
           </div>
         </td>

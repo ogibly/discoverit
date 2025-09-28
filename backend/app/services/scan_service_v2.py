@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 class ScanServiceV2:
     def __init__(self, db: Session):
         self.db = db
+        from .scanner_service import ScannerService
+        self.scanner_service = ScannerService(db)
         self.asset_service = AssetService(db)
 
     def create_scan_task(self, task_data: ScanTaskCreate) -> ScanTask:
@@ -117,6 +119,64 @@ class ScanServiceV2:
             raise ValueError(f"Invalid target format: {e}")
         
         return ips
+
+    def get_scanner_recommendation(self, target: str) -> Dict[str, Any]:
+        """Get scanner recommendation for a target network."""
+        try:
+            # Get the best scanner for this target
+            optimal_scanner = self.scanner_service.get_best_scanner_for_target(target)
+            
+            if not optimal_scanner:
+                return {
+                    "recommended_scanner": None,
+                    "fallback_available": True,
+                    "message": "No scanners configured. Will use local nmap fallback.",
+                    "scanner_type": "local_fallback"
+                }
+            
+            # Get all available scanners for comparison
+            all_scanners = self.scanner_service.get_all_scanners()
+            active_scanners = [s for s in all_scanners if s.is_active]
+            
+            # Check if there are satellite scanners available
+            satellite_scanners = [s for s in active_scanners if not s.is_default]
+            
+            recommendation = {
+                "recommended_scanner": {
+                    "id": optimal_scanner.id,
+                    "name": optimal_scanner.name,
+                    "url": optimal_scanner.url,
+                    "is_satellite": not optimal_scanner.is_default,
+                    "is_default": optimal_scanner.is_default,
+                    "subnets": optimal_scanner.subnets,
+                    "max_concurrent_scans": optimal_scanner.max_concurrent_scans,
+                    "timeout_seconds": optimal_scanner.timeout_seconds
+                },
+                "scanner_type": "satellite" if not optimal_scanner.is_default else "default",
+                "message": f"Using {'satellite' if not optimal_scanner.is_default else 'default'} scanner '{optimal_scanner.name}' for optimal performance",
+                "alternatives_available": len(satellite_scanners) > 1 if not optimal_scanner.is_default else len(satellite_scanners) > 0,
+                "total_scanners": len(active_scanners),
+                "satellite_scanners": len(satellite_scanners)
+            }
+            
+            # Add suggestion for satellite scanner if using default
+            if optimal_scanner.is_default and satellite_scanners:
+                recommendation["suggestion"] = {
+                    "type": "info",
+                    "message": f"Consider setting up a satellite scanner for this network range for improved scan performance and accuracy.",
+                    "available_satellites": len(satellite_scanners)
+                }
+            
+            return recommendation
+            
+        except Exception as e:
+            logger.error(f"Error getting scanner recommendation for {target}: {e}")
+            return {
+                "recommended_scanner": None,
+                "fallback_available": True,
+                "message": f"Error getting scanner recommendation: {str(e)}",
+                "scanner_type": "error"
+            }
 
     def run_scan_task(self, task_id: int) -> None:
         """Run a scan task with enhanced error handling and progress tracking."""
@@ -231,36 +291,47 @@ class ScanServiceV2:
             self.db.commit()
 
     def _perform_scan(self, ip: str, scan_type: str, discovery_depth: int = 1) -> Dict[str, Any]:
-        """Perform a comprehensive scan using the scanner service."""
+        """Perform a comprehensive scan using the optimal scanner service."""
         try:
-            # Use scanner service for actual scanning
-            scanner_url = "http://scanner:8001"  # Default scanner service
+            # Get the best scanner for this target IP
+            optimal_scanner = self.scanner_service.get_best_scanner_for_target(ip)
+            
+            if not optimal_scanner:
+                logger.warning(f"No scanner available for {ip}, using local nmap")
+                return self._perform_local_scan(ip, scan_type, discovery_depth)
+            
+            # Use the optimal scanner URL
+            scanner_url = optimal_scanner.url
+            logger.info(f"Using scanner '{optimal_scanner.name}' ({scanner_url}) for target {ip}")
             
             # Prepare scan request
             scan_request = {
                 "target": ip,
                 "scan_type": scan_type,
                 "discovery_depth": discovery_depth,
-                "timeout": 30
+                "timeout": optimal_scanner.timeout_seconds or 30
             }
             
             # Call scanner service
             response = requests.post(
                 f"{scanner_url}/scan",
                 json=scan_request,
-                timeout=35  # Slightly longer than scanner timeout
+                timeout=(optimal_scanner.timeout_seconds or 30) + 5  # Slightly longer than scanner timeout
             )
             
             if response.status_code == 200:
                 scan_result = response.json()
                 scan_result["scanner_info"] = {
+                    "scanner_id": optimal_scanner.id,
+                    "scanner_name": optimal_scanner.name,
                     "scanner_url": scanner_url,
-                    "scan_method": "remote_scanner"
+                    "scan_method": "remote_scanner",
+                    "is_satellite": not optimal_scanner.is_default
                 }
                 return scan_result
             else:
                 # Fallback to local nmap if scanner service fails
-                logger.warning(f"Scanner service failed for {ip}, using local nmap")
+                logger.warning(f"Scanner '{optimal_scanner.name}' failed for {ip}, using local nmap")
                 return self._perform_local_scan(ip, scan_type, discovery_depth)
                 
         except requests.exceptions.RequestException as e:

@@ -489,29 +489,49 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
 };
 
 const ScannerSelectionStep = ({ data, updateData, errors, availableScanners }) => {
-  const getScannerRecommendation = () => {
-    if (!data.target || !availableScanners) return null;
+  const [scannerRecommendation, setScannerRecommendation] = useState(null);
+  const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
+
+  const getScannerRecommendation = async () => {
+    if (!data.target) return null;
     
-    // Simple recommendation logic - in real implementation, this would be more sophisticated
-    const targetIP = data.target.split('/')[0];
-    const targetOctets = targetIP.split('.').slice(0, 2).join('.');
-    
-    return availableScanners.find(scanner => 
-      scanner.subnets && scanner.subnets.some(subnet => 
-        subnet.includes(targetOctets)
-      )
-    ) || availableScanners[0];
+    setIsLoadingRecommendation(true);
+    try {
+      const response = await fetch(`/api/v2/scanners/recommendation?target=${encodeURIComponent(data.target)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get scanner recommendation: ${response.statusText}`);
+      }
+      
+      const recommendation = await response.json();
+      setScannerRecommendation(recommendation);
+      
+      if (recommendation.recommended_scanner && !data.scannerId) {
+        updateData({ 
+          scannerId: recommendation.recommended_scanner.id,
+          scannerRecommendation: recommendation.recommended_scanner
+        });
+      }
+      
+      return recommendation;
+    } catch (error) {
+      console.error('Error getting scanner recommendation:', error);
+      setScannerRecommendation({
+        recommended_scanner: null,
+        message: 'Failed to get scanner recommendation',
+        scanner_type: 'error'
+      });
+      return null;
+    } finally {
+      setIsLoadingRecommendation(false);
+    }
   };
 
   useEffect(() => {
-    const recommendation = getScannerRecommendation();
-    if (recommendation && !data.scannerId) {
-      updateData({ 
-        scannerId: recommendation.id,
-        scannerRecommendation: recommendation
-      });
+    if (data.target) {
+      getScannerRecommendation();
     }
-  }, [data.target, availableScanners]);
+  }, [data.target]);
 
   return (
     <div className="space-y-6">
@@ -522,15 +542,67 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners }) =
         </p>
       </div>
 
-      {data.scannerRecommendation && (
-        <div className="bg-blue-500/10 border border-blue-500 rounded-lg p-4">
+      {isLoadingRecommendation && (
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+            <span className="text-slate-400">Analyzing target network...</span>
+          </div>
+        </div>
+      )}
+
+      {scannerRecommendation && !isLoadingRecommendation && (
+        <div className={cn(
+          "border rounded-lg p-4",
+          scannerRecommendation.scanner_type === 'satellite' 
+            ? "bg-green-500/10 border-green-500" 
+            : scannerRecommendation.scanner_type === 'default'
+            ? "bg-blue-500/10 border-blue-500"
+            : "bg-yellow-500/10 border-yellow-500"
+        )}>
           <div className="flex items-center space-x-2 mb-2">
-            <CheckCircle className="w-5 h-5 text-blue-500" />
-            <span className="font-medium text-blue-400">Recommended Scanner</span>
+            {scannerRecommendation.scanner_type === 'satellite' ? (
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            ) : scannerRecommendation.scanner_type === 'default' ? (
+              <CheckCircle className="w-5 h-5 text-blue-500" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
+            )}
+            <span className={cn(
+              "font-medium",
+              scannerRecommendation.scanner_type === 'satellite' 
+                ? "text-green-400" 
+                : scannerRecommendation.scanner_type === 'default'
+                ? "text-blue-400"
+                : "text-yellow-400"
+            )}>
+              {scannerRecommendation.scanner_type === 'satellite' 
+                ? 'Optimal Satellite Scanner' 
+                : scannerRecommendation.scanner_type === 'default'
+                ? 'Default Scanner'
+                : 'Scanner Recommendation'}
+            </span>
           </div>
-          <div className="text-sm text-slate-300">
-            {data.scannerRecommendation.name} - Best match for your target network
+          <div className="text-sm text-slate-300 mb-2">
+            {scannerRecommendation.message}
           </div>
+          {scannerRecommendation.recommended_scanner && (
+            <div className="text-xs text-slate-400">
+              Scanner: {scannerRecommendation.recommended_scanner.name} 
+              {scannerRecommendation.recommended_scanner.is_satellite && (
+                <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                  Satellite
+                </span>
+              )}
+            </div>
+          )}
+          {scannerRecommendation.suggestion && (
+            <div className="mt-3 p-3 bg-slate-800/50 rounded border border-slate-700">
+              <div className="text-xs text-slate-400">
+                💡 {scannerRecommendation.suggestion.message}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

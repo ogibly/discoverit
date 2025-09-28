@@ -108,54 +108,76 @@ const Discovery = () => {
     }
   };
 
-  const checkScannerForTarget = (target) => {
+  const checkScannerForTarget = async (target) => {
     console.log('Checking scanner for target:', target);
-    console.log('Available scanners:', availableScanners);
     
     if (!target) {
       return null;
     }
 
-    // If no scanners available, create a fallback default scanner
-    if (!availableScanners.length) {
-      console.log('No scanners available, creating fallback scanner');
+    try {
+      // Use the new API endpoint to get scanner recommendation
+      const response = await fetch(`/api/v2/scanners/recommendation?target=${encodeURIComponent(target)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get scanner recommendation: ${response.statusText}`);
+      }
+      
+      const recommendation = await response.json();
+      console.log('Scanner recommendation:', recommendation);
+      
+      if (recommendation.recommended_scanner) {
+        setSelectedScanner(recommendation.recommended_scanner);
+        
+        // Set suggestion based on scanner type
+        if (recommendation.scanner_type === 'default' && recommendation.suggestion) {
+          setScannerSuggestion({
+            type: recommendation.suggestion.type,
+            message: recommendation.suggestion.message,
+            action: 'Setup Scanner'
+          });
+        } else {
+          setScannerSuggestion(null);
+        }
+        
+        return recommendation.recommended_scanner;
+      } else {
+        // Fallback to local scanning
+        const fallbackScanner = {
+          id: 0,
+          name: 'Local Scanner (Fallback)',
+          is_default: true,
+          is_active: true,
+          subnets: [],
+          url: 'local'
+        };
+        setSelectedScanner(fallbackScanner);
+        setScannerSuggestion({
+          type: 'warning',
+          message: recommendation.message || 'No scanners available. Using local fallback.',
+          action: 'Setup Scanner'
+        });
+        return fallbackScanner;
+      }
+    } catch (error) {
+      console.error('Error getting scanner recommendation:', error);
+      
+      // Fallback to local scanning
       const fallbackScanner = {
-        id: 0, // Use 0 as fallback ID for default scanner
-        name: 'Default Scanner',
+        id: 0,
+        name: 'Local Scanner (Fallback)',
         is_default: true,
         is_active: true,
-        subnets: []
+        subnets: [],
+        url: 'local'
       };
       setSelectedScanner(fallbackScanner);
       setScannerSuggestion({
-        type: 'info',
-        message: 'Using default scanner. For improved scan capabilities and accuracy, consider setting up a dedicated satellite scanner for this IP range.',
+        type: 'error',
+        message: 'Failed to get scanner recommendation. Using local fallback.',
         action: 'Setup Scanner'
       });
       return fallbackScanner;
-    }
-
-    // Find satellite scanner for the target range
-    const satelliteScanner = availableScanners.find(scanner => 
-      scanner.subnets && scanner.subnets.some(subnet => 
-        isIPInSubnet(target, subnet)
-      ) && !scanner.is_default
-    );
-
-    if (satelliteScanner) {
-      setSelectedScanner(satelliteScanner);
-      setScannerSuggestion(null);
-      return satelliteScanner;
-    } else {
-      // Always use default scanner as fallback
-      const defaultScanner = availableScanners.find(s => s.is_default) || availableScanners[0];
-      setSelectedScanner(defaultScanner);
-      setScannerSuggestion({
-        type: 'info',
-        message: 'Using default scanner. For improved scan capabilities and accuracy, consider setting up a dedicated satellite scanner for this IP range.',
-        action: 'Setup Scanner'
-      });
-      return defaultScanner;
     }
   };
 
@@ -174,7 +196,7 @@ const Discovery = () => {
     setCurrentStep(2);
   };
 
-  const handleStep2 = (target) => {
+  const handleStep2 = async (target) => {
     if (!target || !target.trim()) {
       alert('Please enter a valid target IP or range');
       return;
@@ -182,12 +204,17 @@ const Discovery = () => {
     setScanConfig(prev => ({ ...prev, target }));
     setIsCheckingScanner(true);
     
-    // Simulate scanner check delay for better UX
-    setTimeout(() => {
-      const scanner = checkScannerForTarget(target);
+    try {
+      // Get scanner recommendation for the target
+      const scanner = await checkScannerForTarget(target);
       setIsCheckingScanner(false);
       setCurrentStep(3);
-    }, 1500);
+    } catch (error) {
+      console.error('Error in handleStep2:', error);
+      setIsCheckingScanner(false);
+      // Still proceed to step 3 with fallback scanner
+      setCurrentStep(3);
+    }
   };
 
   const handleStep3 = () => {
@@ -664,3 +691,4 @@ const Discovery = () => {
 };
 
 export default Discovery;
+

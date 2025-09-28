@@ -923,6 +923,28 @@ def get_default_scanner(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No default scanner configured")
     return config
 
+@router.get("/scanners/recommendation")
+def get_scanner_recommendation(
+    target: str = Query(..., description="Target IP or CIDR range"),
+    current_user: User = Depends(require_discovery_read),
+    db: Session = Depends(get_db)
+):
+    """Get scanner recommendation for a target network."""
+    try:
+        scan_service = ScanService(db)
+        return scan_service.get_scanner_recommendation(target)
+    except Exception as e:
+        return {"error": str(e), "target": target}
+
+@router.get("/scanners/for-ip/{ip}")
+def get_scanner_for_ip(ip: str, db: Session = Depends(get_db)):
+    """Get the appropriate scanner configuration for a given IP address."""
+    service = ScannerService(db)
+    config = service.get_scanner_for_ip(ip)
+    if not config:
+        raise HTTPException(status_code=404, detail="No suitable scanner found for this IP")
+    return config
+
 @router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)
 @router.get("/scanner-configs/{config_id}", response_model=schemas.ScannerConfig)
 def get_scanner_config(config_id: int, db: Session = Depends(get_db)):
@@ -980,15 +1002,6 @@ def test_scanner_connection(
     """Test a scanner connection with a specific IP."""
     service = ScannerService(db)
     return service.test_scanner_connection(config_id, test_ip)
-
-@router.get("/scanners/for-ip/{ip}")
-def get_scanner_for_ip(ip: str, db: Session = Depends(get_db)):
-    """Get the appropriate scanner configuration for a given IP address."""
-    service = ScannerService(db)
-    config = service.get_scanner_for_ip(ip)
-    if not config:
-        raise HTTPException(status_code=404, detail="No suitable scanner found for this IP")
-    return config
 
 @router.post("/scanners/sync-settings")
 def sync_scanners_with_settings(db: Session = Depends(get_db)):

@@ -3,7 +3,7 @@ import { useApp } from '../../contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Textarea } from '../ui/Textarea';
+import { FormTextarea } from '../common/FormModal';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { cn } from '../../utils/cn';
@@ -319,7 +319,7 @@ const ScanTemplateManager = () => {
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Description
             </label>
-            <Textarea
+            <FormTextarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe what this template does"

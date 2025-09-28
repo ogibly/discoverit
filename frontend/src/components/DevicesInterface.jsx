@@ -320,67 +320,72 @@ const DevicesInterface = () => {
 
   // Render functions
   const renderDeviceCard = (device) => (
-    <Card className="group hover:shadow-lg transition-all duration-200 border-border hover:border-primary/50">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              {device.deviceIcon}
-            </div>
-              <div>
-                <h4 className="font-semibold text-foreground">
-                {device.hostname || `Device ${device.ipAddress}`}
+    <Card className="group hover:shadow-lg transition-all duration-200 border-border hover:border-primary/50 h-full">
+        <CardContent className="p-4 flex flex-col h-full">
+          {/* Header with device info and badges */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+                {device.deviceIcon}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold text-foreground truncate">
+                  {device.hostname || `Device ${device.ipAddress}`}
                 </h4>
-                <p className="text-sm text-muted-foreground font-mono">
-                {device.ipAddress}
+                <p className="text-sm text-muted-foreground font-mono truncate">
+                  {device.ipAddress}
                 </p>
               </div>
             </div>
-          <div className="flex items-center space-x-2">
-            <Badge className={cn("text-xs", getStatusColor(device.status))}>
-              {getStatusIcon(device.status)}
-              <span className="ml-1">{device.status === 'new' ? 'New' : 'Converted'}</span>
-            </Badge>
-            <Badge className={cn("text-xs", getConfidenceColor(device.confidence))}>
-              {Math.round(device.confidence * 100)}% confidence
-            </Badge>
-          </div>
+            <div className="flex flex-col space-y-1 flex-shrink-0">
+              <Badge className={cn("text-xs", getStatusColor(device.status))}>
+                {getStatusIcon(device.status)}
+                <span className="ml-1">{device.status === 'new' ? 'New' : 'Converted'}</span>
+              </Badge>
+              <Badge className={cn("text-xs", getConfidenceColor(device.confidence))}>
+                {Math.round(device.confidence * 100)}%
+              </Badge>
+            </div>
           </div>
           
-        <div className="space-y-2 text-sm">
-          {device.deviceType && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Type:</span>
-              <span className="text-foreground font-medium">{device.deviceType}</span>
-            </div>
-          )}
-          {device.osName && (
+          {/* Device details */}
+          <div className="space-y-2 text-sm flex-1">
+            {device.deviceType && (
               <div className="flex justify-between">
+                <span className="text-muted-foreground">Type:</span>
+                <span className="text-foreground font-medium truncate ml-2">{device.deviceType}</span>
+              </div>
+            )}
+            {device.osName && (
+              <div className="flex flex-col">
                 <span className="text-muted-foreground">OS:</span>
-              <span className="text-foreground font-medium">{device.osName}</span>
+                <span className="text-foreground font-medium text-xs break-words leading-tight">
+                  {device.osName.length > 60 ? `${device.osName.substring(0, 60)}...` : device.osName}
+                </span>
               </div>
             )}
             {device.manufacturer && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Manufacturer:</span>
-                <span className="text-foreground font-medium">{device.manufacturer}</span>
+                <span className="text-foreground font-medium truncate ml-2">{device.manufacturer}</span>
               </div>
             )}
-          {device.ports.length > 0 && (
+            {device.ports.length > 0 && (
               <div className="flex justify-between">
-              <span className="text-muted-foreground">Open Ports:</span>
-              <span className="text-foreground font-medium">{device.ports.length}</span>
+                <span className="text-muted-foreground">Open Ports:</span>
+                <span className="text-foreground font-medium">{device.ports.length}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Last Seen:</span>
               <span className="text-foreground text-xs">
-              {formatTimestampUtil(device.lastSeen)}
+                {formatTimestampUtil(device.lastSeen)}
               </span>
             </div>
           </div>
 
-          <div className="flex space-x-2 mt-6">
+          {/* Action buttons */}
+          <div className="flex space-x-2 mt-4 pt-3 border-t border-border">
             <Button
               variant="outline"
               size="sm"
@@ -390,10 +395,10 @@ const DevicesInterface = () => {
               }}
               className="flex-1"
             >
-            <Eye className="w-4 h-4 mr-2" />
+              <Eye className="w-4 h-4 mr-2" />
               Explore
             </Button>
-          {device.status === 'new' && (
+            {device.status === 'new' && (
               <Button
                 variant="default"
                 size="sm"
@@ -628,9 +633,9 @@ const DevicesInterface = () => {
               </CardContent>
             </Card>
           ) : viewMode === 'cards' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredDevices.map((device) => (
-                <div key={device.id}>
+                <div key={device.id} className="min-h-0">
                   {renderDeviceCard(device)}
                 </div>
               ))}

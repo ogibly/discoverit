@@ -388,22 +388,25 @@ class ScanServiceV2:
         
         try:
             # Build scan command based on type and depth
+            # Add network interface options for better host network access
+            base_opts = ["--privileged", "--send-ip"]  # Use privileged mode and send IP packets
+            
             if scan_type == "quick":
-                cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", ip]
+                cmd = ["nmap"] + base_opts + ["-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", ip]
             elif scan_type == "standard":
-                cmd = ["nmap", "-sS", "-O", "-sV", "-A", ip]
+                cmd = ["nmap"] + base_opts + ["-sS", "-O", "-sV", "-A", ip]
             elif scan_type == "comprehensive":
-                cmd = ["nmap", "-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
+                cmd = ["nmap"] + base_opts + ["-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
             elif scan_type == "lan_discovery":
                 # Enhanced LAN discovery based on depth
                 if discovery_depth == 1:
-                    cmd = ["nmap", "-sn", "-PR", ip]  # ARP only
+                    cmd = ["nmap"] + base_opts + ["-sn", "-PR", ip]  # ARP only
                 elif discovery_depth == 2:
-                    cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PR", ip]
+                    cmd = ["nmap"] + base_opts + ["-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PR", ip]
                 else:  # depth >= 3
-                    cmd = ["nmap", "-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
+                    cmd = ["nmap"] + base_opts + ["-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
             else:
-                cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", ip]
+                cmd = ["nmap"] + base_opts + ["-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", ip]
             
             # Run nmap with appropriate timeout based on scan type
             timeout = 600 if scan_type in ["comprehensive", "standard"] else 30

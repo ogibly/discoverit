@@ -44,6 +44,8 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   scanmanager:
     build: ./scanmanager
@@ -56,6 +58,8 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   scanner:
     build: ./scanner
@@ -68,6 +72,8 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build: ./frontend

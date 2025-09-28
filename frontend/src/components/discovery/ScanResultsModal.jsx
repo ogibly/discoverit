@@ -234,11 +234,11 @@ const ScanResultsModal = ({
 
         {/* Scan Info */}
         <Card>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="flex items-center">
-                <span className="text-muted-foreground">Status:</span>
-                <Badge className={cn("ml-2", 
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
+              <div className="flex flex-col space-y-1">
+                <span className="text-muted-foreground text-xs">Status</span>
+                <Badge className={cn("w-fit", 
                   scanTask.status === 'completed' ? 'bg-green-100 text-green-800' :
                   scanTask.status === 'running' ? 'bg-blue-100 text-blue-800' :
                   scanTask.status === 'failed' ? 'bg-red-100 text-red-800' :
@@ -247,19 +247,19 @@ const ScanResultsModal = ({
                   {scanTask.status || 'unknown'}
                 </Badge>
               </div>
-              <div className="flex items-center">
-                <span className="text-muted-foreground">Discovered:</span>
-                <span className="ml-2 font-medium">{cleanResults.length} devices</span>
+              <div className="flex flex-col space-y-1">
+                <span className="text-muted-foreground text-xs">Discovered</span>
+                <span className="font-medium text-lg">{cleanResults.length} devices</span>
               </div>
-              <div className="flex items-center">
-                <span className="text-muted-foreground">Duration:</span>
-                <span className="ml-2 font-mono">
+              <div className="flex flex-col space-y-1">
+                <span className="text-muted-foreground text-xs">Duration</span>
+                <span className="font-mono text-lg">
                   {formatDuration(scanTask.start_time, scanTask.end_time)}
                 </span>
               </div>
-              <div className="flex items-center">
-                <span className="text-muted-foreground">Progress:</span>
-                <span className="ml-2 font-mono">
+              <div className="flex flex-col space-y-1">
+                <span className="text-muted-foreground text-xs">Progress</span>
+                <span className="font-mono text-lg">
                   {scanTask.progress !== null ? `${scanTask.progress}%` : 'N/A'}
                 </span>
               </div>
@@ -268,46 +268,48 @@ const ScanResultsModal = ({
         </Card>
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search devices by IP, hostname, or MAC..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search devices by IP, hostname, or MAC..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="up">Online</option>
-              <option value="down">Offline</option>
-            </select>
             
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [field, order] = e.target.value.split('-');
-                setSortBy(field);
-                setSortOrder(order);
-              }}
-              className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm"
-            >
-              <option value="ip-asc">IP ↑</option>
-              <option value="ip-desc">IP ↓</option>
-              <option value="hostname-asc">Hostname ↑</option>
-              <option value="hostname-desc">Hostname ↓</option>
-              <option value="status-asc">Status ↑</option>
-              <option value="status-desc">Status ↓</option>
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[120px]"
+              >
+                <option value="all">All Status</option>
+                <option value="up">Online</option>
+                <option value="down">Offline</option>
+              </select>
+              
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split('-');
+                  setSortBy(field);
+                  setSortOrder(order);
+                }}
+                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[100px]"
+              >
+                <option value="ip-asc">IP ↑</option>
+                <option value="ip-desc">IP ↓</option>
+                <option value="hostname-asc">Hostname ↑</option>
+                <option value="hostname-desc">Hostname ↓</option>
+                <option value="status-asc">Status ↑</option>
+                <option value="status-desc">Status ↓</option>
+              </select>
+            </div>
           </div>
         </div>
 

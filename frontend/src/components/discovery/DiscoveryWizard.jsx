@@ -37,9 +37,8 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
     targetValidation: null,
     
     // Step 2: Scan Configuration
-    scanType: 'standard',
-    discoveryDepth: 2,
-    scanTemplateId: null,
+    scanTemplateId: null, // Primary scan configuration
+    discoveryDepth: 2, // Can be overridden by template
     customConfig: {},
     
     // Step 3: Scanner Selection
@@ -120,8 +119,8 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
         }
         break;
       case 2:
-        if (!wizardData.scanType) {
-          newErrors.scanType = 'Scan type is required';
+        if (!wizardData.scanTemplateId) {
+          newErrors.scanTemplateId = 'Scan template is required';
         }
         break;
       case 3:
@@ -161,10 +160,14 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
   const handleLaunch = async () => {
     setLoading(true);
     try {
+      // Get the selected template to extract scan type
+      const selectedTemplate = scanTemplates?.find(t => t.id === wizardData.scanTemplateId);
+      const scanType = selectedTemplate?.scan_config?.scan_type || 'standard';
+      
       const scanConfig = {
         name: `Discovery Scan - ${wizardData.target}`,
         target: wizardData.target,
-        scan_type: wizardData.scanType,
+        scan_type: scanType,
         discovery_depth: wizardData.discoveryDepth,
         scan_template_id: wizardData.scanTemplateId,
         scanner_id: wizardData.scannerId,
@@ -397,53 +400,87 @@ const TargetSelectionStep = ({ data, updateData, errors }) => {
 };
 
 const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
-  const scanTypes = [
-    { value: 'quick', label: 'Quick Discovery', description: 'Fast ping scan to find active hosts', duration: '1-2 min' },
-    { value: 'standard', label: 'Standard Scan', description: 'Port and service discovery', duration: '5-10 min' },
-    { value: 'comprehensive', label: 'Comprehensive Scan', description: 'Full analysis with vulnerability detection', duration: '15-30 min' }
-  ];
+  // Get the selected template to show its details
+  const selectedTemplate = scanTemplates?.find(t => t.id === data.scanTemplateId);
+  
+  // Auto-select the first template if none is selected
+  useEffect(() => {
+    if (!data.scanTemplateId && scanTemplates && scanTemplates.length > 0) {
+      updateData({ scanTemplateId: scanTemplates[0].id });
+    }
+  }, [scanTemplates, data.scanTemplateId, updateData]);
 
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-white mb-2">Scan Configuration</h3>
         <p className="text-slate-400 mb-4">
-          Choose the type of scan and configure parameters
+          Choose a scan template to configure your discovery parameters
         </p>
       </div>
 
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-3">
-            Scan Type
+            Scan Template
           </label>
           <div className="grid grid-cols-1 gap-3">
-            {scanTypes.map((type) => (
-              <div
-                key={type.value}
-                className={cn(
-                  "border rounded-lg p-4 cursor-pointer transition-colors",
-                  data.scanType === type.value
-                    ? "border-blue-500 bg-blue-500/10"
-                    : "border-slate-700 hover:border-slate-600"
-                )}
-                onClick={() => updateData({ scanType: type.value })}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-white">{type.label}</div>
-                    <div className="text-sm text-slate-400">{type.description}</div>
+            {scanTemplates
+              ?.filter(template => template.name && template.name.trim() !== '')
+              .map((template) => {
+                const isSelected = data.scanTemplateId === template.id;
+                const scanConfig = template.scan_config || {};
+                const duration = scanConfig.timeout ? `${Math.round(scanConfig.timeout / 60)}-${Math.round(scanConfig.timeout / 30)} min` : 'Unknown';
+                
+                return (
+                  <div
+                    key={template.id}
+                    className={cn(
+                      "border rounded-lg p-4 cursor-pointer transition-colors",
+                      isSelected
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-slate-700 hover:border-slate-600"
+                    )}
+                    onClick={() => updateData({ scanTemplateId: template.id })}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-white">{template.name}</div>
+                        <div className="text-sm text-slate-400 mb-2">{template.description}</div>
+                        <div className="text-xs text-slate-500">
+                          Type: {scanConfig.scan_type || 'standard'} • 
+                          Depth: {scanConfig.discovery_depth || 2} • 
+                          Timeout: {scanConfig.timeout || 300}s
+                        </div>
+                      </div>
+                      <Badge variant="outline">{duration}</Badge>
+                    </div>
                   </div>
-                  <Badge variant="outline">{type.duration}</Badge>
-                </div>
-              </div>
-            ))}
+                );
+              })}
           </div>
+          {errors.scanTemplateId && (
+            <p className="text-red-400 text-sm mt-1">{errors.scanTemplateId}</p>
+          )}
         </div>
+
+        {selectedTemplate && (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-slate-300 mb-2">Template Details</h4>
+            <div className="space-y-2 text-sm text-slate-400">
+              <div><span className="text-slate-300">Scan Type:</span> {selectedTemplate.scan_config?.scan_type || 'standard'}</div>
+              <div><span className="text-slate-300">Discovery Depth:</span> {selectedTemplate.scan_config?.discovery_depth || 2}</div>
+              <div><span className="text-slate-300">Timeout:</span> {selectedTemplate.scan_config?.timeout || 300} seconds</div>
+              {selectedTemplate.scan_config?.arguments && (
+                <div><span className="text-slate-300">Arguments:</span> <code className="text-xs bg-slate-900 px-1 rounded">{selectedTemplate.scan_config.arguments}</code></div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">
-            Discovery Depth
+            Discovery Depth Override
           </label>
           <div className="flex items-center space-x-4">
             <input
@@ -462,30 +499,10 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
             {data.discoveryDepth === 3 && "Comprehensive analysis with OS detection"}
             {data.discoveryDepth >= 4 && "Deep analysis with vulnerability scanning"}
           </div>
-        </div>
-
-        {scanTemplates && scanTemplates.length > 0 && (
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Scan Template (Optional)
-            </label>
-            {console.log('ScanTemplates in DiscoveryWizard:', scanTemplates)}
-            <select
-              value={data.scanTemplateId || ''}
-              onChange={(e) => updateData({ scanTemplateId: e.target.value ? parseInt(e.target.value) : null })}
-              className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white"
-            >
-              <option value="">Use default configuration</option>
-              {scanTemplates
-                .filter(template => template.name && template.name.trim() !== '')
-                .map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name} - {template.description}
-                </option>
-              ))}
-            </select>
+          <div className="text-xs text-slate-500 mt-1">
+            This will override the template's default discovery depth
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -713,8 +730,19 @@ const AdvancedOptionsStep = ({ data, updateData }) => {
   );
 };
 
-const ReviewLaunchStep = ({ data, errors }) => {
-  const estimatedDuration = data.scanType === 'quick' ? 2 : data.scanType === 'standard' ? 10 : 20;
+const ReviewLaunchStep = ({ data, errors, scanTemplates }) => {
+  // Get the selected template
+  const selectedTemplate = scanTemplates?.find(t => t.id === data.scanTemplateId);
+  const scanType = selectedTemplate?.scan_config?.scan_type || 'standard';
+  
+  // Calculate estimated duration based on template
+  const getEstimatedDuration = () => {
+    if (!selectedTemplate) return 10;
+    const timeout = selectedTemplate.scan_config?.timeout || 300;
+    return Math.round(timeout / 60);
+  };
+  
+  const estimatedDuration = getEstimatedDuration();
   const estimatedDevices = data.target.includes('/24') ? 254 : data.target.includes('/16') ? 65534 : 1;
 
   return (
@@ -745,8 +773,12 @@ const ReviewLaunchStep = ({ data, errors }) => {
                 <span className="text-white">{data.target}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-slate-400">Template:</span>
+                <span className="text-white">{selectedTemplate?.name || 'Default'}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-slate-400">Scan Type:</span>
-                <span className="text-white capitalize">{data.scanType}</span>
+                <span className="text-white capitalize">{scanType}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Discovery Depth:</span>

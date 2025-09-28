@@ -446,12 +446,7 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="font-medium text-white">{template.name}</div>
-                        <div className="text-sm text-slate-400 mb-2">{template.description}</div>
-                        <div className="text-xs text-slate-500">
-                          Type: {scanConfig.scan_type || 'standard'} • 
-                          Depth: {scanConfig.discovery_depth || 2} • 
-                          Timeout: {scanConfig.timeout || 300}s
-                        </div>
+                        <div className="text-sm text-slate-400">{template.description}</div>
                       </div>
                       <Badge variant="outline">{duration}</Badge>
                     </div>
@@ -465,44 +460,19 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
         </div>
 
         {selectedTemplate && (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-slate-300 mb-2">Template Details</h4>
-            <div className="space-y-2 text-sm text-slate-400">
-              <div><span className="text-slate-300">Scan Type:</span> {selectedTemplate.scan_config?.scan_type || 'standard'}</div>
-              <div><span className="text-slate-300">Discovery Depth:</span> {selectedTemplate.scan_config?.discovery_depth || 2}</div>
-              <div><span className="text-slate-300">Timeout:</span> {selectedTemplate.scan_config?.timeout || 300} seconds</div>
-              {selectedTemplate.scan_config?.arguments && (
-                <div><span className="text-slate-300">Arguments:</span> <code className="text-xs bg-slate-900 px-1 rounded">{selectedTemplate.scan_config.arguments}</code></div>
-              )}
+          <div className="bg-blue-500/10 border border-blue-500 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <CheckCircle className="w-5 h-5 text-blue-500" />
+              <span className="font-medium text-blue-400">Template Selected</span>
+            </div>
+            <div className="text-sm text-slate-300">
+              {selectedTemplate.description}
+            </div>
+            <div className="text-xs text-slate-400 mt-1">
+              Estimated duration: {selectedTemplate.scan_config?.timeout ? `${Math.round(selectedTemplate.scan_config.timeout / 60)}-${Math.round(selectedTemplate.scan_config.timeout / 30)} minutes` : 'Unknown'}
             </div>
           </div>
         )}
-
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Discovery Depth Override
-          </label>
-          <div className="flex items-center space-x-4">
-            <input
-              type="range"
-              min="1"
-              max="5"
-              value={data.discoveryDepth}
-              onChange={(e) => updateData({ discoveryDepth: parseInt(e.target.value) })}
-              className="flex-1"
-            />
-            <span className="text-white font-medium">{data.discoveryDepth}</span>
-          </div>
-          <div className="text-sm text-slate-400 mt-1">
-            {data.discoveryDepth === 1 && "Basic ping scan only"}
-            {data.discoveryDepth === 2 && "Standard port and service discovery"}
-            {data.discoveryDepth === 3 && "Comprehensive analysis with OS detection"}
-            {data.discoveryDepth >= 4 && "Deep analysis with vulnerability scanning"}
-          </div>
-          <div className="text-xs text-slate-500 mt-1">
-            This will override the template's default discovery depth
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -777,12 +747,8 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates }) => {
                 <span className="text-white">{selectedTemplate?.name || 'Default'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Scan Type:</span>
-                <span className="text-white capitalize">{scanType}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Discovery Depth:</span>
-                <span className="text-white">{data.discoveryDepth}</span>
+                <span className="text-slate-400">Description:</span>
+                <span className="text-white">{selectedTemplate?.description || 'Standard scan configuration'}</span>
               </div>
             </div>
           </div>

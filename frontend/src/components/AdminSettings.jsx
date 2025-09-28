@@ -10,6 +10,7 @@ import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
+import ScanTemplateManager from './admin/ScanTemplateManager';
 
 const AdminSettings = () => {
   const { 
@@ -941,12 +942,13 @@ const AdminSettings = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="system">System Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
+            <TabsTrigger value="templates">Scan Templates</TabsTrigger>
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           </TabsList>
 
@@ -1716,6 +1718,11 @@ const AdminSettings = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Scan Templates Tab */}
+          <TabsContent value="templates" className="space-y-6">
+            <ScanTemplateManager />
           </TabsContent>
 
         </Tabs>

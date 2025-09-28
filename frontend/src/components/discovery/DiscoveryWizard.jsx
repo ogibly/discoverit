@@ -469,13 +469,16 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Scan Template (Optional)
             </label>
+            {console.log('ScanTemplates in DiscoveryWizard:', scanTemplates)}
             <select
               value={data.scanTemplateId || ''}
               onChange={(e) => updateData({ scanTemplateId: e.target.value ? parseInt(e.target.value) : null })}
               className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white"
             >
               <option value="">Use default configuration</option>
-              {scanTemplates.map((template) => (
+              {scanTemplates
+                .filter(template => template.name && template.name.trim() !== '')
+                .map((template) => (
                 <option key={template.id} value={template.id}>
                   {template.name} - {template.description}
                 </option>

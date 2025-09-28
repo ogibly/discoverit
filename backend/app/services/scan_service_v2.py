@@ -41,7 +41,7 @@ class ScanServiceV2:
         task = ScanTask(
             name=task_data.name,
             target=task_data.target,
-            scan_type=task_data.scan_type,
+            scan_template_id=task_data.scan_template_id,
             created_by=task_data.created_by,
             discovery_depth=getattr(task_data, 'discovery_depth', 1),
             scanner_ids=getattr(task_data, 'scanner_ids', [])
@@ -218,8 +218,11 @@ class ScanServiceV2:
                 self.db.commit()
                 
                 try:
+                    # Get scan configuration from template
+                    scan_config = self._get_scan_config_from_template(task)
+                    
                     # Perform the scan
-                    scan_result = self._perform_scan(ip, task.scan_type, task.discovery_depth)
+                    scan_result = self._perform_scan(ip, scan_config["scan_type"], task.discovery_depth)
                     
                     # Categorize the scan result
                     categorization = self._categorize_scan_result(scan_result)
@@ -289,6 +292,38 @@ class ScanServiceV2:
             task.error_message = str(e)
             task.end_time = datetime.utcnow()
             self.db.commit()
+
+    def _get_scan_config_from_template(self, task: ScanTask) -> Dict[str, Any]:
+        """Get scan configuration from the associated template."""
+        if not task.scan_template_id:
+            # Fallback to default configuration if no template
+            return {
+                "scan_type": "standard",
+                "discovery_depth": task.discovery_depth or 2,
+                "timeout": 300,
+                "arguments": "-sS -O -sV -A"
+            }
+        
+        # Get template from database
+        from .template_service import TemplateService
+        template_service = TemplateService(self.db)
+        template = template_service.get_scan_template(task.scan_template_id)
+        
+        if not template:
+            logger.warning(f"Template {task.scan_template_id} not found, using default config")
+            return {
+                "scan_type": "standard",
+                "discovery_depth": task.discovery_depth or 2,
+                "timeout": 300,
+                "arguments": "-sS -O -sV -A"
+            }
+        
+        # Use template configuration, but allow task-level overrides
+        config = template.scan_config.copy()
+        if task.discovery_depth:
+            config["discovery_depth"] = task.discovery_depth
+        
+        return config
 
     def _perform_scan(self, ip: str, scan_type: str, discovery_depth: int = 1) -> Dict[str, Any]:
         """Perform a comprehensive scan using the optimal scanner service."""

@@ -159,16 +159,11 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
   const handleLaunch = async () => {
     setLoading(true);
     try {
-      // Get the selected template to extract scan type
-      const selectedTemplate = scanTemplates?.find(t => t.id === wizardData.scanTemplateId);
-      const scanType = selectedTemplate?.scan_config?.scan_type || 'standard';
-      
       const scanConfig = {
         name: `Discovery Scan - ${wizardData.target}`,
         target: wizardData.target,
-        scan_type: scanType,
-        discovery_depth: wizardData.discoveryDepth,
         scan_template_id: wizardData.scanTemplateId,
+        discovery_depth: wizardData.discoveryDepth,
         scanner_id: wizardData.scannerId || null, // Use null for default scanner
         credentials: wizardData.credentials,
         schedule: wizardData.schedule

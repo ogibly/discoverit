@@ -218,7 +218,7 @@ class AssetGroupWithAssets(AssetGroup):
 class ScanTaskBase(BaseModel):
     name: Optional[str] = None
     target: str = Field(..., description="CIDR, IP range, or specific IPs to scan")
-    scan_type: str = Field(..., description="Type of scan: quick, comprehensive, arp, snmp, lan_discovery")
+    scan_template_id: Optional[int] = Field(None, description="ID of the scan template to use")
     created_by: Optional[str] = None
     discovery_depth: Optional[int] = Field(1, ge=1, le=5, description="Network discovery depth (hops)")
     scanner_ids: Optional[List[int]] = Field(default_factory=list, description="List of scanner IDs to use")

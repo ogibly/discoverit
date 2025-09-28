@@ -178,7 +178,7 @@ class ScanTask(Base):
     end_time = Column(DateTime, nullable=True)
     target = Column(String(255), nullable=False)
     status = Column(String(20), index=True, nullable=True)
-    scan_type = Column(String(50), nullable=False)
+    scan_template_id = Column(Integer, ForeignKey("scan_templates.id"), nullable=True)
     progress = Column(Integer, nullable=True)
     current_ip = Column(String(45), nullable=True)
     total_ips = Column(Integer, nullable=True)
@@ -191,6 +191,7 @@ class ScanTask(Base):
     
     # Relationships
     scans = relationship("Scan", back_populates="scan_task", cascade="all, delete-orphan")
+    scan_template = relationship("ScanTemplate")
 
 
 class Scan(Base):

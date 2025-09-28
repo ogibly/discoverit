@@ -459,20 +459,6 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
           )}
         </div>
 
-        {selectedTemplate && (
-          <div className="bg-blue-500/10 border border-blue-500 rounded-lg p-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <CheckCircle className="w-5 h-5 text-blue-500" />
-              <span className="font-medium text-blue-400">Template Selected</span>
-            </div>
-            <div className="text-sm text-slate-300">
-              {selectedTemplate.description}
-            </div>
-            <div className="text-xs text-slate-400 mt-1">
-              Estimated duration: {selectedTemplate.scan_config?.timeout ? `${Math.round(selectedTemplate.scan_config.timeout / 60)}-${Math.round(selectedTemplate.scan_config.timeout / 30)} minutes` : 'Unknown'}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -72,8 +72,43 @@ const DevicesInterface = () => {
     fetchAssets();
   }, [fetchDiscoveredDevices, fetchAssets]);
 
+  // Helper functions - defined before useMemo to avoid initialization errors
+  const determineDeviceType = (osName, manufacturer, ports) => {
+    if (manufacturer?.toLowerCase().includes('cisco')) return 'Router';
+    if (manufacturer?.toLowerCase().includes('hp') && ports.some(p => p.port === 9100)) return 'Printer';
+    if (osName?.toLowerCase().includes('windows')) return 'Workstation';
+    if (osName?.toLowerCase().includes('linux')) return 'Server';
+    if (osName?.toLowerCase().includes('mac')) return 'Workstation';
+    if (ports.some(p => p.port === 22 || p.port === 80 || p.port === 443)) return 'Server';
+    if (ports.some(p => p.port === 3389)) return 'Workstation';
+    return 'Network Device';
+  };
+
+  const getDeviceIcon = (deviceType, osName, manufacturer) => {
+    if (deviceType === 'Router') return <Router className="w-5 h-5" />;
+    if (deviceType === 'Printer') return <Printer className="w-5 h-5" />;
+    if (deviceType === 'Server') return <Server className="w-5 h-5" />;
+    if (deviceType === 'Workstation') return <Monitor className="w-5 h-5" />;
+    if (osName?.toLowerCase().includes('android') || osName?.toLowerCase().includes('ios')) return <Smartphone className="w-5 h-5" />;
+    return <Network className="w-5 h-5" />;
+  };
+
+  const calculateConfidence = (hostname, osName, manufacturer, macAddress, ports) => {
+    let score = 0;
+    if (hostname) score += 0.3;
+    if (osName) score += 0.3;
+    if (manufacturer) score += 0.2;
+    if (macAddress) score += 0.1;
+    if (ports && ports.length > 0) score += 0.1;
+    return Math.min(score, 1);
+  };
+
   // Enhanced device data processing
   const processedDevices = useMemo(() => {
+    if (!discoveredDevices || !Array.isArray(discoveredDevices)) {
+      return [];
+    }
+    
     return discoveredDevices.map(device => {
       const scanData = device.scan_data || {};
       const osInfo = scanData.os_info || {};
@@ -126,6 +161,10 @@ const DevicesInterface = () => {
 
   // Filter and sort devices
   const filteredDevices = useMemo(() => {
+    if (!processedDevices || !Array.isArray(processedDevices)) {
+      return [];
+    }
+    
     let filtered = processedDevices.filter(device => {
       const matchesSearch = !searchTerm || 
         device.ipAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -187,36 +226,7 @@ const DevicesInterface = () => {
     return filtered;
   }, [processedDevices, searchTerm, filterType, sortBy, sortOrder]);
 
-  // Helper functions
-  const determineDeviceType = (osName, manufacturer, ports) => {
-    if (manufacturer?.toLowerCase().includes('cisco')) return 'Router';
-    if (manufacturer?.toLowerCase().includes('hp') && ports.some(p => p.port === 9100)) return 'Printer';
-    if (osName?.toLowerCase().includes('windows')) return 'Workstation';
-    if (osName?.toLowerCase().includes('linux')) return 'Server';
-    if (osName?.toLowerCase().includes('mac')) return 'Workstation';
-    if (ports.some(p => p.port === 22 || p.port === 80 || p.port === 443)) return 'Server';
-    if (ports.some(p => p.port === 3389)) return 'Workstation';
-    return 'Network Device';
-  };
-
-  const getDeviceIcon = (deviceType, osName, manufacturer) => {
-    if (deviceType === 'Router') return <Router className="w-5 h-5" />;
-    if (deviceType === 'Printer') return <Printer className="w-5 h-5" />;
-    if (deviceType === 'Server') return <Server className="w-5 h-5" />;
-    if (deviceType === 'Workstation') return <Monitor className="w-5 h-5" />;
-    if (osName?.toLowerCase().includes('android') || osName?.toLowerCase().includes('ios')) return <Smartphone className="w-5 h-5" />;
-    return <Network className="w-5 h-5" />;
-  };
-
-  const calculateConfidence = (hostname, osName, manufacturer, macAddress, ports) => {
-    let score = 0;
-    if (hostname) score += 0.3;
-    if (osName) score += 0.3;
-    if (manufacturer) score += 0.2;
-    if (macAddress) score += 0.1;
-    if (ports && ports.length > 0) score += 0.1;
-    return Math.min(score, 1);
-  };
+  // Additional helper functions
 
   const getConfidenceColor = (confidence) => {
     if (confidence >= 0.8) return 'text-green-600 bg-green-100';
@@ -242,6 +252,10 @@ const DevicesInterface = () => {
 
   // Calculate statistics
   const statistics = useMemo(() => {
+    if (!processedDevices || !Array.isArray(processedDevices)) {
+      return { total: 0, newDevices: 0, converted: 0, highConfidence: 0, deviceTypes: 0 };
+    }
+    
     const total = processedDevices.length;
     const newDevices = processedDevices.filter(d => d.status === 'new').length;
     const converted = processedDevices.filter(d => d.status === 'converted').length;
@@ -294,21 +308,21 @@ const DevicesInterface = () => {
   // Render functions
   const renderDeviceCard = (device) => (
     <Card className="group hover:shadow-lg transition-all duration-200 border-border hover:border-primary/50">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               {device.deviceIcon}
             </div>
-            <div>
-              <h4 className="font-semibold text-foreground">
+              <div>
+                <h4 className="font-semibold text-foreground">
                 {device.hostname || `Device ${device.ipAddress}`}
-              </h4>
-              <p className="text-sm text-muted-foreground font-mono">
+                </h4>
+                <p className="text-sm text-muted-foreground font-mono">
                 {device.ipAddress}
-              </p>
+                </p>
+              </div>
             </div>
-          </div>
           <div className="flex items-center space-x-2">
             <Badge className={cn("text-xs", getStatusColor(device.status))}>
               {getStatusIcon(device.status)}
@@ -318,8 +332,8 @@ const DevicesInterface = () => {
               {Math.round(device.confidence * 100)}% confidence
             </Badge>
           </div>
-        </div>
-        
+          </div>
+          
         <div className="space-y-2 text-sm">
           {device.deviceType && (
             <div className="flex justify-between">
@@ -328,84 +342,84 @@ const DevicesInterface = () => {
             </div>
           )}
           {device.osName && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">OS:</span>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">OS:</span>
               <span className="text-foreground font-medium">{device.osName}</span>
-            </div>
-          )}
-          {device.manufacturer && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Manufacturer:</span>
-              <span className="text-foreground font-medium">{device.manufacturer}</span>
-            </div>
-          )}
+              </div>
+            )}
+            {device.manufacturer && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Manufacturer:</span>
+                <span className="text-foreground font-medium">{device.manufacturer}</span>
+              </div>
+            )}
           {device.ports.length > 0 && (
-            <div className="flex justify-between">
+              <div className="flex justify-between">
               <span className="text-muted-foreground">Open Ports:</span>
               <span className="text-foreground font-medium">{device.ports.length}</span>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Last Seen:</span>
-            <span className="text-foreground text-xs">
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Last Seen:</span>
+              <span className="text-foreground text-xs">
               {formatTimestampUtil(device.lastSeen)}
-            </span>
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div className="flex space-x-2 mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSelectedDevice(device);
-              setShowDeviceModal(true);
-            }}
-            className="flex-1"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Explore
-          </Button>
-          {device.status === 'new' && (
+          <div className="flex space-x-2 mt-6">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
-              onClick={() => handleConvertToAsset(device)}
+              onClick={() => {
+                setSelectedDevice(device);
+                setShowDeviceModal(true);
+              }}
               className="flex-1"
             >
+            <Eye className="w-4 h-4 mr-2" />
+              Explore
+            </Button>
+          {device.status === 'new' && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleConvertToAsset(device)}
+                className="flex-1"
+              >
               <ArrowRight className="w-4 h-4 mr-2" />
               Convert
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
 
   const renderDeviceRow = (device) => (
     <tr className="hover:bg-muted/50 transition-colors">
-      <td className="px-6 py-4">
-        <div className="flex items-center space-x-3">
+        <td className="px-6 py-4">
+          <div className="flex items-center space-x-3">
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
             {device.deviceIcon}
           </div>
-          <div>
-            <div className="font-medium text-foreground">
+            <div>
+              <div className="font-medium text-foreground">
               {device.hostname || `Device ${device.ipAddress}`}
-            </div>
-            <div className="text-sm text-muted-foreground">
+              </div>
+                <div className="text-sm text-muted-foreground">
               {device.deviceType}
             </div>
+            </div>
           </div>
-        </div>
-      </td>
-      <td className="px-6 py-4">
+        </td>
+        <td className="px-6 py-4">
         <span className="font-mono text-sm text-foreground">{device.ipAddress}</span>
-      </td>
-      <td className="px-6 py-4">
+        </td>
+        <td className="px-6 py-4">
         <span className="text-sm text-foreground">{device.osName || 'Unknown'}</span>
-      </td>
-      <td className="px-6 py-4">
+        </td>
+        <td className="px-6 py-4">
         <div className="flex items-center space-x-2">
           <Badge className={cn("text-xs", getStatusColor(device.status))}>
             {getStatusIcon(device.status)}
@@ -415,35 +429,35 @@ const DevicesInterface = () => {
             {Math.round(device.confidence * 100)}%
           </Badge>
         </div>
-      </td>
-      <td className="px-6 py-4">
-        <span className="text-sm text-muted-foreground">
+        </td>
+        <td className="px-6 py-4">
+          <span className="text-sm text-muted-foreground">
           {formatTimestampUtil(device.lastSeen)}
-        </span>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSelectedDevice(device);
-              setShowDeviceModal(true);
-            }}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          {device.status === 'new' && (
+          </span>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex space-x-2">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
-              onClick={() => handleConvertToAsset(device)}
+              onClick={() => {
+                setSelectedDevice(device);
+                setShowDeviceModal(true);
+              }}
             >
-              <ArrowRight className="w-4 h-4" />
+            <Eye className="w-4 h-4" />
             </Button>
-          )}
-        </div>
-      </td>
+          {device.status === 'new' && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleConvertToAsset(device)}
+              >
+              <ArrowRight className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </td>
     </tr>
   );
 
@@ -478,7 +492,7 @@ const DevicesInterface = () => {
                     <div>
                       <h4 className="text-sm font-semibold text-blue-900">Active Discovery</h4>
                       <p className="text-xs text-blue-700">
-                        {activeScanTask.name} • {activeScanTask.target} • {formatScanProgress(activeScanTask.progress)} complete
+                          {activeScanTask.name} • {activeScanTask.target} • {formatScanProgress(activeScanTask.progress)} complete
                       </p>
                     </div>
                   </div>
@@ -486,11 +500,11 @@ const DevicesInterface = () => {
                     {activeScanTask.status || 'running'}
                   </Badge>
                 </div>
-                {activeScanTask.progress > 0 && (
-                  <div className="mt-3">
-                    <Progress value={getCappedProgress(activeScanTask.progress)} className="h-2" />
-                  </div>
-                )}
+                  {activeScanTask.progress > 0 && (
+                    <div className="mt-3">
+                      <Progress value={getCappedProgress(activeScanTask.progress)} className="h-2" />
+                    </div>
+                  )}
               </CardContent>
             </Card>
           )}
@@ -668,9 +682,9 @@ const DevicesInterface = () => {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
                       Device Name
                     </label>
                     <p className="text-sm text-foreground bg-muted p-3 rounded-md">
@@ -680,62 +694,62 @@ const DevicesInterface = () => {
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
                       Device Type
-                    </label>
-                    <p className="text-sm text-foreground bg-muted p-3 rounded-md">
+                </label>
+                <p className="text-sm text-foreground bg-muted p-3 rounded-md">
                       {selectedDevice.deviceType}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      IP Address
-                    </label>
-                    <p className="text-sm text-foreground bg-muted p-3 rounded-md font-mono">
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  IP Address
+                </label>
+                <p className="text-sm text-foreground bg-muted p-3 rounded-md font-mono">
                       {selectedDevice.ipAddress}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      MAC Address
-                    </label>
-                    <p className="text-sm text-foreground bg-muted p-3 rounded-md font-mono">
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  MAC Address
+                </label>
+                <p className="text-sm text-foreground bg-muted p-3 rounded-md font-mono">
                       {selectedDevice.macAddress || 'Unknown'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Operating System
-                    </label>
-                    <p className="text-sm text-foreground bg-muted p-3 rounded-md">
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Operating System
+                </label>
+                <p className="text-sm text-foreground bg-muted p-3 rounded-md">
                       {selectedDevice.osName || 'Unknown'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Manufacturer
-                    </label>
-                    <p className="text-sm text-foreground bg-muted p-3 rounded-md">
-                      {selectedDevice.manufacturer || 'Unknown'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Manufacturer
+                </label>
+                <p className="text-sm text-foreground bg-muted p-3 rounded-md">
+                  {selectedDevice.manufacturer || 'Unknown'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
                       Confidence Score
-                    </label>
+                </label>
                     <div className="flex items-center space-x-2">
                       <Progress value={selectedDevice.confidence * 100} className="flex-1" />
                       <span className="text-sm font-medium">
                         {Math.round(selectedDevice.confidence * 100)}%
                       </span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Status
-                    </label>
+              </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Status
+                </label>
                     <Badge className={cn("text-xs", getStatusColor(selectedDevice.status))}>
                       {getStatusIcon(selectedDevice.status)}
                       <span className="ml-1">{selectedDevice.status === 'new' ? 'New Device' : 'Converted to Asset'}</span>
-                    </Badge>
+                  </Badge>
                   </div>
                 </div>
               </TabsContent>
@@ -757,9 +771,9 @@ const DevicesInterface = () => {
                         <span className="text-muted-foreground">Last Seen:</span>
                         <span>{formatTimestampUtil(selectedDevice.lastSeen)}</span>
                       </div>
-                    </div>
-                  </div>
                 </div>
+              </div>
+            </div>
               </TabsContent>
 
               <TabsContent value="services" className="space-y-4">
@@ -786,12 +800,12 @@ const DevicesInterface = () => {
               </TabsContent>
 
               <TabsContent value="raw" className="space-y-4">
-                <div>
+              <div>
                   <h4 className="text-sm font-medium text-foreground mb-2">Raw Scan Data</h4>
                   <pre className="text-xs text-foreground bg-muted p-4 rounded-md overflow-auto max-h-96">
                     {JSON.stringify(selectedDevice.rawScanData, null, 2)}
-                  </pre>
-                </div>
+                </pre>
+              </div>
               </TabsContent>
             </Tabs>
             

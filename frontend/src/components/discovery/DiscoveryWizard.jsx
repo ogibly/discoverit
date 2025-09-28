@@ -26,7 +26,8 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
     assetTemplates,
     fetchScanTemplates,
     fetchAssetTemplates,
-    createScanTask
+    createScanTask,
+    api
   } = useApp();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -473,13 +474,8 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners }) =
     
     setIsLoadingRecommendation(true);
     try {
-      const response = await fetch(`/api/v2/scanners/recommendation?target=${encodeURIComponent(data.target)}`);
+      const recommendation = await api.get(`/scanners/recommendation?target=${encodeURIComponent(data.target)}`);
       
-      if (!response.ok) {
-        throw new Error(`Failed to get scanner recommendation: ${response.statusText}`);
-      }
-      
-      const recommendation = await response.json();
       setScannerRecommendation(recommendation);
       
       if (recommendation.recommended_scanner && !data.scannerId) {

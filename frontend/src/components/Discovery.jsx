@@ -43,7 +43,8 @@ const Discovery = () => {
     fetchDiscoveredDevices,
     createScanTask,
     cancelScanTask,
-    dispatch
+    dispatch,
+    api
   } = useApp();
 
   // Workflow state
@@ -116,14 +117,8 @@ const Discovery = () => {
     }
 
     try {
-      // Use the new API endpoint to get scanner recommendation
-      const response = await fetch(`/api/v2/scanners/recommendation?target=${encodeURIComponent(target)}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to get scanner recommendation: ${response.statusText}`);
-      }
-      
-      const recommendation = await response.json();
+      // Use the authenticated API endpoint to get scanner recommendation
+      const recommendation = await api.get(`/scanners/recommendation?target=${encodeURIComponent(target)}`);
       console.log('Scanner recommendation:', recommendation);
       
       if (recommendation.recommended_scanner) {

@@ -150,16 +150,17 @@ const Discovery = () => {
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={() => setShowWizard(true)}
-                className="flex items-center space-x-2"
-                disabled={!!activeScanTask}
-              >
-                <Plus className="w-4 h-4" />
-                <span>Start New Discovery</span>
-              </Button>
-            </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={() => setShowWizard(true)}
+                    className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
+                    disabled={!!activeScanTask}
+                    size="lg"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>Start New Discovery</span>
+                  </Button>
+                </div>
           </div>
         </div>
       </div>
@@ -171,7 +172,7 @@ const Discovery = () => {
           {activeScanTask && (
             <Card className="border-blue-500/20 bg-blue-500/5">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="text-2xl">🔍</div>
                     <div>
@@ -213,18 +214,15 @@ const Discovery = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {scanTasks.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-4">📊</div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">No Scans Yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Start your first discovery scan to see results here.
-                    </p>
-                    <Button onClick={() => setShowWizard(true)}>
-                      Start First Scan
-                    </Button>
-                  </div>
-                ) : (
+                    {scanTasks.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-4xl mb-4">📊</div>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">No Scans Yet</h3>
+                        <p className="text-muted-foreground">
+                          Use the "Start New Discovery" button above to begin your first network scan.
+                        </p>
+                      </div>
+                    ) : (
                   <div className="space-y-3">
                     {scanTasks.slice(0, 5).map((task) => (
                       <div
@@ -234,14 +232,14 @@ const Discovery = () => {
                         <div className="flex items-center space-x-3">
                           <div className={cn("flex items-center space-x-1", getStatusColor(task.status))}>
                             {getStatusIcon(task.status)}
-                          </div>
+            </div>
                           <div>
                             <p className="font-medium text-foreground">{task.name}</p>
-                            <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                               {task.target} • {formatScanDate(task.start_time)}
-                            </p>
-                          </div>
-                        </div>
+              </p>
+            </div>
+          </div>
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="ghost"
@@ -274,18 +272,15 @@ const Discovery = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {discoveredDevices.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-4">🖥️</div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">No Devices Found</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Run a discovery scan to find devices on your network.
-                    </p>
-                    <Button onClick={() => setShowWizard(true)}>
-                      Discover Devices
-                    </Button>
-                  </div>
-                ) : (
+                    {discoveredDevices.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-4xl mb-4">🖥️</div>
+                        <h3 className="text-lg font-semibold text-foreground mb-2">No Devices Found</h3>
+                        <p className="text-muted-foreground">
+                          Run a discovery scan using the "Start New Discovery" button to find devices on your network.
+                        </p>
+                      </div>
+                    ) : (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Total Devices</span>
@@ -316,8 +311,8 @@ const Discovery = () => {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
           </div>
 
         </div>

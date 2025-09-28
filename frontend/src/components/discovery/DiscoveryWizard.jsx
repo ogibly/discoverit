@@ -125,9 +125,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
         }
         break;
       case 3:
-        if (!wizardData.scannerId) {
-          newErrors.scannerId = 'Scanner selection is required';
-        }
+        // Scanner selection is optional - will use default scanner if none selected
         break;
     }
     
@@ -171,7 +169,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
         scan_type: scanType,
         discovery_depth: wizardData.discoveryDepth,
         scan_template_id: wizardData.scanTemplateId,
-        scanner_id: wizardData.scannerId,
+        scanner_id: wizardData.scannerId || null, // Use null for default scanner
         credentials: wizardData.credentials,
         schedule: wizardData.schedule
       };
@@ -491,8 +489,12 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
       console.error('Error getting scanner recommendation:', error);
       setScannerRecommendation({
         recommended_scanner: null,
-        message: 'Failed to get scanner recommendation',
-        scanner_type: 'error'
+        message: 'Using default scanner. Consider installing a satellite scanner for improved network scan performance.',
+        scanner_type: 'default',
+        suggestion: {
+          type: 'info',
+          message: 'Install a satellite scanner in your target network for faster and more accurate scans.'
+        }
       });
       return null;
     } finally {
@@ -524,60 +526,58 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
         </div>
       )}
 
-      {scannerRecommendation && !isLoadingRecommendation && (
-        <div className={cn(
-          "border rounded-lg p-4",
-          scannerRecommendation.scanner_type === 'satellite' 
-            ? "bg-green-500/10 border-green-500" 
-            : scannerRecommendation.scanner_type === 'default'
-            ? "bg-blue-500/10 border-blue-500"
-            : "bg-yellow-500/10 border-yellow-500"
-        )}>
-          <div className="flex items-center space-x-2 mb-2">
-            {scannerRecommendation.scanner_type === 'satellite' ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            ) : scannerRecommendation.scanner_type === 'default' ? (
-              <CheckCircle className="w-5 h-5 text-blue-500" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-yellow-500" />
-            )}
-            <span className={cn(
-              "font-medium",
+          {scannerRecommendation && !isLoadingRecommendation && (
+            <div className={cn(
+              "border rounded-lg p-4",
               scannerRecommendation.scanner_type === 'satellite' 
-                ? "text-green-400" 
+                ? "bg-green-500/10 border-green-500" 
                 : scannerRecommendation.scanner_type === 'default'
-                ? "text-blue-400"
-                : "text-yellow-400"
+                ? "bg-blue-500/10 border-blue-500"
+                : "bg-yellow-500/10 border-yellow-500"
             )}>
-              {scannerRecommendation.scanner_type === 'satellite' 
-                ? 'Optimal Satellite Scanner' 
-                : scannerRecommendation.scanner_type === 'default'
-                ? 'Default Scanner'
-                : 'Scanner Recommendation'}
-            </span>
-          </div>
-          <div className="text-sm text-slate-300 mb-2">
-            {scannerRecommendation.message}
-          </div>
-          {scannerRecommendation.recommended_scanner && (
-            <div className="text-xs text-slate-400">
-              Scanner: {scannerRecommendation.recommended_scanner.name} 
-              {scannerRecommendation.recommended_scanner.is_satellite && (
-                <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
-                  Satellite
+              <div className="flex items-center space-x-2 mb-2">
+                {scannerRecommendation.scanner_type === 'satellite' ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : scannerRecommendation.scanner_type === 'default' ? (
+                  <CheckCircle className="w-5 h-5 text-blue-500" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-yellow-500" />
+                )}
+                <span className={cn(
+                  "font-medium",
+                  scannerRecommendation.scanner_type === 'satellite' 
+                    ? "text-green-400" 
+                    : scannerRecommendation.scanner_type === 'default'
+                    ? "text-blue-400"
+                    : "text-yellow-400"
+                )}>
+                  {scannerRecommendation.scanner_type === 'satellite' 
+                    ? 'Optimal Satellite Scanner' 
+                    : 'Default Scanner'}
                 </span>
+              </div>
+              <div className="text-sm text-slate-300 mb-2">
+                {scannerRecommendation.message}
+              </div>
+              {scannerRecommendation.recommended_scanner && (
+                <div className="text-xs text-slate-400">
+                  Scanner: {scannerRecommendation.recommended_scanner.name} 
+                  {scannerRecommendation.recommended_scanner.is_satellite && (
+                    <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                      Satellite
+                    </span>
+                  )}
+                </div>
+              )}
+              {scannerRecommendation.suggestion && (
+                <div className="mt-3 p-3 bg-slate-800/50 rounded border border-slate-700">
+                  <div className="text-xs text-slate-400">
+                    💡 {scannerRecommendation.suggestion.message}
+                  </div>
+                </div>
               )}
             </div>
           )}
-          {scannerRecommendation.suggestion && (
-            <div className="mt-3 p-3 bg-slate-800/50 rounded border border-slate-700">
-              <div className="text-xs text-slate-400">
-                💡 {scannerRecommendation.suggestion.message}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="space-y-3">
         {availableScanners?.map((scanner) => (

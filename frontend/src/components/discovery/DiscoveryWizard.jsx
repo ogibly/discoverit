@@ -250,6 +250,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
             availableScanners={availableScanners}
             scanTemplates={scanTemplates}
             assetTemplates={assetTemplates}
+            api={api}
           />
         </div>
 
@@ -306,7 +307,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
 };
 
 // Step Components
-const TargetSelectionStep = ({ data, updateData, errors }) => {
+const TargetSelectionStep = ({ data, updateData, errors, api }) => {
   const [targetSuggestions, setTargetSuggestions] = useState([]);
 
   const commonTargets = [
@@ -400,7 +401,7 @@ const TargetSelectionStep = ({ data, updateData, errors }) => {
   );
 };
 
-const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
+const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates, api }) => {
   // Get the selected template to show its details
   const selectedTemplate = scanTemplates?.find(t => t.id === data.scanTemplateId);
   
@@ -465,7 +466,7 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates }) => {
   );
 };
 
-const ScannerSelectionStep = ({ data, updateData, errors, availableScanners }) => {
+const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api }) => {
   const [scannerRecommendation, setScannerRecommendation] = useState(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
 
@@ -622,7 +623,7 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners }) =
   );
 };
 
-const AdvancedOptionsStep = ({ data, updateData }) => {
+const AdvancedOptionsStep = ({ data, updateData, api }) => {
   return (
     <div className="space-y-6">
       <div>
@@ -682,7 +683,7 @@ const AdvancedOptionsStep = ({ data, updateData }) => {
   );
 };
 
-const ReviewLaunchStep = ({ data, errors, scanTemplates }) => {
+const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
   // Get the selected template
   const selectedTemplate = scanTemplates?.find(t => t.id === data.scanTemplateId);
   const scanType = selectedTemplate?.scan_config?.scan_type || 'standard';

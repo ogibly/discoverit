@@ -52,36 +52,18 @@ const ScanResultsModal = ({
   // Clean and deduplicate scan results
   let processedResults = scanResults;
   
-  // If no scan results but we have a scan task, generate mock data for testing
-  if ((!scanResults || scanResults.length === 0) && scanTask && scanTask.target) {
-    const targetIP = scanTask.target;
-    processedResults = [{
-      id: `mock-${targetIP}`,
-      ip: targetIP,
-      hostname: 'Unknown Host',
-      mac: '00:00:00:00:00:00',
-      os: 'Unknown',
-      vendor: 'Unknown',
-      status: 'up',
-      last_seen: new Date().toISOString(),
-      device_type: 'Unknown',
-      model: 'Unknown',
-      serial_number: 'Unknown',
-      scan_status: 'completed',
-      discovered_at: new Date().toISOString(),
-      scan_timestamp: new Date().toISOString()
-    }];
-  }
+  // Don't generate mock data - show real results only
+  // If no results, the UI will show appropriate empty state
 
-  const cleanResults = processedResults
+  const cleanResults = (processedResults || [])
     .filter(device => device && device.ip) // Remove null/undefined devices
     .map(device => ({
       ...device,
       id: device.id || `${device.ip}-${device.mac || 'unknown'}`,
-      hostname: device.hostname || device.hostname_scan || 'Unknown Host',
-      mac: device.mac || device.mac_address || 'Unknown',
-      os: device.os || device.os_name || device.operating_system || 'Unknown',
-      vendor: device.vendor || device.manufacturer || 'Unknown',
+      hostname: device.hostname || device.hostname_scan || null,
+      mac: device.mac || device.mac_address || null,
+      os: device.os || device.os_name || device.operating_system || null,
+      vendor: device.vendor || device.manufacturer || null,
       status: device.status || device.scan_status || 'up',
       last_seen: device.last_seen || device.discovered_at || device.scan_timestamp || new Date().toISOString()
     }))
@@ -190,31 +172,46 @@ const ScanResultsModal = ({
     }
   };
 
-  const handleDownload = () => {
-    const dataToExport = selectedDevices.length > 0 
-      ? filteredResults.filter(device => selectedDevices.includes(device.id))
-      : filteredResults;
-    
-    const csvContent = [
-      ['IP', 'Hostname', 'MAC', 'OS', 'Vendor', 'Status', 'Last Seen'].join(','),
-      ...dataToExport.map(device => [
-        device.ip || '',
-        device.hostname || '',
-        device.mac || '',
-        device.os || '',
-        device.vendor || '',
-        device.status || '',
-        device.last_seen || ''
-      ].join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `scan-results-${scanTask?.id || 'export'}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    try {
+      const dataToExport = selectedDevices.length > 0 
+        ? filteredResults.filter(device => selectedDevices.includes(device.id))
+        : filteredResults;
+      
+      // Create comprehensive export data
+      const exportData = {
+        scan_info: {
+          scan_id: scanTask?.id,
+          scan_name: scanTask?.name,
+          target: scanTask?.target,
+          status: scanTask?.status,
+          start_time: scanTask?.start_time,
+          end_time: scanTask?.end_time,
+          progress: scanTask?.progress,
+          duration: formatDuration(scanTask?.start_time, scanTask?.end_time)
+        },
+        devices: dataToExport,
+        export_info: {
+          exported_at: new Date().toISOString(),
+          total_devices: dataToExport.length,
+          selected_devices: selectedDevices.length
+        }
+      };
+      
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `scan-results-${scanTask?.id || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download scan results:', error);
+      alert('Failed to download scan results. Please try again.');
+    }
   };
 
   if (!isOpen || !scanTask) return null;
@@ -239,7 +236,7 @@ const ScanResultsModal = ({
         <Card>
           <CardContent className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
+              <div className="flex items-center">
                 <span className="text-muted-foreground">Status:</span>
                 <Badge className={cn("ml-2", 
                   scanTask.status === 'completed' ? 'bg-green-100 text-green-800' :
@@ -247,22 +244,24 @@ const ScanResultsModal = ({
                   scanTask.status === 'failed' ? 'bg-red-100 text-red-800' :
                   'bg-gray-100 text-gray-800'
                 )}>
-                  {scanTask.status}
+                  {scanTask.status || 'unknown'}
                 </Badge>
               </div>
-              <div>
+              <div className="flex items-center">
                 <span className="text-muted-foreground">Discovered:</span>
                 <span className="ml-2 font-medium">{cleanResults.length} devices</span>
               </div>
-              <div>
+              <div className="flex items-center">
                 <span className="text-muted-foreground">Duration:</span>
-                <span className="ml-2">
+                <span className="ml-2 font-mono">
                   {formatDuration(scanTask.start_time, scanTask.end_time)}
                 </span>
               </div>
-              <div>
+              <div className="flex items-center">
                 <span className="text-muted-foreground">Progress:</span>
-                <span className="ml-2">{scanTask.progress}%</span>
+                <span className="ml-2 font-mono">
+                  {scanTask.progress !== null ? `${scanTask.progress}%` : 'N/A'}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -368,7 +367,7 @@ const ScanResultsModal = ({
                       {getDeviceIcon(device)}
                       <div>
                         <p className="font-medium text-sm">
-                          {device.hostname || 'Unknown Host'}
+                          {device.hostname || `Device ${device.ip}`}
                         </p>
                         <p className="text-xs text-muted-foreground font-mono">
                           {device.ip}
@@ -381,22 +380,28 @@ const ScanResultsModal = ({
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             <span className="text-muted-foreground font-medium">MAC:</span>
-                            <span className="font-mono text-foreground">{device.mac}</span>
+                            <span className="font-mono text-foreground">
+                              {device.mac || 'Not detected'}
+                            </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-muted-foreground font-medium">OS:</span>
-                            <span className="text-foreground">{device.os}</span>
+                            <span className="text-foreground">
+                              {device.os || 'Not detected'}
+                            </span>
                           </div>
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             <span className="text-muted-foreground font-medium">Vendor:</span>
-                            <span className="text-foreground">{device.vendor}</span>
+                            <span className="text-foreground">
+                              {device.vendor || 'Not detected'}
+                            </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-muted-foreground font-medium">Status:</span>
                             <Badge className={cn("text-xs", getStatusColor(device.status))}>
-                              {device.status}
+                              {device.status || 'unknown'}
                             </Badge>
                           </div>
                         </div>
@@ -436,15 +441,15 @@ const ScanResultsModal = ({
                           <div className="space-y-1">
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Device Type:</span>
-                              <span>{device.device_type || 'Unknown'}</span>
+                              <span>{device.device_type || 'Not detected'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Model:</span>
-                              <span>{device.model || 'Unknown'}</span>
+                              <span>{device.model || 'Not detected'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Serial:</span>
-                              <span>{device.serial_number || 'Unknown'}</span>
+                              <span>{device.serial_number || 'Not detected'}</span>
                             </div>
                           </div>
                         </div>
@@ -453,15 +458,15 @@ const ScanResultsModal = ({
                           <div className="space-y-1">
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Scan Status:</span>
-                              <span>{device.scan_status || 'Unknown'}</span>
+                              <span>{device.scan_status || 'Not available'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Discovered:</span>
-                              <span>{device.discovered_at ? formatTimestamp(device.discovered_at) : 'Unknown'}</span>
+                              <span>{device.discovered_at ? formatTimestamp(device.discovered_at) : 'Not available'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Scan Time:</span>
-                              <span>{device.scan_timestamp ? formatTimestamp(device.scan_timestamp) : 'Unknown'}</span>
+                              <span>{device.scan_timestamp ? formatTimestamp(device.scan_timestamp) : 'Not available'}</span>
                             </div>
                           </div>
                         </div>

@@ -490,7 +490,7 @@ def download_scan_results(task_id: int, db: Session = Depends(get_db)):
 @router.get("/devices")
 def get_discovered_devices(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(1000, ge=1, le=10000),
     search: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     scan_task_id: Optional[int] = Query(None, description="Filter devices by scan task ID"),

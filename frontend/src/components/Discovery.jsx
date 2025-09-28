@@ -13,17 +13,13 @@ import DiscoveryWizard from './discovery/DiscoveryWizard';
 import SatelliteScannerDashboard from './scanners/SatelliteScannerDashboard';
 import { 
   Plus, 
-  Target, 
   Network, 
-  BarChart3,
   Clock,
   CheckCircle,
   AlertTriangle,
-  Satellite,
   Play,
   Eye,
-  Download,
-  Trash2
+  Download
 } from 'lucide-react';
 // Removed useScanUpdates import - using AppContext polling instead
 
@@ -125,14 +121,6 @@ const Discovery = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowSatelliteDashboard(true)}
-                className="flex items-center space-x-2"
-              >
-                <Satellite className="w-4 h-4" />
-                <span>Manage Scanners</span>
-              </Button>
               <Button
                 onClick={() => setShowWizard(true)}
                 className="flex items-center space-x-2"
@@ -302,47 +290,6 @@ const Discovery = () => {
             </Card>
           </div>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="w-5 h-5" />
-                <span>Quick Actions</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                  onClick={() => setShowWizard(true)}
-                  disabled={!!activeScanTask}
-                >
-                  <Target className="w-6 h-6" />
-                  <span>New Discovery Scan</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                  onClick={() => setShowSatelliteDashboard(true)}
-                >
-                  <Satellite className="w-6 h-6" />
-                  <span>Manage Scanners</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                  onClick={() => {
-                    // Navigate to assets view
-                    console.log('Navigate to assets');
-                  }}
-                >
-                  <Network className="w-6 h-6" />
-                  <span>View All Assets</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 

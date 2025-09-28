@@ -355,6 +355,8 @@ class ScanServiceV2:
             # Build scan command based on type and depth
             if scan_type == "quick":
                 cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", ip]
+            elif scan_type == "standard":
+                cmd = ["nmap", "-sS", "-O", "-sV", "-A", ip]
             elif scan_type == "comprehensive":
                 cmd = ["nmap", "-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
             elif scan_type == "lan_discovery":
@@ -368,8 +370,9 @@ class ScanServiceV2:
             else:
                 cmd = ["nmap", "-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", ip]
             
-            # Run nmap
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            # Run nmap with appropriate timeout based on scan type
+            timeout = 600 if scan_type in ["comprehensive", "standard"] else 30
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
             
             # Parse results
             scan_result = self._parse_nmap_output(result, ip, scan_type)

@@ -17,7 +17,11 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  X
+  X,
+  ChevronDown,
+  ChevronRight,
+  Network,
+  ExternalLink
 } from 'lucide-react';
 
 const Discovery = () => {
@@ -34,6 +38,7 @@ const Discovery = () => {
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedScanTask, setSelectedScanTask] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [expandedScans, setExpandedScans] = useState(new Set());
 
   useEffect(() => {
     fetchScanTasks();
@@ -79,6 +84,24 @@ const Discovery = () => {
       console.error('Failed to download scan results:', error);
       alert('Failed to download scan results. Please try again.');
     }
+  };
+
+  const toggleScanExpansion = (scanId) => {
+    setExpandedScans(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(scanId)) {
+        newSet.delete(scanId);
+      } else {
+        newSet.add(scanId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleViewDevices = (scanTask) => {
+    // Navigate to devices page with scan filter
+    const devicesUrl = `/devices?scan_task_id=${scanTask.id}&scan_name=${encodeURIComponent(scanTask.name)}`;
+    window.open(devicesUrl, '_blank');
   };
 
   const formatScanDate = (startTime) => {
@@ -161,6 +184,11 @@ const Discovery = () => {
                         Target: {activeScanTask.target} • 
                         {activeScanTask.progress !== null ? ` Progress: ${activeScanTask.progress}%` : ''}
                       </p>
+                      {activeScanTask.current_ip && (
+                        <p className="text-sm text-blue-400 font-mono">
+                          Currently scanning: {activeScanTask.current_ip}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -202,40 +230,139 @@ const Discovery = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {scanTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className={cn("flex items-center space-x-2", getStatusColor(task.status))}>
-                          {getStatusIcon(task.status)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">{task.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {task.target} • {formatScanDate(task.start_time)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewResults(task.id)}
+                  {scanTasks.map((task) => {
+                    const isExpanded = expandedScans.has(task.id);
+                    return (
+                      <div
+                        key={task.id}
+                        className="border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        {/* Main scan entry - clickable */}
+                        <div
+                          className="flex items-center justify-between p-4 cursor-pointer"
+                          onClick={() => toggleScanExpansion(task.id)}
                         >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDownloadResults(task.id)}
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-2">
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                              )}
+                              <div className={cn("flex items-center space-x-2", getStatusColor(task.status))}>
+                                {getStatusIcon(task.status)}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">{task.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {task.target} • {formatScanDate(task.start_time)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewResults(task.id);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadResults(task.id);
+                              }}
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Expanded content */}
+                        {isExpanded && (
+                          <div className="px-4 pb-4 border-t border-border">
+                            <div className="pt-4 space-y-4">
+                              {/* Scan Details */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <span className="text-muted-foreground">Status:</span>
+                                  <div className="mt-1">
+                                    <Badge className={cn("text-xs", 
+                                      task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                      task.status === 'running' ? 'bg-blue-100 text-blue-800' :
+                                      task.status === 'failed' ? 'bg-red-100 text-red-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    )}>
+                                      {task.status || 'unknown'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Progress:</span>
+                                  <p className="mt-1 font-mono">
+                                    {task.progress !== null ? `${task.progress}%` : 'N/A'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Discovered:</span>
+                                  <p className="mt-1 font-mono">
+                                    {task.discovered_devices || 0} devices
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Duration:</span>
+                                  <p className="mt-1 font-mono">
+                                    {task.start_time && task.end_time 
+                                      ? formatScanDate(task.start_time) 
+                                      : 'In progress'
+                                    }
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center space-x-3 pt-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => handleViewDevices(task)}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Network className="w-4 h-4" />
+                                  <span>View Devices</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewResults(task.id)}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  <span>View Results</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadResults(task.id)}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  <span>Download</span>
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

@@ -162,13 +162,19 @@ const ScanTemplateManager = () => {
     if (!confirm(`Are you sure you want to delete "${template.name}"?`)) return;
     
     try {
-      await fetch(`/api/v2/scan-templates/${template.id}`, {
+      const response = await fetch(`/api/v2/scan-templates/${template.id}`, {
         method: 'DELETE'
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete template');
+      }
+      
       await fetchScanTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
-      alert('Failed to delete template');
+      alert(`Failed to delete template: ${error.message}`);
     }
   };
 
@@ -270,7 +276,9 @@ const ScanTemplateManager = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(template)}
-                      className="text-red-400 hover:text-red-300"
+                      disabled={scanTemplates?.length <= 1}
+                      className="text-red-400 hover:text-red-300 disabled:text-slate-500 disabled:cursor-not-allowed"
+                      title={scanTemplates?.length <= 1 ? "Cannot delete the last template" : "Delete template"}
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>

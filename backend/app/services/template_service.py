@@ -78,6 +78,11 @@ class TemplateService:
         if not template or template.is_system:
             return False  # Cannot delete system templates
         
+        # Check if this would be the last template
+        total_templates = self.db.query(ScanTemplate).count()
+        if total_templates <= 1:
+            return False  # Cannot delete the last template
+        
         self.db.delete(template)
         self.db.commit()
         return True

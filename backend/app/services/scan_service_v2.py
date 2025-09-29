@@ -222,7 +222,7 @@ class ScanServiceV2:
                     scan_config = self._get_scan_config_from_template(task)
                     
                     # Perform the scan
-                    scan_result = self._perform_scan(ip, scan_config["scan_type"], task.discovery_depth)
+                    scan_result = self._perform_scan(ip, scan_config, task.discovery_depth)
                     
                     # Categorize the scan result
                     categorization = self._categorize_scan_result(scan_result)
@@ -296,13 +296,7 @@ class ScanServiceV2:
     def _get_scan_config_from_template(self, task: ScanTask) -> Dict[str, Any]:
         """Get scan configuration from the associated template."""
         if not task.scan_template_id:
-            # Fallback to default configuration if no template
-            return {
-                "scan_type": "standard",
-                "discovery_depth": task.discovery_depth or 2,
-                "timeout": 300,
-                "arguments": "-sS -O -sV -A"
-            }
+            raise ValueError("Scan template is required for all scan tasks")
         
         # Get template from database
         from .template_service import TemplateService
@@ -310,13 +304,7 @@ class ScanServiceV2:
         template = template_service.get_scan_template(task.scan_template_id)
         
         if not template:
-            logger.warning(f"Template {task.scan_template_id} not found, using default config")
-            return {
-                "scan_type": "standard",
-                "discovery_depth": task.discovery_depth or 2,
-                "timeout": 300,
-                "arguments": "-sS -O -sV -A"
-            }
+            raise ValueError(f"Scan template {task.scan_template_id} not found")
         
         # Use template configuration, but allow task-level overrides
         config = template.scan_config.copy()
@@ -325,7 +313,7 @@ class ScanServiceV2:
         
         return config
 
-    def _perform_scan(self, ip: str, scan_type: str, discovery_depth: int = 1) -> Dict[str, Any]:
+    def _perform_scan(self, ip: str, scan_config: Dict[str, Any], discovery_depth: int = 1) -> Dict[str, Any]:
         """Perform a comprehensive scan using the optimal scanner service."""
         try:
             # Get the best scanner for this target IP
@@ -333,7 +321,7 @@ class ScanServiceV2:
             
             if not optimal_scanner:
                 logger.warning(f"No scanner available for {ip}, using local nmap")
-                return self._perform_local_scan(ip, scan_type, discovery_depth)
+                return self._perform_local_scan(ip, scan_config, discovery_depth)
             
             # Use the optimal scanner URL
             scanner_url = optimal_scanner.url
@@ -342,9 +330,10 @@ class ScanServiceV2:
             # Prepare scan request
             scan_request = {
                 "target": ip,
-                "scan_type": scan_type,
+                "scan_type": scan_config.get("scan_type", "standard"),
                 "discovery_depth": discovery_depth,
-                "timeout": optimal_scanner.timeout_seconds or 30
+                "timeout": optimal_scanner.timeout_seconds or 30,
+                "arguments": scan_config.get("arguments", "-sS -O -sV -A")
             }
             
             # Call scanner service
@@ -367,11 +356,11 @@ class ScanServiceV2:
             else:
                 # Fallback to local nmap if scanner service fails
                 logger.warning(f"Scanner '{optimal_scanner.name}' failed for {ip}, using local nmap")
-                return self._perform_local_scan(ip, scan_type, discovery_depth)
+                return self._perform_local_scan(ip, scan_config, discovery_depth)
                 
         except requests.exceptions.RequestException as e:
             logger.warning(f"Scanner service unavailable for {ip}: {e}, using local nmap")
-            return self._perform_local_scan(ip, scan_type, discovery_depth)
+            return self._perform_local_scan(ip, scan_config, discovery_depth)
         except Exception as e:
             logger.error(f"Scan failed for {ip}: {e}")
             return {
@@ -379,40 +368,29 @@ class ScanServiceV2:
                 "status": "failed",
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
-                "scan_type": scan_type
+                "scan_type": scan_config.get("scan_type", "standard")
             }
 
-    def _perform_local_scan(self, ip: str, scan_type: str, discovery_depth: int = 1) -> Dict[str, Any]:
+    def _perform_local_scan(self, ip: str, scan_config: Dict[str, Any], discovery_depth: int = 1) -> Dict[str, Any]:
         """Fallback local scan using nmap directly."""
         import re
         
         try:
-            # Build scan command based on type and depth
             # Add network interface options for better host network access
             base_opts = ["--privileged", "--send-ip"]  # Use privileged mode and send IP packets
             
-            if scan_type == "quick":
-                cmd = ["nmap"] + base_opts + ["-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PA21,22,23,25,53,80,110,443,993,995", ip]
-            elif scan_type == "standard":
-                cmd = ["nmap"] + base_opts + ["-sS", "-O", "-sV", "-A", ip]
-            elif scan_type == "comprehensive":
-                cmd = ["nmap"] + base_opts + ["-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
-            elif scan_type == "lan_discovery":
-                # Enhanced LAN discovery based on depth
-                if discovery_depth == 1:
-                    cmd = ["nmap"] + base_opts + ["-sn", "-PR", ip]  # ARP only
-                elif discovery_depth == 2:
-                    cmd = ["nmap"] + base_opts + ["-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", "-PR", ip]
-                else:  # depth >= 3
-                    cmd = ["nmap"] + base_opts + ["-sS", "-O", "-sV", "-A", "--script", "default,safe", ip]
-            else:
-                cmd = ["nmap"] + base_opts + ["-sn", "-PE", "-PS21,22,23,25,53,80,110,443,993,995", ip]
+            # Get arguments from scan config (from template)
+            arguments = scan_config.get("arguments", "-sS -O -sV -A")
+            timeout = scan_config.get("timeout", 300)
             
-            # Run nmap with appropriate timeout based on scan type
-            timeout = 600 if scan_type in ["comprehensive", "standard"] else 30
+            # Parse arguments and build command
+            args_list = arguments.split()
+            cmd = ["nmap"] + base_opts + args_list + [ip]
+            
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
             
             # Parse results
+            scan_type = scan_config.get("scan_type", "standard")
             scan_result = self._parse_nmap_output(result, ip, scan_type)
             scan_result["scanner_info"] = {
                 "scanner_url": "local_nmap",
@@ -427,7 +405,7 @@ class ScanServiceV2:
                 "status": "failed",
                 "error": "Scan timeout",
                 "timestamp": datetime.utcnow().isoformat(),
-                "scan_type": scan_type
+                "scan_type": scan_config.get("scan_type", "standard")
             }
         except Exception as e:
             return {

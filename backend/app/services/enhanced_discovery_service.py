@@ -11,8 +11,8 @@ import platform
 from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from datetime import datetime
-from ..models import Asset, ScanTask, AssetMetric, NetworkTopology
-from ..schemas import AssetCreate, AssetMetricCreate, NetworkTopologyCreate
+from ..models import Asset, ScanTask
+from ..schemas import AssetCreate
 from .base_service import BaseService
 
 
@@ -100,14 +100,18 @@ class EnhancedDiscoveryService:
         # Use nmap for network discovery
         nm = nmap.PortScanner()
         
-        # Configure scan based on type
-        scan_args = {
-            "quick": "-sn -T4",  # Ping scan only
-            "standard": "-sS -O -sV -A -T4",
-            "comprehensive": "-sS -O -sV -A --script default,safe,vuln -T4"
-        }
+        # Get scan configuration from template
+        from .template_service import TemplateService
+        template_service = TemplateService(self.db)
         
-        args = scan_args.get(scan_type, scan_args["standard"])
+        # Find template by scan type
+        templates = template_service.get_scan_templates(scan_type=scan_type, is_active=True)
+        if not templates:
+            raise ValueError(f"No active template found for scan type: {scan_type}")
+        
+        template = templates[0]  # Use first matching template
+        scan_config = template.scan_config
+        args = scan_config.get("arguments", "-sS -O -sV -A")
         
         try:
             # Perform the scan

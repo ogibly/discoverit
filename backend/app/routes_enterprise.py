@@ -525,31 +525,22 @@ def enhanced_discovery(
     service = ScanServiceV2(db)
     audit_service = AuditService(db)
     
-    # Apply scan template if specified
-    if discovery_config.scan_template_id:
-        template_service = TemplateService(db)
-        template = template_service.get_scan_template(discovery_config.scan_template_id)
-        if template:
-            # Merge template config with provided config
-            template_config = template.scan_config.copy()
-            # Override with provided values
-            if discovery_config.scan_type:
-                template_config["scan_type"] = discovery_config.scan_type
-            if discovery_config.discovery_depth:
-                template_config["discovery_depth"] = discovery_config.discovery_depth
-            
-            # Increment template usage
-            template_service.increment_scan_template_usage(discovery_config.scan_template_id)
-        else:
-            template_config = {
-                "scan_type": discovery_config.scan_type,
-                "discovery_depth": discovery_config.discovery_depth
-            }
-    else:
-        template_config = {
-            "scan_type": discovery_config.scan_type,
-            "discovery_depth": discovery_config.discovery_depth
-        }
+    # Apply scan template - template is required
+    if not discovery_config.scan_template_id:
+        raise HTTPException(status_code=400, detail="scan_template_id is required for enhanced discovery")
+    
+    template_service = TemplateService(db)
+    template = template_service.get_scan_template(discovery_config.scan_template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Scan template not found")
+    
+    # Use template configuration, allow discovery_depth override
+    template_config = template.scan_config.copy()
+    if discovery_config.discovery_depth:
+        template_config["discovery_depth"] = discovery_config.discovery_depth
+    
+    # Increment template usage
+    template_service.increment_scan_template_usage(discovery_config.scan_template_id)
     
     # Start the scan
     scan_task = service.create_enhanced_scan_task(
@@ -569,7 +560,7 @@ def enhanced_discovery(
         user_id=current_user.id,
         details={
             "target": discovery_config.target,
-            "scan_type": discovery_config.scan_type,
+            "scan_type": template_config.get("scan_type", "standard"),
             "discovery_depth": discovery_config.discovery_depth,
             "template_id": discovery_config.scan_template_id
         }
@@ -584,7 +575,8 @@ def enhanced_discovery(
             "scan_task_id": scan_task.id,
             "scan_name": scan_task.name,
             "target": discovery_config.target,
-            "scan_type": discovery_config.scan_type,
+            "scan_type": template_config.get("scan_type", "standard"),
+            "template_id": discovery_config.scan_template_id,
             "user_id": current_user.id
         }
     )

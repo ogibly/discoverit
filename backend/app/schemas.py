@@ -759,11 +759,10 @@ class BulkOperationResult(BaseModel):
 # Enhanced Discovery Schemas
 class DiscoveryConfig(BaseModel):
     target: str = Field(..., description="Target network or IP range")
-    scan_type: str = Field(default="comprehensive", description="Type of discovery scan")
     discovery_depth: int = Field(default=2, ge=1, le=5, description="Network discovery depth")
     scanner_id: Optional[str] = None
     credentials: Optional[List[int]] = None
-    scan_template_id: Optional[int] = None
+    scan_template_id: int = Field(..., description="Required scan template ID")
     schedule: Optional[Dict[str, Any]] = None
 
 class DiscoveryResult(BaseModel):

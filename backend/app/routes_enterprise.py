@@ -532,10 +532,8 @@ def enhanced_discovery(
     if not template:
         raise HTTPException(status_code=404, detail="Scan template not found")
     
-    # Use template configuration, allow discovery_depth override
+    # Use template configuration
     template_config = template.scan_config.copy()
-    if discovery_config.discovery_depth:
-        template_config["discovery_depth"] = discovery_config.discovery_depth
     
     # Increment template usage
     template_service.increment_scan_template_usage(discovery_config.scan_template_id)
@@ -559,7 +557,6 @@ def enhanced_discovery(
         details={
             "target": discovery_config.target,
             "scan_type": template_config.get("scan_type", "standard"),
-            "discovery_depth": discovery_config.discovery_depth,
             "template_id": discovery_config.scan_template_id
         }
     )

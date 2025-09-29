@@ -186,7 +186,6 @@ class ScanTask(Base):
     discovered_devices = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)
     created_by = Column(String(100), nullable=True)
-    discovery_depth = Column(Integer, default=1, nullable=True)
     scanner_ids = Column(JSON, nullable=True)
     
     # Relationships

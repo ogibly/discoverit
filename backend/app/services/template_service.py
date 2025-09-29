@@ -199,7 +199,6 @@ class TemplateService:
                 "name": "Quick Network Discovery",
                 "description": "Fast ping scan to discover active hosts",
                 "scan_config": {
-                    "discovery_depth": 1,
                     "timeout": 30,
                     "arguments": "-sn -T4"
                 }
@@ -208,7 +207,6 @@ class TemplateService:
                 "name": "Standard Network Scan",
                 "description": "Comprehensive port and service discovery",
                 "scan_config": {
-                    "discovery_depth": 2,
                     "timeout": 300,
                     "arguments": "-sS -O -sV -A"
                 }
@@ -217,7 +215,6 @@ class TemplateService:
                 "name": "Deep Network Analysis",
                 "description": "Comprehensive scan with vulnerability detection",
                 "scan_config": {
-                    "discovery_depth": 3,
                     "timeout": 600,
                     "arguments": "-sS -O -sV -A --script default,safe,vuln"
                 }

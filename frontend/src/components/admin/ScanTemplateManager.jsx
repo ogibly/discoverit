@@ -24,7 +24,6 @@ const ScanTemplateManager = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    discovery_depth: 2,
     timeout: 300,
     arguments: ''
   });
@@ -40,7 +39,6 @@ const ScanTemplateManager = () => {
     setFormData({
       name: '',
       description: '',
-      discovery_depth: 2,
       timeout: 300,
       arguments: ''
     });
@@ -56,7 +54,6 @@ const ScanTemplateManager = () => {
     setFormData({
       name: template.name,
       description: template.description,
-      discovery_depth: template.scan_config?.discovery_depth || 2,
       timeout: template.scan_config?.timeout || 300,
       arguments: template.scan_config?.arguments || ''
     });
@@ -68,7 +65,6 @@ const ScanTemplateManager = () => {
     setFormData({
       name: `${template.name} (Copy)`,
       description: template.description,
-      discovery_depth: template.scan_config?.discovery_depth || 2,
       timeout: template.scan_config?.timeout || 300,
       arguments: template.scan_config?.arguments || ''
     });
@@ -110,7 +106,6 @@ const ScanTemplateManager = () => {
         name: formData.name.trim(),
         description: formData.description.trim(),
         scan_config: {
-          discovery_depth: formData.discovery_depth,
           timeout: formData.timeout,
           arguments: formData.arguments.trim()
         }
@@ -323,36 +318,19 @@ const ScanTemplateManager = () => {
           </div>
 
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Discovery Depth
-              </label>
-              <Input
-                type="number"
-                min="1"
-                max="5"
-                value={formData.discovery_depth}
-                onChange={(e) => setFormData({ ...formData, discovery_depth: parseInt(e.target.value) })}
-                className={cn(errors.discovery_depth && "border-red-500")}
-              />
-              {errors.discovery_depth && <p className="text-red-400 text-sm mt-1">{errors.discovery_depth}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Timeout (seconds)
-              </label>
-              <Input
-                type="number"
-                min="30"
-                max="3600"
-                value={formData.timeout}
-                onChange={(e) => setFormData({ ...formData, timeout: parseInt(e.target.value) })}
-                className={cn(errors.timeout && "border-red-500")}
-              />
-              {errors.timeout && <p className="text-red-400 text-sm mt-1">{errors.timeout}</p>}
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Timeout (seconds)
+            </label>
+            <Input
+              type="number"
+              min="30"
+              max="3600"
+              value={formData.timeout}
+              onChange={(e) => setFormData({ ...formData, timeout: parseInt(e.target.value) })}
+              className={cn(errors.timeout && "border-red-500")}
+            />
+            {errors.timeout && <p className="text-red-400 text-sm mt-1">{errors.timeout}</p>}
           </div>
 
           <div>

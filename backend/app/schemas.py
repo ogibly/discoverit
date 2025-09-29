@@ -220,7 +220,6 @@ class ScanTaskBase(BaseModel):
     target: str = Field(..., description="CIDR, IP range, or specific IPs to scan")
     scan_template_id: Optional[int] = Field(None, description="ID of the scan template to use")
     created_by: Optional[str] = None
-    discovery_depth: Optional[int] = Field(1, ge=1, le=5, description="Network discovery depth (hops)")
     scanner_ids: Optional[List[int]] = Field(default_factory=list, description="List of scanner IDs to use")
 
 class ScanTaskCreate(ScanTaskBase):
@@ -757,7 +756,6 @@ class BulkOperationResult(BaseModel):
 # Enhanced Discovery Schemas
 class DiscoveryConfig(BaseModel):
     target: str = Field(..., description="Target network or IP range")
-    discovery_depth: int = Field(default=2, ge=1, le=5, description="Network discovery depth")
     scanner_id: Optional[str] = None
     credentials: Optional[List[int]] = None
     scan_template_id: int = Field(..., description="Required scan template ID")

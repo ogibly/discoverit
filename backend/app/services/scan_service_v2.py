@@ -43,7 +43,6 @@ class ScanServiceV2:
             target=task_data.target,
             scan_template_id=task_data.scan_template_id,
             created_by=task_data.created_by,
-            discovery_depth=getattr(task_data, 'discovery_depth', 1),
             scanner_ids=getattr(task_data, 'scanner_ids', [])
         )
         
@@ -222,7 +221,7 @@ class ScanServiceV2:
                     scan_config = self._get_scan_config_from_template(task)
                     
                     # Perform the scan
-                    scan_result = self._perform_scan(ip, scan_config, task.discovery_depth)
+                    scan_result = self._perform_scan(ip, scan_config)
                     
                     # Categorize the scan result
                     categorization = self._categorize_scan_result(scan_result)
@@ -232,7 +231,6 @@ class ScanServiceV2:
                     scan_result["task_metadata"] = {
                         "task_id": task.id,
                         "task_name": task.name,
-                        "discovery_depth": task.discovery_depth,
                         "scan_timestamp": datetime.utcnow().isoformat()
                     }
                     
@@ -306,14 +304,11 @@ class ScanServiceV2:
         if not template:
             raise ValueError(f"Scan template {task.scan_template_id} not found")
         
-        # Use template configuration, but allow task-level overrides
+        # Use template configuration
         config = template.scan_config.copy()
-        if task.discovery_depth:
-            config["discovery_depth"] = task.discovery_depth
-        
         return config
 
-    def _perform_scan(self, ip: str, scan_config: Dict[str, Any], discovery_depth: int = 1) -> Dict[str, Any]:
+    def _perform_scan(self, ip: str, scan_config: Dict[str, Any]) -> Dict[str, Any]:
         """Perform a comprehensive scan using the optimal scanner service."""
         try:
             # Get the best scanner for this target IP
@@ -321,7 +316,7 @@ class ScanServiceV2:
             
             if not optimal_scanner:
                 logger.warning(f"No scanner available for {ip}, using local nmap")
-                return self._perform_local_scan(ip, scan_config, discovery_depth)
+                return self._perform_local_scan(ip, scan_config)
             
             # Use the optimal scanner URL
             scanner_url = optimal_scanner.url
@@ -331,7 +326,6 @@ class ScanServiceV2:
             scan_request = {
                 "target": ip,
                 "scan_type": scan_config.get("scan_type", "standard"),
-                "discovery_depth": discovery_depth,
                 "timeout": optimal_scanner.timeout_seconds or 30,
                 "arguments": scan_config.get("arguments", "-sS -O -sV -A")
             }
@@ -356,7 +350,7 @@ class ScanServiceV2:
             else:
                 # Fallback to local nmap if scanner service fails
                 logger.warning(f"Scanner '{optimal_scanner.name}' failed for {ip}, using local nmap")
-                return self._perform_local_scan(ip, scan_config, discovery_depth)
+                return self._perform_local_scan(ip, scan_config)
                 
         except requests.exceptions.RequestException as e:
             logger.warning(f"Scanner service unavailable for {ip}: {e}, using local nmap")
@@ -371,7 +365,7 @@ class ScanServiceV2:
                 "scan_type": scan_config.get("scan_type", "standard")
             }
 
-    def _perform_local_scan(self, ip: str, scan_config: Dict[str, Any], discovery_depth: int = 1) -> Dict[str, Any]:
+    def _perform_local_scan(self, ip: str, scan_config: Dict[str, Any]) -> Dict[str, Any]:
         """Fallback local scan using nmap directly."""
         import re
         

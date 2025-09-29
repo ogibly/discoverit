@@ -260,10 +260,6 @@ class Settings(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     scanners = Column(JSON, nullable=True)
-    default_subnet = Column(String(50), nullable=True)
-    scan_timeout = Column(Integer, nullable=True)
-    max_concurrent_scans = Column(Integer, nullable=True)
-    max_discovery_depth = Column(Integer, default=2)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

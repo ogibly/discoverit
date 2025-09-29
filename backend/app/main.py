@@ -85,18 +85,9 @@ def _initialize_default_settings(db: SessionLocal):
             }
         ]
         new_settings = models.Settings(
-            scanners=default_scanners,
-            default_subnet=settings.default_subnets[0],
-            scan_timeout=settings.scan_timeout,
-            max_concurrent_scans=settings.max_concurrent_scans,
-            max_discovery_depth=settings.max_discovery_depth
+            scanners=default_scanners
         )
         db.add(new_settings)
-        db.commit()
-    elif not db_settings.default_subnet:
-        db_settings.default_subnet = settings.default_subnets[0]
-        if not hasattr(db_settings, 'max_discovery_depth') or db_settings.max_discovery_depth is None:
-            db_settings.max_discovery_depth = settings.max_discovery_depth
         db.commit()
 
 app = FastAPI(

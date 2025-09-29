@@ -283,23 +283,12 @@ class ScannerConfig(ScannerConfigBase):
 class SettingsBase(BaseModel):
     # Scanner configuration
     scanners: Optional[List[Dict[str, Any]]] = None
-    default_subnet: Optional[str] = None
-    
-    
-    # Application settings
-    scan_timeout: int = Field(300, ge=30, le=3600)
-    max_concurrent_scans: int = Field(5, ge=1, le=20)
-    max_discovery_depth: int = Field(3, ge=1, le=5)
 
 class SettingsCreate(SettingsBase):
     pass
 
 class SettingsUpdate(BaseModel):
     scanners: Optional[List[Dict[str, Any]]] = None
-    default_subnet: Optional[str] = None
-    scan_timeout: Optional[int] = Field(None, ge=30, le=3600)
-    max_concurrent_scans: Optional[int] = Field(None, ge=1, le=20)
-    max_discovery_depth: Optional[int] = Field(None, ge=1, le=5)
 
 class Settings(SettingsBase):
     id: int

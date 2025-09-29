@@ -301,10 +301,7 @@ class AssetService:
         ]
         
         settings = Settings(
-            scanners=default_scanners,
-            default_subnet="192.168.1.0/24",
-            scan_timeout=300,
-            max_concurrent_scans=5,
+            scanners=default_scanners
         )
         
         self.db.add(settings)

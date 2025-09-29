@@ -289,15 +289,7 @@ class SettingsBase(BaseModel):
     # Application settings
     scan_timeout: int = Field(300, ge=30, le=3600)
     max_concurrent_scans: int = Field(5, ge=1, le=20)
-    auto_discovery_enabled: bool = True
     max_discovery_depth: int = Field(3, ge=1, le=5)
-    
-    # Notification settings
-    email_notifications: bool = False
-    email_smtp_server: Optional[str] = None
-    email_smtp_port: Optional[int] = Field(None, ge=1, le=65535)
-    email_username: Optional[str] = None
-    email_password: Optional[str] = None
 
 class SettingsCreate(SettingsBase):
     pass
@@ -307,13 +299,7 @@ class SettingsUpdate(BaseModel):
     default_subnet: Optional[str] = None
     scan_timeout: Optional[int] = Field(None, ge=30, le=3600)
     max_concurrent_scans: Optional[int] = Field(None, ge=1, le=20)
-    auto_discovery_enabled: Optional[bool] = None
     max_discovery_depth: Optional[int] = Field(None, ge=1, le=5)
-    email_notifications: Optional[bool] = None
-    email_smtp_server: Optional[str] = None
-    email_smtp_port: Optional[int] = Field(None, ge=1, le=65535)
-    email_username: Optional[str] = None
-    email_password: Optional[str] = None
 
 class Settings(SettingsBase):
     id: int
@@ -513,24 +499,6 @@ class Credential(CredentialBase):
     class Config:
         from_attributes = True
 
-class NotificationBase(BaseModel):
-    type: str = Field(..., description="Notification type: scan_completed, etc.")
-    title: str = Field(..., min_length=1, max_length=255)
-    message: str
-    is_read: bool = False
-
-class NotificationCreate(NotificationBase):
-    scan_task_id: Optional[int] = None
-    job_id: Optional[int] = None
-
-class Notification(NotificationBase):
-    id: int
-    created_at: datetime
-    scan_task_id: Optional[int] = None
-    job_id: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
 
 # LDAP Configuration Schemas
 class LDAPConfigBase(BaseModel):

@@ -263,13 +263,7 @@ class Settings(Base):
     default_subnet = Column(String(50), nullable=True)
     scan_timeout = Column(Integer, nullable=True)
     max_concurrent_scans = Column(Integer, nullable=True)
-    auto_discovery_enabled = Column(Boolean, default=True)
     max_discovery_depth = Column(Integer, default=2)
-    email_notifications = Column(Boolean, default=False)
-    email_smtp_server = Column(String(255), nullable=True)
-    email_smtp_port = Column(Integer, nullable=True)
-    email_username = Column(String(100), nullable=True)
-    email_password = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

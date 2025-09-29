@@ -89,7 +89,6 @@ def _initialize_default_settings(db: SessionLocal):
             default_subnet=settings.default_subnets[0],
             scan_timeout=settings.scan_timeout,
             max_concurrent_scans=settings.max_concurrent_scans,
-            auto_discovery_enabled=True,
             max_discovery_depth=settings.max_discovery_depth
         )
         db.add(new_settings)

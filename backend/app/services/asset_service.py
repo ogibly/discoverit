@@ -305,8 +305,6 @@ class AssetService:
             default_subnet="192.168.1.0/24",
             scan_timeout=300,
             max_concurrent_scans=5,
-            auto_discovery_enabled=True,
-            email_notifications=False
         )
         
         self.db.add(settings)

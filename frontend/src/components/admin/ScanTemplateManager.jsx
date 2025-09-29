@@ -13,7 +13,8 @@ import {
   Trash2, 
   Copy, 
   Clock,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 
 const ScanTemplateManager = () => {
@@ -157,13 +158,13 @@ const ScanTemplateManager = () => {
   };
 
   const getScanTypeIcon = (scanType) => {
-    const type = scanTypes.find(t => t.value === scanType);
-    return type ? type.icon : Settings;
+    // Since we removed scan types, just return a default icon
+    return Settings;
   };
 
   const getScanTypeLabel = (scanType) => {
-    const type = scanTypes.find(t => t.value === scanType);
-    return type ? type.label : 'Unknown';
+    // Since we removed scan types, just return a default label
+    return 'Custom Template';
   };
 
   return (

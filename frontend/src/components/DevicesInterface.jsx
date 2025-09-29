@@ -48,21 +48,20 @@ const DevicesInterface = () => {
     fetchDiscoveredDevices,
     fetchAssets,
     convertDeviceToAsset,
-    selectedDevices,
-    toggleDeviceSelection,
-    selectAllDevices
+    selectAllDevices,
+    selectedDevices
   } = useApp();
-  
+
   const { user } = useAuth();
-  
+
   // State management
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [sortBy, setSortBy] = useState('last_seen');
+  const [sortBy, setSortBy] = useState('lastSeen');
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
-  const [viewMode, setViewMode] = useState('cards');
+  const [viewMode, setViewMode] = useState('list');
   const [activeTab, setActiveTab] = useState('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -154,7 +153,11 @@ const DevicesInterface = () => {
         rawScanData: scanData,
         ports: scanData.ports || [],
         services: scanData.services || [],
-        indicators: categorization.indicators || []
+        indicators: categorization.indicators || [],
+        // Scan information
+        scanTaskId: device.scan_task_id,
+        scanTaskName: device.scan_task_name,
+        scanType: device.scan_type
       };
     });
   }, [discoveredDevices, assets]);
@@ -172,83 +175,52 @@ const DevicesInterface = () => {
         device.macAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         device.osName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         device.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.deviceType?.toLowerCase().includes(searchTerm.toLowerCase());
+        device.deviceType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.scanTaskId?.toString().includes(searchTerm) ||
+        device.scanTaskName?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      let matchesFilter = true;
-      if (filterType === 'new') {
-        matchesFilter = device.status === 'new';
-      } else if (filterType === 'converted') {
-        matchesFilter = device.status === 'converted';
-      } else if (filterType === 'high_confidence') {
-        matchesFilter = device.confidence >= 0.7;
-      } else if (filterType === 'low_confidence') {
-        matchesFilter = device.confidence < 0.7;
-      }
+      const matchesFilter = filterType === 'all' ||
+        (filterType === 'new' && device.status === 'new') ||
+        (filterType === 'converted' && device.status === 'converted') ||
+        (filterType === 'high_confidence' && device.confidence >= 0.7) ||
+        (filterType === 'low_confidence' && device.confidence < 0.7);
       
       return matchesSearch && matchesFilter;
     });
-
+    
     // Sort devices
     filtered.sort((a, b) => {
       let aValue, bValue;
       
       switch (sortBy) {
-        case 'ip':
+        case 'hostname':
+          aValue = a.hostname || a.ipAddress || '';
+          bValue = b.hostname || b.ipAddress || '';
+          break;
+        case 'ipAddress':
           aValue = a.ipAddress || '';
           bValue = b.ipAddress || '';
           break;
-        case 'hostname':
-          aValue = a.hostname || '';
-          bValue = b.hostname || '';
-          break;
-        case 'os':
-          aValue = a.osName || '';
-          bValue = b.osName || '';
-          break;
         case 'confidence':
-          aValue = a.confidence;
-          bValue = b.confidence;
+          aValue = a.confidence || 0;
+          bValue = b.confidence || 0;
           break;
-        case 'last_seen':
-        default:
+        case 'lastSeen':
           aValue = new Date(a.lastSeen || 0);
           bValue = new Date(b.lastSeen || 0);
           break;
+        default:
+          aValue = a.ipAddress || '';
+          bValue = b.ipAddress || '';
       }
       
-      if (sortOrder === 'asc') {
-        return aValue < bValue ? -1 : 1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
     });
     
     return filtered;
   }, [processedDevices, searchTerm, filterType, sortBy, sortOrder]);
-
-  // Additional helper functions
-
-  const getConfidenceColor = (confidence) => {
-    if (confidence >= 0.8) return 'text-green-600 bg-green-100';
-    if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'new': return <Clock className="w-4 h-4" />;
-      case 'converted': return <CheckCircle className="w-4 h-4" />;
-      default: return <AlertCircle className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'converted': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -315,6 +287,29 @@ const DevicesInterface = () => {
       selectAllDevices([]);
     } else {
       selectAllDevices(filteredDevices.map(d => d.id));
+    }
+  };
+
+  // Additional helper functions
+  const getConfidenceColor = (confidence) => {
+    if (confidence >= 0.8) return 'text-green-600 bg-green-100';
+    if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'new': return <Clock className="w-4 h-4" />;
+      case 'converted': return <CheckCircle className="w-4 h-4" />;
+      default: return <AlertCircle className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'new': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'converted': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -405,48 +400,73 @@ const DevicesInterface = () => {
                 onClick={() => handleConvertToAsset(device)}
                 className="flex-1"
               >
-              <ArrowRight className="w-4 h-4 mr-2" />
-              Convert
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Convert
               </Button>
             )}
           </div>
         </CardContent>
-      </Card>
-    );
+    </Card>
+  );
 
   const renderDeviceRow = (device) => (
-    <tr className="hover:bg-muted/50 transition-colors">
+    <tr key={device.id} className="hover:bg-muted/50 transition-colors">
         <td className="px-6 py-4">
           <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            {device.deviceIcon}
-          </div>
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              {device.deviceIcon}
+            </div>
             <div>
-              <div className="font-medium text-foreground">
-              {device.hostname || `Device ${device.ipAddress}`}
-              </div>
-                <div className="text-sm text-muted-foreground">
-              {device.deviceType}
-                </div>
+              <p className="font-medium text-foreground">
+                {device.hostname || `Device ${device.ipAddress}`}
+              </p>
+              <p className="text-sm text-muted-foreground">{device.deviceType}</p>
             </div>
           </div>
         </td>
         <td className="px-6 py-4">
-        <span className="font-mono text-sm text-foreground">{device.ipAddress}</span>
+          <span className="font-mono text-sm text-foreground">
+            {device.ipAddress}
+          </span>
         </td>
         <td className="px-6 py-4">
-        <span className="text-sm text-foreground">{device.osName || 'Unknown'}</span>
+          <div className="max-w-xs">
+            <span className="text-sm text-foreground">
+              {device.osName ? (
+                device.osName.length > 50 ? `${device.osName.substring(0, 50)}...` : device.osName
+              ) : 'Unknown'}
+            </span>
+          </div>
         </td>
         <td className="px-6 py-4">
-        <div className="flex items-center space-x-2">
-          <Badge className={cn("text-xs", getStatusColor(device.status))}>
-            {getStatusIcon(device.status)}
-            <span className="ml-1">{device.status === 'new' ? 'New' : 'Converted'}</span>
-          </Badge>
-          <Badge className={cn("text-xs", getConfidenceColor(device.confidence))}>
-            {Math.round(device.confidence * 100)}%
-          </Badge>
-        </div>
+          <div className="flex flex-col space-y-1">
+            <Badge className={cn("text-xs w-fit", getStatusColor(device.status))}>
+              {getStatusIcon(device.status)}
+              <span className="ml-1">{device.status === 'new' ? 'New Device' : 'Converted'}</span>
+            </Badge>
+            <Badge className={cn("text-xs w-fit", getConfidenceColor(device.confidence))}>
+              {Math.round(device.confidence * 100)}% confidence
+            </Badge>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm">
+            {device.scanTaskName && (
+              <div className="text-foreground font-medium truncate max-w-[150px]" title={device.scanTaskName}>
+                {device.scanTaskName}
+              </div>
+            )}
+            {device.scanTaskId && (
+              <div className="text-muted-foreground text-xs">
+                Scan ID: {device.scanTaskId}
+              </div>
+            )}
+            {device.scanType && (
+              <div className="text-muted-foreground text-xs">
+                Type: {device.scanType}
+              </div>
+            )}
+          </div>
         </td>
         <td className="px-6 py-4">
           <span className="text-sm text-muted-foreground">
@@ -462,6 +482,7 @@ const DevicesInterface = () => {
                 setSelectedDevice(device);
                 setShowDeviceModal(true);
               }}
+              title="View device details"
             >
             <Eye className="w-4 h-4" />
             </Button>
@@ -470,6 +491,7 @@ const DevicesInterface = () => {
                 variant="default"
                 size="sm"
                 onClick={() => handleConvertToAsset(device)}
+                title="Convert to asset"
               >
               <ArrowRight className="w-4 h-4" />
               </Button>
@@ -480,158 +502,177 @@ const DevicesInterface = () => {
   );
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <PageHeader
-        title={
-          <span className="flex items-center">
-            Network Devices
-            <Info className="ml-2 w-4 h-4 text-muted-foreground" />
-          </span>
-        }
-        subtitle="Discover, explore, and manage network devices"
-        metrics={[
-          { value: statistics.total, label: "Total Devices", color: "primary" },
-          { value: statistics.newDevices, label: "New Devices", color: "blue" },
-          { value: statistics.converted, label: "Converted", color: "green" },
-          { value: statistics.deviceTypes, label: "Device Types", color: "purple" }
-        ]}
-      />
+    <div className="h-screen bg-background flex flex-col">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 border-b border-border bg-background">
+        <PageHeader
+          title={
+            <span className="flex items-center">
+              Network Devices
+              <Info className="ml-2 w-4 h-4 text-muted-foreground" />
+            </span>
+          }
+          subtitle="Discover, explore, and manage network devices"
+          metrics={[
+            { value: statistics.total, label: "Total Devices", color: "primary" },
+            { value: statistics.newDevices, label: "New Devices", color: "blue" },
+            { value: statistics.converted, label: "Converted", color: "green" },
+            { value: statistics.deviceTypes, label: "Device Types", color: "purple" }
+          ]}
+        />
+      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-6">
-          {/* Active Scan Status */}
-          {activeScanTask && (
-            <Card className="border-blue-200 bg-blue-50/50">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-blue-900">Active Discovery</h4>
-                      <p className="text-xs text-blue-700">
-                          {activeScanTask.name} • {activeScanTask.target} • {formatScanProgress(activeScanTask.progress)} complete
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                    {activeScanTask.status || 'running'}
-                  </Badge>
-                </div>
-                  {activeScanTask.progress > 0 && (
-                    <div className="mt-3">
-                      <Progress value={getCappedProgress(activeScanTask.progress)} className="h-2" />
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Enhanced Controls */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                    <Input
-                      placeholder="Search devices by IP, hostname, OS, manufacturer..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-80"
-                    />
-                  </div>
-                  
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                  >
-                    <option value="all">All Devices</option>
-                    <option value="new">New Devices</option>
-                    <option value="converted">Converted</option>
-                    <option value="high_confidence">High Confidence</option>
-                    <option value="low_confidence">Low Confidence</option>
-                  </select>
-
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                  >
-                    <option value="last_seen">Last Seen</option>
-                    <option value="ip">IP Address</option>
-                    <option value="hostname">Hostname</option>
-                    <option value="os">Operating System</option>
-                    <option value="confidence">Confidence</option>
-                  </select>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  >
-                    {sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
-                  </Button>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                  >
-                    <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
-                  </Button>
-                  
-                  <div className="flex items-center space-x-1 border border-border rounded-md">
-                    <Button
-                      variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('cards')}
-                    >
-                      <Grid3X3 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'table' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('table')}
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+      {/* Fixed Search and Filter Bar */}
+      <div className="flex-shrink-0 p-6 pb-4 border-b border-border bg-background">
+        <div className="space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search devices by IP, hostname, OS, manufacturer, scan ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-
-              {/* Results Summary */}
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>
-                  Showing {filteredDevices.length} of {processedDevices.length} devices
-                </span>
-                <div className="flex items-center space-x-4">
-                  <span>High Confidence: {statistics.highConfidence}</span>
-                  <span>Device Types: {statistics.deviceTypes}</span>
-                </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[140px]"
+              >
+                <option value="all">All Devices</option>
+                <option value="new">New Devices</option>
+                <option value="converted">Converted</option>
+                <option value="high_confidence">High Confidence</option>
+                <option value="low_confidence">Low Confidence</option>
+              </select>
+              
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split('-');
+                  setSortBy(field);
+                  setSortOrder(order);
+                }}
+                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[140px]"
+              >
+                <option value="lastSeen-desc">Last Seen ↓</option>
+                <option value="lastSeen-asc">Last Seen ↑</option>
+                <option value="ipAddress-asc">IP Address ↑</option>
+                <option value="ipAddress-desc">IP Address ↓</option>
+                <option value="hostname-asc">Hostname ↑</option>
+                <option value="hostname-desc">Hostname ↓</option>
+                <option value="confidence-desc">Confidence ↓</option>
+                <option value="confidence-asc">Confidence ↑</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <span className="text-sm text-muted-foreground">
+                Showing {filteredDevices.length} of {processedDevices.length} devices
+              </span>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">High Confidence:</span>
+                <span className="text-sm font-medium text-green-600">{statistics.highConfidence}</span>
               </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Device Types:</span>
+                <span className="text-sm font-medium text-blue-600">{statistics.deviceTypes}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title="Refresh device list"
+              >
+                <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+              </Button>
+              
+              <div className="flex border border-border rounded-md">
+                <Button
+                  variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('cards')}
+                  className="rounded-r-none"
+                  title="Card view"
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="rounded-l-none"
+                  title="Table view"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-auto p-6">
+        {/* Active Scan Status */}
+        {activeScanTask && (
+          <Card className="border-blue-200 bg-blue-50/50 mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-900">Active Discovery</h4>
+                    <p className="text-xs text-blue-700">
+                        {activeScanTask.name} • {activeScanTask.target} • {formatScanProgress(activeScanTask.progress)} complete
+                    </p>
+                  </div>
+                </div>
+                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                  {activeScanTask.status || 'running'}
+                </Badge>
+              </div>
+                {activeScanTask.progress > 0 && (
+                  <div className="mt-3">
+                    <Progress value={getCappedProgress(activeScanTask.progress)} className="h-2" />
+                  </div>
+                )}
             </CardContent>
           </Card>
+        )}
 
-          {/* Device List */}
-          {filteredDevices.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <div className="text-6xl mb-4">📱</div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">No devices found</h3>
-                <p className="text-muted-foreground mb-6">
-                  {searchTerm ? 'Try adjusting your search criteria.' : 'Start a network discovery scan to find devices.'}
-                </p>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Start Discovery Scan
-                </Button>
-              </CardContent>
-            </Card>
+        {/* Device List */}
+        {filteredDevices.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <div className="text-4xl mb-4">🔍</div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">No Devices Found</h3>
+              <p className="text-muted-foreground mb-6">
+                {searchTerm || filterType !== 'all' 
+                  ? 'Try adjusting your search or filter criteria.'
+                  : 'No devices have been discovered yet. Start a network scan to discover devices.'
+                }
+              </p>
+              <Button
+                onClick={() => window.location.href = '/discovery'}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Start Discovery Scan
+              </Button>
+            </CardContent>
+          </Card>
           ) : viewMode === 'cards' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredDevices.map((device) => (
@@ -645,51 +686,116 @@ const DevicesInterface = () => {
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="border-b border-border">
+                    <thead className="border-b border-border bg-muted/50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
-                          Device
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                          onClick={() => {
+                            if (sortBy === 'hostname') {
+                              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSortBy('hostname');
+                              setSortOrder('asc');
+                            }
+                          }}
+                          title="Click to sort by device name"
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Device</span>
+                            {sortBy === 'hostname' && (
+                              sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
-                          IP Address
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                          onClick={() => {
+                            if (sortBy === 'ipAddress') {
+                              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSortBy('ipAddress');
+                              setSortOrder('asc');
+                            }
+                          }}
+                          title="Click to sort by IP address"
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>IP Address</span>
+                            {sortBy === 'ipAddress' && (
+                              sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
-                          OS
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Operating System
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
-                          Status
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                          onClick={() => {
+                            if (sortBy === 'confidence') {
+                              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSortBy('confidence');
+                              setSortOrder('desc');
+                            }
+                          }}
+                          title="Click to sort by confidence level"
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Status & Confidence</span>
+                            {sortBy === 'confidence' && (
+                              sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
-                          Last Seen
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Scan Info
                         </th>
-                        <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                          onClick={() => {
+                            if (sortBy === 'lastSeen') {
+                              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setSortBy('lastSeen');
+                              setSortOrder('desc');
+                            }
+                          }}
+                          title="Click to sort by last seen"
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Last Seen</span>
+                            {sortBy === 'lastSeen' && (
+                              sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {filteredDevices.map((device) => (
-                        <div key={device.id}>
-                          {renderDeviceRow(device)}
-                        </div>
-                      ))}
+                    <tbody className="divide-y divide-border">
+                      {filteredDevices.map((device) => renderDeviceRow(device))}
                     </tbody>
                   </table>
                 </div>
               </CardContent>
             </Card>
           )}
-        </div>
       </div>
 
-      {/* Enhanced Device Details Modal */}
-      <Modal
-        isOpen={showDeviceModal}
-        onClose={() => setShowDeviceModal(false)}
-        title="Device Details"
-        size="xl"
-      >
-        {selectedDevice && (
+      {/* Device Details Modal */}
+      {showDeviceModal && selectedDevice && (
+        <Modal
+          isOpen={showDeviceModal}
+          onClose={() => {
+            setShowDeviceModal(false);
+            setSelectedDevice(null);
+          }}
+          title={`Device Details - ${selectedDevice.hostname || selectedDevice.ipAddress}`}
+          size="lg"
+        >
           <div className="space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-4">
@@ -698,132 +804,94 @@ const DevicesInterface = () => {
                 <TabsTrigger value="services">Services</TabsTrigger>
                 <TabsTrigger value="raw">Raw Data</TabsTrigger>
               </TabsList>
-
+              
               <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                      Device Name
-                    </label>
-                    <p className="text-sm text-foreground bg-muted p-3 rounded-md">
-                      {selectedDevice.hostname || `Device ${selectedDevice.ipAddress}`}
-                    </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Device Name</label>
+                    <p className="text-foreground">{selectedDevice.hostname || 'Not detected'}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Device Type
-                </label>
-                <p className="text-sm text-foreground bg-muted p-3 rounded-md">
-                      {selectedDevice.deviceType}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  IP Address
-                </label>
-                <p className="text-sm text-foreground bg-muted p-3 rounded-md font-mono">
-                      {selectedDevice.ipAddress}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  MAC Address
-                </label>
-                <p className="text-sm text-foreground bg-muted p-3 rounded-md font-mono">
-                      {selectedDevice.macAddress || 'Unknown'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Operating System
-                </label>
-                <p className="text-sm text-foreground bg-muted p-3 rounded-md">
-                      {selectedDevice.osName || 'Unknown'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Manufacturer
-                </label>
-                <p className="text-sm text-foreground bg-muted p-3 rounded-md">
-                  {selectedDevice.manufacturer || 'Unknown'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                      Confidence Score
-                </label>
+                    <label className="text-sm font-medium text-muted-foreground">IP Address</label>
+                    <p className="text-foreground font-mono">{selectedDevice.ipAddress}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">MAC Address</label>
+                    <p className="text-foreground font-mono">{selectedDevice.macAddress || 'Not detected'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Device Type</label>
+                    <p className="text-foreground">{selectedDevice.deviceType}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Operating System</label>
+                    <p className="text-foreground">{selectedDevice.osName || 'Not detected'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Manufacturer</label>
+                    <p className="text-foreground">{selectedDevice.manufacturer || 'Not detected'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Model</label>
+                    <p className="text-foreground">{selectedDevice.model || 'Not detected'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Confidence Score</label>
                     <div className="flex items-center space-x-2">
                       <Progress value={selectedDevice.confidence * 100} className="flex-1" />
-                      <span className="text-sm font-medium">
-                        {Math.round(selectedDevice.confidence * 100)}%
-                      </span>
-              </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Status
-                </label>
-                    <Badge className={cn("text-xs", getStatusColor(selectedDevice.status))}>
-                      {getStatusIcon(selectedDevice.status)}
-                      <span className="ml-1">{selectedDevice.status === 'new' ? 'New Device' : 'Converted to Asset'}</span>
-                  </Badge>
+                      <span className="text-sm font-medium">{Math.round(selectedDevice.confidence * 100)}%</span>
+                    </div>
                   </div>
                 </div>
               </TabsContent>
-
+              
               <TabsContent value="network" className="space-y-4">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-sm font-medium text-foreground mb-2">Network Information</h4>
-                    <div className="bg-muted p-4 rounded-md space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">IP Address:</span>
-                        <span className="font-mono">{selectedDevice.ipAddress}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">MAC Address:</span>
-                        <span className="font-mono">{selectedDevice.macAddress || 'Unknown'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Last Seen:</span>
-                        <span>{formatTimestampUtil(selectedDevice.lastSeen)}</span>
-                      </div>
-                </div>
-              </div>
-            </div>
-              </TabsContent>
-
-              <TabsContent value="services" className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2">
-                    Open Ports & Services ({selectedDevice.ports.length})
-                  </h4>
-                  {selectedDevice.ports.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedDevice.ports.map((port, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                          <div className="flex items-center space-x-3">
-                            <Badge variant="outline">{port.port}/{port.protocol}</Badge>
-                            <span className="font-medium">{port.service}</span>
+                    <label className="text-sm font-medium text-muted-foreground">Open Ports</label>
+                    <div className="mt-2 space-y-2">
+                      {selectedDevice.ports.length > 0 ? (
+                        selectedDevice.ports.map((port, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <span className="font-mono">{port.port}</span>
+                            <span className="text-sm text-muted-foreground">{port.service || 'Unknown'}</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">{port.state}</span>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-muted-foreground">No open ports detected</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-muted-foreground">No open ports detected</p>
-                  )}
+                  </div>
                 </div>
               </TabsContent>
-
+              
+              <TabsContent value="services" className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Detected Services</label>
+                    <div className="mt-2 space-y-2">
+                      {selectedDevice.services.length > 0 ? (
+                        selectedDevice.services.map((service, index) => (
+                          <div key={index} className="p-2 bg-muted/50 rounded">
+                            <div className="font-medium">{service.name}</div>
+                            <div className="text-sm text-muted-foreground">{service.version || 'Version unknown'}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-muted-foreground">No services detected</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              
               <TabsContent value="raw" className="space-y-4">
-              <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2">Raw Scan Data</h4>
-                  <pre className="text-xs text-foreground bg-muted p-4 rounded-md overflow-auto max-h-96">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Raw Scan Data</label>
+                  <pre className="mt-2 p-4 bg-muted/50 rounded text-xs overflow-auto max-h-96">
                     {JSON.stringify(selectedDevice.rawScanData, null, 2)}
-                </pre>
-              </div>
+                  </pre>
+                </div>
               </TabsContent>
             </Tabs>
             
@@ -844,8 +912,8 @@ const DevicesInterface = () => {
               )}
             </div>
           </div>
-        )}
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
 };

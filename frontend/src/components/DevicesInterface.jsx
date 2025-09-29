@@ -61,15 +61,114 @@ const DevicesInterface = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState('table');
   const [activeTab, setActiveTab] = useState('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+
+  // Search field definitions (JQL-style)
+  const searchFields = [
+    { key: 'ip', label: 'IP Address', type: 'string', example: 'ip=192.168.1.1' },
+    { key: 'hostname', label: 'Hostname', type: 'string', example: 'hostname=server01' },
+    { key: 'os', label: 'Operating System', type: 'string', example: 'os=Linux' },
+    { key: 'manufacturer', label: 'Manufacturer', type: 'string', example: 'manufacturer=Cisco' },
+    { key: 'device_type', label: 'Device Type', type: 'string', example: 'device_type=Server' },
+    { key: 'scan_id', label: 'Scan ID', type: 'number', example: 'scan_id=2' },
+    { key: 'scan_name', label: 'Scan Name', type: 'string', example: 'scan_name=Network Discovery' },
+    { key: 'status', label: 'Status', type: 'string', example: 'status=new', options: ['new', 'converted'] },
+    { key: 'confidence', label: 'Confidence', type: 'number', example: 'confidence>70' },
+    { key: 'ports', label: 'Open Ports', type: 'number', example: 'ports>5' },
+    { key: 'last_seen', label: 'Last Seen', type: 'date', example: 'last_seen>2024-01-01' }
+  ];
 
   // Load data on component mount
   useEffect(() => {
     fetchDiscoveredDevices();
     fetchAssets();
   }, [fetchDiscoveredDevices, fetchAssets]);
+
+  // Search suggestion logic
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    
+    if (value.length > 0) {
+      const lastWord = value.split(' ').pop();
+      const suggestions = searchFields.filter(field => 
+        field.key.toLowerCase().includes(lastWord.toLowerCase()) ||
+        field.label.toLowerCase().includes(lastWord.toLowerCase())
+      ).map(field => ({
+        ...field,
+        display: `${field.key}=${field.example.split('=')[1] || 'value'}`
+      }));
+      
+      setSearchSuggestions(suggestions);
+      setShowSearchSuggestions(suggestions.length > 0);
+    } else {
+      setShowSearchSuggestions(false);
+      setSearchSuggestions([]);
+    }
+  };
+
+  // Parse JQL-style search query
+  const parseSearchQuery = (query) => {
+    if (!query.trim()) return { type: 'simple', value: '' };
+    
+    // Check if it's a JQL-style query (contains =, >, <, etc.)
+    const jqlPattern = /^(\w+)\s*(=|<|>|<=|>=|!=)\s*(.+)$/;
+    const match = query.match(jqlPattern);
+    
+    if (match) {
+      const [, field, operator, value] = match;
+      return { type: 'jql', field, operator, value: value.trim() };
+    }
+    
+    // Fallback to simple search
+    return { type: 'simple', value: query };
+  };
+
+  // Get device field value for JQL queries
+  const getDeviceFieldValue = (device, field) => {
+    switch (field) {
+      case 'ip': return device.ipAddress;
+      case 'hostname': return device.hostname;
+      case 'os': return device.osName;
+      case 'manufacturer': return device.manufacturer;
+      case 'device_type': return device.deviceType;
+      case 'scan_id': return device.scanTaskId;
+      case 'scan_name': return device.scanTaskName;
+      case 'status': return device.status;
+      case 'confidence': return Math.round(device.confidence * 100);
+      case 'ports': return device.ports?.length || 0;
+      case 'last_seen': return device.lastSeen;
+      default: return null;
+    }
+  };
+
+  // Evaluate JQL condition
+  const evaluateJQLCondition = (deviceValue, operator, searchValue) => {
+    if (deviceValue === null || deviceValue === undefined) return false;
+    
+    const deviceStr = String(deviceValue).toLowerCase();
+    const searchStr = String(searchValue).toLowerCase();
+    
+    switch (operator) {
+      case '=':
+        return deviceStr === searchStr;
+      case '!=':
+        return deviceStr !== searchStr;
+      case '>':
+        return Number(deviceValue) > Number(searchValue);
+      case '<':
+        return Number(deviceValue) < Number(searchValue);
+      case '>=':
+        return Number(deviceValue) >= Number(searchValue);
+      case '<=':
+        return Number(deviceValue) <= Number(searchValue);
+      default:
+        return deviceStr.includes(searchStr);
+    }
+  };
 
   // Helper functions - defined before useMemo to avoid initialization errors
   const determineDeviceType = (osName, manufacturer, ports) => {
@@ -169,15 +268,32 @@ const DevicesInterface = () => {
     }
     
     let filtered = processedDevices.filter(device => {
-      const matchesSearch = !searchTerm || 
-        device.ipAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.hostname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.macAddress?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.osName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.deviceType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.scanTaskId?.toString().includes(searchTerm) ||
-        device.scanTaskName?.toLowerCase().includes(searchTerm.toLowerCase());
+      // Parse search query
+      const searchQuery = parseSearchQuery(searchTerm);
+      let matchesSearch = true;
+      
+      if (searchQuery.type === 'jql') {
+        const { field, operator, value } = searchQuery;
+        const deviceValue = getDeviceFieldValue(device, field);
+        
+        if (deviceValue !== null && deviceValue !== undefined) {
+          matchesSearch = evaluateJQLCondition(deviceValue, operator, value);
+        } else {
+          matchesSearch = false;
+        }
+      } else if (searchQuery.type === 'simple' && searchQuery.value) {
+        // Simple search across multiple fields
+        const searchValue = searchQuery.value.toLowerCase();
+        matchesSearch = 
+          device.ipAddress?.toLowerCase().includes(searchValue) ||
+          device.hostname?.toLowerCase().includes(searchValue) ||
+          device.macAddress?.toLowerCase().includes(searchValue) ||
+          device.osName?.toLowerCase().includes(searchValue) ||
+          device.manufacturer?.toLowerCase().includes(searchValue) ||
+          device.deviceType?.toLowerCase().includes(searchValue) ||
+          device.scanTaskId?.toString().includes(searchValue) ||
+          device.scanTaskName?.toLowerCase().includes(searchValue);
+      }
       
       const matchesFilter = filterType === 'all' ||
         (filterType === 'new' && device.status === 'new') ||
@@ -530,11 +646,37 @@ const DevicesInterface = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search devices by IP, hostname, OS, manufacturer, scan ID..."
+                  placeholder="Search devices (e.g., scan_id=2, ip=192.168.1.1, confidence>70)..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onFocus={() => setShowSearchSuggestions(searchSuggestions.length > 0)}
+                  onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
                   className="pl-10"
                 />
+                
+                {/* Search Suggestions Dropdown */}
+                {showSearchSuggestions && searchSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                    <div className="p-2 text-xs text-muted-foreground border-b border-border">
+                      Available fields (JQL-style):
+                    </div>
+                    {searchSuggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                        onClick={() => {
+                          const currentQuery = searchTerm.split(' ').slice(0, -1).join(' ');
+                          const newQuery = currentQuery ? `${currentQuery} ${suggestion.display}` : suggestion.display;
+                          handleSearchChange(newQuery);
+                          setShowSearchSuggestions(false);
+                        }}
+                      >
+                        <div className="font-medium">{suggestion.display}</div>
+                        <div className="text-xs text-muted-foreground">{suggestion.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             
@@ -609,9 +751,9 @@ const DevicesInterface = () => {
                   <Grid3X3 className="w-4 h-4" />
                 </Button>
                 <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  variant={viewMode === 'table' ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => setViewMode('list')}
+                  onClick={() => setViewMode('table')}
                   className="rounded-l-none"
                   title="Table view"
                 >
@@ -684,9 +826,9 @@ const DevicesInterface = () => {
           ) : (
             <Card>
               <CardContent className="p-0">
-                <div className="overflow-x-auto">
+                <div className="overflow-auto max-h-[calc(100vh-400px)]">
                   <table className="w-full">
-                    <thead className="border-b border-border bg-muted/50">
+                    <thead className="border-b border-border bg-muted/50 sticky top-0 z-10">
                       <tr>
                         <th 
                           className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"

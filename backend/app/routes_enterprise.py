@@ -66,7 +66,6 @@ def get_scan_templates(
     limit: int = Query(100, ge=1, le=1000),
     is_system: Optional[bool] = Query(None),
     is_active: Optional[bool] = Query(None),
-    scan_type: Optional[str] = Query(None),
     current_user: User = Depends(require_discovery_read),
     db: Session = Depends(get_db)
 ):
@@ -76,8 +75,7 @@ def get_scan_templates(
         skip=skip,
         limit=limit,
         is_system=is_system,
-        is_active=is_active,
-        scan_type=scan_type
+        is_active=is_active
     )
 
 @router.get("/scan-templates/{template_id}", response_model=schemas.ScanTemplate)

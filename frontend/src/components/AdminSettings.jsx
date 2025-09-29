@@ -128,6 +128,24 @@ const AdminSettings = () => {
     permissions: []
   });
 
+  // Subnet management state
+  const [subnets, setSubnets] = useState([]);
+  const [showSubnetModal, setShowSubnetModal] = useState(false);
+  const [editingSubnet, setEditingSubnet] = useState(null);
+  const [subnetForm, setSubnetForm] = useState({
+    name: '',
+    description: '',
+    cidr: '',
+    gateway: '',
+    vlan_id: '',
+    location: '',
+    department: '',
+    is_active: true,
+    is_managed: false,
+    scan_frequency: 'weekly',
+    tags: {}
+  });
+
   useEffect(() => {
     if (hasPermission('admin')) {
       fetchSettings();
@@ -137,6 +155,7 @@ const AdminSettings = () => {
       loadLDAPConfigs();
       fetchSatelliteScanners();
       fetchApiKeys();
+      fetchSubnets();
     }
   }, [hasPermission]);
 
@@ -991,6 +1010,150 @@ const AdminSettings = () => {
     }
   };
 
+  // Subnet management functions
+  const fetchSubnets = async () => {
+    try {
+      const response = await fetch('/api/v2/subnets', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      setSubnets(data);
+    } catch (error) {
+      console.error('Failed to fetch subnets:', error);
+    }
+  };
+
+  const handleCreateSubnet = async () => {
+    try {
+      const response = await fetch('/api/v2/subnets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(subnetForm)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create subnet');
+      }
+
+      setShowSubnetModal(false);
+      setSubnetForm({
+        name: '',
+        description: '',
+        cidr: '',
+        gateway: '',
+        vlan_id: '',
+        location: '',
+        department: '',
+        is_active: true,
+        is_managed: false,
+        scan_frequency: 'weekly',
+        tags: {}
+      });
+      fetchSubnets();
+      setStatusMessage('Subnet created successfully');
+    } catch (error) {
+      console.error('Failed to create subnet:', error);
+      setStatusMessage(`Failed to create subnet: ${error.message}`);
+    }
+  };
+
+  const handleEditSubnet = (subnet) => {
+    setEditingSubnet(subnet);
+    setSubnetForm({
+      name: subnet.name,
+      description: subnet.description || '',
+      cidr: subnet.cidr,
+      gateway: subnet.gateway || '',
+      vlan_id: subnet.vlan_id || '',
+      location: subnet.location || '',
+      department: subnet.department || '',
+      is_active: subnet.is_active,
+      is_managed: subnet.is_managed,
+      scan_frequency: subnet.scan_frequency,
+      tags: subnet.tags || {}
+    });
+    setShowSubnetModal(true);
+  };
+
+  const handleUpdateSubnet = async () => {
+    try {
+      const response = await fetch(`/api/v2/subnets/${editingSubnet.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(subnetForm)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update subnet');
+      }
+
+      setShowSubnetModal(false);
+      setEditingSubnet(null);
+      setSubnetForm({
+        name: '',
+        description: '',
+        cidr: '',
+        gateway: '',
+        vlan_id: '',
+        location: '',
+        department: '',
+        is_active: true,
+        is_managed: false,
+        scan_frequency: 'weekly',
+        tags: {}
+      });
+      fetchSubnets();
+      setStatusMessage('Subnet updated successfully');
+    } catch (error) {
+      console.error('Failed to update subnet:', error);
+      setStatusMessage(`Failed to update subnet: ${error.message}`);
+    }
+  };
+
+  const handleDeleteSubnet = async (subnetId) => {
+    if (!window.confirm('Are you sure you want to delete this subnet? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v2/subnets/${subnetId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete subnet');
+      }
+
+      fetchSubnets();
+      setStatusMessage('Subnet deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete subnet:', error);
+      setStatusMessage(`Failed to delete subnet: ${error.message}`);
+    }
+  };
+
+  const handleSubnetSubmit = () => {
+    if (editingSubnet) {
+      handleUpdateSubnet();
+    } else {
+      handleCreateSubnet();
+    }
+  };
+
   return (
     <div className="h-screen bg-background flex flex-col">
       <PageHeader
@@ -1018,13 +1181,14 @@ const AdminSettings = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="system">System Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
             <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
             <TabsTrigger value="templates">Scan Templates</TabsTrigger>
+            <TabsTrigger value="subnets">Subnets</TabsTrigger>
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           </TabsList>
 
@@ -1576,6 +1740,102 @@ const AdminSettings = () => {
           {/* Scan Templates Tab */}
           <TabsContent value="templates" className="space-y-6">
             <ScanTemplateManager />
+          </TabsContent>
+
+          {/* Subnets Management Tab */}
+          <TabsContent value="subnets" className="space-y-6">
+            <Card className="surface-elevated">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-subheading text-foreground flex items-center">
+                      <span className="mr-2">🌐</span>
+                      Network Subnet Management
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Manage network subnets for organized scanning and monitoring
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowSubnetModal(true)}>
+                    Add Subnet
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {subnets.map((subnet) => (
+                    <div key={subnet.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-md border border-border">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                          <span className="text-primary-foreground font-semibold">
+                            {subnet.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-subheading text-foreground">{subnet.name}</h3>
+                          <p className="text-body text-muted-foreground">{subnet.description || 'No description'}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge className="bg-info text-info-foreground">
+                              {subnet.cidr}
+                            </Badge>
+                            {subnet.is_managed && (
+                              <Badge className="bg-success text-success-foreground">
+                                Managed
+                              </Badge>
+                            )}
+                            {subnet.is_active ? (
+                              <Badge className="bg-success text-success-foreground">
+                                Active
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-muted text-muted-foreground">
+                                Inactive
+                              </Badge>
+                            )}
+                            {subnet.department && (
+                              <Badge variant="outline">
+                                {subnet.department}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {subnet.location && `📍 ${subnet.location}`}
+                            {subnet.gateway && ` • Gateway: ${subnet.gateway}`}
+                            {subnet.vlan_id && ` • VLAN: ${subnet.vlan_id}`}
+                            {subnet.is_managed && ` • Scan: ${subnet.scan_frequency}`}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditSubnet(subnet)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteSubnet(subnet.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {subnets.length === 0 && (
+                    <div className="text-center py-8">
+                      <div className="text-4xl mb-4">🌐</div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">No Subnets Yet</h3>
+                      <p className="text-muted-foreground">
+                        Create your first network subnet to organize your scanning activities.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
         </Tabs>
@@ -2357,6 +2617,179 @@ const AdminSettings = () => {
               disabled={!roleForm.name.trim()}
             >
               {editingRole ? 'Update Role' : 'Create Role'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Subnet Management Modal */}
+      <Modal
+        isOpen={showSubnetModal}
+        onClose={() => {
+          setShowSubnetModal(false);
+          setEditingSubnet(null);
+          setSubnetForm({
+            name: '',
+            description: '',
+            cidr: '',
+            gateway: '',
+            vlan_id: '',
+            location: '',
+            department: '',
+            is_active: true,
+            is_managed: false,
+            scan_frequency: 'weekly',
+            tags: {}
+          });
+        }}
+        title={editingSubnet ? 'Edit Subnet' : 'Add Subnet'}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Subnet Name *
+            </label>
+            <Input
+              value={subnetForm.name}
+              onChange={(e) => setSubnetForm({...subnetForm, name: e.target.value})}
+              placeholder="e.g., Office Network"
+            />
+          </div>
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Description
+            </label>
+            <textarea
+              value={subnetForm.description}
+              onChange={(e) => setSubnetForm({...subnetForm, description: e.target.value})}
+              placeholder="Describe this subnet's purpose and location"
+              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              rows={3}
+            />
+          </div>
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              CIDR Notation *
+            </label>
+            <Input
+              value={subnetForm.cidr}
+              onChange={(e) => setSubnetForm({...subnetForm, cidr: e.target.value})}
+              placeholder="e.g., 192.168.1.0/24"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Network address and subnet mask in CIDR notation
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                Gateway IP
+              </label>
+              <Input
+                value={subnetForm.gateway}
+                onChange={(e) => setSubnetForm({...subnetForm, gateway: e.target.value})}
+                placeholder="e.g., 192.168.1.1"
+              />
+            </div>
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                VLAN ID
+              </label>
+              <Input
+                type="number"
+                min="1"
+                max="4094"
+                value={subnetForm.vlan_id}
+                onChange={(e) => setSubnetForm({...subnetForm, vlan_id: e.target.value})}
+                placeholder="e.g., 100"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                Location
+              </label>
+              <Input
+                value={subnetForm.location}
+                onChange={(e) => setSubnetForm({...subnetForm, location: e.target.value})}
+                placeholder="e.g., Building A, Floor 2"
+              />
+            </div>
+            <div>
+              <label className="block text-body font-medium text-foreground mb-2">
+                Department
+              </label>
+              <Input
+                value={subnetForm.department}
+                onChange={(e) => setSubnetForm({...subnetForm, department: e.target.value})}
+                placeholder="e.g., IT, Engineering"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Scan Frequency
+            </label>
+            <select
+              value={subnetForm.scan_frequency}
+              onChange={(e) => setSubnetForm({...subnetForm, scan_frequency: e.target.value})}
+              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="manual">Manual Only</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={subnetForm.is_active}
+                onChange={(e) => setSubnetForm({...subnetForm, is_active: e.target.checked})}
+                className="rounded"
+              />
+              <span className="text-sm font-medium text-foreground">Active</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={subnetForm.is_managed}
+                onChange={(e) => setSubnetForm({...subnetForm, is_managed: e.target.checked})}
+                className="rounded"
+              />
+              <span className="text-sm font-medium text-foreground">Managed</span>
+            </label>
+          </div>
+          <div className="flex justify-end space-x-2 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowSubnetModal(false);
+                setEditingSubnet(null);
+                setSubnetForm({
+                  name: '',
+                  description: '',
+                  cidr: '',
+                  gateway: '',
+                  vlan_id: '',
+                  location: '',
+                  department: '',
+                  is_active: true,
+                  is_managed: false,
+                  scan_frequency: 'weekly',
+                  tags: {}
+                });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubnetSubmit} 
+              disabled={!subnetForm.name.trim() || !subnetForm.cidr.trim()}
+            >
+              {editingSubnet ? 'Update Subnet' : 'Create Subnet'}
             </Button>
           </div>
         </div>

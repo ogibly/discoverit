@@ -199,15 +199,15 @@ const ScansView = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/discovery')}
+              onClick={() => navigate('/scans')}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Discovery</span>
+              <span>Back to Scans</span>
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-foreground">All Scans</h1>
-              <p className="text-muted-foreground">Comprehensive view of all network discovery scans</p>
+              <p className="text-muted-foreground">Comprehensive view of all network scans</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">

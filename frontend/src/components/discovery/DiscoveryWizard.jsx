@@ -160,7 +160,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
     setLoading(true);
     try {
       const scanConfig = {
-        name: `Discovery Scan - ${wizardData.target}`,
+        name: `Network Scan - ${wizardData.target}`,
         target: wizardData.target,
         scan_template_id: wizardData.scanTemplateId,
         scanner_ids: wizardData.scannerId ? [wizardData.scannerId] : [], // Convert to array format
@@ -186,7 +186,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
         <div className="border-b border-slate-800 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white">Discovery Wizard</h2>
+              <h2 className="text-2xl font-bold text-white">Scan Wizard</h2>
               <p className="text-slate-400 mt-1">
                 Step {currentStep} of {steps.length}: {steps[currentStep - 1].title}
               </p>

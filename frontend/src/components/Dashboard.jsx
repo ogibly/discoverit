@@ -195,9 +195,9 @@ const Dashboard = () => {
       }
     }
     
-    // Discovery Engine status
+    // Scan Engine status
     status.push({
-      name: 'Discovery Engine',
+      name: 'Scan Engine',
       status: activeScanTask ? 'Active' : 'Ready',
       color: activeScanTask ? 'bg-info' : 'bg-success',
       badgeColor: activeScanTask ? 'badge-info' : 'badge-success',
@@ -398,11 +398,11 @@ const Dashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
-                    onClick={() => navigate('/discovery')}
+                    onClick={() => navigate('/scans')}
                     className="h-12 flex flex-col items-center justify-center space-y-1 bg-info hover:bg-info/90 text-info-foreground transition-all duration-200"
                   >
                     <span className="text-lg">🔍</span>
-                    <span className="text-xs font-medium">Start Discovery</span>
+                    <span className="text-xs font-medium">Start Scan</span>
                   </Button>
                   <Button
                     onClick={() => navigate('/devices')}

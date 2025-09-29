@@ -75,7 +75,7 @@ const DevicesInterface = () => {
     { key: 'manufacturer', label: 'Manufacturer', type: 'string', example: 'manufacturer=Cisco' },
     { key: 'device_type', label: 'Device Type', type: 'string', example: 'device_type=Server' },
     { key: 'scan_id', label: 'Scan ID', type: 'number', example: 'scan_id=2' },
-    { key: 'scan_name', label: 'Scan Name', type: 'string', example: 'scan_name=Network Discovery' },
+    { key: 'scan_name', label: 'Scan Name', type: 'string', example: 'scan_name=Network Scan' },
     { key: 'status', label: 'Status', type: 'string', example: 'status=new', options: ['new', 'converted'] },
     { key: 'confidence', label: 'Confidence', type: 'number', example: 'confidence>70' },
     { key: 'ports', label: 'Open Ports', type: 'number', example: 'ports>5' },
@@ -775,7 +775,7 @@ const DevicesInterface = () => {
                 <div className="flex items-center space-x-3">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
                   <div>
-                    <h4 className="text-sm font-semibold text-blue-900">Active Discovery</h4>
+                    <h4 className="text-sm font-semibold text-blue-900">Active Scan</h4>
                     <p className="text-xs text-blue-700">
                         {activeScanTask.name} • {activeScanTask.target} • {formatScanProgress(activeScanTask.progress)} complete
                     </p>
@@ -807,11 +807,11 @@ const DevicesInterface = () => {
                 }
               </p>
               <Button
-                onClick={() => window.location.href = '/discovery'}
+                onClick={() => window.location.href = '/scans'}
                 className="flex items-center space-x-2"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Start Discovery Scan
+                Start Network Scan
               </Button>
             </CardContent>
           </Card>

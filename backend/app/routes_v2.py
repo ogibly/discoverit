@@ -1340,6 +1340,125 @@ def get_ldap_sync_logs(
     service = LDAPService(db)
     return service.get_sync_logs(config_id=config_id, limit=limit)
 
+# Subnet management routes
+@router.get("/subnets", response_model=List[schemas.Subnet])
+def list_subnets(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    is_active: Optional[bool] = Query(None),
+    is_managed: Optional[bool] = Query(None),
+    department: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    current_user: User = Depends(require_assets_read),
+    db: Session = Depends(get_db)
+):
+    """List subnets with optional filtering."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    return service.get_subnets(
+        skip=skip,
+        limit=limit,
+        is_active=is_active,
+        is_managed=is_managed,
+        department=department,
+        location=location,
+        search=search
+    )
+
+@router.post("/subnets", response_model=schemas.Subnet)
+def create_subnet(
+    subnet_data: schemas.SubnetCreate,
+    current_user: User = Depends(require_assets_write),
+    db: Session = Depends(get_db)
+):
+    """Create a new subnet."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    try:
+        return service.create_subnet(subnet_data, created_by=current_user.username)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/subnets/{subnet_id}", response_model=schemas.Subnet)
+def get_subnet(
+    subnet_id: int,
+    current_user: User = Depends(require_assets_read),
+    db: Session = Depends(get_db)
+):
+    """Get a subnet by ID."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    subnet = service.get_subnet(subnet_id)
+    if not subnet:
+        raise HTTPException(status_code=404, detail="Subnet not found")
+    return subnet
+
+@router.put("/subnets/{subnet_id}", response_model=schemas.Subnet)
+def update_subnet(
+    subnet_id: int,
+    subnet_data: schemas.SubnetUpdate,
+    current_user: User = Depends(require_assets_write),
+    db: Session = Depends(get_db)
+):
+    """Update a subnet."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    try:
+        updated_subnet = service.update_subnet(subnet_id, subnet_data)
+        if not updated_subnet:
+            raise HTTPException(status_code=404, detail="Subnet not found")
+        return updated_subnet
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/subnets/{subnet_id}")
+def delete_subnet(
+    subnet_id: int,
+    current_user: User = Depends(require_assets_write),
+    db: Session = Depends(get_db)
+):
+    """Delete a subnet."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    if not service.delete_subnet(subnet_id):
+        raise HTTPException(status_code=404, detail="Subnet not found")
+    return {"message": "Subnet deleted successfully"}
+
+@router.get("/subnets/statistics")
+def get_subnet_statistics(
+    current_user: User = Depends(require_assets_read),
+    db: Session = Depends(get_db)
+):
+    """Get subnet statistics."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    return service.get_subnet_statistics()
+
+@router.get("/subnets/due-for-scan", response_model=List[schemas.Subnet])
+def get_subnets_due_for_scan(
+    current_user: User = Depends(require_discovery_read),
+    db: Session = Depends(get_db)
+):
+    """Get subnets that are due for scanning."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    return service.get_subnets_due_for_scan()
+
+@router.post("/subnets/{subnet_id}/mark-scanned")
+def mark_subnet_scanned(
+    subnet_id: int,
+    current_user: User = Depends(require_discovery_write),
+    db: Session = Depends(get_db)
+):
+    """Mark a subnet as scanned."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    updated_subnet = service.update_last_scanned(subnet_id)
+    if not updated_subnet:
+        raise HTTPException(status_code=404, detail="Subnet not found")
+    return {"message": "Subnet marked as scanned", "next_scan": updated_subnet.next_scan}
+
 @router.get("/health")
 def health_check():
     """Health check endpoint."""

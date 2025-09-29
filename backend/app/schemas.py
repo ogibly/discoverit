@@ -768,6 +768,103 @@ class DiscoveryResult(BaseModel):
     success_rate: float
     errors: List[str] = []
 
+# Subnet Schemas
+class SubnetBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255, description="Subnet name")
+    description: Optional[str] = Field(None, description="Subnet description")
+    cidr: str = Field(..., description="CIDR notation (e.g., 192.168.1.0/24)")
+    gateway: Optional[str] = Field(None, description="Gateway IP address")
+    vlan_id: Optional[int] = Field(None, ge=1, le=4094, description="VLAN ID")
+    location: Optional[str] = Field(None, max_length=255, description="Physical location")
+    department: Optional[str] = Field(None, max_length=255, description="Department/team")
+    is_active: bool = Field(True, description="Whether subnet is active")
+    is_managed: bool = Field(False, description="Whether subnet is actively managed")
+    scan_frequency: str = Field("weekly", description="Scan frequency: daily, weekly, monthly, manual")
+    tags: Optional[Dict[str, Any]] = Field(None, description="Additional metadata tags")
+
+    @validator('cidr')
+    def validate_cidr(cls, v):
+        try:
+            network = ipaddress.ip_network(v, strict=False)
+            return str(network)
+        except ValueError:
+            raise ValueError('Invalid CIDR notation')
+
+    @validator('gateway')
+    def validate_gateway(cls, v):
+        if v is None:
+            return v
+        try:
+            ipaddress.ip_address(v)
+            return v
+        except ValueError:
+            raise ValueError('Invalid gateway IP address')
+
+    @validator('scan_frequency')
+    def validate_scan_frequency(cls, v):
+        allowed_frequencies = ['daily', 'weekly', 'monthly', 'manual']
+        if v not in allowed_frequencies:
+            raise ValueError(f'Scan frequency must be one of: {", ".join(allowed_frequencies)}')
+        return v
+
+class SubnetCreate(SubnetBase):
+    pass
+
+class SubnetUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    cidr: Optional[str] = None
+    gateway: Optional[str] = None
+    vlan_id: Optional[int] = Field(None, ge=1, le=4094)
+    location: Optional[str] = Field(None, max_length=255)
+    department: Optional[str] = Field(None, max_length=255)
+    is_active: Optional[bool] = None
+    is_managed: Optional[bool] = None
+    scan_frequency: Optional[str] = None
+    tags: Optional[Dict[str, Any]] = None
+
+    @validator('cidr')
+    def validate_cidr(cls, v):
+        if v is None:
+            return v
+        try:
+            network = ipaddress.ip_network(v, strict=False)
+            return str(network)
+        except ValueError:
+            raise ValueError('Invalid CIDR notation')
+
+    @validator('gateway')
+    def validate_gateway(cls, v):
+        if v is None:
+            return v
+        try:
+            ipaddress.ip_address(v)
+            return v
+        except ValueError:
+            raise ValueError('Invalid gateway IP address')
+
+    @validator('scan_frequency')
+    def validate_scan_frequency(cls, v):
+        if v is None:
+            return v
+        allowed_frequencies = ['daily', 'weekly', 'monthly', 'manual']
+        if v not in allowed_frequencies:
+            raise ValueError(f'Scan frequency must be one of: {", ".join(allowed_frequencies)}')
+        return v
+
+class Subnet(SubnetBase):
+    id: int
+    network_address: str
+    subnet_mask: str
+    last_scanned: Optional[datetime] = None
+    next_scan: Optional[datetime] = None
+    created_by: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # Update forward references
 AssetGroup.update_forward_refs()
 Asset.update_forward_refs()

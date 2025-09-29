@@ -49,7 +49,7 @@ const ScanNotifications = ({
             id: Date.now(),
             type: 'success',
             title: 'Scan Completed',
-            message: `Discovery scan "${activeScanTask.name || activeScanTask.target}" has completed successfully.`,
+            message: `Network scan "${activeScanTask.name || activeScanTask.target}" has completed successfully.`,
             scanId: activeScanTask.id,
             status: currentStatus,
             timestamp: new Date()
@@ -60,7 +60,7 @@ const ScanNotifications = ({
             id: Date.now(),
             type: 'error',
             title: 'Scan Failed',
-            message: `Discovery scan "${activeScanTask.name || activeScanTask.target}" has failed.`,
+            message: `Network scan "${activeScanTask.name || activeScanTask.target}" has failed.`,
             scanId: activeScanTask.id,
             status: currentStatus,
             timestamp: new Date(),
@@ -72,7 +72,7 @@ const ScanNotifications = ({
             id: Date.now(),
             type: 'warning',
             title: 'Scan Cancelled',
-            message: `Discovery scan "${activeScanTask.name || activeScanTask.target}" has been cancelled.`,
+            message: `Network scan "${activeScanTask.name || activeScanTask.target}" has been cancelled.`,
             scanId: activeScanTask.id,
             status: currentStatus,
             timestamp: new Date()
@@ -86,7 +86,7 @@ const ScanNotifications = ({
               id: Date.now(),
               type: 'info',
               title: 'Scan Started',
-              message: `Discovery scan "${activeScanTask.name || activeScanTask.target}" has started.`,
+              message: `Network scan "${activeScanTask.name || activeScanTask.target}" has started.`,
               scanId: activeScanTask.id,
               status: currentStatus,
               timestamp: new Date()

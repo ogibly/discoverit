@@ -10,8 +10,8 @@ const WorkflowGuide = () => {
   const workflowSteps = [
     {
       id: 'discovery',
-      title: 'Network Discovery',
-      description: 'Discover devices on your network',
+      title: 'Network Scans',
+      description: 'Scan devices on your network',
       icon: '🔍',
       details: [
         'Use Custom Scan to target specific IP ranges',
@@ -61,8 +61,8 @@ const WorkflowGuide = () => {
 
   const bestPractices = [
     {
-      title: 'Regular Discovery',
-      description: 'Run network discovery scans regularly to keep your asset inventory up-to-date',
+      title: 'Regular Scanning',
+      description: 'Run network scans regularly to keep your asset inventory up-to-date',
       tip: 'Schedule weekly automated scans'
     },
     {
@@ -214,10 +214,10 @@ const WorkflowGuide = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Button 
                   className="h-auto p-4 flex flex-col items-center space-y-2"
-                  onClick={() => window.location.href = '/discovery'}
+                  onClick={() => window.location.href = '/scans'}
                 >
                   <span className="text-xl">🔍</span>
-                  <span>Start Discovery</span>
+                  <span>Start Scan</span>
                   <span className="text-xs opacity-75">Begin network scanning</span>
                 </Button>
                 

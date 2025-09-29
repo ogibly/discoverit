@@ -8,7 +8,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import DevicesInterface from './components/DevicesInterface';
-import Discovery from './components/Discovery';
+import Scans from './components/Scans';
 import AssetsInterface from './components/AssetsInterface';
 import AssetDetail from './components/AssetDetail';
 import CredentialsManager from './components/CredentialsManager';
@@ -37,8 +37,8 @@ const Navigation = () => {
       permission: 'assets:read'
     },
     { 
-      path: '/discovery', 
-      label: 'Discovery', 
+      path: '/scans', 
+      label: 'Scans', 
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -106,7 +106,7 @@ const Navigation = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold text-foreground">DiscoverIT</h1>
-            <p className="text-xs text-muted-foreground">Network Discovery & Asset Management</p>
+            <p className="text-xs text-muted-foreground">Network Scanning & Asset Management</p>
           </div>
         </Link>
       </div>
@@ -274,9 +274,9 @@ const AppContent = () => {
             </ProtectedRoute>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/discovery" element={
+          <Route path="/scans" element={
             <ProtectedRoute requiredPermission="assets:read">
-              <Discovery />
+              <Scans />
             </ProtectedRoute>
           } />
           <Route path="/devices" element={

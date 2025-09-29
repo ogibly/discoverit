@@ -187,10 +187,12 @@ class ScanTask(Base):
     error_message = Column(Text, nullable=True)
     created_by = Column(String(100), nullable=True)
     scanner_ids = Column(JSON, nullable=True)
+    subnet_id = Column(Integer, ForeignKey("subnets.id"), nullable=True)
     
     # Relationships
     scans = relationship("Scan", back_populates="scan_task", cascade="all, delete-orphan")
     scan_template = relationship("ScanTemplate")
+    subnet = relationship("Subnet", back_populates="scan_tasks")
 
 
 class Scan(Base):
@@ -533,4 +535,32 @@ class NetworkTopology(Base):
     # Relationships
     source_asset = relationship("Asset", foreign_keys=[source_asset_id])
     target_asset = relationship("Asset", foreign_keys=[target_asset_id])
+
+
+class Subnet(Base):
+    """Network subnets for organized scanning and management."""
+    __tablename__ = "subnets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    cidr = Column(String(18), nullable=False, index=True)  # e.g., "192.168.1.0/24"
+    network_address = Column(String(15), nullable=False)  # e.g., "192.168.1.0"
+    subnet_mask = Column(String(15), nullable=False)  # e.g., "255.255.255.0"
+    gateway = Column(String(15), nullable=True)  # e.g., "192.168.1.1"
+    vlan_id = Column(Integer, nullable=True)
+    location = Column(String(255), nullable=True)  # Physical location
+    department = Column(String(255), nullable=True)  # Department/team
+    is_active = Column(Boolean, default=True, index=True)
+    is_managed = Column(Boolean, default=False)  # Whether this subnet is actively managed
+    scan_frequency = Column(String(20), default="weekly")  # daily, weekly, monthly, manual
+    last_scanned = Column(DateTime, nullable=True)
+    next_scan = Column(DateTime, nullable=True)
+    created_by = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    tags = Column(JSON, nullable=True)  # Additional metadata tags
+    
+    # Relationships
+    scan_tasks = relationship("ScanTask", back_populates="subnet")
 

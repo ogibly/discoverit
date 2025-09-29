@@ -31,7 +31,7 @@ const Login = () => {
             <span className="text-primary-foreground font-bold text-2xl">D</span>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">DiscoverIT</h1>
-          <p className="text-muted-foreground">Network Discovery & Asset Management</p>
+          <p className="text-muted-foreground">Network Scanning & Asset Management</p>
         </div>
 
         {/* Elegant Login Form */}

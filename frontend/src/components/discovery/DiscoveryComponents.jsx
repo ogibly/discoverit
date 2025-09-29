@@ -120,8 +120,8 @@ export const ResultsView = ({ discoveredDevices, onNewScan, onViewDevice }) => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">Discovery Results</h2>
-        <p className="text-muted-foreground">Work with your discovered devices</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Scan Results</h2>
+        <p className="text-muted-foreground">Work with your scanned devices</p>
       </div>
 
       {/* Toolbar with integrated view toggle */}

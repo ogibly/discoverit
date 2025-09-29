@@ -24,7 +24,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 
-const Discovery = () => {
+const Scans = () => {
   const {
     scanTasks,
     activeScanTask,
@@ -144,15 +144,15 @@ const Discovery = () => {
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <PageHeader
-        title="Network Discovery"
-        subtitle="Discover and analyze devices in your network"
+        title="Network Scans"
+        subtitle="Scan and analyze devices in your network"
       />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           
-          {/* 1. Start New Discovery Button */}
+          {/* 1. Start New Scan Button */}
           <div className="flex justify-center">
             <Button
               onClick={() => setShowWizard(true)}
@@ -161,7 +161,7 @@ const Discovery = () => {
               size="lg"
             >
               <Plus className="w-5 h-5" />
-              <span>Start New Discovery</span>
+              <span>Start New Scan</span>
             </Button>
           </div>
 
@@ -225,7 +225,7 @@ const Discovery = () => {
                   <div className="text-4xl mb-4">📊</div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">No Scans Yet</h3>
                   <p className="text-muted-foreground">
-                    Use the "Start New Discovery" button above to begin your first network scan.
+                    Use the "Start New Scan" button above to begin your first network scan.
                   </p>
                 </div>
               ) : (
@@ -388,7 +388,7 @@ const Discovery = () => {
         position="top-right"
       />
 
-      {/* Discovery Wizard Modal */}
+      {/* Scan Wizard Modal */}
       {showWizard && (
         <DiscoveryWizard
           onComplete={handleWizardComplete}
@@ -399,4 +399,4 @@ const Discovery = () => {
   );
 };
 
-export default Discovery;
+export default Scans;

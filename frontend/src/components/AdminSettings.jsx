@@ -893,10 +893,31 @@ const AdminSettings = () => {
   };
 
 
-  // Role management functions (placeholder)
+  // Role management functions
   const handleCreateRole = async () => {
-    console.log('Create role:', roleForm);
-    // TODO: Implement role creation
+    try {
+      const response = await fetch('/api/v2/roles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(roleForm)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create role');
+      }
+
+      setShowRoleModal(false);
+      setRoleForm({ name: '', description: '', permissions: [] });
+      fetchRoles();
+      setStatusMessage('Role created successfully');
+    } catch (error) {
+      console.error('Failed to create role:', error);
+      setStatusMessage(`Failed to create role: ${error.message}`);
+    }
   };
 
   const handleEditRole = (role) => {
@@ -909,9 +930,65 @@ const AdminSettings = () => {
     setShowRoleModal(true);
   };
 
+  const handleUpdateRole = async () => {
+    try {
+      const response = await fetch(`/api/v2/roles/${editingRole.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(roleForm)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update role');
+      }
+
+      setShowRoleModal(false);
+      setEditingRole(null);
+      setRoleForm({ name: '', description: '', permissions: [] });
+      fetchRoles();
+      setStatusMessage('Role updated successfully');
+    } catch (error) {
+      console.error('Failed to update role:', error);
+      setStatusMessage(`Failed to update role: ${error.message}`);
+    }
+  };
+
   const handleDeleteRole = async (roleId) => {
-    console.log('Delete role:', roleId);
-    // TODO: Implement role deletion
+    if (!window.confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v2/roles/${roleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete role');
+      }
+
+      fetchRoles();
+      setStatusMessage('Role deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete role:', error);
+      setStatusMessage(`Failed to delete role: ${error.message}`);
+    }
+  };
+
+  const handleRoleSubmit = () => {
+    if (editingRole) {
+      handleUpdateRole();
+    } else {
+      handleCreateRole();
+    }
   };
 
   return (
@@ -2187,6 +2264,101 @@ const AdminSettings = () => {
               </div>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Role Management Modal */}
+      <Modal
+        isOpen={showRoleModal}
+        onClose={() => {
+          setShowRoleModal(false);
+          setEditingRole(null);
+          setRoleForm({ name: '', description: '', permissions: [] });
+        }}
+        title={editingRole ? 'Edit Role' : 'Add Role'}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Role Name *
+            </label>
+            <Input
+              value={roleForm.name}
+              onChange={(e) => setRoleForm({...roleForm, name: e.target.value})}
+              placeholder="e.g., Security Analyst"
+            />
+          </div>
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Description
+            </label>
+            <textarea
+              value={roleForm.description}
+              onChange={(e) => setRoleForm({...roleForm, description: e.target.value})}
+              placeholder="Describe the role's responsibilities and access level"
+              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              rows={3}
+            />
+          </div>
+          <div>
+            <label className="block text-body font-medium text-foreground mb-2">
+              Permissions
+            </label>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {[
+                'assets:read', 'assets:write', 'assets:admin',
+                'scans:read', 'scans:write', 'scans:admin',
+                'discovery:read', 'discovery:write', 'discovery:admin',
+                'users:read', 'users:write', 'users:admin',
+                'roles:read', 'roles:write', 'roles:admin',
+                'settings:read', 'settings:write', 'settings:admin',
+                'api_keys:read', 'api_keys:write', 'api_keys:admin',
+                'ldap:read', 'ldap:write', 'ldap:admin',
+                'scanners:read', 'scanners:write', 'scanners:admin',
+                'templates:read', 'templates:write', 'templates:admin'
+              ].map((perm) => (
+                <label key={perm} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={roleForm.permissions.includes(perm)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setRoleForm({
+                          ...roleForm,
+                          permissions: [...roleForm.permissions, perm]
+                        });
+                      } else {
+                        setRoleForm({
+                          ...roleForm,
+                          permissions: roleForm.permissions.filter(p => p !== perm)
+                        });
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-foreground">{perm}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowRoleModal(false);
+                setEditingRole(null);
+                setRoleForm({ name: '', description: '', permissions: [] });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRoleSubmit} 
+              disabled={!roleForm.name.trim()}
+            >
+              {editingRole ? 'Update Role' : 'Create Role'}
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

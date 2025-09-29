@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     default_scanner_url: str = "http://scanner:8001"
     scan_timeout: int = 300
     max_concurrent_scans: int = 5
-    max_discovery_depth: int = 3
     
     # Default Networks
     default_subnets: List[str] = [

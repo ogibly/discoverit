@@ -87,9 +87,6 @@ const ScanTemplateManager = () => {
       newErrors.timeout = 'Timeout must be between 30 and 3600 seconds';
     }
     
-    if (formData.discovery_depth < 1 || formData.discovery_depth > 5) {
-      newErrors.discovery_depth = 'Discovery depth must be between 1 and 5';
-    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -212,7 +209,7 @@ const ScanTemplateManager = () => {
                   </div>
                   <div>
                     <span className="text-slate-400">Depth:</span>
-                    <div className="text-white">{template.scan_config?.discovery_depth || 2}</div>
+                    <div className="text-white">N/A</div>
                   </div>
                   <div>
                     <span className="text-slate-400">Timeout:</span>

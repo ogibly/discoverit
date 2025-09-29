@@ -354,7 +354,7 @@ class ScanServiceV2:
                 
         except requests.exceptions.RequestException as e:
             logger.warning(f"Scanner service unavailable for {ip}: {e}, using local nmap")
-            return self._perform_local_scan(ip, scan_config, discovery_depth)
+            return self._perform_local_scan(ip, scan_config)
         except Exception as e:
             logger.error(f"Scan failed for {ip}: {e}")
             return {

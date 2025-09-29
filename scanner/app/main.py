@@ -12,7 +12,6 @@ app = FastAPI()
 class ScanRequest(BaseModel):
     target: str
     scan_type: str
-    discovery_depth: int = 1
     timeout: int = 30
 
 @app.get("/health")
@@ -55,12 +54,7 @@ def unified_scan(request: ScanRequest):
         elif request.scan_type == "comprehensive":
             arguments = "-sS -O -sV -A --script default,safe"
         elif request.scan_type == "lan_discovery":
-            if request.discovery_depth == 1:
-                arguments = "-sn -PR"  # ARP only
-            elif request.discovery_depth == 2:
-                arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995 -PR"
-            else:  # depth >= 3
-                arguments = "-sS -O -sV -A --script default,safe"
+            arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995 -PR"
         elif request.scan_type == "arp":
             arguments = "-sn -PR"
         elif request.scan_type == "snmp":
@@ -91,7 +85,6 @@ def unified_scan(request: ScanRequest):
             "status": "completed",
             "timestamp": timestamp,
             "scan_type": request.scan_type,
-            "discovery_depth": request.discovery_depth,
             "raw_output": nm.csv(),
             "hostname": host_data.hostname() if host_data.hostname() else None,
             "addresses": {

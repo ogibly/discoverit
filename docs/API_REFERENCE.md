@@ -470,7 +470,6 @@ Content-Type: application/json
   "scan_timeout": 300,
   "max_concurrent_scans": 5,
   "auto_discovery_enabled": true,
-  "max_discovery_depth": 3
 }
 ```
 

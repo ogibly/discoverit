@@ -163,7 +163,6 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
         name: `Discovery Scan - ${wizardData.target}`,
         target: wizardData.target,
         scan_template_id: wizardData.scanTemplateId,
-        discovery_depth: wizardData.discoveryDepth,
         scanner_ids: wizardData.scannerId ? [wizardData.scannerId] : [], // Convert to array format
         credentials: wizardData.credentials,
         schedule: wizardData.schedule

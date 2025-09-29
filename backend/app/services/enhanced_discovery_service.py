@@ -24,7 +24,6 @@ class EnhancedDiscoveryService:
         self,
         target: str,
         scan_type: str = "comprehensive",
-        discovery_depth: int = 2,
         credentials: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """Perform enhanced discovery with advanced data collection."""
@@ -38,7 +37,6 @@ class EnhancedDiscoveryService:
             "scan_metadata": {
                 "target": target,
                 "scan_type": scan_type,
-                "discovery_depth": discovery_depth,
                 "start_time": datetime.utcnow(),
                 "end_time": None,
                 "duration": 0
@@ -51,32 +49,27 @@ class EnhancedDiscoveryService:
             discovery_results["devices"] = devices
 
             # Phase 2: Service Discovery
-            if discovery_depth >= 2:
-                for device in devices:
-                    services = await self._discover_services(device, credentials)
-                    discovery_results["services"].extend(services)
+            for device in devices:
+                services = await self._discover_services(device, credentials)
+                discovery_results["services"].extend(services)
 
             # Phase 3: OS Fingerprinting
-            if discovery_depth >= 3:
-                for device in devices:
-                    os_info = await self._perform_os_fingerprinting(device)
-                    device.update(os_info)
+            for device in devices:
+                os_info = await self._perform_os_fingerprinting(device)
+                device.update(os_info)
 
             # Phase 4: Hardware Detection
-            if discovery_depth >= 3:
-                for device in devices:
-                    hardware_info = await self._detect_hardware(device, credentials)
-                    device.update(hardware_info)
+            for device in devices:
+                hardware_info = await self._detect_hardware(device, credentials)
+                device.update(hardware_info)
 
             # Phase 5: Network Topology Mapping
-            if discovery_depth >= 4:
-                topology = await self._map_network_topology(devices)
-                discovery_results["network_topology"] = topology
+            topology = await self._map_network_topology(devices)
+            discovery_results["network_topology"] = topology
 
             # Phase 6: Vulnerability Scanning
-            if discovery_depth >= 5:
-                vulnerabilities = await self._scan_vulnerabilities(devices)
-                discovery_results["vulnerabilities"] = vulnerabilities
+            vulnerabilities = await self._scan_vulnerabilities(devices)
+            discovery_results["vulnerabilities"] = vulnerabilities
 
             # Phase 7: Performance Metrics Collection
             metrics = await self._collect_performance_metrics(devices)

@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **BREAKING**: Removed scan type display from Local Network Discovery form
-- **BREAKING**: Updated scan task schema to include `discovery_depth` and `scanner_ids`
+- **BREAKING**: Updated scan task schema to include `scanner_ids`
 - Enhanced scanner service with better data extraction
 - Improved frontend scan UI with better validation
 - Updated default view mode from 'grid' to 'table' across components

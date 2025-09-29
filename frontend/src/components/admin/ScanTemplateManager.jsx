@@ -12,10 +12,7 @@ import {
   Edit, 
   Trash2, 
   Copy, 
-  Settings,
   Clock,
-  Zap,
-  Shield,
   AlertCircle
 } from 'lucide-react';
 
@@ -27,7 +24,6 @@ const ScanTemplateManager = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    scan_type: 'standard',
     discovery_depth: 2,
     timeout: 300,
     arguments: ''
@@ -39,17 +35,11 @@ const ScanTemplateManager = () => {
     fetchScanTemplates();
   }, [fetchScanTemplates]);
 
-  const scanTypes = [
-    { value: 'quick', label: 'Quick Discovery', icon: Zap, description: 'Fast ping scan to find active hosts' },
-    { value: 'standard', label: 'Standard Scan', icon: Settings, description: 'Port and service discovery' },
-    { value: 'comprehensive', label: 'Comprehensive Scan', icon: Shield, description: 'Full analysis with vulnerability detection' }
-  ];
 
   const resetForm = () => {
     setFormData({
       name: '',
       description: '',
-      scan_type: 'standard',
       discovery_depth: 2,
       timeout: 300,
       arguments: ''
@@ -66,7 +56,6 @@ const ScanTemplateManager = () => {
     setFormData({
       name: template.name,
       description: template.description,
-      scan_type: template.scan_config?.scan_type || 'standard',
       discovery_depth: template.scan_config?.discovery_depth || 2,
       timeout: template.scan_config?.timeout || 300,
       arguments: template.scan_config?.arguments || ''
@@ -79,7 +68,6 @@ const ScanTemplateManager = () => {
     setFormData({
       name: `${template.name} (Copy)`,
       description: template.description,
-      scan_type: template.scan_config?.scan_type || 'standard',
       discovery_depth: template.scan_config?.discovery_depth || 2,
       timeout: template.scan_config?.timeout || 300,
       arguments: template.scan_config?.arguments || ''
@@ -121,9 +109,7 @@ const ScanTemplateManager = () => {
       const templateData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        scan_type: formData.scan_type,
         scan_config: {
-          scan_type: formData.scan_type,
           discovery_depth: formData.discovery_depth,
           timeout: formData.timeout,
           arguments: formData.arguments.trim()
@@ -336,22 +322,6 @@ const ScanTemplateManager = () => {
             {errors.description && <p className="text-red-400 text-sm mt-1">{errors.description}</p>}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Scan Type
-            </label>
-            <select
-              value={formData.scan_type}
-              onChange={(e) => setFormData({ ...formData, scan_type: e.target.value })}
-              className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white"
-            >
-              {scanTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label} - {type.description}
-                </option>
-              ))}
-            </select>
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>

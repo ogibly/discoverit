@@ -156,11 +156,6 @@ def delete_scan_template(
     if not template:
         raise HTTPException(status_code=404, detail="Scan template not found")
     
-    # Check if this would be the last template
-    total_templates = db.query(ScanTemplate).count()
-    if total_templates <= 1:
-        raise HTTPException(status_code=400, detail="Cannot delete the last template. At least one template must remain.")
-    
     if not service.delete_scan_template(template_id):
         raise HTTPException(status_code=400, detail="Cannot delete system template")
     

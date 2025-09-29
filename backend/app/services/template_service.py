@@ -15,8 +15,7 @@ class TemplateService:
         skip: int = 0,
         limit: int = 100,
         is_system: Optional[bool] = None,
-        is_active: Optional[bool] = None,
-        scan_type: Optional[str] = None
+        is_active: Optional[bool] = None
     ) -> List[ScanTemplate]:
         """Get scan templates with filtering."""
         query = self.db.query(ScanTemplate)
@@ -25,8 +24,6 @@ class TemplateService:
             query = query.filter(ScanTemplate.is_system == is_system)
         if is_active is not None:
             query = query.filter(ScanTemplate.is_active == is_active)
-        if scan_type:
-            query = query.filter(ScanTemplate.scan_type == scan_type)
         
         return query.order_by(ScanTemplate.usage_count.desc()).offset(skip).limit(limit).all()
 
@@ -44,7 +41,6 @@ class TemplateService:
             name=template_data.name,
             description=template_data.description,
             scan_config=template_data.scan_config,
-            scan_type=template_data.scan_type,
             is_system=template_data.is_system,
             created_by=user_id
         )
@@ -77,11 +73,6 @@ class TemplateService:
         template = self.get_scan_template(template_id)
         if not template or template.is_system:
             return False  # Cannot delete system templates
-        
-        # Check if this would be the last template
-        total_templates = self.db.query(ScanTemplate).count()
-        if total_templates <= 1:
-            return False  # Cannot delete the last template
         
         self.db.delete(template)
         self.db.commit()
@@ -207,9 +198,7 @@ class TemplateService:
             {
                 "name": "Quick Network Discovery",
                 "description": "Fast ping scan to discover active hosts",
-                "scan_type": "quick",
                 "scan_config": {
-                    "scan_type": "quick",
                     "discovery_depth": 1,
                     "timeout": 30,
                     "arguments": "-sn -T4"
@@ -218,9 +207,7 @@ class TemplateService:
             {
                 "name": "Standard Network Scan",
                 "description": "Comprehensive port and service discovery",
-                "scan_type": "standard",
                 "scan_config": {
-                    "scan_type": "standard",
                     "discovery_depth": 2,
                     "timeout": 300,
                     "arguments": "-sS -O -sV -A"
@@ -229,9 +216,7 @@ class TemplateService:
             {
                 "name": "Deep Network Analysis",
                 "description": "Comprehensive scan with vulnerability detection",
-                "scan_type": "comprehensive",
                 "scan_config": {
-                    "scan_type": "comprehensive",
                     "discovery_depth": 3,
                     "timeout": 600,
                     "arguments": "-sS -O -sV -A --script default,safe,vuln"

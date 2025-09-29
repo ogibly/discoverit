@@ -421,7 +421,6 @@ class ScanTemplate(Base):
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     scan_config = Column(JSON, nullable=False)  # Complete scan configuration
-    scan_type = Column(String(50), nullable=False)  # quick, standard, comprehensive, custom
     is_system = Column(Boolean, default=False)  # System templates vs user templates
     is_active = Column(Boolean, default=True)
     usage_count = Column(Integer, default=0)

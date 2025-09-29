@@ -276,9 +276,8 @@ const ScanTemplateManager = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(template)}
-                      disabled={scanTemplates?.length <= 1}
-                      className="text-red-400 hover:text-red-300 disabled:text-slate-500 disabled:cursor-not-allowed"
-                      title={scanTemplates?.length <= 1 ? "Cannot delete the last template" : "Delete template"}
+                      className="text-red-400 hover:text-red-300"
+                      title="Delete template"
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>

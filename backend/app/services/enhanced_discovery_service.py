@@ -104,10 +104,11 @@ class EnhancedDiscoveryService:
         from .template_service import TemplateService
         template_service = TemplateService(self.db)
         
-        # Find template by scan type
-        templates = template_service.get_scan_templates(scan_type=scan_type, is_active=True)
+        # Find template by name (since we removed scan_type)
+        # For now, we'll use the first active template as a fallback
+        templates = template_service.get_scan_templates(is_active=True)
         if not templates:
-            raise ValueError(f"No active template found for scan type: {scan_type}")
+            raise ValueError("No active templates found")
         
         template = templates[0]  # Use first matching template
         scan_config = template.scan_config

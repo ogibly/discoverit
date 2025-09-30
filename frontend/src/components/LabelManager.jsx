@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE || '/api/v2';
 
 export default function LabelManager({ selectedObject, onUpdate }) {
   const [labels, setLabels] = useState([]);

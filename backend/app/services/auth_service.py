@@ -9,16 +9,21 @@ from ..schemas import UserCreate, UserUpdate, UserPasswordUpdate, RoleCreate, Ro
 from datetime import datetime, timedelta
 import secrets
 import hashlib
+import logging
 from jose import jwt
 from passlib.context import CryptContext
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # Password hashing - using pbkdf2_sha256 to avoid bcrypt issues
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 # JWT settings
-SECRET_KEY = "your-secret-key-here"  # In production, use environment variable
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from ..config import settings
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 SESSION_EXPIRE_DAYS = 7
 
 # Permission constants

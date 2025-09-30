@@ -40,8 +40,7 @@ class LDAPService:
                 user=config.bind_dn,
                 password=config.bind_password,
                 auto_bind=True,
-                receive_timeout=config.connection_timeout,
-                read_timeout=config.read_timeout
+                receive_timeout=config.connection_timeout
             )
             
             # Test user search
@@ -102,8 +101,7 @@ class LDAPService:
                 user=config.bind_dn,
                 password=config.bind_password,
                 auto_bind=True,
-                receive_timeout=config.connection_timeout,
-                read_timeout=config.read_timeout
+                receive_timeout=config.connection_timeout
             )
             
             # Search for user
@@ -135,8 +133,7 @@ class LDAPService:
                 user=user_dn,
                 password=password,
                 auto_bind=True,
-                receive_timeout=config.connection_timeout,
-                read_timeout=config.read_timeout
+                receive_timeout=config.connection_timeout
             )
             
             # Extract user attributes
@@ -195,8 +192,7 @@ class LDAPService:
                 user=config.bind_dn,
                 password=config.bind_password,
                 auto_bind=True,
-                receive_timeout=config.connection_timeout,
-                read_timeout=config.read_timeout
+                receive_timeout=config.connection_timeout
             )
             
             # Search for all users

@@ -8,6 +8,7 @@ import { Modal } from './ui/Modal';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
 import StandardList from './common/StandardList';
+import { validateForm, FIELD_VALIDATIONS, hasFormErrors } from '../utils/validation';
 
 const CredentialsManager = () => {
   const { 
@@ -42,6 +43,7 @@ const CredentialsManager = () => {
     port: '',
     is_active: true
   });
+  const [formErrors, setFormErrors] = useState({});
 
   const credentialTypes = [
     { value: 'all', label: 'All Credentials', icon: '🔑' },
@@ -132,10 +134,35 @@ const CredentialsManager = () => {
       port: '',
       is_active: true
     });
+    setFormErrors({});
     setError(null);
   };
 
+  // Clear field error when user starts typing
+  const handleFormChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+    if (formErrors[field]) {
+      setFormErrors({ ...formErrors, [field]: null });
+    }
+  };
+
   const handleCreate = async () => {
+    // Validate form
+    const credentialValidations = {
+      name: FIELD_VALIDATIONS.credentialName,
+      description: FIELD_VALIDATIONS.credentialDescription,
+      username: formData.credential_type === 'username_password' ? FIELD_VALIDATIONS.credentialUsername : [],
+      password: formData.credential_type === 'username_password' ? FIELD_VALIDATIONS.credentialPassword : []
+    };
+    
+    const { isValid, errors } = validateForm(formData, credentialValidations);
+    setFormErrors(errors);
+    
+    if (!isValid) {
+      setError('Please fix the validation errors before submitting.');
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       setError(null);
@@ -155,6 +182,7 @@ const CredentialsManager = () => {
       await createCredential(credentialData);
       setShowCreateModal(false);
       resetForm();
+      setFormErrors({});
     } catch (error) {
       console.error('Failed to create credential:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to create credential';
@@ -485,10 +513,13 @@ const CredentialsManager = () => {
             </label>
             <Input
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => handleFormChange('name', e.target.value)}
               placeholder="Enter credential name"
-              required
+              className={formErrors.name ? 'border-red-500' : ''}
             />
+            {formErrors.name && (
+              <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">

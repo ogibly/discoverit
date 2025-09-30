@@ -974,13 +974,13 @@ const AdminSettings = () => {
     try {
       const result = await testLDAPConnection(configId);
       if (result.success) {
-        alert('LDAP connection test successful!');
+        setStatusMessage('LDAP connection test successful!');
       } else {
-        alert('LDAP connection test failed: ' + result.error);
+        setStatusMessage('LDAP connection test failed: ' + result.message);
       }
     } catch (error) {
       console.error('Failed to test LDAP connection:', error);
-      alert('Failed to test LDAP connection: ' + (error.response?.data?.detail || error.message));
+      setStatusMessage('Failed to test LDAP connection: ' + (error.response?.data?.detail || error.message));
     }
   };
 

@@ -107,12 +107,12 @@ const AdminSettings = () => {
   const [editingLDAP, setEditingLDAP] = useState(null);
   const [ldapForm, setLdapForm] = useState({
     name: '',
-    server_url: '',
+    server_uri: '',
     bind_dn: '',
     bind_password: '',
-    user_search_base: '',
+    user_base_dn: '',
     user_search_filter: '',
-    group_search_base: '',
+    group_base_dn: '',
     group_search_filter: '',
     is_default: false,
     is_active: true
@@ -813,12 +813,12 @@ const AdminSettings = () => {
       setShowLDAPModal(false);
       setLdapForm({
         name: '',
-        server_url: '',
+        server_uri: '',
         bind_dn: '',
         bind_password: '',
-        user_search_base: '',
+        user_base_dn: '',
         user_search_filter: '',
-        group_search_base: '',
+        group_base_dn: '',
         group_search_filter: '',
         is_default: false,
         is_active: true
@@ -834,12 +834,12 @@ const AdminSettings = () => {
     setEditingLDAP(config);
     setLdapForm({
       name: config.name,
-      server_url: config.server_url,
+      server_uri: config.server_uri,
       bind_dn: config.bind_dn,
       bind_password: config.bind_password,
-      user_search_base: config.user_search_base,
+      user_base_dn: config.user_base_dn,
       user_search_filter: config.user_search_filter,
-      group_search_base: config.group_search_base,
+      group_base_dn: config.group_base_dn,
       group_search_filter: config.group_search_filter,
       is_default: config.is_default,
       is_active: config.is_active
@@ -855,12 +855,12 @@ const AdminSettings = () => {
       setEditingLDAP(null);
       setLdapForm({
         name: '',
-        server_url: '',
+        server_uri: '',
         bind_dn: '',
         bind_password: '',
-        user_search_base: '',
+        user_base_dn: '',
         user_search_filter: '',
-        group_search_base: '',
+        group_base_dn: '',
         group_search_filter: '',
         is_default: false,
         is_active: true
@@ -1302,7 +1302,7 @@ const AdminSettings = () => {
                           </div>
                           <div>
                             <h3 className="text-subheading text-foreground">{config.name}</h3>
-                            <p className="text-body text-muted-foreground">{config.server_url}</p>
+                            <p className="text-body text-muted-foreground">{config.server_uri}</p>
                             <div className="flex items-center space-x-2 mt-1">
                               <Badge className={config.is_active ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}>
                                 {config.is_active ? 'Active' : 'Inactive'}
@@ -2042,12 +2042,12 @@ const AdminSettings = () => {
           setEditingLDAP(null);
           setLdapForm({
             name: '',
-            server_url: '',
+            server_uri: '',
             bind_dn: '',
             bind_password: '',
-            user_search_base: '',
+            user_base_dn: '',
             user_search_filter: '',
-            group_search_base: '',
+            group_base_dn: '',
             group_search_filter: '',
             is_default: false,
             is_active: true
@@ -2071,8 +2071,8 @@ const AdminSettings = () => {
               Server URL *
             </label>
             <Input
-              value={ldapForm.server_url}
-              onChange={(e) => setLdapForm({...ldapForm, server_url: e.target.value})}
+              value={ldapForm.server_uri}
+              onChange={(e) => setLdapForm({...ldapForm, server_uri: e.target.value})}
               placeholder="e.g., ldap://dc.company.com:389"
             />
           </div>
@@ -2102,8 +2102,8 @@ const AdminSettings = () => {
               User Search Base *
             </label>
             <Input
-              value={ldapForm.user_search_base}
-              onChange={(e) => setLdapForm({...ldapForm, user_search_base: e.target.value})}
+              value={ldapForm.user_base_dn}
+              onChange={(e) => setLdapForm({...ldapForm, user_base_dn: e.target.value})}
               placeholder="e.g., OU=Users,DC=company,DC=com"
             />
           </div>
@@ -2122,8 +2122,8 @@ const AdminSettings = () => {
               Group Search Base
             </label>
             <Input
-              value={ldapForm.group_search_base}
-              onChange={(e) => setLdapForm({...ldapForm, group_search_base: e.target.value})}
+              value={ldapForm.group_base_dn}
+              onChange={(e) => setLdapForm({...ldapForm, group_base_dn: e.target.value})}
               placeholder="e.g., OU=Groups,DC=company,DC=com"
             />
           </div>
@@ -2166,12 +2166,12 @@ const AdminSettings = () => {
             setEditingLDAP(null);
             setLdapForm({
               name: '',
-              server_url: '',
+              server_uri: '',
               bind_dn: '',
               bind_password: '',
-              user_search_base: '',
+              user_base_dn: '',
               user_search_filter: '',
-              group_search_base: '',
+              group_base_dn: '',
               group_search_filter: '',
               is_default: false,
               is_active: true

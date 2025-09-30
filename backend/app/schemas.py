@@ -557,7 +557,7 @@ class LDAPConfigUpdate(BaseModel):
 class LDAPConfig(LDAPConfigBase):
     id: int
     last_sync: Optional[datetime] = None
-    sync_status: str
+    sync_status: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     created_by: Optional[int] = None

@@ -1,15 +1,47 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { validateForm, FIELD_VALIDATIONS } from '../utils/validation';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   const { login } = useAuth();
+
+  // Clear field error when user starts typing
+  const handleUsernameChange = (value) => {
+    setUsername(value);
+    if (formErrors.username) {
+      setFormErrors({ ...formErrors, username: null });
+    }
+  };
+
+  const handlePasswordChange = (value) => {
+    setPassword(value);
+    if (formErrors.password) {
+      setFormErrors({ ...formErrors, password: null });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    const loginValidations = {
+      username: FIELD_VALIDATIONS.username,
+      password: [FIELD_VALIDATIONS.required]
+    };
+    
+    const { isValid, errors } = validateForm({ username, password }, loginValidations);
+    setFormErrors(errors);
+    
+    if (!isValid) {
+      setError('Please fix the validation errors before submitting.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
@@ -45,11 +77,13 @@ const Login = () => {
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                onChange={(e) => handleUsernameChange(e.target.value)}
+                className={`w-full px-3 py-2 bg-background border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent ${formErrors.username ? 'border-red-500' : 'border-border'}`}
                 placeholder="Enter your username"
-                required
               />
+              {formErrors.username && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.username}</p>
+              )}
             </div>
 
             <div>
@@ -60,12 +94,14 @@ const Login = () => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                className={`w-full px-3 py-2 bg-background border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent ${formErrors.password ? 'border-red-500' : 'border-border'}`}
                 placeholder="Enter your password"
                 autoComplete="current-password"
-                required
               />
+              {formErrors.password && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>
+              )}
             </div>
 
             {error && (

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
 import ScanTemplateManager from './admin/ScanTemplateManager';
+import { validateForm, FIELD_VALIDATIONS, hasFormErrors } from '../utils/validation';
 
 const AdminSettings = () => {
   const { 
@@ -64,6 +65,7 @@ const AdminSettings = () => {
     role_id: '',
     is_active: true
   });
+  const [userFormErrors, setUserFormErrors] = useState({});
 
   // Scanner configurations state
   const [scannerConfigs, setScannerConfigs] = useState([]);
@@ -117,6 +119,7 @@ const AdminSettings = () => {
     is_default: false,
     is_active: true
   });
+  const [ldapFormErrors, setLdapFormErrors] = useState({});
 
 
   // Role management state
@@ -127,6 +130,7 @@ const AdminSettings = () => {
     description: '',
     permissions: []
   });
+  const [roleFormErrors, setRoleFormErrors] = useState({});
 
   // Subnet management state
   const [subnets, setSubnets] = useState([]);
@@ -272,6 +276,22 @@ const AdminSettings = () => {
   };
 
   const handleCreateUser = async () => {
+    // Validate form
+    const userValidations = {
+      username: FIELD_VALIDATIONS.username,
+      email: FIELD_VALIDATIONS.email,
+      full_name: FIELD_VALIDATIONS.fullName,
+      password: FIELD_VALIDATIONS.password
+    };
+    
+    const { isValid, errors } = validateForm(userForm, userValidations);
+    setUserFormErrors(errors);
+    
+    if (!isValid) {
+      setStatusMessage('Please fix the validation errors before submitting.');
+      return;
+    }
+    
     try {
       setLoading(true);
       await createUserAPI(userForm);
@@ -284,11 +304,12 @@ const AdminSettings = () => {
         role_id: '',
         is_active: true
       });
+      setUserFormErrors({});
       fetchUsers();
-      alert('User created successfully!');
+      setStatusMessage('User created successfully!');
     } catch (error) {
       console.error('Error creating user:', error);
-      alert('Error creating user');
+      setStatusMessage('Error creating user: ' + (error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
     }
@@ -807,6 +828,26 @@ const AdminSettings = () => {
 
   // LDAP management functions
   const handleCreateLDAP = async () => {
+    // Validate form
+    const ldapValidations = {
+      name: FIELD_VALIDATIONS.ldapName,
+      server_uri: FIELD_VALIDATIONS.ldapServerUri,
+      user_base_dn: FIELD_VALIDATIONS.ldapUserBaseDn,
+      bind_dn: FIELD_VALIDATIONS.ldapBindDn,
+      bind_password: FIELD_VALIDATIONS.ldapBindPassword,
+      user_search_filter: FIELD_VALIDATIONS.ldapUserSearchFilter,
+      group_base_dn: FIELD_VALIDATIONS.ldapGroupBaseDn,
+      group_search_filter: FIELD_VALIDATIONS.ldapGroupSearchFilter
+    };
+    
+    const { isValid, errors } = validateForm(ldapForm, ldapValidations);
+    setLdapFormErrors(errors);
+    
+    if (!isValid) {
+      setStatusMessage('Please fix the validation errors before submitting.');
+      return;
+    }
+    
     try {
       const config = await createLDAPConfig(ldapForm);
       setLdapConfigs([...ldapConfigs, config]);
@@ -823,10 +864,11 @@ const AdminSettings = () => {
         is_default: false,
         is_active: true
       });
-      alert('LDAP configuration created successfully!');
+      setLdapFormErrors({});
+      setStatusMessage('LDAP configuration created successfully!');
     } catch (error) {
       console.error('Failed to create LDAP config:', error);
-      alert('Failed to create LDAP configuration: ' + (error.response?.data?.detail || error.message));
+      setStatusMessage('Failed to create LDAP configuration: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -848,6 +890,26 @@ const AdminSettings = () => {
   };
 
   const handleUpdateLDAP = async () => {
+    // Validate form
+    const ldapValidations = {
+      name: FIELD_VALIDATIONS.ldapName,
+      server_uri: FIELD_VALIDATIONS.ldapServerUri,
+      user_base_dn: FIELD_VALIDATIONS.ldapUserBaseDn,
+      bind_dn: FIELD_VALIDATIONS.ldapBindDn,
+      bind_password: FIELD_VALIDATIONS.ldapBindPassword,
+      user_search_filter: FIELD_VALIDATIONS.ldapUserSearchFilter,
+      group_base_dn: FIELD_VALIDATIONS.ldapGroupBaseDn,
+      group_search_filter: FIELD_VALIDATIONS.ldapGroupSearchFilter
+    };
+    
+    const { isValid, errors } = validateForm(ldapForm, ldapValidations);
+    setLdapFormErrors(errors);
+    
+    if (!isValid) {
+      setStatusMessage('Please fix the validation errors before submitting.');
+      return;
+    }
+    
     try {
       const config = await updateLDAPConfig(editingLDAP.id, ldapForm);
       setLdapConfigs(ldapConfigs.map(c => c.id === editingLDAP.id ? config : c));
@@ -865,10 +927,11 @@ const AdminSettings = () => {
         is_default: false,
         is_active: true
       });
-      alert('LDAP configuration updated successfully!');
+      setLdapFormErrors({});
+      setStatusMessage('LDAP configuration updated successfully!');
     } catch (error) {
       console.error('Failed to update LDAP config:', error);
-      alert('Failed to update LDAP configuration: ' + (error.response?.data?.detail || error.message));
+      setStatusMessage('Failed to update LDAP configuration: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -877,11 +940,33 @@ const AdminSettings = () => {
       try {
         await deleteLDAPConfig(ldapId);
         setLdapConfigs(ldapConfigs.filter(c => c.id !== ldapId));
-        alert('LDAP configuration deleted successfully!');
+        setStatusMessage('LDAP configuration deleted successfully!');
       } catch (error) {
         console.error('Failed to delete LDAP config:', error);
-        alert('Failed to delete LDAP configuration: ' + (error.response?.data?.detail || error.message));
+        setStatusMessage('Failed to delete LDAP configuration: ' + (error.response?.data?.detail || error.message));
       }
+    }
+  };
+
+  // Clear field error when user starts typing
+  const handleLdapFormChange = (field, value) => {
+    setLdapForm({ ...ldapForm, [field]: value });
+    if (ldapFormErrors[field]) {
+      setLdapFormErrors({ ...ldapFormErrors, [field]: null });
+    }
+  };
+
+  const handleUserFormChange = (field, value) => {
+    setUserForm({ ...userForm, [field]: value });
+    if (userFormErrors[field]) {
+      setUserFormErrors({ ...userFormErrors, [field]: null });
+    }
+  };
+
+  const handleRoleFormChange = (field, value) => {
+    setRoleForm({ ...roleForm, [field]: value });
+    if (roleFormErrors[field]) {
+      setRoleFormErrors({ ...roleFormErrors, [field]: null });
     }
   };
 
@@ -1850,24 +1935,32 @@ const AdminSettings = () => {
         <div className="space-y-4">
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
-              Username
+              Username *
             </label>
             <Input
               value={userForm.username}
-              onChange={(e) => setUserForm({...userForm, username: e.target.value})}
+              onChange={(e) => handleUserFormChange('username', e.target.value)}
               placeholder="Enter username"
+              className={userFormErrors.username ? 'border-red-500' : ''}
             />
+            {userFormErrors.username && (
+              <p className="text-red-500 text-sm mt-1">{userFormErrors.username}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
-              Email
+              Email *
             </label>
             <Input
               type="email"
               value={userForm.email}
-              onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+              onChange={(e) => handleUserFormChange('email', e.target.value)}
               placeholder="Enter email"
+              className={userFormErrors.email ? 'border-red-500' : ''}
             />
+            {userFormErrors.email && (
+              <p className="text-red-500 text-sm mt-1">{userFormErrors.email}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
@@ -1881,15 +1974,19 @@ const AdminSettings = () => {
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
-              Password
+              Password *
             </label>
             <Input
               type="password"
               value={userForm.password}
-              onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+              onChange={(e) => handleUserFormChange('password', e.target.value)}
               autoComplete="new-password"
               placeholder="Enter password"
+              className={userFormErrors.password ? 'border-red-500' : ''}
             />
+            {userFormErrors.password && (
+              <p className="text-red-500 text-sm mt-1">{userFormErrors.password}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
@@ -2062,9 +2159,13 @@ const AdminSettings = () => {
             </label>
             <Input
               value={ldapForm.name}
-              onChange={(e) => setLdapForm({...ldapForm, name: e.target.value})}
+              onChange={(e) => handleLdapFormChange('name', e.target.value)}
               placeholder="e.g., Corporate Active Directory"
+              className={ldapFormErrors.name ? 'border-red-500' : ''}
             />
+            {ldapFormErrors.name && (
+              <p className="text-red-500 text-sm mt-1">{ldapFormErrors.name}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
@@ -2072,9 +2173,13 @@ const AdminSettings = () => {
             </label>
             <Input
               value={ldapForm.server_uri}
-              onChange={(e) => setLdapForm({...ldapForm, server_uri: e.target.value})}
+              onChange={(e) => handleLdapFormChange('server_uri', e.target.value)}
               placeholder="e.g., ldap://dc.company.com:389"
+              className={ldapFormErrors.server_uri ? 'border-red-500' : ''}
             />
+            {ldapFormErrors.server_uri && (
+              <p className="text-red-500 text-sm mt-1">{ldapFormErrors.server_uri}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
@@ -2103,9 +2208,13 @@ const AdminSettings = () => {
             </label>
             <Input
               value={ldapForm.user_base_dn}
-              onChange={(e) => setLdapForm({...ldapForm, user_base_dn: e.target.value})}
+              onChange={(e) => handleLdapFormChange('user_base_dn', e.target.value)}
               placeholder="e.g., OU=Users,DC=company,DC=com"
+              className={ldapFormErrors.user_base_dn ? 'border-red-500' : ''}
             />
+            {ldapFormErrors.user_base_dn && (
+              <p className="text-red-500 text-sm mt-1">{ldapFormErrors.user_base_dn}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">

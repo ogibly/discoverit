@@ -149,10 +149,18 @@ export const FIELD_VALIDATIONS = {
 
 // Validation function
 export const validateField = (value, validations) => {
+  // Safety check: ensure validations is an array
+  if (!Array.isArray(validations)) {
+    return null;
+  }
+  
   for (const validation of validations) {
-    const error = validation(value);
-    if (error) {
-      return error;
+    // Safety check: ensure validation is a function
+    if (typeof validation === 'function') {
+      const error = validation(value);
+      if (error) {
+        return error;
+      }
     }
   }
   return null;

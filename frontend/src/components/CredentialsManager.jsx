@@ -8,7 +8,7 @@ import { Modal } from './ui/Modal';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
 import StandardList from './common/StandardList';
-import { validateForm, FIELD_VALIDATIONS, hasFormErrors } from '../utils/validation';
+import { validateForm, FIELD_VALIDATIONS } from '../utils/validation';
 
 const CredentialsManager = () => {
   const { 
@@ -150,10 +150,14 @@ const CredentialsManager = () => {
     // Validate form
     const credentialValidations = {
       name: FIELD_VALIDATIONS.credentialName,
-      description: FIELD_VALIDATIONS.credentialDescription,
-      username: formData.credential_type === 'username_password' ? FIELD_VALIDATIONS.credentialUsername : [],
-      password: formData.credential_type === 'username_password' ? FIELD_VALIDATIONS.credentialPassword : []
+      description: FIELD_VALIDATIONS.credentialDescription
     };
+    
+    // Add conditional validations based on credential type
+    if (formData.credential_type === 'username_password') {
+      credentialValidations.username = FIELD_VALIDATIONS.credentialUsername;
+      credentialValidations.password = FIELD_VALIDATIONS.credentialPassword;
+    }
     
     const { isValid, errors } = validateForm(formData, credentialValidations);
     setFormErrors(errors);

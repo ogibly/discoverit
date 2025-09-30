@@ -234,8 +234,17 @@ class LDAPService:
                     email = str(getattr(entry, config.email_attribute, ""))
                     full_name = str(getattr(entry, config.full_name_attribute, ""))
                     
-                    if not username or not email:
+                    # Clean up LDAP attribute values - handle empty lists and None values
+                    username = username.strip() if username and username not in ['[]', 'None'] else ""
+                    email = email.strip() if email and email not in ['[]', 'None'] else ""
+                    full_name = full_name.strip() if full_name and full_name not in ['[]', 'None'] else ""
+                    
+                    if not username:
                         continue
+                    
+                    # Generate email if not provided
+                    if not email:
+                        email = f"{username}@ldap.local"
                     
                     # Check if user exists
                     if user_dn in existing_ldap_dns:
@@ -308,6 +317,9 @@ class LDAPService:
             }
             
         except Exception as e:
+            # Rollback any pending changes
+            self.db.rollback()
+            
             # Update sync log with error
             sync_log.completed_at = datetime.utcnow()
             sync_log.status = "error"

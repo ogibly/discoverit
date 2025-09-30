@@ -1,0 +1,132 @@
+networks:
+  discoverit-net:
+    driver: bridge
+
+services:
+  postgres:
+    networks:
+      - discoverit-net
+    image: postgres:15
+    container_name: discoverit-db
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U discoverit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: discoverit
+      POSTGRES_PASSWORD: DiscoverIT4DB
+      POSTGRES_DB: discoverit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    env_file:
+      ./backend/.env
+    networks:
+      - discoverit-net
+    build: ./backend
+    container_name: discoverit-backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      DATABASE_URL: postgresql://discoverit:DiscoverIT4DB@postgres:5432/discoverit
+    ports:
+      - "8000:8000"
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  scanmanager:
+    build: ./scanmanager
+    container_name: discoverit-scanmanager
+    restart: always
+    ports:
+      - "8002:8002"
+    networks:
+      - discoverit-net
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  scanner:
+    build: ./scanner
+    container_name: discoverit-scanner
+    restart: always
+    ports:
+      - "8001:8001"
+    networks:
+      - discoverit-net
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build: ./frontend
+    container_name: discoverit-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE: /api/v2
+    ports:
+      - "5173:5173"
+    networks:
+      - discoverit-net
+
+  # 🧪 smblds test service (easy to remove)
+  smblds-test:
+    image: smblds/smblds:latest
+    container_name: smblds-test
+    networks:
+      - discoverit-net
+    ports:
+      - "389:389"
+      - "636:636"
+      - "3268:3268"
+      - "3269:3269"
+      - "22:22"
+      - "389:389/udp"
+    environment:
+      SAMBA_DOMAIN: TEST
+      SAMBA_REALM: TEST.LOCAL
+      SAMBA_ADMIN_PASSWORD: TestPass123!
+      INSECURE_LDAP: "true"
+    healthcheck:
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - smblds_test_logs:/var/log/samba
+      - smblds_test_entry:/entrypoint.d
+      - smblds_test_dropbear:/etc/dropbear
+      - smblds_test_config:/etc/samba
+      - smblds_test_root:/root
+      - smblds_test_cache:/var/cache/samba
+      - smblds_test_data:/var/lib/samba
+  # 🧪 end smblds test service
+
+volumes:
+  postgres_data:
+  smblds_test_logs:
+  smblds_test_entry:
+  smblds_test_dropbear:
+  smblds_test_config:
+  smblds_test_root:
+  smblds_test_cache:
+  smblds_test_data:

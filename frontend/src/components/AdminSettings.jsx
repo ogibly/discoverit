@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
 import ScanTemplateManager from './admin/ScanTemplateManager';
-import { validateForm, FIELD_VALIDATIONS } from '../utils/validation';
+import { validateForm, FIELD_VALIDATIONS, VALIDATION_RULES } from '../utils/validation';
+import { handleFormSubmission, COMMON_FIELD_CONFIGS, createFieldChangeHandler } from '../utils/formHelpers';
 
 const AdminSettings = () => {
   const { 
@@ -136,6 +137,13 @@ const AdminSettings = () => {
   const [subnets, setSubnets] = useState([]);
   const [showSubnetModal, setShowSubnetModal] = useState(false);
   const [editingSubnet, setEditingSubnet] = useState(null);
+  
+  // Access list management state
+  const [showAccessListModal, setShowAccessListModal] = useState(false);
+  const [selectedResource, setSelectedResource] = useState(null);
+  const [resourceType, setResourceType] = useState(null); // 'subnet' or 'scanner'
+  const [resourceUsers, setResourceUsers] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState([]);
   const [subnetForm, setSubnetForm] = useState({
     name: '',
     description: '',
@@ -149,6 +157,7 @@ const AdminSettings = () => {
     scan_frequency: 'weekly',
     tags: {}
   });
+  const [subnetFormErrors, setSubnetFormErrors] = useState({});
 
   useEffect(() => {
     if (hasPermission('admin')) {
@@ -157,9 +166,13 @@ const AdminSettings = () => {
       fetchRoles();
       fetchScannerConfigsAPI();
       loadLDAPConfigs();
-      fetchSatelliteScanners();
       fetchApiKeys();
+    }
+    if (hasPermission('subnets:read')) {
       fetchSubnets();
+    }
+    if (hasPermission('satellite_scanners:read')) {
+      fetchSatelliteScanners();
     }
   }, [hasPermission]);
 
@@ -316,6 +329,26 @@ const AdminSettings = () => {
   };
 
   const handleUpdateUser = async () => {
+    // Validate form (password is optional for updates)
+    const userValidations = {
+      username: FIELD_VALIDATIONS.username,
+      email: FIELD_VALIDATIONS.email,
+      full_name: FIELD_VALIDATIONS.fullName
+    };
+    
+    // Only validate password if it's provided
+    if (userForm.password && userForm.password.trim()) {
+      userValidations.password = FIELD_VALIDATIONS.password;
+    }
+    
+    const { isValid, errors } = validateForm(userForm, userValidations);
+    setUserFormErrors(errors);
+    
+    if (!isValid) {
+      setStatusMessage('Please fix the validation errors before submitting.');
+      return;
+    }
+    
     try {
       setLoading(true);
       await updateUserAPI(editingUser.id, userForm);
@@ -329,11 +362,12 @@ const AdminSettings = () => {
         role_id: '',
         is_active: true
       });
+      setUserFormErrors({});
       fetchUsers();
-      alert('User updated successfully!');
+      setStatusMessage('User updated successfully!');
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Error updating user');
+      setStatusMessage('Error updating user: ' + (error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
     }
@@ -987,7 +1021,21 @@ const AdminSettings = () => {
   const handleSyncLDAPUsers = async (configId) => {
     try {
       const result = await syncLDAPUsers(configId);
-      alert(`LDAP user sync completed. ${result.synced_users || 0} users synchronized.`);
+      
+      if (result.success) {
+        const totalUsers = (result.users_created || 0) + (result.users_updated || 0);
+        const message = `LDAP user sync completed successfully!\n\n` +
+          `• Users created: ${result.users_created || 0}\n` +
+          `• Users updated: ${result.users_updated || 0}\n` +
+          `• Users deactivated: ${result.users_deactivated || 0}\n` +
+          `• Total synchronized: ${totalUsers}\n` +
+          `• Errors: ${result.errors_count || 0}`;
+        
+        alert(message);
+      } else {
+        alert(`LDAP sync failed: ${result.error || 'Unknown error'}`);
+      }
+      
       // Refresh users list
       fetchUsers();
     } catch (error) {
@@ -1111,41 +1159,47 @@ const AdminSettings = () => {
   };
 
   const handleCreateSubnet = async () => {
-    try {
-      const response = await fetch('/api/v2/subnets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(subnetForm)
-      });
+    const success = await handleFormSubmission({
+      formData: subnetForm,
+      validations: COMMON_FIELD_CONFIGS.subnet.validations,
+      setFormErrors: setSubnetFormErrors,
+      setError: setStatusMessage,
+      submitFunction: async (cleanedData) => {
+        const response = await fetch('/api/v2/subnets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(cleanedData)
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create subnet');
-      }
-
-      setShowSubnetModal(false);
-      setSubnetForm({
-        name: '',
-        description: '',
-        cidr: '',
-        gateway: '',
-        vlan_id: '',
-        location: '',
-        department: '',
-        is_active: true,
-        is_managed: false,
-        scan_frequency: 'weekly',
-        tags: {}
-      });
-      fetchSubnets();
-      setStatusMessage('Subnet created successfully');
-    } catch (error) {
-      console.error('Failed to create subnet:', error);
-      setStatusMessage(`Failed to create subnet: ${error.message}`);
-    }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Failed to create subnet');
+        }
+      },
+      onSuccess: () => {
+        setShowSubnetModal(false);
+        setSubnetForm({
+          name: '',
+          description: '',
+          cidr: '',
+          gateway: '',
+          vlan_id: '',
+          location: '',
+          department: '',
+          is_active: true,
+          is_managed: false,
+          scan_frequency: 'weekly',
+          tags: {}
+        });
+        fetchSubnets();
+        setStatusMessage('Subnet created successfully');
+      },
+      optionalFields: COMMON_FIELD_CONFIGS.subnet.optionalFields,
+      numericFields: COMMON_FIELD_CONFIGS.subnet.numericFields
+    });
   };
 
   const handleEditSubnet = (subnet) => {
@@ -1167,42 +1221,48 @@ const AdminSettings = () => {
   };
 
   const handleUpdateSubnet = async () => {
-    try {
-      const response = await fetch(`/api/v2/subnets/${editingSubnet.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(subnetForm)
-      });
+    const success = await handleFormSubmission({
+      formData: subnetForm,
+      validations: COMMON_FIELD_CONFIGS.subnet.validations,
+      setFormErrors: setSubnetFormErrors,
+      setError: setStatusMessage,
+      submitFunction: async (cleanedData) => {
+        const response = await fetch(`/api/v2/subnets/${editingSubnet.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(cleanedData)
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to update subnet');
-      }
-
-      setShowSubnetModal(false);
-      setEditingSubnet(null);
-      setSubnetForm({
-        name: '',
-        description: '',
-        cidr: '',
-        gateway: '',
-        vlan_id: '',
-        location: '',
-        department: '',
-        is_active: true,
-        is_managed: false,
-        scan_frequency: 'weekly',
-        tags: {}
-      });
-      fetchSubnets();
-      setStatusMessage('Subnet updated successfully');
-    } catch (error) {
-      console.error('Failed to update subnet:', error);
-      setStatusMessage(`Failed to update subnet: ${error.message}`);
-    }
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || 'Failed to update subnet');
+        }
+      },
+      onSuccess: () => {
+        setShowSubnetModal(false);
+        setEditingSubnet(null);
+        setSubnetForm({
+          name: '',
+          description: '',
+          cidr: '',
+          gateway: '',
+          vlan_id: '',
+          location: '',
+          department: '',
+          is_active: true,
+          is_managed: false,
+          scan_frequency: 'weekly',
+          tags: {}
+        });
+        fetchSubnets();
+        setStatusMessage('Subnet updated successfully');
+      },
+      optionalFields: COMMON_FIELD_CONFIGS.subnet.optionalFields,
+      numericFields: COMMON_FIELD_CONFIGS.subnet.numericFields
+    });
   };
 
   const handleDeleteSubnet = async (subnetId) => {
@@ -1229,6 +1289,86 @@ const AdminSettings = () => {
       console.error('Failed to delete subnet:', error);
       setStatusMessage(`Failed to delete subnet: ${error.message}`);
     }
+  };
+
+  // Access list management functions
+  const fetchResourceUsers = async (resourceId, type) => {
+    try {
+      const endpoint = type === 'subnet' ? `/api/v2/subnets/${resourceId}/users` : `/api/v2/scanners/${resourceId}/users`;
+      const response = await fetch(endpoint, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch resource users');
+      }
+
+      const data = await response.json();
+      setResourceUsers(data);
+    } catch (error) {
+      console.error('Failed to fetch resource users:', error);
+      setStatusMessage(`Failed to fetch resource users: ${error.message}`, 'error');
+    }
+  };
+
+  const grantAccess = async (resourceId, userId, type) => {
+    try {
+      const endpoint = type === 'subnet' ? `/api/v2/subnets/${resourceId}/grant-access/${userId}` : `/api/v2/scanners/${resourceId}/grant-access/${userId}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to grant access');
+      }
+
+      // Refresh the resource users list
+      fetchResourceUsers(resourceId, type);
+      setStatusMessage('Access granted successfully');
+    } catch (error) {
+      console.error('Failed to grant access:', error);
+      setStatusMessage(`Failed to grant access: ${error.message}`, 'error');
+    }
+  };
+
+  const revokeAccess = async (resourceId, userId, type) => {
+    try {
+      const endpoint = type === 'subnet' ? `/api/v2/subnets/${resourceId}/revoke-access/${userId}` : `/api/v2/scanners/${resourceId}/revoke-access/${userId}`;
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to revoke access');
+      }
+
+      // Refresh the resource users list
+      fetchResourceUsers(resourceId, type);
+      setStatusMessage('Access revoked successfully');
+    } catch (error) {
+      console.error('Failed to revoke access:', error);
+      setStatusMessage(`Failed to revoke access: ${error.message}`, 'error');
+    }
+  };
+
+  const handleManageAccess = (resource, type) => {
+    setSelectedResource(resource);
+    setResourceType(type);
+    setShowAccessListModal(true);
+    fetchResourceUsers(resource.id, type);
   };
 
   const handleSubnetSubmit = () => {
@@ -1271,9 +1411,13 @@ const AdminSettings = () => {
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
-            <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
+            {hasPermission('satellite_scanners:read') && (
+              <TabsTrigger value="scanners">Scanner Configs</TabsTrigger>
+            )}
             <TabsTrigger value="templates">Scan Templates</TabsTrigger>
-            <TabsTrigger value="subnets">Subnets</TabsTrigger>
+            {hasPermission('subnets:read') && (
+              <TabsTrigger value="subnets">Subnets</TabsTrigger>
+            )}
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           </TabsList>
 
@@ -1505,7 +1649,8 @@ const AdminSettings = () => {
 
 
           {/* Scanner Configs Tab */}
-          <TabsContent value="scanners" className="space-y-6">
+          {hasPermission('satellite_scanners:read') && (
+            <TabsContent value="scanners" className="space-y-6">
             {/* Main Scanner Configuration */}
             <Card className="surface-elevated border-primary/20 bg-primary/5">
               <CardHeader>
@@ -1584,9 +1729,11 @@ const AdminSettings = () => {
                       Additional scanners for specific subnets, VLANs, or network segments
                     </p>
                   </div>
-                  <Button onClick={() => setShowScannerModal(true)}>
-                    Add Satellite Scanner
-                  </Button>
+                  {hasPermission('satellite_scanners:create') && (
+                    <Button onClick={() => setShowScannerModal(true)}>
+                      Add Satellite Scanner
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -1597,9 +1744,11 @@ const AdminSettings = () => {
                     <p className="text-body text-muted-foreground mb-4">
                       Add satellite scanners to enhance discovery capabilities for specific network segments.
                     </p>
-                    <Button onClick={() => setShowScannerModal(true)}>
-                      Add Your First Satellite Scanner
-                    </Button>
+                    {hasPermission('satellite_scanners:create') && (
+                      <Button onClick={() => setShowScannerModal(true)}>
+                        Add Your First Satellite Scanner
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1661,12 +1810,34 @@ const AdminSettings = () => {
                               >
                                 🔧 Troubleshoot
                               </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleEditScanner(config)}>
-                                Edit
+                              {hasPermission('satellite_scanners:update') && (
+                                <Button variant="outline" size="sm" onClick={() => handleEditScanner(config)}>
+                                  Edit
+                                </Button>
+                              )}
+                              {hasPermission('users:read') && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleManageAccess(config, 'scanner')}
+                                >
+                                  Manage Access
+                                </Button>
+                              )}
+                              {/* Debug: Always show a test button */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => console.log('Debug: Manage Access clicked for scanner', config.name)}
+                                style={{backgroundColor: 'yellow', color: 'black'}}
+                              >
+                                DEBUG: Access
                               </Button>
-                              <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(scannerId)}>
-                                Delete
-                              </Button>
+                              {hasPermission('satellite_scanners:delete') && (
+                                <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(scannerId)}>
+                                  Delete
+                                </Button>
+                              )}
                             </div>
                           </div>
                           
@@ -1726,6 +1897,7 @@ const AdminSettings = () => {
               </CardContent>
             </Card>
           </TabsContent>
+          )}
 
           {/* API Keys Tab */}
           <TabsContent value="api-keys" className="space-y-6">
@@ -1820,7 +1992,8 @@ const AdminSettings = () => {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           {/* Scan Templates Tab */}
           <TabsContent value="templates" className="space-y-6">
@@ -1828,7 +2001,8 @@ const AdminSettings = () => {
           </TabsContent>
 
           {/* Subnets Management Tab */}
-          <TabsContent value="subnets" className="space-y-6">
+          {hasPermission('subnets:read') && (
+            <TabsContent value="subnets" className="space-y-6">
             <Card className="surface-elevated">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1841,9 +2015,11 @@ const AdminSettings = () => {
                       Manage network subnets for organized scanning and monitoring
                     </p>
                   </div>
-                  <Button onClick={() => setShowSubnetModal(true)}>
-                    Add Subnet
-                  </Button>
+                  {hasPermission('subnets:create') && (
+                    <Button onClick={() => setShowSubnetModal(true)}>
+                      Add Subnet
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -1892,20 +2068,42 @@ const AdminSettings = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        {hasPermission('subnets:update') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditSubnet(subnet)}
+                          >
+                            Edit
+                          </Button>
+                        )}
+                        {hasPermission('users:read') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleManageAccess(subnet, 'subnet')}
+                          >
+                            Manage Access
+                          </Button>
+                        )}
+                        {/* Debug: Always show a test button */}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleEditSubnet(subnet)}
+                          onClick={() => console.log('Debug: Manage Access clicked for subnet', subnet.name)}
+                          style={{backgroundColor: 'yellow', color: 'black'}}
                         >
-                          Edit
+                          DEBUG: Access
                         </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteSubnet(subnet.id)}
-                        >
-                          Delete
-                        </Button>
+                        {hasPermission('subnets:delete') && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteSubnet(subnet.id)}
+                          >
+                            Delete
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1921,7 +2119,8 @@ const AdminSettings = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+            </TabsContent>
+          )}
 
         </Tabs>
       </div>
@@ -2750,6 +2949,7 @@ const AdminSettings = () => {
             scan_frequency: 'weekly',
             tags: {}
           });
+          setSubnetFormErrors({});
         }}
         title={editingSubnet ? 'Edit Subnet' : 'Add Subnet'}
       >
@@ -2760,9 +2960,18 @@ const AdminSettings = () => {
             </label>
             <Input
               value={subnetForm.name}
-              onChange={(e) => setSubnetForm({...subnetForm, name: e.target.value})}
+              onChange={(e) => {
+                setSubnetForm({...subnetForm, name: e.target.value});
+                if (subnetFormErrors.name) {
+                  setSubnetFormErrors({...subnetFormErrors, name: null});
+                }
+              }}
               placeholder="e.g., Office Network"
+              className={subnetFormErrors.name ? 'border-red-500' : ''}
             />
+            {subnetFormErrors.name && (
+              <p className="text-red-500 text-sm mt-1">{subnetFormErrors.name}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
@@ -2770,11 +2979,19 @@ const AdminSettings = () => {
             </label>
             <textarea
               value={subnetForm.description}
-              onChange={(e) => setSubnetForm({...subnetForm, description: e.target.value})}
+              onChange={(e) => {
+                setSubnetForm({...subnetForm, description: e.target.value});
+                if (subnetFormErrors.description) {
+                  setSubnetFormErrors({...subnetFormErrors, description: null});
+                }
+              }}
               placeholder="Describe this subnet's purpose and location"
-              className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className={`w-full px-3 py-2 bg-background border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${subnetFormErrors.description ? 'border-red-500' : 'border-border'}`}
               rows={3}
             />
+            {subnetFormErrors.description && (
+              <p className="text-red-500 text-sm mt-1">{subnetFormErrors.description}</p>
+            )}
           </div>
           <div>
             <label className="block text-body font-medium text-foreground mb-2">
@@ -2782,9 +2999,18 @@ const AdminSettings = () => {
             </label>
             <Input
               value={subnetForm.cidr}
-              onChange={(e) => setSubnetForm({...subnetForm, cidr: e.target.value})}
+              onChange={(e) => {
+                setSubnetForm({...subnetForm, cidr: e.target.value});
+                if (subnetFormErrors.cidr) {
+                  setSubnetFormErrors({...subnetFormErrors, cidr: null});
+                }
+              }}
               placeholder="e.g., 192.168.1.0/24"
+              className={subnetFormErrors.cidr ? 'border-red-500' : ''}
             />
+            {subnetFormErrors.cidr && (
+              <p className="text-red-500 text-sm mt-1">{subnetFormErrors.cidr}</p>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
               Network address and subnet mask in CIDR notation
             </p>
@@ -2796,9 +3022,18 @@ const AdminSettings = () => {
               </label>
               <Input
                 value={subnetForm.gateway}
-                onChange={(e) => setSubnetForm({...subnetForm, gateway: e.target.value})}
+                onChange={(e) => {
+                  setSubnetForm({...subnetForm, gateway: e.target.value});
+                  if (subnetFormErrors.gateway) {
+                    setSubnetFormErrors({...subnetFormErrors, gateway: null});
+                  }
+                }}
                 placeholder="e.g., 192.168.1.1"
+                className={subnetFormErrors.gateway ? 'border-red-500' : ''}
               />
+              {subnetFormErrors.gateway && (
+                <p className="text-red-500 text-sm mt-1">{subnetFormErrors.gateway}</p>
+              )}
             </div>
             <div>
               <label className="block text-body font-medium text-foreground mb-2">
@@ -2809,9 +3044,18 @@ const AdminSettings = () => {
                 min="1"
                 max="4094"
                 value={subnetForm.vlan_id}
-                onChange={(e) => setSubnetForm({...subnetForm, vlan_id: e.target.value})}
+                onChange={(e) => {
+                  setSubnetForm({...subnetForm, vlan_id: e.target.value});
+                  if (subnetFormErrors.vlan_id) {
+                    setSubnetFormErrors({...subnetFormErrors, vlan_id: null});
+                  }
+                }}
                 placeholder="e.g., 100"
+                className={subnetFormErrors.vlan_id ? 'border-red-500' : ''}
               />
+              {subnetFormErrors.vlan_id && (
+                <p className="text-red-500 text-sm mt-1">{subnetFormErrors.vlan_id}</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -2821,9 +3065,18 @@ const AdminSettings = () => {
               </label>
               <Input
                 value={subnetForm.location}
-                onChange={(e) => setSubnetForm({...subnetForm, location: e.target.value})}
+                onChange={(e) => {
+                  setSubnetForm({...subnetForm, location: e.target.value});
+                  if (subnetFormErrors.location) {
+                    setSubnetFormErrors({...subnetFormErrors, location: null});
+                  }
+                }}
                 placeholder="e.g., Building A, Floor 2"
+                className={subnetFormErrors.location ? 'border-red-500' : ''}
               />
+              {subnetFormErrors.location && (
+                <p className="text-red-500 text-sm mt-1">{subnetFormErrors.location}</p>
+              )}
             </div>
             <div>
               <label className="block text-body font-medium text-foreground mb-2">
@@ -2831,9 +3084,18 @@ const AdminSettings = () => {
               </label>
               <Input
                 value={subnetForm.department}
-                onChange={(e) => setSubnetForm({...subnetForm, department: e.target.value})}
+                onChange={(e) => {
+                  setSubnetForm({...subnetForm, department: e.target.value});
+                  if (subnetFormErrors.department) {
+                    setSubnetFormErrors({...subnetFormErrors, department: null});
+                  }
+                }}
                 placeholder="e.g., IT, Engineering"
+                className={subnetFormErrors.department ? 'border-red-500' : ''}
               />
+              {subnetFormErrors.department && (
+                <p className="text-red-500 text-sm mt-1">{subnetFormErrors.department}</p>
+              )}
             </div>
           </div>
           <div>
@@ -2890,6 +3152,7 @@ const AdminSettings = () => {
                   scan_frequency: 'weekly',
                   tags: {}
                 });
+                setSubnetFormErrors({});
               }}
             >
               Cancel
@@ -2900,6 +3163,108 @@ const AdminSettings = () => {
             >
               {editingSubnet ? 'Update Subnet' : 'Create Subnet'}
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Access List Management Modal */}
+      <Modal
+        isOpen={showAccessListModal}
+        onClose={() => {
+          setShowAccessListModal(false);
+          setSelectedResource(null);
+          setResourceType(null);
+          setResourceUsers([]);
+        }}
+        title={`Manage Access - ${selectedResource?.name || 'Resource'}`}
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-info/10 border border-info/20 rounded-md">
+            <div className="flex items-center">
+              <span className="text-info mr-2">ℹ️</span>
+              <p className="text-sm text-info">
+                {resourceType === 'subnet' 
+                  ? 'Manage which users can access this subnet for scanning and monitoring.'
+                  : 'Manage which users can use this satellite scanner for enhanced discovery.'
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Current Users with Access */}
+          <div>
+            <h3 className="text-subheading text-foreground mb-3">Users with Access</h3>
+            {resourceUsers.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No users have access to this {resourceType}.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {resourceUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-md border border-border">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                        <span className="text-primary-foreground font-semibold text-sm">
+                          {user.username.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-subheading text-foreground">{user.username}</p>
+                        <p className="text-xs text-muted-foreground">{user.full_name || user.email}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => revokeAccess(selectedResource.id, user.id, resourceType)}
+                    >
+                      Revoke Access
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Grant Access to New Users */}
+          <div>
+            <h3 className="text-subheading text-foreground mb-3">Grant Access</h3>
+            <div className="space-y-2">
+              {users
+                .filter(user => !resourceUsers.some(ru => ru.id === user.id))
+                .map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-md border border-border">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                        <span className="text-muted-foreground font-semibold text-sm">
+                          {user.username.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-subheading text-foreground">{user.username}</p>
+                        <p className="text-xs text-muted-foreground">{user.full_name || user.email}</p>
+                        {user.role && (
+                          <Badge variant="outline" className="text-xs">
+                            {user.role.name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => grantAccess(selectedResource.id, user.id, resourceType)}
+                    >
+                      Grant Access
+                    </Button>
+                  </div>
+                ))}
+            </div>
+            {users.filter(user => !resourceUsers.some(ru => ru.id === user.id)).length === 0 && (
+              <div className="text-center py-4 text-muted-foreground">
+                All users already have access to this {resourceType}.
+              </div>
+            )}
           </div>
         </div>
       </Modal>

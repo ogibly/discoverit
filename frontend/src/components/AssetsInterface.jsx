@@ -8,7 +8,7 @@ import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { cn } from '../utils/cn';
-import { formatTimestamp as formatTimestampUtil } from '../utils/formatters';
+import { formatTimestampSafe } from '../utils/formatters';
 import PageHeader from './PageHeader';
 import { 
   Search, 
@@ -399,7 +399,7 @@ const AssetsInterface = () => {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Created:</span>
             <span className="text-foreground text-xs">
-              {formatTimestampUtil(asset.created_at)}
+              {formatTimestampSafe(asset.created_at)}
             </span>
           </div>
         </div>
@@ -480,7 +480,7 @@ const AssetsInterface = () => {
       </td>
       <td className="px-6 py-4">
         <span className="text-sm text-muted-foreground">
-          {formatTimestampUtil(asset.created_at)}
+          {formatTimestampSafe(asset.created_at)}
         </span>
       </td>
       <td className="px-6 py-4">
@@ -843,7 +843,7 @@ const AssetsInterface = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Created</label>
-                    <p className="text-foreground">{formatTimestampUtil(selectedAssetForEdit.created_at)}</p>
+                    <p className="text-foreground">{formatTimestampSafe(selectedAssetForEdit.created_at)}</p>
                   </div>
                 </div>
               </TabsContent>

@@ -196,6 +196,10 @@ class LDAPService:
             )
             
             # Search for all users
+            logger.info(f"LDAP sync: Searching for users with filter: {config.user_search_filter}")
+            logger.info(f"LDAP sync: Search base: {config.user_base_dn}")
+            logger.info(f"LDAP sync: Username attribute: {config.username_attribute}")
+            
             search_result = conn.search(
                 search_base=config.user_base_dn,
                 search_filter=config.user_search_filter,
@@ -212,6 +216,8 @@ class LDAPService:
             
             if not search_result:
                 raise Exception("No users found in LDAP")
+            
+            logger.info(f"LDAP sync: Found {len(conn.entries)} users in LDAP")
             
             users_created = 0
             users_updated = 0
@@ -234,12 +240,18 @@ class LDAPService:
                     email = str(getattr(entry, config.email_attribute, ""))
                     full_name = str(getattr(entry, config.full_name_attribute, ""))
                     
+                    logger.info(f"LDAP sync: Processing user DN: {user_dn}")
+                    logger.info(f"LDAP sync: Raw username: '{username}', email: '{email}', full_name: '{full_name}'")
+                    
                     # Clean up LDAP attribute values - handle empty lists and None values
                     username = username.strip() if username and username not in ['[]', 'None'] else ""
                     email = email.strip() if email and email not in ['[]', 'None'] else ""
                     full_name = full_name.strip() if full_name and full_name not in ['[]', 'None'] else ""
                     
+                    logger.info(f"LDAP sync: Cleaned username: '{username}', email: '{email}', full_name: '{full_name}'")
+                    
                     if not username:
+                        logger.warning(f"LDAP sync: Skipping user {user_dn} - no username found")
                         continue
                     
                     # Generate email if not provided
@@ -250,6 +262,7 @@ class LDAPService:
                     if user_dn in existing_ldap_dns:
                         # Update existing user
                         user = existing_ldap_dns[user_dn]
+                        logger.info(f"LDAP sync: Updating existing user {username}")
                         user.email = email
                         user.full_name = full_name
                         user.last_ldap_sync = datetime.utcnow()
@@ -257,6 +270,7 @@ class LDAPService:
                         users_updated += 1
                     else:
                         # Create new user
+                        logger.info(f"LDAP sync: Creating new user {username}")
                         user = User(
                             username=username,
                             email=email,
@@ -291,6 +305,9 @@ class LDAPService:
                         users_deactivated += 1
             
             conn.unbind()
+            
+            # Log sync summary
+            logger.info(f"LDAP sync completed: {users_created} created, {users_updated} updated, {users_deactivated} deactivated, {errors_count} errors")
             
             # Update sync log
             sync_log.completed_at = datetime.utcnow()

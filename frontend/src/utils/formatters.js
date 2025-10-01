@@ -14,7 +14,7 @@ export const formatDate = (date, options = {}) => {
   };
   
   try {
-    return new Date(date).toLocaleDateString('en-US', defaultOptions);
+    return new Date(date).toLocaleDateString(undefined, defaultOptions);
   } catch {
     return '-';
   }
@@ -34,7 +34,7 @@ export const formatDateTime = (date, options = {}) => {
   };
   
   try {
-    return new Date(date).toLocaleString('en-US', defaultOptions);
+    return new Date(date).toLocaleString(undefined, defaultOptions);
   } catch {
     return '-';
   }
@@ -88,13 +88,136 @@ export const formatTimestamp = (timestamp, options = {}) => {
   }
 };
 
+// Enhanced timezone-aware timestamp formatting with better error handling
+export const formatTimestampSafe = (timestamp, options = {}) => {
+  if (!timestamp) return '-';
+  
+  const defaultOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+    ...options
+  };
+  
+  try {
+    let date;
+    
+    // Handle different timestamp formats from the backend
+    if (typeof timestamp === 'string') {
+      // Clean up the timestamp string
+      let cleanTimestamp = timestamp.trim();
+      
+      // If it's an ISO string without timezone info, assume it's UTC
+      if (!cleanTimestamp.includes('Z') && !cleanTimestamp.includes('+') && !cleanTimestamp.includes('-', 10)) {
+        // Add 'Z' to indicate UTC
+        cleanTimestamp = cleanTimestamp + 'Z';
+      }
+      
+      date = new Date(cleanTimestamp);
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      // Assume it's a timestamp number
+      date = new Date(timestamp);
+    }
+    
+    // Validate the date
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid timestamp:', timestamp);
+      return '-';
+    }
+    
+    // Format in user's local timezone
+    return date.toLocaleString(undefined, defaultOptions);
+  } catch (error) {
+    console.warn('Error formatting timestamp:', timestamp, error);
+    return '-';
+  }
+};
+
+// Get user's timezone
+export const getUserTimezone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch (error) {
+    console.warn('Could not detect user timezone:', error);
+    return 'UTC';
+  }
+};
+
+// Format timestamp with explicit timezone
+export const formatTimestampWithTimezone = (timestamp, timezone = null, options = {}) => {
+  if (!timestamp) return '-';
+  
+  const defaultOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+    timeZone: timezone || getUserTimezone(),
+    ...options
+  };
+  
+  try {
+    let date;
+    
+    if (typeof timestamp === 'string') {
+      let cleanTimestamp = timestamp.trim();
+      if (!cleanTimestamp.includes('Z') && !cleanTimestamp.includes('+') && !cleanTimestamp.includes('-', 10)) {
+        cleanTimestamp = cleanTimestamp + 'Z';
+      }
+      date = new Date(cleanTimestamp);
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      date = new Date(timestamp);
+    }
+    
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid timestamp:', timestamp);
+      return '-';
+    }
+    
+    return date.toLocaleString(undefined, defaultOptions);
+  } catch (error) {
+    console.warn('Error formatting timestamp with timezone:', timestamp, error);
+    return '-';
+  }
+};
+
 // Relative time formatting
 export const formatRelativeTime = (date) => {
   if (!date) return '-';
   
   try {
     const now = new Date();
-    const targetDate = new Date(date);
+    let targetDate;
+    
+    // Handle different timestamp formats
+    if (typeof date === 'string') {
+      let cleanDate = date.trim();
+      if (!cleanDate.includes('Z') && !cleanDate.includes('+') && !cleanDate.includes('-', 10)) {
+        cleanDate = cleanDate + 'Z';
+      }
+      targetDate = new Date(cleanDate);
+    } else {
+      targetDate = new Date(date);
+    }
+    
+    if (isNaN(targetDate.getTime())) {
+      console.warn('Invalid date for relative time:', date);
+      return '-';
+    }
+    
     const diffInSeconds = Math.floor((now - targetDate) / 1000);
     
     if (diffInSeconds < 60) return 'Just now';
@@ -103,7 +226,8 @@ export const formatRelativeTime = (date) => {
     if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
     
     return formatDate(date);
-  } catch {
+  } catch (error) {
+    console.warn('Error formatting relative time:', date, error);
     return '-';
   }
 };

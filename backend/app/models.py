@@ -4,7 +4,7 @@ Database models for DiscoverIT application.
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Index, Float, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 from .database import Base
 
@@ -22,8 +22,8 @@ class User(Base):
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
     last_login = Column(DateTime, nullable=True)
     login_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     preferences = Column(JSON, nullable=True)
     auth_source = Column(String(20), default="local", nullable=False)
     ldap_dn = Column(String(500), nullable=True)
@@ -39,6 +39,8 @@ class User(Base):
     created_api_keys = relationship("APIKey", back_populates="creator")
     created_ip_ranges = relationship("IPRange", back_populates="creator")
     allowed_ip_ranges = relationship("UserIPRange", foreign_keys="UserIPRange.user_id", back_populates="user")
+    allowed_subnets = relationship("UserSubnetAccess", foreign_keys="UserSubnetAccess.user_id", back_populates="user")
+    allowed_satellite_scanners = relationship("UserSatelliteScannerAccess", foreign_keys="UserSatelliteScannerAccess.user_id", back_populates="user")
 
 
 class Role(Base):
@@ -49,8 +51,8 @@ class Role(Base):
     description = Column(Text, nullable=True)
     permissions = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationships
     users = relationship("User", back_populates="role")
@@ -96,8 +98,8 @@ class Asset(Base):
     is_managed = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     last_seen = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     custom_fields = Column(JSON, nullable=True)
     scan_data = Column(JSON, nullable=True)
     
@@ -131,8 +133,8 @@ class AssetGroup(Base):
     default_password = Column(String(255), nullable=True)
     default_ssh_key = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     custom_fields = Column(JSON, nullable=True)
     
     # Relationships
@@ -158,8 +160,8 @@ class Label(Base):
     is_active = Column(Boolean, default=True)
     is_system = Column(Boolean, default=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationships
     creator = relationship("User", back_populates="created_labels")
@@ -233,8 +235,8 @@ class Credential(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     is_active = Column(Boolean, default=True)
     last_used = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     tags = Column(JSON, nullable=True)
     
     # Relationships
@@ -252,8 +254,11 @@ class ScannerConfig(Base):
     is_default = Column(Boolean, default=False)
     max_concurrent_scans = Column(Integer, nullable=True)
     timeout_seconds = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    user_access = relationship("UserSatelliteScannerAccess", back_populates="scanner", cascade="all, delete-orphan")
 
 
 class Settings(Base):
@@ -261,8 +266,8 @@ class Settings(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     scanners = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class LDAPConfig(Base):
@@ -300,8 +305,8 @@ class LDAPConfig(Base):
     sync_status = Column(String(20), nullable=True)
     is_active = Column(Boolean, default=True)
     is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
@@ -345,8 +350,8 @@ class APIKey(Base):
     
     # Metadata
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Relationships
     creator = relationship("User", back_populates="created_api_keys")
@@ -390,8 +395,8 @@ class IPRange(Base):
     is_restrictive = Column(Boolean, default=True, nullable=False)
     priority = Column(Integer, default=0, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
@@ -403,12 +408,42 @@ class UserIPRange(Base):
     
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     ip_range_id = Column(Integer, ForeignKey("ip_ranges.id", ondelete="CASCADE"), primary_key=True)
-    granted_at = Column(DateTime, default=datetime.utcnow)
+    granted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     granted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
     user = relationship("User", foreign_keys=[user_id], back_populates="allowed_ip_ranges")
     ip_range = relationship("IPRange")
+    granter = relationship("User", foreign_keys=[granted_by])
+
+
+class UserSubnetAccess(Base):
+    """User access control for subnets."""
+    __tablename__ = "user_subnet_access"
+    
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    subnet_id = Column(Integer, ForeignKey("subnets.id", ondelete="CASCADE"), primary_key=True)
+    granted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    granted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], back_populates="allowed_subnets")
+    subnet = relationship("Subnet", back_populates="user_access")
+    granter = relationship("User", foreign_keys=[granted_by])
+
+
+class UserSatelliteScannerAccess(Base):
+    """User access control for satellite scanners."""
+    __tablename__ = "user_satellite_scanner_access"
+    
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    scanner_id = Column(Integer, ForeignKey("scanner_configs.id", ondelete="CASCADE"), primary_key=True)
+    granted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    granted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], back_populates="allowed_satellite_scanners")
+    scanner = relationship("ScannerConfig", back_populates="user_access")
     granter = relationship("User", foreign_keys=[granted_by])
 
 
@@ -425,8 +460,8 @@ class ScanTemplate(Base):
     is_system = Column(Boolean, default=False)  # System templates vs user templates
     is_active = Column(Boolean, default=True)
     usage_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
@@ -447,8 +482,8 @@ class AssetTemplate(Base):
     is_system = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     usage_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
@@ -491,8 +526,8 @@ class Webhook(Base):
     last_triggered = Column(DateTime, nullable=True)
     success_count = Column(Integer, default=0)
     failure_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # Relationships
@@ -557,10 +592,11 @@ class Subnet(Base):
     last_scanned = Column(DateTime, nullable=True)
     next_scan = Column(DateTime, nullable=True)
     created_by = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     tags = Column(JSON, nullable=True)  # Additional metadata tags
     
     # Relationships
     scan_tasks = relationship("ScanTask", back_populates="subnet")
+    user_access = relationship("UserSubnetAccess", back_populates="subnet", cascade="all, delete-orphan")
 

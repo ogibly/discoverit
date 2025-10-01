@@ -9,8 +9,7 @@ import { Modal } from './ui/Modal';
 import { Progress } from './ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { cn } from '../utils/cn';
-import { formatTimestamp as formatTimestampUtil } from '../utils/formatters';
-import { formatScanProgress, getCappedProgress } from '../utils/formatters';
+import { formatTimestampSafe, formatScanProgress, getCappedProgress } from '../utils/formatters';
 import PageHeader from './PageHeader';
 import { 
   Search, 
@@ -490,7 +489,7 @@ const DevicesInterface = () => {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Last Seen:</span>
               <span className="text-foreground text-xs">
-                {formatTimestampUtil(device.lastSeen)}
+                {formatTimestampSafe(device.lastSeen)}
               </span>
             </div>
           </div>

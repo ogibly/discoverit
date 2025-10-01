@@ -1,7 +1,20 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import ipaddress
+
+# Custom datetime serializer for timezone-aware responses
+def serialize_datetime(dt: datetime) -> str:
+    """Serialize datetime to ISO format with timezone info."""
+    if dt is None:
+        return None
+    
+    # If datetime is naive (no timezone), assume it's UTC
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    
+    # Return ISO format with timezone info
+    return dt.isoformat()
 
 class Port(BaseModel):
     port: int

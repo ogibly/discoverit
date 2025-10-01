@@ -93,6 +93,39 @@ export const VALIDATION_RULES = {
       return 'Password must be at least 8 characters long';
     }
     return null;
+  },
+  
+  // Additional validation rules for common edge cases
+  optionalString: (value) => {
+    // Allow empty strings, null, undefined for optional fields
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    return null;
+  },
+  
+  optionalNumber: (value) => {
+    // Allow empty strings, null, undefined for optional number fields
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    // If value is provided, it should be a valid number
+    if (isNaN(value)) {
+      return 'Must be a valid number';
+    }
+    return null;
+  },
+  
+  optionalInteger: (value) => {
+    // Allow empty strings, null, undefined for optional integer fields
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    // If value is provided, it should be a valid integer
+    if (isNaN(value) || !Number.isInteger(Number(value))) {
+      return 'Must be a valid integer';
+    }
+    return null;
   }
 };
 

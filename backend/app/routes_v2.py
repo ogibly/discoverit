@@ -16,7 +16,9 @@ from .auth import (
     require_assets_read, require_assets_write, require_discovery_read, require_discovery_write,
     require_scanners_read, require_scanners_write,  require_credentials_read, require_credentials_write,
     require_users_read, require_users_write, require_roles_read, require_roles_write,
-    require_settings_read, require_settings_write, get_auth_service
+    require_settings_read, require_settings_write, require_subnets_read, require_subnets_write,
+    require_satellite_scanners_read, require_satellite_scanners_write, require_satellite_scanners_use,
+    get_auth_service
 )
 from . import schemas
 from .models import User, Asset
@@ -907,6 +909,7 @@ def list_scanner_configs(
     limit: int = Query(100, ge=1, le=1000),
     is_active: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
+    current_user: User = Depends(require_satellite_scanners_read),
     db: Session = Depends(get_db)
 ):
     """List scanner configurations with optional filtering."""
@@ -915,12 +918,17 @@ def list_scanner_configs(
         skip=skip,
         limit=limit,
         is_active=is_active,
-        search=search
+        search=search,
+        current_user=current_user
     )
 
 @router.post("/scanners", response_model=schemas.ScannerConfig)
 @router.post("/scanner-configs", response_model=schemas.ScannerConfig)
-def create_scanner_config(config: schemas.ScannerConfigCreate, db: Session = Depends(get_db)):
+def create_scanner_config(
+    config: schemas.ScannerConfigCreate, 
+    current_user: User = Depends(require_satellite_scanners_write),
+    db: Session = Depends(get_db)
+):
     """Create a new scanner configuration."""
     service = ScannerService(db)
     try:
@@ -946,13 +954,13 @@ def get_default_scanner(db: Session = Depends(get_db)):
 @router.get("/scanners/recommendation")
 def get_scanner_recommendation(
     target: str = Query(..., description="Target IP or CIDR range"),
-    current_user: User = Depends(require_discovery_read),
+    current_user: User = Depends(require_satellite_scanners_use),
     db: Session = Depends(get_db)
 ):
     """Get scanner recommendation for a target network."""
     try:
         scan_service = ScanService(db)
-        return scan_service.get_scanner_recommendation(target)
+        return scan_service.get_scanner_recommendation(target, current_user)
     except Exception as e:
         return {"error": str(e), "target": target}
 
@@ -1028,6 +1036,55 @@ def sync_scanners_with_settings(db: Session = Depends(get_db)):
     """Sync scanner configurations with the Settings table."""
     service = ScannerService(db)
     return service.sync_with_settings()
+
+# Satellite Scanner access management routes (admin only)
+@router.post("/scanners/{scanner_id}/grant-access/{user_id}")
+def grant_scanner_access(
+    scanner_id: int,
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Grant a user access to a satellite scanner (admin only)."""
+    service = ScannerService(db)
+    success = service.grant_scanner_access(user_id, scanner_id, current_user.id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to grant access")
+    return {"message": "Access granted successfully"}
+
+@router.delete("/scanners/{scanner_id}/revoke-access/{user_id}")
+def revoke_scanner_access(
+    scanner_id: int,
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Revoke a user's access to a satellite scanner (admin only)."""
+    service = ScannerService(db)
+    success = service.revoke_scanner_access(user_id, scanner_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to revoke access")
+    return {"message": "Access revoked successfully"}
+
+@router.get("/scanners/{scanner_id}/users", response_model=List[schemas.User])
+def get_scanner_users(
+    scanner_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get all users who have access to a satellite scanner (admin only)."""
+    service = ScannerService(db)
+    return service.get_scanner_users(scanner_id)
+
+@router.get("/users/{user_id}/scanners", response_model=List[schemas.ScannerConfig])
+def get_user_scanners(
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get all satellite scanners a user has access to (admin only)."""
+    service = ScannerService(db)
+    return service.get_user_scanner_access(user_id)
 
 # API Key management routes
 @router.get("/api-keys", response_model=List[schemas.APIKey])
@@ -1350,7 +1407,7 @@ def list_subnets(
     department: Optional[str] = Query(None),
     location: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    current_user: User = Depends(require_assets_read),
+    current_user: User = Depends(require_subnets_read),
     db: Session = Depends(get_db)
 ):
     """List subnets with optional filtering."""
@@ -1363,13 +1420,14 @@ def list_subnets(
         is_managed=is_managed,
         department=department,
         location=location,
-        search=search
+        search=search,
+        current_user=current_user
     )
 
 @router.post("/subnets", response_model=schemas.Subnet)
 def create_subnet(
     subnet_data: schemas.SubnetCreate,
-    current_user: User = Depends(require_assets_write),
+    current_user: User = Depends(require_subnets_write),
     db: Session = Depends(get_db)
 ):
     """Create a new subnet."""
@@ -1383,13 +1441,13 @@ def create_subnet(
 @router.get("/subnets/{subnet_id}", response_model=schemas.Subnet)
 def get_subnet(
     subnet_id: int,
-    current_user: User = Depends(require_assets_read),
+    current_user: User = Depends(require_subnets_read),
     db: Session = Depends(get_db)
 ):
     """Get a subnet by ID."""
     from .services.subnet_service import SubnetService
     service = SubnetService(db)
-    subnet = service.get_subnet(subnet_id)
+    subnet = service.get_subnet(subnet_id, current_user=current_user)
     if not subnet:
         raise HTTPException(status_code=404, detail="Subnet not found")
     return subnet
@@ -1398,7 +1456,7 @@ def get_subnet(
 def update_subnet(
     subnet_id: int,
     subnet_data: schemas.SubnetUpdate,
-    current_user: User = Depends(require_assets_write),
+    current_user: User = Depends(require_subnets_write),
     db: Session = Depends(get_db)
 ):
     """Update a subnet."""
@@ -1415,7 +1473,7 @@ def update_subnet(
 @router.delete("/subnets/{subnet_id}")
 def delete_subnet(
     subnet_id: int,
-    current_user: User = Depends(require_assets_write),
+    current_user: User = Depends(require_subnets_write),
     db: Session = Depends(get_db)
 ):
     """Delete a subnet."""
@@ -1427,7 +1485,7 @@ def delete_subnet(
 
 @router.get("/subnets/statistics")
 def get_subnet_statistics(
-    current_user: User = Depends(require_assets_read),
+    current_user: User = Depends(require_subnets_read),
     db: Session = Depends(get_db)
 ):
     """Get subnet statistics."""
@@ -1458,6 +1516,59 @@ def mark_subnet_scanned(
     if not updated_subnet:
         raise HTTPException(status_code=404, detail="Subnet not found")
     return {"message": "Subnet marked as scanned", "next_scan": updated_subnet.next_scan}
+
+# Subnet access management routes (admin only)
+@router.post("/subnets/{subnet_id}/grant-access/{user_id}")
+def grant_subnet_access(
+    subnet_id: int,
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Grant a user access to a subnet (admin only)."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    success = service.grant_subnet_access(user_id, subnet_id, current_user.id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to grant access")
+    return {"message": "Access granted successfully"}
+
+@router.delete("/subnets/{subnet_id}/revoke-access/{user_id}")
+def revoke_subnet_access(
+    subnet_id: int,
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Revoke a user's access to a subnet (admin only)."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    success = service.revoke_subnet_access(user_id, subnet_id)
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to revoke access")
+    return {"message": "Access revoked successfully"}
+
+@router.get("/subnets/{subnet_id}/users", response_model=List[schemas.User])
+def get_subnet_users(
+    subnet_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get all users who have access to a subnet (admin only)."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    return service.get_subnet_users(subnet_id)
+
+@router.get("/users/{user_id}/subnets", response_model=List[schemas.Subnet])
+def get_user_subnets(
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get all subnets a user has access to (admin only)."""
+    from .services.subnet_service import SubnetService
+    service = SubnetService(db)
+    return service.get_user_subnet_access(user_id)
 
 @router.get("/health")
 def health_check():

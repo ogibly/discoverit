@@ -4,7 +4,7 @@ Scanner service for managing scanner configurations and health checks.
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
-from ..models import ScannerConfig
+from ..models import ScannerConfig, UserSatelliteScannerAccess, User
 from ..schemas import ScannerConfigCreate, ScannerConfigUpdate
 from datetime import datetime
 import requests
@@ -73,10 +73,18 @@ class ScannerService:
         skip: int = 0,
         limit: int = 100,
         is_active: Optional[bool] = None,
-        search: Optional[str] = None
+        search: Optional[str] = None,
+        current_user: Optional[User] = None
     ) -> List[ScannerConfig]:
         """Get scanner configurations with optional filtering."""
         query = self.db.query(ScannerConfig)
+        
+        # Apply access control - only admins can see all scanners
+        if current_user and not current_user.is_superuser:
+            # Non-admin users can only see scanners they have explicit access to
+            query = query.join(UserSatelliteScannerAccess).filter(
+                UserSatelliteScannerAccess.user_id == current_user.id
+            )
         
         if is_active is not None:
             query = query.filter(ScannerConfig.is_active == is_active)
@@ -364,7 +372,7 @@ class ScannerService:
             "scanners": scanner_list
         }
     
-    def get_best_scanner_for_target(self, target: str) -> Optional[ScannerConfig]:
+    def get_best_scanner_for_target(self, target: str, current_user: Optional[User] = None) -> Optional[ScannerConfig]:
         """
         Get the best scanner for a given target IP or subnet.
         Returns the scanner that handles the specific subnet, or the default scanner as fallback.
@@ -378,9 +386,16 @@ class ScannerService:
                 target_network = ipaddress.ip_network(f"{target}/32", strict=False)
             
             # First, try to find a scanner that handles this specific subnet
-            active_scanners = self.db.query(ScannerConfig).filter(
-                ScannerConfig.is_active == True
-            ).all()
+            query = self.db.query(ScannerConfig).filter(ScannerConfig.is_active == True)
+            
+            # Apply access control - only admins can see all scanners
+            if current_user and not current_user.is_superuser:
+                # Non-admin users can only see scanners they have explicit access to
+                query = query.join(UserSatelliteScannerAccess).filter(
+                    UserSatelliteScannerAccess.user_id == current_user.id
+                )
+            
+            active_scanners = query.all()
             
             for scanner in active_scanners:
                 if scanner.subnets:
@@ -399,3 +414,64 @@ class ScannerService:
         except ValueError:
             # Invalid target format, return default scanner
             return self.get_default_scanner()
+    
+    def grant_scanner_access(self, user_id: int, scanner_id: int, granted_by: int) -> bool:
+        """Grant a user access to a satellite scanner."""
+        # Check if access already exists
+        existing = self.db.query(UserSatelliteScannerAccess).filter(
+            and_(
+                UserSatelliteScannerAccess.user_id == user_id,
+                UserSatelliteScannerAccess.scanner_id == scanner_id
+            )
+        ).first()
+        
+        if existing:
+            return True  # Access already granted
+        
+        # Create new access
+        access = UserSatelliteScannerAccess(
+            user_id=user_id,
+            scanner_id=scanner_id,
+            granted_by=granted_by
+        )
+        
+        self.db.add(access)
+        self.db.commit()
+        return True
+    
+    def revoke_scanner_access(self, user_id: int, scanner_id: int) -> bool:
+        """Revoke a user's access to a satellite scanner."""
+        access = self.db.query(UserSatelliteScannerAccess).filter(
+            and_(
+                UserSatelliteScannerAccess.user_id == user_id,
+                UserSatelliteScannerAccess.scanner_id == scanner_id
+            )
+        ).first()
+        
+        if not access:
+            return False
+        
+        self.db.delete(access)
+        self.db.commit()
+        return True
+    
+    def get_user_scanner_access(self, user_id: int) -> List[ScannerConfig]:
+        """Get all satellite scanners a user has access to."""
+        return self.db.query(ScannerConfig).join(UserSatelliteScannerAccess).filter(
+            UserSatelliteScannerAccess.user_id == user_id
+        ).all()
+    
+    def get_scanner_users(self, scanner_id: int) -> List[User]:
+        """Get all users who have access to a satellite scanner."""
+        return self.db.query(User).join(UserSatelliteScannerAccess).filter(
+            UserSatelliteScannerAccess.scanner_id == scanner_id
+        ).all()
+    
+    def get_available_scanners_for_user(self, user: User) -> List[ScannerConfig]:
+        """Get all scanners available to a user (either all if admin, or only accessible ones)."""
+        if user.is_superuser:
+            # Admins can see all active scanners
+            return self.db.query(ScannerConfig).filter(ScannerConfig.is_active == True).all()
+        else:
+            # Non-admin users can only see scanners they have access to
+            return self.get_user_scanner_access(user.id)

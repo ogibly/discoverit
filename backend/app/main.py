@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
+from pydantic import BaseModel
+from typing import Any
 
 from . import models
 from .config import settings
@@ -13,6 +15,35 @@ from .scanner_routes import router as scanner_router
 from .routes_enterprise import router as enterprise_router
 from .services.auth_service import AuthService
 from .middleware.audit_middleware import AuditMiddleware
+
+# Custom JSON encoder for timezone-aware datetime serialization
+class TimezoneAwareJSONEncoder:
+    """Custom JSON encoder that ensures all datetime objects are serialized with timezone info."""
+    
+    @staticmethod
+    def serialize_datetime(dt: datetime) -> str:
+        """Serialize datetime to ISO format with timezone info."""
+        if dt is None:
+            return None
+        
+        # If datetime is naive (no timezone), assume it's UTC
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        
+        # Return ISO format with timezone info
+        return dt.isoformat()
+    
+    @staticmethod
+    def serialize_model(model: Any) -> Any:
+        """Recursively serialize a model, converting all datetime fields."""
+        if isinstance(model, dict):
+            return {key: TimezoneAwareJSONEncoder.serialize_model(value) for key, value in model.items()}
+        elif isinstance(model, list):
+            return [TimezoneAwareJSONEncoder.serialize_model(item) for item in model]
+        elif isinstance(model, datetime):
+            return TimezoneAwareJSONEncoder.serialize_datetime(model)
+        else:
+            return model
 
 # Configure logging
 logging.basicConfig(
@@ -134,6 +165,6 @@ def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": "2.0.0"
     }

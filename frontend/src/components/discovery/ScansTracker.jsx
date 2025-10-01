@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { cn } from '../../utils/cn';
-import { formatScanProgress, getCappedProgress, formatTimestamp as formatTimestampUtil } from '../../utils/formatters';
+import { formatScanProgress, getCappedProgress, formatTimestampSafe } from '../../utils/formatters';
 import ScanProgressIndicator from './ScanProgressIndicator';
 import { 
   Play, 
@@ -117,7 +117,7 @@ const ScansTracker = ({
   };
 
   const formatTimestamp = (timestamp) => {
-    return formatTimestampUtil(timestamp);
+    return formatTimestampSafe(timestamp);
   };
 
   const getScanTypeIcon = (scanType) => {

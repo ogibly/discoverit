@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from datetime import datetime, timedelta
 
-from ..models import Subnet
+from ..models import Subnet, UserSubnetAccess, User
 from ..schemas import SubnetCreate, SubnetUpdate
 
 
@@ -62,9 +62,18 @@ class SubnetService:
         
         return subnet
     
-    def get_subnet(self, subnet_id: int) -> Optional[Subnet]:
+    def get_subnet(self, subnet_id: int, current_user: Optional[User] = None) -> Optional[Subnet]:
         """Get a subnet by ID."""
-        return self.db.query(Subnet).filter(Subnet.id == subnet_id).first()
+        query = self.db.query(Subnet).filter(Subnet.id == subnet_id)
+        
+        # Apply access control - only admins can see all subnets
+        if current_user and not current_user.is_superuser:
+            # Non-admin users can only see subnets they have explicit access to
+            query = query.join(UserSubnetAccess).filter(
+                UserSubnetAccess.user_id == current_user.id
+            )
+        
+        return query.first()
     
     def get_subnets(
         self, 
@@ -74,10 +83,18 @@ class SubnetService:
         is_managed: Optional[bool] = None,
         department: Optional[str] = None,
         location: Optional[str] = None,
-        search: Optional[str] = None
+        search: Optional[str] = None,
+        current_user: Optional[User] = None
     ) -> List[Subnet]:
         """Get list of subnets with optional filtering."""
         query = self.db.query(Subnet)
+        
+        # Apply access control - only admins can see all subnets
+        if current_user and not current_user.is_superuser:
+            # Non-admin users can only see subnets they have explicit access to
+            query = query.join(UserSubnetAccess).filter(
+                UserSubnetAccess.user_id == current_user.id
+            )
         
         # Apply filters
         if is_active is not None:
@@ -292,3 +309,55 @@ class SubnetService:
                 except ValueError:
                     # Skip if subnet already exists
                     pass
+    
+    def grant_subnet_access(self, user_id: int, subnet_id: int, granted_by: int) -> bool:
+        """Grant a user access to a subnet."""
+        # Check if access already exists
+        existing = self.db.query(UserSubnetAccess).filter(
+            and_(
+                UserSubnetAccess.user_id == user_id,
+                UserSubnetAccess.subnet_id == subnet_id
+            )
+        ).first()
+        
+        if existing:
+            return True  # Access already granted
+        
+        # Create new access
+        access = UserSubnetAccess(
+            user_id=user_id,
+            subnet_id=subnet_id,
+            granted_by=granted_by
+        )
+        
+        self.db.add(access)
+        self.db.commit()
+        return True
+    
+    def revoke_subnet_access(self, user_id: int, subnet_id: int) -> bool:
+        """Revoke a user's access to a subnet."""
+        access = self.db.query(UserSubnetAccess).filter(
+            and_(
+                UserSubnetAccess.user_id == user_id,
+                UserSubnetAccess.subnet_id == subnet_id
+            )
+        ).first()
+        
+        if not access:
+            return False
+        
+        self.db.delete(access)
+        self.db.commit()
+        return True
+    
+    def get_user_subnet_access(self, user_id: int) -> List[Subnet]:
+        """Get all subnets a user has access to."""
+        return self.db.query(Subnet).join(UserSubnetAccess).filter(
+            UserSubnetAccess.user_id == user_id
+        ).all()
+    
+    def get_subnet_users(self, subnet_id: int) -> List[User]:
+        """Get all users who have access to a subnet."""
+        return self.db.query(User).join(UserSubnetAccess).filter(
+            UserSubnetAccess.subnet_id == subnet_id
+        ).all()

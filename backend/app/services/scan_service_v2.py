@@ -119,11 +119,11 @@ class ScanServiceV2:
         
         return ips
 
-    def get_scanner_recommendation(self, target: str) -> Dict[str, Any]:
+    def get_scanner_recommendation(self, target: str, current_user=None) -> Dict[str, Any]:
         """Get scanner recommendation for a target network."""
         try:
             # Get the best scanner for this target
-            optimal_scanner = self.scanner_service.get_best_scanner_for_target(target)
+            optimal_scanner = self.scanner_service.get_best_scanner_for_target(target, current_user)
             
             if not optimal_scanner:
                 return {

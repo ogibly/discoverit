@@ -74,6 +74,19 @@ PERMISSIONS = {
     # Settings permissions
     "settings:read": "View settings",
     "settings:update": "Update settings",
+    
+    # Subnet permissions
+    "subnets:read": "View subnets",
+    "subnets:create": "Create subnets",
+    "subnets:update": "Update subnets",
+    "subnets:delete": "Delete subnets",
+    
+    # Satellite Scanner permissions
+    "satellite_scanners:read": "View satellite scanners",
+    "satellite_scanners:create": "Create satellite scanners",
+    "satellite_scanners:update": "Update satellite scanners",
+    "satellite_scanners:delete": "Delete satellite scanners",
+    "satellite_scanners:use": "Use satellite scanners for scanning",
 }
 
 # Default roles

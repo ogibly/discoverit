@@ -7,8 +7,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import DevicesInterface from './components/DevicesInterface';
-import Scans from './components/Scans';
 import AssetsInterface from './components/AssetsInterface';
 import UnifiedScanDevicesInterface from './components/UnifiedScanDevicesInterface';
 import AssetDetail from './components/AssetDetail';
@@ -16,7 +14,6 @@ import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
 import AdminSettings from './components/AdminSettings';
-import ScansView from './components/ScansView';
 import { cn } from './utils/cn';
 
 // Sophisticated Navigation Component
@@ -43,26 +40,6 @@ const Navigation = () => {
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      ), 
-      permission: 'assets:read'
-    },
-    { 
-      path: '/scans', 
-      label: 'Scans', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ), 
-      permission: 'assets:read'
-    },
-    { 
-      path: '/devices', 
-      label: 'Devices', 
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ), 
       permission: 'assets:read'
@@ -290,16 +267,6 @@ const AppContent = () => {
               <UnifiedScanDevicesInterface />
             </ProtectedRoute>
           } />
-          <Route path="/scans" element={
-            <ProtectedRoute requiredPermission="assets:read">
-              <Scans />
-            </ProtectedRoute>
-          } />
-          <Route path="/devices" element={
-            <ProtectedRoute requiredPermission="assets:read">
-              <DevicesInterface />
-            </ProtectedRoute>
-          } />
           <Route path="/assets" element={
             <ProtectedRoute requiredPermission="assets:read">
               <AssetsInterface />
@@ -324,11 +291,6 @@ const AppContent = () => {
           <Route path="/settings" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/scanners" element={<Navigate to="/admin-settings" replace />} />
           <Route path="/workflow" element={<WorkflowGuide />} />
-          <Route path="/scans" element={
-            <ProtectedRoute requiredPermission="assets:read">
-              <ScansView />
-            </ProtectedRoute>
-          } />
         </Routes>
       </div>
     </div>

@@ -19,6 +19,7 @@ const AdminSettings = () => {
     statusMessage, 
     setStatusMessage,
     clearStatusMessage,
+    fetchSettings: fetchSettingsAPI,
     fetchUsers: fetchUsersAPI,
     createUser: createUserAPI,
     updateUser: updateUserAPI,
@@ -40,6 +41,7 @@ const AdminSettings = () => {
   // User Management State
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);

@@ -527,21 +527,6 @@ const UnifiedScanDevicesInterface = () => {
     return 'text-red-600 bg-red-100';
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'new': return <Clock className="w-4 h-4" />;
-      case 'converted': return <CheckCircle className="w-4 h-4" />;
-      default: return <AlertCircle className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'converted': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   // Statistics
   const scanStats = useMemo(() => {

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class ScanServiceV2:
     def __init__(self, db: Session):
         self.db = db
-        from .scanner_service_v2 import ScannerServiceV2
+        from .scanner_service_enhanced import ScannerServiceV2
         self.scanner_service = ScannerServiceV2(db)
         self.asset_service = AssetService(db)
 

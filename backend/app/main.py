@@ -2,17 +2,15 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
-import os
 from datetime import datetime, timezone
-from pydantic import BaseModel
 from typing import Any
 
 from . import models
 from .config import settings
 from .database import engine, Base, SessionLocal, get_db
-from .routes_v2_improved import router
+from .routes import router
 from .scanner_routes import router as scanner_router
-from .routes_enterprise import router as enterprise_router
+from .enterprise_routes import router as enterprise_router
 from .services.auth_service import AuthService
 from .middleware.audit_middleware import AuditMiddleware
 

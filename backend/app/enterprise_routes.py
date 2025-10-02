@@ -518,7 +518,7 @@ def enhanced_discovery(
     db: Session = Depends(get_db)
 ):
     """Start an enhanced discovery scan with advanced configuration."""
-    from .services.scan_service_v2 import ScanServiceV2
+    from .services.scan_service import ScanServiceV2
     
     service = ScanServiceV2(db)
     audit_service = AuditService(db)

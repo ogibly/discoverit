@@ -6,12 +6,12 @@ from sqlalchemy.orm import Session
 from .base_service import BaseService
 from .auth_service import AuthService
 from .asset_service import AssetService
-from .scanner_service_v2 import ScannerServiceV2
+from .scanner_service_enhanced import ScannerServiceV2
 from .credential_service import CredentialService
 from .subnet_service import SubnetService
 from .ldap_service import LDAPService
 from .api_key_service import APIKeyService
-from .scan_service_v2 import ScanServiceV2
+from .scan_service import ScanServiceV2
 from .enhanced_discovery_service import EnhancedDiscoveryService
 from .template_service import TemplateService
 from .webhook_service import WebhookService

@@ -19,8 +19,6 @@ const AdminSettings = () => {
     statusMessage, 
     setStatusMessage,
     clearStatusMessage,
-    fetchSettings: fetchSettingsAPI,
-    updateSettings: updateSettingsAPI,
     fetchUsers: fetchUsersAPI,
     createUser: createUserAPI,
     updateUser: updateUserAPI,
@@ -36,20 +34,8 @@ const AdminSettings = () => {
   } = useApp();
   const { hasPermission } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('system');
+  const [activeTab, setActiveTab] = useState('users');
   
-  // System Settings State
-  const [settings, setSettings] = useState({
-    default_subnet: '172.18.0.0/16',
-    scan_timeout: 300,
-    max_concurrent_scans: 5,
-    auto_discovery_enabled: true,
-    email_notifications: false,
-    email_smtp_server: '',
-    email_smtp_port: 587,
-    email_username: '',
-    email_password: ''
-  });
   
   // User Management State
   const [users, setUsers] = useState([]);
@@ -275,18 +261,6 @@ const AdminSettings = () => {
     }
   };
 
-  const saveSettings = async () => {
-    try {
-      setLoading(true);
-      await updateSettingsAPI(settings);
-      alert('Settings saved successfully!');
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateUser = async () => {
     // Validate form
@@ -1406,8 +1380,7 @@ const AdminSettings = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="system">System Settings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
@@ -1421,16 +1394,6 @@ const AdminSettings = () => {
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           </TabsList>
 
-          {/* System Settings Tab */}
-          <TabsContent value="system" className="space-y-6">
-
-
-            <div className="pt-4">
-              <Button onClick={saveSettings} disabled={loading} className="w-full md:w-auto">
-                {loading ? 'Saving...' : 'Save All Settings'}
-              </Button>
-            </div>
-          </TabsContent>
 
           {/* User Management Tab */}
           <TabsContent value="users" className="space-y-6">
@@ -1824,15 +1787,6 @@ const AdminSettings = () => {
                                   Manage Access
                                 </Button>
                               )}
-                              {/* Debug: Always show a test button */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => console.log('Debug: Manage Access clicked for scanner', config.name)}
-                                style={{backgroundColor: 'yellow', color: 'black'}}
-                              >
-                                DEBUG: Access
-                              </Button>
                               {hasPermission('satellite_scanners:delete') && (
                                 <Button variant="destructive" size="sm" onClick={() => handleDeleteScanner(scannerId)}>
                                   Delete
@@ -2086,15 +2040,6 @@ const AdminSettings = () => {
                             Manage Access
                           </Button>
                         )}
-                        {/* Debug: Always show a test button */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => console.log('Debug: Manage Access clicked for subnet', subnet.name)}
-                          style={{backgroundColor: 'yellow', color: 'black'}}
-                        >
-                          DEBUG: Access
-                        </Button>
                         {hasPermission('subnets:delete') && (
                           <Button
                             variant="destructive"

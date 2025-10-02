@@ -358,6 +358,6 @@ class SubnetService:
     
     def get_subnet_users(self, subnet_id: int) -> List[User]:
         """Get all users who have access to a subnet."""
-        return self.db.query(User).join(UserSubnetAccess).filter(
+        return self.db.query(User).join(UserSubnetAccess, User.id == UserSubnetAccess.user_id).filter(
             UserSubnetAccess.subnet_id == subnet_id
         ).all()

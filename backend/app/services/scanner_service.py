@@ -463,7 +463,7 @@ class ScannerService:
     
     def get_scanner_users(self, scanner_id: int) -> List[User]:
         """Get all users who have access to a satellite scanner."""
-        return self.db.query(User).join(UserSatelliteScannerAccess).filter(
+        return self.db.query(User).join(UserSatelliteScannerAccess, User.id == UserSatelliteScannerAccess.user_id).filter(
             UserSatelliteScannerAccess.scanner_id == scanner_id
         ).all()
     

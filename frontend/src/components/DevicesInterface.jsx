@@ -585,7 +585,7 @@ const DevicesInterface = () => {
         </td>
         <td className="px-6 py-4">
           <span className="text-sm text-muted-foreground">
-          {formatTimestampUtil(device.lastSeen)}
+          {formatTimestampSafe(device.lastSeen)}
           </span>
         </td>
         <td className="px-6 py-4">

@@ -27,6 +27,9 @@ router = APIRouter()
 
 def handle_service_errors(func):
     """Decorator to handle service layer errors and convert to HTTP exceptions."""
+    from functools import wraps
+    
+    @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)

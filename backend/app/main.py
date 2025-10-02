@@ -10,7 +10,7 @@ from typing import Any
 from . import models
 from .config import settings
 from .database import engine, Base, SessionLocal, get_db
-from .routes_v2 import router
+from .routes_v2_improved import router
 from .scanner_routes import router as scanner_router
 from .routes_enterprise import router as enterprise_router
 from .services.auth_service import AuthService

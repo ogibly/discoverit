@@ -642,3 +642,86 @@ class ScanServiceV2:
         return self.db.query(Scan).filter(
             Scan.asset_id == asset_id
         ).order_by(desc(Scan.timestamp)).limit(limit).all()
+    
+    def get_scan_statistics(self) -> Dict[str, Any]:
+        """Get scan task statistics."""
+        total_tasks = self.db.query(ScanTask).count()
+        running_tasks = self.db.query(ScanTask).filter(ScanTask.status == "running").count()
+        completed_tasks = self.db.query(ScanTask).filter(ScanTask.status == "completed").count()
+        failed_tasks = self.db.query(ScanTask).filter(ScanTask.status == "failed").count()
+        cancelled_tasks = self.db.query(ScanTask).filter(ScanTask.status == "cancelled").count()
+        
+        return {
+            "total_tasks": total_tasks,
+            "running_tasks": running_tasks,
+            "completed_tasks": completed_tasks,
+            "failed_tasks": failed_tasks,
+            "cancelled_tasks": cancelled_tasks
+        }
+    
+    def update_scan_task(self, task_id: int, task_data: ScanTaskUpdate) -> Optional[ScanTask]:
+        """Update a scan task."""
+        task = self.get_scan_task(task_id)
+        if not task:
+            return None
+        
+        # Only allow updates if task is not running
+        if task.status == "running":
+            raise ValueError("Cannot update a running scan task")
+        
+        update_data = task_data.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            if hasattr(task, key):
+                setattr(task, key, value)
+        
+        self.db.commit()
+        self.db.refresh(task)
+        return task
+    
+    def get_scan_results(self, task_id: int) -> Dict[str, Any]:
+        """Get scan results for a specific task."""
+        task = self.get_scan_task(task_id)
+        if not task:
+            raise ValueError(f"Scan task {task_id} not found")
+        
+        scans = self.db.query(Scan).filter(Scan.scan_task_id == task_id).all()
+        
+        return {
+            "task": task,
+            "scans": scans,
+            "total_scans": len(scans),
+            "completed_scans": len([s for s in scans if s.status == "completed"]),
+            "failed_scans": len([s for s in scans if s.status == "failed"])
+        }
+    
+    def download_scan_results(self, task_id: int) -> Dict[str, Any]:
+        """Download scan results for a specific task."""
+        task = self.get_scan_task(task_id)
+        if not task:
+            raise ValueError(f"Scan task {task_id} not found")
+        
+        scans = self.db.query(Scan).filter(Scan.scan_task_id == task_id).all()
+        
+        # Format results for download
+        results = {
+            "task_id": task_id,
+            "task_name": task.name,
+            "target": task.target,
+            "status": task.status,
+            "start_time": task.start_time.isoformat() if task.start_time else None,
+            "end_time": task.end_time.isoformat() if task.end_time else None,
+            "scans": []
+        }
+        
+        for scan in scans:
+            scan_data = {
+                "scan_id": scan.id,
+                "asset_id": scan.asset_id,
+                "ip_address": scan.ip_address,
+                "status": scan.status,
+                "timestamp": scan.timestamp.isoformat() if scan.timestamp else None,
+                "results": scan.results
+            }
+            results["scans"].append(scan_data)
+        
+        return results

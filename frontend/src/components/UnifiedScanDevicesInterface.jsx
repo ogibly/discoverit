@@ -350,8 +350,11 @@ const UnifiedScanDevicesInterface = () => {
   // Enhanced device data processing
   const processedDevices = useMemo(() => {
     if (!discoveredDevices || !Array.isArray(discoveredDevices)) {
+      console.log('No discovered devices or not an array:', discoveredDevices);
       return [];
     }
+    
+    console.log('Processing devices:', discoveredDevices.length);
     
     return discoveredDevices.map(device => {
       const scanData = device.scan_data || {};
@@ -370,8 +373,8 @@ const UnifiedScanDevicesInterface = () => {
       const lastSeen = device.last_seen || scanData.timestamp || null;
       
       // Determine device type and icon
-      const deviceType = determineDeviceType(device.deviceType, manufacturer);
-      const deviceIcon = getDeviceIcon(deviceType, manufacturer);
+      const deviceType = determineDeviceType(osName, manufacturer, scanData.ports);
+      const deviceIcon = getDeviceIcon(deviceType, osName, manufacturer);
       
       // Calculate confidence score
       const confidence = calculateConfidence(hostname, osName, manufacturer, macAddress, scanData.ports);
@@ -380,7 +383,7 @@ const UnifiedScanDevicesInterface = () => {
       const isConverted = assets.some(asset => asset.primary_ip === ipAddress);
       const status = isConverted ? 'converted' : 'new';
       
-      return {
+      const processedDevice = {
         ...device,
         // Enhanced fields
         hostname,
@@ -404,6 +407,9 @@ const UnifiedScanDevicesInterface = () => {
         scanTaskName: device.scan_task_name,
         scanType: device.scan_type
       };
+      
+      console.log('Processed device:', processedDevice);
+      return processedDevice;
     });
   }, [discoveredDevices, assets]);
 
@@ -997,8 +1003,7 @@ const UnifiedScanDevicesInterface = () => {
             ) : viewMode === 'cards' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDevices.map((device) => {
-                  const deviceType = determineDeviceType(device.deviceType, device.manufacturer);
-                  const deviceIcon = getDeviceIcon(deviceType, device.manufacturer);
+                  const deviceIcon = getDeviceIcon(device.deviceType, device.osName, device.manufacturer);
                   
                   return (
                     <Card key={device.id} className="group hover:shadow-lg transition-all duration-200 border-border hover:border-primary/50 h-full">
@@ -1011,10 +1016,10 @@ const UnifiedScanDevicesInterface = () => {
                             </div>
                             <div className="min-w-0 flex-1">
                               <h4 className="font-semibold text-foreground truncate">
-                                {device.hostname || device.primary_ip || 'Unknown Device'}
+                                {device.hostname || `Device ${device.ipAddress}`}
                               </h4>
                               <p className="text-sm text-muted-foreground font-mono truncate">
-                                {device.primary_ip || 'No IP'}
+                                {device.ipAddress}
                               </p>
                             </div>
                           </div>

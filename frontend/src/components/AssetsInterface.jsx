@@ -63,11 +63,32 @@ const AssetsInterface = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedAssetForEdit, setSelectedAssetForEdit] = useState(null);
   const [showAssetModal, setShowAssetModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [viewMode, setViewMode] = useState('table');
   const [activeTab, setActiveTab] = useState('overview');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState([]);
+  
+  // Create Asset Form State
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    description: '',
+    primary_ip: '',
+    mac_address: '',
+    hostname: '',
+    os_name: '',
+    os_family: '',
+    os_version: '',
+    manufacturer: '',
+    model: '',
+    device_type: '',
+    location: '',
+    is_managed: false,
+    is_active: true,
+    ip_addresses: [],
+    labels: []
+  });
 
   // Search field definitions (JQL-style)
   const searchFields = [
@@ -299,6 +320,57 @@ const AssetsInterface = () => {
   const handleEditAsset = (asset) => {
     setSelectedAssetForEdit(asset);
     setShowAssetModal(true);
+  };
+
+  const handleCreateAsset = async () => {
+    try {
+      // Validate required fields
+      if (!createForm.name.trim()) {
+        alert('Asset name is required');
+        return;
+      }
+      if (!createForm.primary_ip.trim()) {
+        alert('Primary IP address is required');
+        return;
+      }
+
+      // Prepare asset data
+      const assetData = {
+        ...createForm,
+        ip_addresses: createForm.ip_addresses.filter(ip => ip.trim() !== ''),
+        labels: createForm.labels.filter(label => label.trim() !== '')
+      };
+
+      await createAsset(assetData);
+      
+      // Reset form and close modal
+      setCreateForm({
+        name: '',
+        description: '',
+        primary_ip: '',
+        mac_address: '',
+        hostname: '',
+        os_name: '',
+        os_family: '',
+        os_version: '',
+        manufacturer: '',
+        model: '',
+        device_type: '',
+        location: '',
+        is_managed: false,
+        is_active: true,
+        ip_addresses: [],
+        labels: []
+      });
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Failed to create asset:', error);
+      alert('Failed to create asset. Please try again.');
+    }
+  };
+
+  const handleCreateModalOpen = () => {
+    setShowCreateModal(true);
   };
 
   const handleDeleteAsset = async (asset) => {
@@ -669,7 +741,7 @@ const AssetsInterface = () => {
                 }
               </p>
               <Button
-                onClick={() => setShowAssetModal(true)}
+                onClick={handleCreateModalOpen}
                 className="flex items-center space-x-2"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -901,6 +973,200 @@ const AssetsInterface = () => {
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Asset
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Create Asset Modal */}
+      {showCreateModal && (
+        <Modal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          title="Create New Asset"
+          size="lg"
+        >
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Basic Information</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Asset Name *
+                  </label>
+                  <Input
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                    placeholder="Enter asset name"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
+                    placeholder="Enter asset description"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Primary IP Address *
+                  </label>
+                  <Input
+                    value={createForm.primary_ip}
+                    onChange={(e) => setCreateForm({...createForm, primary_ip: e.target.value})}
+                    placeholder="192.168.1.100"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    MAC Address
+                  </label>
+                  <Input
+                    value={createForm.mac_address}
+                    onChange={(e) => setCreateForm({...createForm, mac_address: e.target.value})}
+                    placeholder="00:11:22:33:44:55"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Hostname
+                  </label>
+                  <Input
+                    value={createForm.hostname}
+                    onChange={(e) => setCreateForm({...createForm, hostname: e.target.value})}
+                    placeholder="server01"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Device Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Device Information</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Manufacturer
+                  </label>
+                  <Input
+                    value={createForm.manufacturer}
+                    onChange={(e) => setCreateForm({...createForm, manufacturer: e.target.value})}
+                    placeholder="Dell, HP, Cisco, etc."
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Model
+                  </label>
+                  <Input
+                    value={createForm.model}
+                    onChange={(e) => setCreateForm({...createForm, model: e.target.value})}
+                    placeholder="PowerEdge R740"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Device Type
+                  </label>
+                  <select
+                    value={createForm.device_type}
+                    onChange={(e) => setCreateForm({...createForm, device_type: e.target.value})}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Select device type</option>
+                    <option value="Server">Server</option>
+                    <option value="Workstation">Workstation</option>
+                    <option value="Router">Router</option>
+                    <option value="Switch">Switch</option>
+                    <option value="Printer">Printer</option>
+                    <option value="Network Device">Network Device</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Operating System
+                  </label>
+                  <Input
+                    value={createForm.os_name}
+                    onChange={(e) => setCreateForm({...createForm, os_name: e.target.value})}
+                    placeholder="Windows Server 2019, Ubuntu 20.04, etc."
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Location
+                  </label>
+                  <Input
+                    value={createForm.location}
+                    onChange={(e) => setCreateForm({...createForm, location: e.target.value})}
+                    placeholder="Data Center A, Office Building, etc."
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Status Settings */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Status Settings</h3>
+              <div className="flex space-x-6">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={createForm.is_active}
+                    onChange={(e) => setCreateForm({...createForm, is_active: e.target.checked})}
+                    className="rounded border-border"
+                  />
+                  <span className="text-sm text-foreground">Active</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={createForm.is_managed}
+                    onChange={(e) => setCreateForm({...createForm, is_managed: e.target.checked})}
+                    className="rounded border-border"
+                  />
+                  <span className="text-sm text-foreground">Managed</span>
+                </label>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateAsset}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                Create Asset
               </Button>
             </div>
           </div>

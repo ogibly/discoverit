@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import DevicesInterface from './components/DevicesInterface';
 import Scans from './components/Scans';
 import AssetsInterface from './components/AssetsInterface';
+import UnifiedScanDevicesInterface from './components/UnifiedScanDevicesInterface';
 import AssetDetail from './components/AssetDetail';
 import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
@@ -37,11 +38,21 @@ const Navigation = () => {
       permission: 'assets:read'
     },
     { 
+      path: '/discovery', 
+      label: 'Discovery', 
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ), 
+      permission: 'assets:read'
+    },
+    { 
       path: '/scans', 
       label: 'Scans', 
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ), 
       permission: 'assets:read'
@@ -274,6 +285,11 @@ const AppContent = () => {
             </ProtectedRoute>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/discovery" element={
+            <ProtectedRoute requiredPermission="assets:read">
+              <UnifiedScanDevicesInterface />
+            </ProtectedRoute>
+          } />
           <Route path="/scans" element={
             <ProtectedRoute requiredPermission="assets:read">
               <Scans />

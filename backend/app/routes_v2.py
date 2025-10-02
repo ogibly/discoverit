@@ -909,7 +909,7 @@ def list_scanner_configs(
     limit: int = Query(100, ge=1, le=1000),
     is_active: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
-    current_user: User = Depends(require_satellite_scanners_read),
+    current_user: User = Depends(require_scanners_read),
     db: Session = Depends(get_db)
 ):
     """List scanner configurations with optional filtering."""
@@ -926,7 +926,7 @@ def list_scanner_configs(
 @router.post("/scanner-configs", response_model=schemas.ScannerConfig)
 def create_scanner_config(
     config: schemas.ScannerConfigCreate, 
-    current_user: User = Depends(require_satellite_scanners_write),
+    current_user: User = Depends(require_scanners_write),
     db: Session = Depends(get_db)
 ):
     """Create a new scanner configuration."""
@@ -937,13 +937,19 @@ def create_scanner_config(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/scanners/statistics")
-def get_scanner_statistics(db: Session = Depends(get_db)):
+def get_scanner_statistics(
+    current_user: User = Depends(require_scanners_read),
+    db: Session = Depends(get_db)
+):
     """Get statistics about scanner configurations."""
     service = ScannerService(db)
     return service.get_scanner_statistics()
 
 @router.get("/scanners/default", response_model=schemas.ScannerConfig)
-def get_default_scanner(db: Session = Depends(get_db)):
+def get_default_scanner(
+    current_user: User = Depends(require_scanners_read),
+    db: Session = Depends(get_db)
+):
     """Get the default scanner configuration."""
     service = ScannerService(db)
     config = service.get_default_scanner()
@@ -965,7 +971,11 @@ def get_scanner_recommendation(
         return {"error": str(e), "target": target}
 
 @router.get("/scanners/for-ip/{ip}")
-def get_scanner_for_ip(ip: str, db: Session = Depends(get_db)):
+def get_scanner_for_ip(
+    ip: str, 
+    current_user: User = Depends(require_scanners_read),
+    db: Session = Depends(get_db)
+):
     """Get the appropriate scanner configuration for a given IP address."""
     service = ScannerService(db)
     config = service.get_scanner_for_ip(ip)
@@ -975,7 +985,11 @@ def get_scanner_for_ip(ip: str, db: Session = Depends(get_db)):
 
 @router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)
 @router.get("/scanner-configs/{config_id}", response_model=schemas.ScannerConfig)
-def get_scanner_config(config_id: int, db: Session = Depends(get_db)):
+def get_scanner_config(
+    config_id: int, 
+    current_user: User = Depends(require_scanners_read),
+    db: Session = Depends(get_db)
+):
     """Get a scanner configuration by ID."""
     service = ScannerService(db)
     config = service.get_scanner_config(config_id)
@@ -988,6 +1002,7 @@ def get_scanner_config(config_id: int, db: Session = Depends(get_db)):
 def update_scanner_config(
     config_id: int,
     config: schemas.ScannerConfigUpdate,
+    current_user: User = Depends(require_scanners_write),
     db: Session = Depends(get_db)
 ):
     """Update a scanner configuration."""
@@ -1002,7 +1017,11 @@ def update_scanner_config(
 
 @router.delete("/scanners/{config_id}")
 @router.delete("/scanner-configs/{config_id}")
-def delete_scanner_config(config_id: int, db: Session = Depends(get_db)):
+def delete_scanner_config(
+    config_id: int, 
+    current_user: User = Depends(require_scanners_write),
+    db: Session = Depends(get_db)
+):
     """Delete a scanner configuration."""
     service = ScannerService(db)
     if not service.delete_scanner_config(config_id):
@@ -1010,13 +1029,20 @@ def delete_scanner_config(config_id: int, db: Session = Depends(get_db)):
     return {"message": "Scanner configuration deleted successfully"}
 
 @router.get("/scanners/{config_id}/health")
-def check_scanner_health(config_id: int, db: Session = Depends(get_db)):
+def check_scanner_health(
+    config_id: int, 
+    current_user: User = Depends(require_scanners_read),
+    db: Session = Depends(get_db)
+):
     """Check the health of a scanner configuration."""
     service = ScannerService(db)
     return service.check_scanner_health(config_id)
 
 @router.get("/scanners/health/all")
-def check_all_scanners_health(db: Session = Depends(get_db)):
+def check_all_scanners_health(
+    current_user: User = Depends(require_scanners_read),
+    db: Session = Depends(get_db)
+):
     """Check the health of all active scanner configurations."""
     service = ScannerService(db)
     return service.check_all_scanners_health()
@@ -1032,7 +1058,10 @@ def test_scanner_connection(
     return service.test_scanner_connection(config_id, test_ip)
 
 @router.post("/scanners/sync-settings")
-def sync_scanners_with_settings(db: Session = Depends(get_db)):
+def sync_scanners_with_settings(
+    current_user: User = Depends(require_scanners_write),
+    db: Session = Depends(get_db)
+):
     """Sync scanner configurations with the Settings table."""
     service = ScannerService(db)
     return service.sync_with_settings()

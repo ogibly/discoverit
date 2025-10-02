@@ -148,24 +148,24 @@ const Scans = () => {
         subtitle="Scan and analyze devices in your network"
       />
 
-      {/* Main Content */}
+      {/* Start New Scan Button - Fixed at top */}
+      <div className="flex justify-center p-6 bg-background border-b border-border">
+        <Button
+          onClick={() => setShowWizard(true)}
+          className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
+          disabled={!!activeScanTask}
+          size="lg"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Start New Scan</span>
+        </Button>
+      </div>
+
+      {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          
-          {/* 1. Start New Scan Button */}
-          <div className="flex justify-center">
-            <Button
-              onClick={() => setShowWizard(true)}
-              className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
-              disabled={!!activeScanTask}
-              size="lg"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Start New Scan</span>
-            </Button>
-          </div>
 
-          {/* 2. Current Running Scans */}
+          {/* 1. Current Running Scans */}
           {activeScanTask && (
             <Card className="border-blue-500/20 bg-blue-500/5">
               <CardHeader>
@@ -211,7 +211,7 @@ const Scans = () => {
             </Card>
           )}
 
-          {/* 3. Scans History */}
+          {/* 2. Scans History */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">

@@ -347,6 +347,43 @@ const UnifiedScanDevicesInterface = () => {
     }
   };
 
+  // Helper functions
+  const determineDeviceType = (osName, manufacturer, ports) => {
+    if (manufacturer?.toLowerCase().includes('cisco')) return 'Router';
+    if (manufacturer?.toLowerCase().includes('hp') && ports?.some(p => p.port === 9100)) return 'Printer';
+    if (osName?.toLowerCase().includes('windows')) return 'Workstation';
+    if (osName?.toLowerCase().includes('linux')) return 'Server';
+    if (osName?.toLowerCase().includes('mac')) return 'Workstation';
+    if (ports?.some(p => p.port === 22 || p.port === 80 || p.port === 443)) return 'Server';
+    if (ports?.some(p => p.port === 3389)) return 'Workstation';
+    return 'Network Device';
+  };
+
+  const getDeviceIcon = (deviceType, osName, manufacturer) => {
+    if (deviceType === 'Router') return <Router className="w-5 h-5" />;
+    if (deviceType === 'Printer') return <Printer className="w-5 h-5" />;
+    if (deviceType === 'Server') return <Server className="w-5 h-5" />;
+    if (deviceType === 'Workstation') return <Monitor className="w-5 h-5" />;
+    if (osName?.toLowerCase().includes('android') || osName?.toLowerCase().includes('ios')) return <Smartphone className="w-5 h-5" />;
+    return <Network className="w-5 h-5" />;
+  };
+
+  const calculateConfidence = (hostname, osName, manufacturer, macAddress, ports) => {
+    let score = 0;
+    if (hostname) score += 0.3;
+    if (osName) score += 0.3;
+    if (manufacturer) score += 0.2;
+    if (macAddress) score += 0.1;
+    if (ports && ports.length > 0) score += 0.1;
+    return Math.min(score, 1);
+  };
+
+  const getConfidenceColor = (confidence) => {
+    if (confidence >= 0.8) return 'text-green-600 bg-green-100';
+    if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
+  };
+
   // Enhanced device data processing
   const processedDevices = useMemo(() => {
     if (!discoveredDevices || !Array.isArray(discoveredDevices)) {
@@ -491,41 +528,6 @@ const UnifiedScanDevicesInterface = () => {
   }, [processedDevices, searchTerm, filterType, sortBy, sortOrder]);
 
   // Helper functions
-  const determineDeviceType = (osName, manufacturer, ports) => {
-    if (manufacturer?.toLowerCase().includes('cisco')) return 'Router';
-    if (manufacturer?.toLowerCase().includes('hp') && ports?.some(p => p.port === 9100)) return 'Printer';
-    if (osName?.toLowerCase().includes('windows')) return 'Workstation';
-    if (osName?.toLowerCase().includes('linux')) return 'Server';
-    if (osName?.toLowerCase().includes('mac')) return 'Workstation';
-    if (ports?.some(p => p.port === 22 || p.port === 80 || p.port === 443)) return 'Server';
-    if (ports?.some(p => p.port === 3389)) return 'Workstation';
-    return 'Network Device';
-  };
-
-  const getDeviceIcon = (deviceType, osName, manufacturer) => {
-    if (deviceType === 'Router') return <Router className="w-5 h-5" />;
-    if (deviceType === 'Printer') return <Printer className="w-5 h-5" />;
-    if (deviceType === 'Server') return <Server className="w-5 h-5" />;
-    if (deviceType === 'Workstation') return <Monitor className="w-5 h-5" />;
-    if (osName?.toLowerCase().includes('android') || osName?.toLowerCase().includes('ios')) return <Smartphone className="w-5 h-5" />;
-    return <Network className="w-5 h-5" />;
-  };
-
-  const calculateConfidence = (hostname, osName, manufacturer, macAddress, ports) => {
-    let score = 0;
-    if (hostname) score += 0.3;
-    if (osName) score += 0.3;
-    if (manufacturer) score += 0.2;
-    if (macAddress) score += 0.1;
-    if (ports && ports.length > 0) score += 0.1;
-    return Math.min(score, 1);
-  };
-
-  const getConfidenceColor = (confidence) => {
-    if (confidence >= 0.8) return 'text-green-600 bg-green-100';
-    if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
-  };
 
 
   // Statistics

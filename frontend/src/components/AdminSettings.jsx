@@ -1947,7 +1947,6 @@ const AdminSettings = () => {
               </CardContent>
             </Card>
             </TabsContent>
-          )}
 
           {/* Scan Templates Tab */}
           <TabsContent value="templates" className="space-y-6">

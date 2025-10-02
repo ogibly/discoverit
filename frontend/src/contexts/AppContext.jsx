@@ -332,6 +332,12 @@ export function AppProvider({ children }) {
 
   // Asset actions
   const fetchAssets = useCallback(async (filters = {}) => {
+    // Don't make API calls if not authenticated
+    if (!token) {
+      dispatch({ type: ActionTypes.SET_ASSETS, payload: [] });
+      return;
+    }
+    
     dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'assets', value: true } });
     try {
       const params = new URLSearchParams();
@@ -346,7 +352,7 @@ export function AppProvider({ children }) {
     } finally {
       dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'assets', value: false } });
     }
-  }, [apiCall]);
+  }, [apiCall, token]);
 
   const createAsset = useCallback(async (assetData) => {
     try {
@@ -411,6 +417,12 @@ export function AppProvider({ children }) {
 
   // Discovered Devices actions
   const fetchDiscoveredDevices = useCallback(async (filters = {}) => {
+    // Don't make API calls if not authenticated
+    if (!token) {
+      dispatch({ type: ActionTypes.SET_DISCOVERED_DEVICES, payload: [] });
+      return;
+    }
+    
     dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'discoveredDevices', value: true } });
     try {
       const params = new URLSearchParams();
@@ -427,7 +439,7 @@ export function AppProvider({ children }) {
     } finally {
       dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'discoveredDevices', value: false } });
     }
-  }, [apiCall]);
+  }, [apiCall, token]);
 
   const convertDeviceToAsset = useCallback(async (deviceId, assetData) => {
     try {
@@ -625,6 +637,12 @@ export function AppProvider({ children }) {
 
   // Scan Task actions
   const fetchScanTasks = useCallback(async () => {
+    // Don't make API calls if not authenticated
+    if (!token) {
+      dispatch({ type: ActionTypes.SET_SCAN_TASKS, payload: [] });
+      return;
+    }
+    
     dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'scanTasks', value: true } });
     try {
       const scanTasks = await apiCall('/scan-tasks');
@@ -634,9 +652,15 @@ export function AppProvider({ children }) {
     } finally {
       dispatch({ type: ActionTypes.SET_LOADING, payload: { key: 'scanTasks', value: false } });
     }
-  }, [apiCall]);
+  }, [apiCall, token]);
 
   const fetchActiveScanTask = useCallback(async () => {
+    // Don't make API calls if not authenticated
+    if (!token) {
+      dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: null });
+      return;
+    }
+    
     try {
       const activeScanTask = await apiCall('/scan-tasks/active');
       dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: activeScanTask || null });
@@ -644,7 +668,7 @@ export function AppProvider({ children }) {
       console.log('Failed to fetch scan updates:', error);
       dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: null });
     }
-  }, [apiCall]);
+  }, [apiCall, token]);
 
   const createScanTask = useCallback(async (taskData) => {
     try {
@@ -890,13 +914,15 @@ export function AppProvider({ children }) {
     };
   }, [refreshAllData]);
 
-  // Poll for active scan updates
+  // Poll for active scan updates - only when authenticated
   useEffect(() => {
+    if (!token) return; // Don't poll if not authenticated
+    
     const interval = setInterval(() => {
       fetchActiveScanTask();
     }, 2000);
     return () => clearInterval(interval);
-  }, [fetchActiveScanTask]);
+  }, [fetchActiveScanTask, token]);
 
   // Auto-clear status messages
   useEffect(() => {

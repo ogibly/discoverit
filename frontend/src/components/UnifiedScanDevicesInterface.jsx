@@ -83,14 +83,14 @@ const UnifiedScanDevicesInterface = () => {
 
   const { user } = useAuth();
 
-  // UI State
-  const [activePanel, setActivePanel] = useState('scans'); // 'scans' or 'devices'
+  // UI State - Enhanced for dynamic correlation
+  const [selectedScanId, setSelectedScanId] = useState(null); // Track which scan's devices to show
   const [expandedScans, setExpandedScans] = useState(new Set());
   const [selectedScanTask, setSelectedScanTask] = useState(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   
-  // Device interface state
+  // Device interface state - Simplified
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('lastSeen');
@@ -98,12 +98,13 @@ const UnifiedScanDevicesInterface = () => {
   const [viewMode, setViewMode] = useState('table');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showDeviceModal, setShowDeviceModal] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshingScans, setIsRefreshingScans] = useState(false);
+  const [isRefreshingDevices, setIsRefreshingDevices] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState([]);
 
-  // Search field definitions (JQL-style)
+  // Search field definitions (JQL-style) - Removed confidence
   const searchFields = [
     { key: 'ip', label: 'IP Address', type: 'string', example: 'ip=192.168.1.1' },
     { key: 'hostname', label: 'Hostname', type: 'string', example: 'hostname=server01' },
@@ -113,7 +114,6 @@ const UnifiedScanDevicesInterface = () => {
     { key: 'scan_id', label: 'Scan ID', type: 'number', example: 'scan_id=2' },
     { key: 'scan_name', label: 'Scan Name', type: 'string', example: 'scan_name=Network Scan' },
     { key: 'status', label: 'Status', type: 'string', example: 'status=new', options: ['new', 'converted'] },
-    { key: 'confidence', label: 'Confidence', type: 'number', example: 'confidence>70' },
     { key: 'ports', label: 'Open Ports', type: 'number', example: 'ports>5' },
     { key: 'last_seen', label: 'Last Seen', type: 'date', example: 'last_seen>2024-01-01' }
   ];
@@ -265,7 +265,6 @@ const UnifiedScanDevicesInterface = () => {
       case 'scan_id': return device.scanTaskId;
       case 'scan_name': return device.scanTaskName;
       case 'status': return device.status;
-      case 'confidence': return Math.round(device.confidence * 100);
       case 'ports': return device.ports?.length || 0;
       case 'last_seen': return device.lastSeen;
       default: return null;
@@ -297,18 +296,36 @@ const UnifiedScanDevicesInterface = () => {
     }
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
+  // Section-specific refresh functions
+  const handleRefreshScans = async () => {
+    setIsRefreshingScans(true);
     try {
       await Promise.all([
         fetchScanTasks(),
-        fetchActiveScanTask(),
+        fetchActiveScanTask()
+      ]);
+    } finally {
+      setIsRefreshingScans(false);
+    }
+  };
+
+  const handleRefreshDevices = async () => {
+    setIsRefreshingDevices(true);
+    try {
+      await Promise.all([
         fetchDiscoveredDevices(),
         fetchAssets()
       ]);
     } finally {
-      setIsRefreshing(false);
+      setIsRefreshingDevices(false);
     }
+  };
+
+  // Handle scan selection for device correlation
+  const handleScanSelect = (scanId) => {
+    setSelectedScanId(scanId);
+    // Auto-refresh devices when scan is selected
+    handleRefreshDevices();
   };
 
   // Format functions
@@ -368,21 +385,7 @@ const UnifiedScanDevicesInterface = () => {
     return <Network className="w-5 h-5" />;
   };
 
-  const calculateConfidence = (hostname, osName, manufacturer, macAddress, ports) => {
-    let score = 0;
-    if (hostname) score += 0.3;
-    if (osName) score += 0.3;
-    if (manufacturer) score += 0.2;
-    if (macAddress) score += 0.1;
-    if (ports && ports.length > 0) score += 0.1;
-    return Math.min(score, 1);
-  };
-
-  const getConfidenceColor = (confidence) => {
-    if (confidence >= 0.8) return 'text-green-600 bg-green-100';
-    if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
-  };
+  // Removed confidence calculation functions
 
   // Enhanced device data processing
   const processedDevices = useMemo(() => {
@@ -413,9 +416,6 @@ const UnifiedScanDevicesInterface = () => {
       const deviceType = determineDeviceType(osName, manufacturer, scanData.ports);
       const deviceIcon = getDeviceIcon(deviceType, osName, manufacturer);
       
-      // Calculate confidence score
-      const confidence = calculateConfidence(hostname, osName, manufacturer, macAddress, scanData.ports);
-      
       // Determine status
       const isConverted = assets.some(asset => asset.primary_ip === ipAddress);
       const status = isConverted ? 'converted' : 'new';
@@ -432,7 +432,6 @@ const UnifiedScanDevicesInterface = () => {
         lastSeen,
         deviceType,
         deviceIcon,
-        confidence,
         status,
         // Raw data for details
         rawScanData: scanData,
@@ -450,13 +449,18 @@ const UnifiedScanDevicesInterface = () => {
     });
   }, [discoveredDevices, assets]);
 
-  // Device filtering and sorting
+  // Device filtering and sorting with scan correlation
   const filteredDevices = useMemo(() => {
     if (!processedDevices || !Array.isArray(processedDevices)) {
       return [];
     }
     
     let filtered = processedDevices.filter(device => {
+      // Filter by selected scan if one is selected
+      if (selectedScanId && device.scanTaskId !== selectedScanId) {
+        return false;
+      }
+      
       // Parse search query
       const searchQuery = parseSearchQuery(searchTerm);
       let matchesSearch = true;
@@ -484,11 +488,10 @@ const UnifiedScanDevicesInterface = () => {
           device.scanTaskName?.toLowerCase().includes(searchValue);
       }
       
+      // Simplified filter options (removed confidence-based filters)
       const matchesFilter = filterType === 'all' ||
         (filterType === 'new' && device.status === 'new') ||
-        (filterType === 'converted' && device.status === 'converted') ||
-        (filterType === 'high_confidence' && device.confidence >= 0.7) ||
-        (filterType === 'low_confidence' && device.confidence < 0.7);
+        (filterType === 'converted' && device.status === 'converted');
       
       return matchesSearch && matchesFilter;
     });
@@ -506,9 +509,9 @@ const UnifiedScanDevicesInterface = () => {
           aValue = a.ipAddress || '';
           bValue = b.ipAddress || '';
           break;
-        case 'confidence':
-          aValue = a.confidence || 0;
-          bValue = b.confidence || 0;
+        case 'deviceType':
+          aValue = a.deviceType || '';
+          bValue = b.deviceType || '';
           break;
         case 'lastSeen':
           aValue = new Date(a.lastSeen || 0);
@@ -542,16 +545,15 @@ const UnifiedScanDevicesInterface = () => {
 
   const deviceStats = useMemo(() => {
     if (!processedDevices || !Array.isArray(processedDevices)) {
-      return { total: 0, newDevices: 0, converted: 0, highConfidence: 0, deviceTypes: 0 };
+      return { total: 0, newDevices: 0, converted: 0, deviceTypes: 0 };
     }
     
     const total = processedDevices.length;
     const newDevices = processedDevices.filter(d => d.status === 'new').length;
     const converted = processedDevices.filter(d => d.status === 'converted').length;
-    const highConfidence = processedDevices.filter(d => d.confidence >= 0.7).length;
     const deviceTypes = [...new Set(processedDevices.map(d => d.deviceType))].length;
     
-    return { total, newDevices, converted, highConfidence, deviceTypes };
+    return { total, newDevices, converted, deviceTypes };
   }, [processedDevices]);
 
   return (
@@ -594,11 +596,11 @@ const UnifiedScanDevicesInterface = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                title="Refresh data"
+                onClick={handleRefreshScans}
+                disabled={isRefreshingScans}
+                title="Refresh scans"
               >
-                <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+                <RefreshCw className={cn("w-4 h-4", isRefreshingScans && "animate-spin")} />
               </Button>
             </div>
 
@@ -715,6 +717,17 @@ const UnifiedScanDevicesInterface = () => {
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
+                                <Button
+                                  variant={selectedScanId === task.id ? "default" : "ghost"}
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleScanSelect(task.id);
+                                  }}
+                                  title="View devices from this scan"
+                                >
+                                  <Database className="w-4 h-4" />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -836,18 +849,23 @@ const UnifiedScanDevicesInterface = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-foreground">Discovered Devices</h2>
-                  <p className="text-sm text-muted-foreground">Manage and convert discovered devices</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedScanId 
+                      ? `Devices from selected scan (${scanTasks.find(s => s.id === selectedScanId)?.name || 'Unknown'})`
+                      : 'All discovered devices'
+                    }
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
+                  onClick={handleRefreshDevices}
+                  disabled={isRefreshingDevices}
                   title="Refresh devices"
                 >
-                  <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+                  <RefreshCw className={cn("w-4 h-4", isRefreshingDevices && "animate-spin")} />
                 </Button>
                 <div className="flex border border-border rounded-md">
                   <Button
@@ -879,7 +897,7 @@ const UnifiedScanDevicesInterface = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search devices (e.g., scan_id=2, ip=192.168.1.1, confidence>70)..."
+                      placeholder="Search devices (e.g., scan_id=2, ip=192.168.1.1, device_type=Server)..."
                       value={searchTerm}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       onFocus={() => setShowSearchSuggestions(searchSuggestions.length > 0)}
@@ -922,8 +940,6 @@ const UnifiedScanDevicesInterface = () => {
                     <option value="all">All Devices</option>
                     <option value="new">New Devices</option>
                     <option value="converted">Converted</option>
-                    <option value="high_confidence">High Confidence</option>
-                    <option value="low_confidence">Low Confidence</option>
                   </select>
                   
                   <select
@@ -941,8 +957,8 @@ const UnifiedScanDevicesInterface = () => {
                     <option value="ipAddress-desc">IP Address ↓</option>
                     <option value="hostname-asc">Hostname ↑</option>
                     <option value="hostname-desc">Hostname ↓</option>
-                    <option value="confidence-desc">Confidence ↓</option>
-                    <option value="confidence-asc">Confidence ↑</option>
+                    <option value="deviceType-asc">Device Type ↑</option>
+                    <option value="deviceType-desc">Device Type ↓</option>
                   </select>
                 </div>
               </div>
@@ -953,13 +969,15 @@ const UnifiedScanDevicesInterface = () => {
                     Showing {filteredDevices.length} of {processedDevices.length} devices
                   </span>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-muted-foreground">High Confidence:</span>
-                    <span className="text-sm font-medium text-green-600">{deviceStats.highConfidence}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
                     <span className="text-sm text-muted-foreground">Device Types:</span>
                     <span className="text-sm font-medium text-blue-600">{deviceStats.deviceTypes}</span>
                   </div>
+                  {selectedScanId && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-muted-foreground">From Scan:</span>
+                      <span className="text-sm font-medium text-primary">{scanTasks.find(s => s.id === selectedScanId)?.name || 'Unknown'}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -972,19 +990,14 @@ const UnifiedScanDevicesInterface = () => {
                 <CardContent className="text-center py-12">
                   <div className="text-4xl mb-4">🔍</div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">No Devices Found</h3>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-muted-foreground">
                     {searchTerm || filterType !== 'all' 
                       ? 'Try adjusting your search or filter criteria.'
-                      : 'No devices have been discovered yet. Start a network scan to discover devices.'
+                      : selectedScanId 
+                        ? 'No devices found in this scan.'
+                        : 'No devices have been discovered yet. Use the Network Scans panel to start a scan.'
                     }
                   </p>
-                  <Button
-                    onClick={() => setShowWizard(true)}
-                    className="flex items-center space-x-2"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Start Network Scan
-                  </Button>
                 </CardContent>
               </Card>
             ) : viewMode === 'cards' ? (
@@ -1011,12 +1024,10 @@ const UnifiedScanDevicesInterface = () => {
                             </div>
                           </div>
                           <div className="flex flex-col space-y-1 flex-shrink-0">
-                            <Badge className={cn("text-xs", getStatusColor(device.status))}>
-                              {getStatusIcon(device.status)}
-                              <span className="ml-1">{device.status === 'new' ? 'New' : 'Converted'}</span>
-                            </Badge>
-                            <Badge className={cn("text-xs", getConfidenceColor(device.confidence))}>
-                              {Math.round(device.confidence * 100)}%
+                            <Badge className={cn("text-xs", 
+                              device.status === 'new' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'
+                            )}>
+                              {device.status === 'new' ? 'New' : 'Converted'}
                             </Badge>
                           </div>
                         </div>

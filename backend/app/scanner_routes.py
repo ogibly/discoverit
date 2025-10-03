@@ -9,8 +9,6 @@ import time
 
 from .database import get_db
 from .services.asset_service import AssetService
-from .auth import get_current_active_user
-from .models import User
 
 router = APIRouter()
 
@@ -91,8 +89,7 @@ def scanner_heartbeat(heartbeat_data: Dict[str, Any], db: Session = Depends(get_
 
 @router.get("/satellite-scanners", response_model=List[Dict[str, Any]])
 def list_scanners(
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """List all registered scanners."""
     try:
@@ -124,8 +121,7 @@ def remove_scanner(scanner_id: str, db: Session = Depends(get_db)):
 @router.get("/satellite-scanners/{scanner_id}/status")
 def get_scanner_status(
     scanner_id: str, 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Get status of a specific satellite scanner."""
     try:
@@ -154,8 +150,7 @@ def get_scanner_status(
 @router.get("/satellite-scanners/{scanner_id}/health")
 def get_scanner_health(
     scanner_id: str, 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Get health status of a specific satellite scanner."""
     try:

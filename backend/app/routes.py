@@ -10,7 +10,7 @@ from .services.base_service import ServiceError, ValidationError, NotFoundError,
 from .auth import (
     get_current_active_user, require_permission, require_permissions, require_admin,
     require_assets_read, require_assets_write, require_discovery_read, require_discovery_write,
-    require_scanners_read, require_scanners_write, require_credentials_read, require_credentials_write,
+    require_scanners_write, require_credentials_read, require_credentials_write,
     require_users_read, require_users_write, require_roles_read, require_roles_write,
     require_settings_read, require_settings_write, require_subnets_read, require_subnets_write,
     require_satellite_scanners_read, require_satellite_scanners_write, require_satellite_scanners_use,
@@ -148,7 +148,6 @@ async def list_scanner_configs(
     limit: int = Query(100, ge=1, le=1000),
     is_active: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
-    current_user: User = Depends(require_scanners_read),
     services: ServiceFactory = Depends(get_services)
 ):
     """List scanner configurations with optional filtering."""
@@ -177,7 +176,6 @@ async def create_scanner_config(
 @router.get("/scanners/statistics")
 @handle_service_errors
 async def get_scanner_statistics(
-    current_user: User = Depends(require_scanners_read),
     services: ServiceFactory = Depends(get_services)
 ):
     """Get statistics about scanner configurations."""
@@ -188,7 +186,6 @@ async def get_scanner_statistics(
 @router.get("/scanners/default", response_model=schemas.ScannerConfig)
 @handle_service_errors
 async def get_default_scanner(
-    current_user: User = Depends(require_scanners_read),
     services: ServiceFactory = Depends(get_services)
 ):
     """Get the default scanner configuration."""
@@ -203,7 +200,6 @@ async def get_default_scanner(
 @handle_service_errors
 async def get_scanner_for_ip(
     ip: str,
-    current_user: User = Depends(require_scanners_read),
     services: ServiceFactory = Depends(get_services)
 ):
     """Get the appropriate scanner configuration for a given IP address."""
@@ -219,7 +215,6 @@ async def get_scanner_for_ip(
 @handle_service_errors
 async def get_scanner_config(
     config_id: int,
-    current_user: User = Depends(require_scanners_read),
     services: ServiceFactory = Depends(get_services)
 ):
     """Get a scanner configuration by ID."""
@@ -267,7 +262,6 @@ async def delete_scanner_config(
 @handle_service_errors
 async def check_scanner_health(
     config_id: int,
-    current_user: User = Depends(require_scanners_read),
     services: ServiceFactory = Depends(get_services)
 ):
     """Check the health of a scanner configuration."""
@@ -278,7 +272,6 @@ async def check_scanner_health(
 @router.get("/scanners/health/all")
 @handle_service_errors
 async def check_all_scanners_health(
-    current_user: User = Depends(require_scanners_read),
     services: ServiceFactory = Depends(get_services)
 ):
     """Check the health of all active scanner configurations."""
@@ -438,6 +431,7 @@ async def download_scan_results(
 
 # Asset routes with improved error handling
 @router.get("/assets", response_model=List[schemas.Asset])
+@router.get("/devices", response_model=List[schemas.Asset])  # Alias for frontend compatibility
 @handle_service_errors
 async def list_assets(
     skip: int = Query(0, ge=0),
@@ -515,3 +509,192 @@ async def delete_asset(
     if not success:
         raise HTTPException(status_code=404, detail="Asset not found")
     return {"message": "Asset deleted successfully"}
+
+
+# Asset Group routes
+@router.get("/asset-groups", response_model=List[schemas.AssetGroup])
+@handle_service_errors
+async def list_asset_groups(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    is_active: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
+    current_user: User = Depends(require_assets_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """List asset groups with optional filtering."""
+    asset_service = services.get_asset_service()
+    return asset_service.get_asset_groups(
+        skip=skip,
+        limit=limit,
+        is_active=is_active
+    )
+
+
+@router.post("/asset-groups", response_model=schemas.AssetGroup)
+@handle_service_errors
+async def create_asset_group(
+    group: schemas.AssetGroupCreate,
+    current_user: User = Depends(require_assets_write),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Create a new asset group."""
+    asset_service = services.get_asset_service()
+    return asset_service.create_asset_group(group)
+
+
+@router.get("/asset-groups/{group_id}", response_model=schemas.AssetGroup)
+@handle_service_errors
+async def get_asset_group(
+    group_id: int,
+    current_user: User = Depends(require_assets_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Get an asset group by ID."""
+    asset_service = services.get_asset_service()
+    group = asset_service.get_asset_group(group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Asset group not found")
+    return group
+
+
+@router.put("/asset-groups/{group_id}", response_model=schemas.AssetGroup)
+@handle_service_errors
+async def update_asset_group(
+    group_id: int,
+    group: schemas.AssetGroupUpdate,
+    current_user: User = Depends(require_assets_write),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Update an asset group."""
+    asset_service = services.get_asset_service()
+    updated_group = asset_service.update_asset_group(group_id, group)
+    if not updated_group:
+        raise HTTPException(status_code=404, detail="Asset group not found")
+    return updated_group
+
+
+@router.delete("/asset-groups/{group_id}")
+@handle_service_errors
+async def delete_asset_group(
+    group_id: int,
+    current_user: User = Depends(require_assets_write),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Delete an asset group."""
+    asset_service = services.get_asset_service()
+    success = asset_service.delete_asset_group(group_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Asset group not found")
+    return {"message": "Asset group deleted successfully"}
+
+
+# Settings routes
+@router.get("/settings")
+@handle_service_errors
+async def get_settings(
+    current_user: User = Depends(require_settings_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Get application settings."""
+    asset_service = services.get_asset_service()
+    settings = asset_service.get_settings()
+    if not settings:
+        settings = asset_service.create_default_settings()
+    return settings
+
+
+@router.put("/settings")
+@handle_service_errors
+async def update_settings(
+    settings_data: dict,
+    current_user: User = Depends(require_settings_write),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Update application settings."""
+    asset_service = services.get_asset_service()
+    return asset_service.update_settings(settings_data)
+
+
+# User management routes
+@router.get("/users", response_model=List[schemas.User])
+@handle_service_errors
+async def list_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: User = Depends(require_users_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """List users."""
+    auth_service = services.get_auth_service()
+    return auth_service.get_users(skip=skip, limit=limit)
+
+
+# Role management routes
+@router.get("/roles", response_model=List[schemas.Role])
+@handle_service_errors
+async def list_roles(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: User = Depends(require_roles_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """List roles."""
+    auth_service = services.get_auth_service()
+    return auth_service.get_roles(skip=skip, limit=limit)
+
+
+# Subnet routes
+@router.get("/subnets", response_model=List[schemas.Subnet])
+@handle_service_errors
+async def list_subnets(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: User = Depends(require_subnets_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """List subnets."""
+    subnet_service = services.get_subnet_service()
+    return subnet_service.get_subnets(skip=skip, limit=limit)
+
+
+# API Key routes
+@router.get("/api-keys", response_model=List[schemas.APIKey])
+@handle_service_errors
+async def list_api_keys(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: User = Depends(require_admin),
+    services: ServiceFactory = Depends(get_services)
+):
+    """List API keys."""
+    api_key_service = services.get_api_key_service()
+    return api_key_service.get_api_keys(skip=skip, limit=limit)
+
+
+# LDAP routes
+@router.get("/ldap/configs", response_model=List[schemas.LDAPConfig])
+@handle_service_errors
+async def list_ldap_configs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: User = Depends(require_admin),
+    services: ServiceFactory = Depends(get_services)
+):
+    """List LDAP configurations."""
+    ldap_service = services.get_ldap_service()
+    return ldap_service.get_ldap_configs(skip=skip, limit=limit)
+
+
+# Credential routes
+@router.get("/credentials", response_model=List[schemas.Credential])
+@handle_service_errors
+async def list_credentials(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: User = Depends(require_credentials_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """List credentials."""
+    credential_service = services.get_credential_service()
+    return credential_service.get_credentials(skip=skip, limit=limit)

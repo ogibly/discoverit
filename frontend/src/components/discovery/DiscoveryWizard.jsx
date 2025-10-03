@@ -487,7 +487,7 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
         scanner_type: 'default',
         suggestion: {
           type: 'info',
-          message: 'Install a satellite scanner in your target network for faster and more accurate scans.'
+          message: 'Satellite scanners provide faster and more accurate scans for specific network segments.'
         }
       });
       return null;

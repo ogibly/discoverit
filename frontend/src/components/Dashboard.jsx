@@ -39,17 +39,12 @@ const Dashboard = () => {
     try {
       setLoadingScanners(true);
       
-      // Fetch scanner configurations
+      // Fetch scanner configurations (use only the main scanners endpoint to avoid duplicates)
       const scannersResponse = await axios.get('/api/v2/scanners');
       setScanners(scannersResponse.data);
       
-      // Fetch satellite scanners
-      try {
-        const satelliteScannersResponse = await axios.get('/api/v2/satellite-scanners');
-        setScanners(prev => [...prev, ...satelliteScannersResponse.data]);
-      } catch (satelliteError) {
-        console.warn('Failed to fetch satellite scanners:', satelliteError);
-      }
+      // Note: Satellite scanners are now included in the main scanners endpoint
+      // No need to fetch separately to avoid duplicates
       
       // Fetch scanner health
       const healthResponse = await axios.get('/api/v2/scanners/health/all');

@@ -84,6 +84,17 @@ async def lifespan(app: FastAPI):
             template_service.create_default_templates()
             logger.info("Default templates initialized")
             
+            # Initialize default scanner configuration
+            _initialize_default_scanner(db)
+            logger.info("Default scanner configuration initialized")
+            
+            # Ensure all users have access to the default scanner
+            from .services.scanner_service import ScannerService
+            scanner_service = ScannerService(db)
+            grants_created = scanner_service.ensure_all_users_have_default_scanner_access()
+            if grants_created > 0:
+                logger.info(f"Granted default scanner access to {grants_created} users")
+            
         finally:
             db.close()
             
@@ -118,6 +129,56 @@ def _initialize_default_settings(db: SessionLocal):
         )
         db.add(new_settings)
         db.commit()
+
+def _initialize_default_scanner(db: SessionLocal):
+    """Initialize default scanner configuration as a ScannerConfig entity."""
+    from .services.scanner_service import ScannerService
+    from .schemas import ScannerConfigCreate
+    
+    # Check if default scanner already exists
+    scanner_service = ScannerService(db)
+    existing_default = scanner_service.get_default_scanner()
+    
+    if not existing_default:
+        # Create default scanner configuration
+        default_scanner_data = ScannerConfigCreate(
+            name="Default Scanner",
+            url=settings.default_scanner_url,
+            subnets=settings.default_subnets,
+            is_active=True,
+            is_default=True,
+            max_concurrent_scans=3,
+            timeout_seconds=settings.scan_timeout
+        )
+        
+        try:
+            default_scanner = scanner_service.create_scanner_config(default_scanner_data)
+            
+            # Grant access to all users for the default scanner
+            from .models import User, UserSatelliteScannerAccess
+            all_users = db.query(User).all()
+            
+            for user in all_users:
+                # Check if access already exists
+                existing_access = db.query(UserSatelliteScannerAccess).filter(
+                    UserSatelliteScannerAccess.user_id == user.id,
+                    UserSatelliteScannerAccess.scanner_id == default_scanner.id
+                ).first()
+                
+                if not existing_access:
+                    access = UserSatelliteScannerAccess(
+                        user_id=user.id,
+                        scanner_id=default_scanner.id,
+                        granted_by=1  # System admin
+                    )
+                    db.add(access)
+            
+            db.commit()
+            logger.info(f"Default scanner created with ID {default_scanner.id} and access granted to all users")
+            
+        except Exception as e:
+            logger.error(f"Failed to create default scanner: {e}")
+            db.rollback()
 
 app = FastAPI(
     title="DiscoverIT API",

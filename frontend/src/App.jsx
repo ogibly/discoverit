@@ -235,6 +235,7 @@ const Navigation = () => {
 // Main App Content
 const AppContent = () => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -249,6 +250,11 @@ const AppContent = () => {
 
   if (!isAuthenticated) {
     return <Login />;
+  }
+
+  // Redirect from /login to /dashboard after successful authentication
+  if (location.pathname === '/login') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

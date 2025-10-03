@@ -352,9 +352,8 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Recent Activity and Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Recent Activity */}
+          {/* Recent Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
             <Card className="surface-elevated">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-foreground flex items-center">
@@ -385,40 +384,6 @@ const Dashboard = () => {
                     <p className="text-sm">No recent activity</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card className="surface-elevated">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                  🚀 Quick Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    onClick={() => navigate('/scans')}
-                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-info hover:bg-info/90 text-info-foreground transition-all duration-200"
-                  >
-                    <span className="text-lg">🔍</span>
-                    <span className="text-xs font-medium">Start Scan</span>
-                  </Button>
-                  <Button
-                    onClick={() => navigate('/devices')}
-                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200"
-                  >
-                    <span className="text-lg">📱</span>
-                    <span className="text-xs font-medium">View Devices</span>
-                  </Button>
-                  <Button
-                    onClick={() => navigate('/assets')}
-                    className="h-12 flex flex-col items-center justify-center space-y-1 bg-success hover:bg-success/90 text-success-foreground transition-all duration-200"
-                  >
-                    <span className="text-lg">📋</span>
-                    <span className="text-xs font-medium">Manage Assets</span>
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>

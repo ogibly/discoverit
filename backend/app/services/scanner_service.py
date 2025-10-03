@@ -475,3 +475,41 @@ class ScannerService:
         else:
             # Non-admin users can only see scanners they have access to
             return self.get_user_scanner_access(user.id)
+    
+    def grant_default_scanner_access(self, user_id: int) -> bool:
+        """Grant a user access to the default scanner."""
+        default_scanner = self.get_default_scanner()
+        if not default_scanner:
+            return False
+        
+        return self.grant_scanner_access(user_id, default_scanner.id, 1)  # System admin
+    
+    def ensure_all_users_have_default_scanner_access(self) -> int:
+        """Ensure all users have access to the default scanner. Returns number of access grants created."""
+        default_scanner = self.get_default_scanner()
+        if not default_scanner:
+            return 0
+        
+        all_users = self.db.query(User).all()
+        grants_created = 0
+        
+        for user in all_users:
+            # Check if access already exists
+            existing_access = self.db.query(UserSatelliteScannerAccess).filter(
+                UserSatelliteScannerAccess.user_id == user.id,
+                UserSatelliteScannerAccess.scanner_id == default_scanner.id
+            ).first()
+            
+            if not existing_access:
+                access = UserSatelliteScannerAccess(
+                    user_id=user.id,
+                    scanner_id=default_scanner.id,
+                    granted_by=1  # System admin
+                )
+                self.db.add(access)
+                grants_created += 1
+        
+        if grants_created > 0:
+            self.db.commit()
+        
+        return grants_created

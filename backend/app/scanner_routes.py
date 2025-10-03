@@ -9,6 +9,8 @@ import time
 
 from .database import get_db
 from .services.asset_service import AssetService
+from .auth import get_current_active_user
+from .models import User
 
 router = APIRouter()
 
@@ -88,7 +90,10 @@ def scanner_heartbeat(heartbeat_data: Dict[str, Any], db: Session = Depends(get_
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/satellite-scanners", response_model=List[Dict[str, Any]])
-def list_scanners(db: Session = Depends(get_db)):
+def list_scanners(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_active_user)
+):
     """List all registered scanners."""
     try:
         service = AssetService(db)
@@ -101,9 +106,9 @@ def list_scanners(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/scanners/{scanner_id}")
+@router.delete("/satellite-scanners/{scanner_id}")
 def remove_scanner(scanner_id: str, db: Session = Depends(get_db)):
-    """Remove a registered scanner."""
+    """Remove a registered satellite scanner."""
     try:
         service = AssetService(db)
         settings = service.get_settings()
@@ -116,9 +121,13 @@ def remove_scanner(scanner_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/scanners/{scanner_id}/status")
-def get_scanner_status(scanner_id: str, db: Session = Depends(get_db)):
-    """Get status of a specific scanner."""
+@router.get("/satellite-scanners/{scanner_id}/status")
+def get_scanner_status(
+    scanner_id: str, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get status of a specific satellite scanner."""
     try:
         service = AssetService(db)
         settings = service.get_settings()
@@ -143,7 +152,11 @@ def get_scanner_status(scanner_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/satellite-scanners/{scanner_id}/health")
-def get_scanner_health(scanner_id: str, db: Session = Depends(get_db)):
+def get_scanner_health(
+    scanner_id: str, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """Get health status of a specific satellite scanner."""
     try:
         service = AssetService(db)

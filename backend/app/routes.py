@@ -702,6 +702,26 @@ async def list_ldap_configs(
     return ldap_service.get_ldap_configs(skip=skip, limit=limit)
 
 
+@router.post("/ldap/configs/{config_id}/test")
+@handle_service_errors
+async def test_ldap_connection(
+    config_id: int,
+    current_user: User = Depends(require_admin),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Test LDAP connection for a specific configuration."""
+    ldap_service = services.get_ldap_service()
+    
+    # Get the LDAP configuration
+    config = ldap_service.get_ldap_config(config_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="LDAP configuration not found")
+    
+    # Test the connection
+    result = ldap_service.test_connection(config)
+    return result
+
+
 # Credential routes
 @router.get("/credentials", response_model=List[schemas.Credential])
 @handle_service_errors

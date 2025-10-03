@@ -210,6 +210,18 @@ async def get_scanner_for_ip(
     return config
 
 
+@router.get("/scanners/recommendation")
+@handle_service_errors
+async def get_scanner_recommendation(
+    target: str = Query(..., description="Target IP or subnet to get scanner recommendation for"),
+    current_user: User = Depends(get_current_active_user),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Get scanner recommendation for a target network."""
+    scan_service = services.get_scan_service()
+    return scan_service.get_scanner_recommendation(target, current_user)
+
+
 @router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)
 @router.get("/scanner-configs/{config_id}", response_model=schemas.ScannerConfig)
 @handle_service_errors

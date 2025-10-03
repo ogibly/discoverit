@@ -165,6 +165,43 @@ class ScannerServiceV2(BaseService[ScannerConfig], CommonValidationMixin, Cachea
         # Return default scanner if no specific match
         return self.get_default_scanner()
     
+    def get_best_scanner_for_target(self, target: str, current_user=None) -> Optional[ScannerConfig]:
+        """Get the best scanner for a given target IP or subnet."""
+        try:
+            # Parse the target to get the network
+            if '/' in target:
+                target_network = ipaddress.ip_network(target, strict=False)
+            else:
+                # Single IP - get the /32 network
+                target_network = ipaddress.ip_network(f"{target}/32", strict=False)
+            
+            # Get all active scanners
+            scanners = self.get_scanner_configs(is_active=True)
+            
+            # Apply access control - only admins can see all scanners
+            if current_user and not current_user.is_superuser:
+                # For now, non-admin users see all scanners
+                # TODO: Implement proper access control
+                pass
+            
+            for scanner in scanners:
+                if scanner.subnets:
+                    for subnet_str in scanner.subnets:
+                        try:
+                            scanner_network = ipaddress.ip_network(subnet_str, strict=False)
+                            # Check if target network is contained within scanner's subnet
+                            if target_network.subnet_of(scanner_network) or target_network == scanner_network:
+                                return scanner
+                        except ValueError:
+                            continue
+            
+            # If no specific scanner found, return the default scanner
+            return self.get_default_scanner()
+            
+        except ValueError as e:
+            logger.error(f"Invalid target format: {target} - {e}")
+            return self.get_default_scanner()
+    
     def check_scanner_health(self, config_id: int) -> Dict[str, Any]:
         """Check the health of a scanner configuration."""
         config = self.get_by_id(config_id)

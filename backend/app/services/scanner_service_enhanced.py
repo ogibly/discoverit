@@ -148,6 +148,10 @@ class ScannerServiceV2(BaseService[ScannerConfig], CommonValidationMixin, Cachea
             'default': default
         }
     
+    def get_all_scanners(self) -> List[ScannerConfig]:
+        """Get all scanner configurations."""
+        return self.get_scanner_configs()
+    
     def get_scanner_for_ip(self, ip: str) -> Optional[ScannerConfig]:
         """Get the appropriate scanner configuration for a given IP address."""
         if not self.validate_ip_address(ip):

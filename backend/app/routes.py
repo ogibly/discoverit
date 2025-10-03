@@ -4,6 +4,7 @@ Improved API routes with enhanced error handling and service factory pattern.
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Request, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import logging
 from .db_utils import get_db
 from .services.service_factory import ServiceFactory, get_service_factory
 from .services.base_service import ServiceError, ValidationError, NotFoundError, DuplicateError
@@ -18,7 +19,6 @@ from .auth import (
 )
 from . import schemas
 from .models import User, Asset
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -218,8 +218,12 @@ async def get_scanner_recommendation(
     services: ServiceFactory = Depends(get_services)
 ):
     """Get scanner recommendation for a target network."""
-    scan_service = services.get_scan_service()
-    return scan_service.get_scanner_recommendation(target, current_user)
+    try:
+        scan_service = services.get_scan_service()
+        return scan_service.get_scanner_recommendation(target, current_user)
+    except Exception as e:
+        logger.error(f"Error in scanner recommendation endpoint: {e}")
+        raise HTTPException(status_code=422, detail=f"Error getting scanner recommendation: {str(e)}")
 
 
 @router.get("/scanners/{config_id}", response_model=schemas.ScannerConfig)

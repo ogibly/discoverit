@@ -8,6 +8,7 @@ import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Progress } from './ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
+import FlexibleLayout from './ui/FlexibleLayout';
 import { cn } from '../utils/cn';
 import { formatTimestampSafe, formatScanProgress, getCappedProgress } from '../utils/formatters';
 import PageHeader from './PageHeader';
@@ -656,8 +657,18 @@ const UnifiedScanDevicesInterface = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Scans */}
-        <div className="w-1/2 border-r border-border bg-background flex flex-col">
+        <FlexibleLayout
+          storageKey="scan-devices-layout"
+          defaultLayout="horizontal"
+          defaultSizes={[600, 600]}
+          minSizes={[400, 400]}
+          maxSizes={[1200, 1200]}
+          resizable={true}
+          gap={8}
+          showControls={true}
+        >
+          {/* Left Panel - Scans */}
+          <div className="border-r border-border bg-background flex flex-col">
           {/* Scans Header */}
           <div className="flex-shrink-0 p-6 pb-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
@@ -917,8 +928,8 @@ const UnifiedScanDevicesInterface = () => {
           </div>
         </div>
 
-        {/* Right Panel - Devices */}
-        <div className="w-1/2 bg-background flex flex-col">
+          {/* Right Panel - Devices */}
+          <div className="bg-background flex flex-col">
           {/* Devices Header */}
           <div className="flex-shrink-0 p-6 pb-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
@@ -1320,7 +1331,8 @@ const UnifiedScanDevicesInterface = () => {
               </Card>
             )}
           </div>
-        </div>
+          </div>
+        </FlexibleLayout>
       </div>
 
       {/* Modals */}

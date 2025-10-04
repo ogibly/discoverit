@@ -15,7 +15,8 @@ import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
 import AdminSettings from './components/AdminSettings';
-import CollapsibleSidebar from './components/ui/CollapsibleSidebar';
+import EnhancedSidebar from './components/ui/EnhancedSidebar';
+import EnhancedNavigation from './components/ui/EnhancedNavigation';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { cn } from './utils/cn';
 
@@ -265,19 +266,18 @@ const AppContent = () => {
 
   return (
     <div className="flex h-screen bg-background">
-      <CollapsibleSidebar 
+      <EnhancedSidebar 
         storageKey="main-sidebar"
         defaultCollapsed={false}
-        expandedWidth={256}
-        collapsedWidth={64}
+        expandedWidth={280}
+        collapsedWidth={72}
         minWidth={200}
-        maxWidth={400}
+        maxWidth={500}
         resizable={true}
         showToggle={true}
-        togglePosition="top-right"
       >
-        <Navigation />
-      </CollapsibleSidebar>
+        <EnhancedNavigation />
+      </EnhancedSidebar>
       <div className="flex-grow overflow-hidden bg-background">
         <Routes>
           <Route path="/dashboard" element={

@@ -667,16 +667,13 @@ const AdminSettings = () => {
   // API Key management functions
   const fetchApiKeys = async () => {
     try {
-      console.log('Fetching API keys...');
       const response = await fetch('/api/v2/api-keys', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      console.log('API keys response status:', response.status);
       if (response.ok) {
         const keys = await response.json();
-        console.log('API keys received:', keys);
         setApiKeys(keys);
       } else {
         console.error('API keys fetch failed with status:', response.status);

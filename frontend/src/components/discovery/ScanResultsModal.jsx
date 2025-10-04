@@ -43,9 +43,6 @@ const ScanResultsModal = ({
       setFilterStatus('all');
       setSelectedDevices([]);
       setShowDetails({});
-      // Debug: Log the scan results data
-      console.log('ScanResultsModal - scanTask:', scanTask);
-      console.log('ScanResultsModal - scanResults:', scanResults);
     }
   }, [isOpen, scanTask, scanResults]);
 

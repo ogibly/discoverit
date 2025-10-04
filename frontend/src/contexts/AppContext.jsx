@@ -636,7 +636,6 @@ export function AppProvider({ children }) {
       const activeScanTask = await apiCall('/scan-tasks/active');
       dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: activeScanTask || null });
     } catch (error) {
-      console.log('Failed to fetch scan updates:', error);
       dispatch({ type: ActionTypes.SET_ACTIVE_SCAN_TASK, payload: null });
     }
   }, [apiCall, token]);

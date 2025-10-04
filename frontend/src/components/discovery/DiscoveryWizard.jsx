@@ -503,15 +503,13 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates, api })
   );
 };
 
-const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = [], api }) => {
+const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api }) => {
   const [scannerRecommendation, setScannerRecommendation] = useState(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
   
   console.log('ScannerSelectionStep - availableScanners:', availableScanners);
   console.log('ScannerSelectionStep - availableScanners type:', typeof availableScanners);
   console.log('ScannerSelectionStep - availableScanners is array:', Array.isArray(availableScanners));
-  
-  // Ensure availableScanners is always an array - moved to where it's used
 
   const getScannerRecommendation = async () => {
     if (!data.target) return null;
@@ -640,40 +638,45 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = []
           )}
 
       <div className="space-y-3">
-        {availableScanners && Array.isArray(availableScanners) && availableScanners.length > 0 ? availableScanners.map((scanner) => (
-          <div
-            key={scanner.id}
-            className={cn(
-              "border rounded-lg p-4 cursor-pointer transition-colors",
-              data.scannerId === scanner.id
-                ? "border-blue-500 bg-blue-500/10"
-                : "border-slate-700 hover:border-slate-600"
-            )}
-            onClick={() => updateData({ scannerId: scanner.id })}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium text-white">{scanner.name}</div>
-                <div className="text-sm text-slate-400">
-                  {scanner.subnets?.length || 0} configured subnets
-                  {scanner.is_satellite && (
-                    <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
-                      Satellite
-                    </span>
+        {(() => {
+          try {
+            if (availableScanners && Array.isArray(availableScanners) && availableScanners.length > 0) {
+              return availableScanners.map((scanner) => (
+                <div
+                  key={scanner.id}
+                  className={cn(
+                    "border rounded-lg p-4 cursor-pointer transition-colors",
+                    data.scannerId === scanner.id
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-slate-700 hover:border-slate-600"
                   )}
+                  onClick={() => updateData({ scannerId: scanner.id })}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-white">{scanner.name}</div>
+                      <div className="text-sm text-slate-400">
+                        {scanner.subnets?.length || 0} configured subnets
+                        {scanner.is_satellite && (
+                          <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                            Satellite
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={scanner.is_active ? "default" : "secondary"}>
+                        {scanner.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                      {data.scannerId === scanner.id && (
+                        <CheckCircle className="w-5 h-5 text-blue-500" />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant={scanner.is_active ? "default" : "secondary"}>
-                  {scanner.is_active ? "Active" : "Inactive"}
-                </Badge>
-                {data.scannerId === scanner.id && (
-                  <CheckCircle className="w-5 h-5 text-blue-500" />
-                )}
-              </div>
-            </div>
-          </div>
-        )) : (
+              ));
+            } else {
+              return (
           <div className="space-y-4">
             <div className="text-center py-8 text-slate-400">
               <div className="text-4xl mb-4">🔍</div>
@@ -719,7 +722,18 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = []
               </div>
             </div>
           </div>
-        )}
+            );
+          } catch (error) {
+            console.error('Error rendering scanners:', error);
+            return (
+              <div className="text-center py-8 text-red-400">
+                <div className="text-4xl mb-4">⚠️</div>
+                <p className="text-sm">Error loading scanners</p>
+                <p className="text-xs text-red-500 mt-1">Please refresh the page</p>
+              </div>
+            );
+          }
+        })()}
       </div>
 
       {errors.scannerId && (

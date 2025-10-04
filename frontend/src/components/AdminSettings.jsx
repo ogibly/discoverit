@@ -20,6 +20,7 @@ const AdminSettings = () => {
     setStatusMessage,
     clearStatusMessage,
     fetchSettings: fetchSettingsAPI,
+    updateSettings: updateSettingsAPI,
     fetchUsers: fetchUsersAPI,
     createUser: createUserAPI,
     updateUser: updateUserAPI,
@@ -1382,7 +1383,8 @@ const AdminSettings = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
+            <TabsTrigger value="system">System Settings</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="ldap">LDAP Integration</TabsTrigger>
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
@@ -1396,6 +1398,61 @@ const AdminSettings = () => {
             <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           </TabsList>
 
+
+          {/* System Settings Tab */}
+          <TabsContent value="system" className="space-y-6">
+            <Card className="surface-elevated">
+              <CardHeader>
+                <CardTitle className="text-subheading text-foreground">System Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-body font-medium text-foreground mb-2">
+                      Scan Retry Time Limit (minutes)
+                    </label>
+                    <Input
+                      type="number"
+                      value={settings?.scan_retry_time_limit_minutes || 30}
+                      onChange={(e) => {
+                        const newSettings = { ...settings };
+                        newSettings.scan_retry_time_limit_minutes = parseInt(e.target.value);
+                        setSettings(newSettings);
+                      }}
+                      min="1"
+                      max="1440"
+                      placeholder="30"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      How long after a scan fails can it be retried (1-1440 minutes)
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchSettings()}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await updateSettingsAPI(settings);
+                        setStatusMessage('Settings updated successfully');
+                      } catch (error) {
+                        setStatusMessage('Failed to update settings');
+                        console.error('Error updating settings:', error);
+                      }
+                    }}
+                  >
+                    Save Settings
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* User Management Tab */}
           <TabsContent value="users" className="space-y-6">

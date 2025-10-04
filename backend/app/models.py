@@ -266,6 +266,7 @@ class Settings(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     scanners = Column(JSON, nullable=True)
+    scan_retry_time_limit_minutes = Column(Integer, default=30, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

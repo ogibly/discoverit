@@ -265,11 +265,8 @@ export function AppProvider({ children }) {
     
     // Get token from localStorage to ensure it's always current
     const currentToken = localStorage.getItem('token');
-    console.log('API Call to:', endpoint);
-    console.log('Token from localStorage:', currentToken);
     if (currentToken) {
       headers['Authorization'] = `Bearer ${currentToken}`;
-      console.log('Authorization header set:', headers['Authorization']);
     } else {
       console.warn('No authentication token found for API call to:', endpoint);
     }
@@ -670,6 +667,30 @@ export function AppProvider({ children }) {
     }
   }, [apiCall]);
 
+  const checkScanRetryEligibility = useCallback(async (taskId) => {
+    try {
+      const eligibility = await apiCall(`/scan-tasks/${taskId}/retry-eligibility`);
+      return eligibility;
+    } catch (error) {
+      console.error('Error checking scan retry eligibility:', error);
+      return { can_retry: false, reason: 'Error checking eligibility' };
+    }
+  }, [apiCall]);
+
+  const retryScanTask = useCallback(async (taskId) => {
+    try {
+      const result = await apiCall(`/scan-tasks/${taskId}/retry`, { method: 'POST' });
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Scan retry initiated successfully' });
+      // Refresh scan tasks to show the updated status
+      fetchScanTasks();
+      fetchActiveScanTask();
+      return result;
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_STATUS_MESSAGE, payload: 'Failed to retry scan' });
+      throw error;
+    }
+  }, [apiCall, fetchScanTasks, fetchActiveScanTask]);
+
   // Operation actions
 
   // Admin/Settings API functions
@@ -964,6 +985,8 @@ export function AppProvider({ children }) {
     startScan: createScanTask, // Alias for backward compatibility
     cancelScanTask,
     cancelScan: cancelScanTask, // Alias for backward compatibility
+    checkScanRetryEligibility,
+    retryScanTask,
     
     // Template and Scanner actions
     fetchScanTemplates,

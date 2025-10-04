@@ -74,6 +74,8 @@ const UnifiedScanDevicesInterface = () => {
     fetchScanTasks,
     fetchActiveScanTask,
     cancelScanTask,
+    checkScanRetryEligibility,
+    retryScanTask,
     fetchDiscoveredDevices,
     fetchAssets,
     convertDeviceToAsset,
@@ -100,6 +102,8 @@ const UnifiedScanDevicesInterface = () => {
   const [showDeviceModal, setShowDeviceModal] = useState(false);
   const [isRefreshingScans, setIsRefreshingScans] = useState(false);
   const [isRefreshingDevices, setIsRefreshingDevices] = useState(false);
+  const [retryEligibility, setRetryEligibility] = useState({}); // Cache retry eligibility for each scan
+  const [retryingScans, setRetryingScans] = useState(new Set()); // Track which scans are being retried
   const [activeTab, setActiveTab] = useState('overview');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState([]);
@@ -161,6 +165,45 @@ const UnifiedScanDevicesInterface = () => {
     } catch (error) {
       console.error('Failed to download scan results:', error);
       alert('Failed to download scan results. Please try again.');
+    }
+  };
+
+  const handleRetryScan = async (taskId) => {
+    try {
+      setRetryingScans(prev => new Set([...prev, taskId]));
+      await retryScanTask(taskId);
+      // Clear eligibility cache for this scan
+      setRetryEligibility(prev => {
+        const newEligibility = { ...prev };
+        delete newEligibility[taskId];
+        return newEligibility;
+      });
+    } catch (error) {
+      console.error('Error retrying scan:', error);
+    } finally {
+      setRetryingScans(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(taskId);
+        return newSet;
+      });
+    }
+  };
+
+  const checkRetryEligibility = async (taskId) => {
+    if (retryEligibility[taskId]) {
+      return retryEligibility[taskId];
+    }
+    
+    try {
+      const eligibility = await checkScanRetryEligibility(taskId);
+      setRetryEligibility(prev => ({
+        ...prev,
+        [taskId]: eligibility
+      }));
+      return eligibility;
+    } catch (error) {
+      console.error('Error checking retry eligibility:', error);
+      return { can_retry: false, reason: 'Error checking eligibility' };
     }
   };
 
@@ -390,11 +433,9 @@ const UnifiedScanDevicesInterface = () => {
   // Enhanced device data processing
   const processedDevices = useMemo(() => {
     if (!discoveredDevices || !Array.isArray(discoveredDevices)) {
-      console.log('No discovered devices or not an array:', discoveredDevices);
       return [];
     }
     
-    console.log('Processing devices:', discoveredDevices.length);
     
     return discoveredDevices.map(device => {
       const scanData = device.scan_data || {};
@@ -444,7 +485,6 @@ const UnifiedScanDevicesInterface = () => {
         scanType: device.scan_type
       };
       
-      console.log('Processed device:', processedDevice);
       return processedDevice;
     });
   }, [discoveredDevices, assets]);
@@ -823,6 +863,22 @@ const UnifiedScanDevicesInterface = () => {
                                       <Download className="w-4 h-4" />
                                       <span>Download</span>
                                     </Button>
+                                    {task.status === 'failed' && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRetryScan(task.id)}
+                                        disabled={retryingScans.has(task.id)}
+                                        className="flex items-center space-x-2"
+                                      >
+                                        {retryingScans.has(task.id) ? (
+                                          <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <RefreshCw className="w-4 h-4" />
+                                        )}
+                                        <span>{retryingScans.has(task.id) ? 'Retrying...' : 'Retry'}</span>
+                                      </Button>
+                                    )}
                                   </div>
                                 </div>
                               </div>

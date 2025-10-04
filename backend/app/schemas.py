@@ -295,12 +295,15 @@ class ScannerConfig(ScannerConfigBase):
 class SettingsBase(BaseModel):
     # Scanner configuration
     scanners: Optional[List[Dict[str, Any]]] = None
+    # Scan retry configuration
+    scan_retry_time_limit_minutes: Optional[int] = Field(default=30, ge=1, le=1440)  # 1 minute to 24 hours
 
 class SettingsCreate(SettingsBase):
     pass
 
 class SettingsUpdate(BaseModel):
     scanners: Optional[List[Dict[str, Any]]] = None
+    scan_retry_time_limit_minutes: Optional[int] = Field(None, ge=1, le=1440)
 
 class Settings(SettingsBase):
     id: int

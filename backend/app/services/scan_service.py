@@ -291,6 +291,71 @@ class ScanServiceV2:
             task.end_time = datetime.utcnow()
             self.db.commit()
 
+    def can_retry_scan_task(self, task_id: int) -> Dict[str, Any]:
+        """Check if a failed scan task can be retried based on time limits."""
+        task = self.db.query(ScanTask).filter(ScanTask.id == task_id).first()
+        if not task:
+            return {"can_retry": False, "reason": "Scan task not found"}
+        
+        if task.status != "failed":
+            return {"can_retry": False, "reason": "Only failed scans can be retried"}
+        
+        # Get retry time limit from settings
+        from .asset_service import AssetService
+        asset_service = AssetService(self.db)
+        settings = asset_service.get_settings()
+        retry_limit_minutes = getattr(settings, 'scan_retry_time_limit_minutes', 30)
+        
+        # Check if scan is within retry time limit
+        if task.end_time:
+            time_since_failure = datetime.now(timezone.utc) - task.end_time
+            if time_since_failure.total_seconds() > (retry_limit_minutes * 60):
+                return {
+                    "can_retry": False, 
+                    "reason": f"Scan is too old to retry (older than {retry_limit_minutes} minutes)",
+                    "time_since_failure": time_since_failure.total_seconds() / 60
+                }
+        
+        return {"can_retry": True, "reason": "Scan is eligible for retry"}
+
+    def retry_scan_task(self, task_id: int) -> Dict[str, Any]:
+        """Retry a failed scan task."""
+        # Check if scan can be retried
+        retry_check = self.can_retry_scan_task(task_id)
+        if not retry_check["can_retry"]:
+            raise ValueError(retry_check["reason"])
+        
+        task = self.db.query(ScanTask).filter(ScanTask.id == task_id).first()
+        if not task:
+            raise ValueError("Scan task not found")
+        
+        # Reset task status and clear error
+        task.status = "pending"
+        task.progress = 0
+        task.current_ip = None
+        task.completed_ips = 0
+        task.discovered_devices = 0
+        task.error_message = None
+        task.start_time = None
+        task.end_time = None
+        
+        # Clear previous scan results for this task
+        self.db.query(Scan).filter(Scan.scan_task_id == task_id).delete()
+        
+        self.db.commit()
+        
+        # Start the scan task
+        import threading
+        scan_thread = threading.Thread(target=self.run_scan_task, args=(task_id,))
+        scan_thread.daemon = True
+        scan_thread.start()
+        
+        return {
+            "message": "Scan task retry initiated",
+            "task_id": task_id,
+            "status": "pending"
+        }
+
     def _get_scan_config_from_template(self, task: ScanTask) -> Dict[str, Any]:
         """Get scan configuration from the associated template."""
         if not task.scan_template_id:

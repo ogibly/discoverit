@@ -421,6 +421,30 @@ async def cancel_scan_task(
     return scan_service.cancel_scan_task(task_id)
 
 
+@router.get("/scan-tasks/{task_id}/retry-eligibility")
+@handle_service_errors
+async def check_scan_retry_eligibility(
+    task_id: int,
+    current_user: User = Depends(require_discovery_read),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Check if a scan task can be retried."""
+    scan_service = services.get_scan_service()
+    return scan_service.can_retry_scan_task(task_id)
+
+
+@router.post("/scan-tasks/{task_id}/retry", status_code=200)
+@handle_service_errors
+async def retry_scan_task(
+    task_id: int,
+    current_user: User = Depends(require_discovery_write),
+    services: ServiceFactory = Depends(get_services)
+):
+    """Retry a failed scan task."""
+    scan_service = services.get_scan_service()
+    return scan_service.retry_scan_task(task_id)
+
+
 @router.get("/scan-tasks/{task_id}/results")
 @handle_service_errors
 async def get_scan_results(

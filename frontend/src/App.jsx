@@ -3,6 +3,7 @@ import { Route, Routes, Link, useLocation, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LayoutProvider, useLayout } from './contexts/LayoutContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import Login from './components/Login';
@@ -14,6 +15,8 @@ import CredentialsManager from './components/CredentialsManager';
 import WorkflowGuide from './components/WorkflowGuide';
 import ThemeToggle from './components/ThemeToggle';
 import AdminSettings from './components/AdminSettings';
+import CollapsibleSidebar from './components/ui/CollapsibleSidebar';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { cn } from './utils/cn';
 
 // Sophisticated Navigation Component
@@ -82,7 +85,7 @@ const Navigation = () => {
   );
 
   return (
-    <div className="flex flex-col w-64 bg-background border-r border-border">
+    <div className="flex flex-col h-full bg-background">
       {/* Sophisticated Header */}
       <div className="px-4 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-primary/10">
         <Link 
@@ -147,7 +150,7 @@ const Navigation = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <span className="font-medium">Global Settings</span>
+                <span className="font-medium">Admin Settings</span>
               </Link>
               
             </div>
@@ -236,6 +239,9 @@ const Navigation = () => {
 const AppContent = () => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
+  
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts();
 
   if (loading) {
     return (
@@ -259,7 +265,19 @@ const AppContent = () => {
 
   return (
     <div className="flex h-screen bg-background">
-      <Navigation />
+      <CollapsibleSidebar 
+        storageKey="main-sidebar"
+        defaultCollapsed={false}
+        expandedWidth={256}
+        collapsedWidth={64}
+        minWidth={200}
+        maxWidth={400}
+        resizable={true}
+        showToggle={true}
+        togglePosition="top-right"
+      >
+        <Navigation />
+      </CollapsibleSidebar>
       <div className="flex-grow overflow-hidden bg-background">
         <Routes>
           <Route path="/dashboard" element={
@@ -309,9 +327,11 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <AppProvider>
-            <AppContent />
-          </AppProvider>
+          <LayoutProvider>
+            <AppProvider>
+              <AppContent />
+            </AppProvider>
+          </LayoutProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

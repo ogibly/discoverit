@@ -8,6 +8,7 @@ import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Progress } from './ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
+import ResizableLayout from './ui/ResizableLayout';
 import { cn } from '../utils/cn';
 import { formatTimestampSafe, formatScanProgress, getCappedProgress } from '../utils/formatters';
 import PageHeader from './PageHeader';
@@ -621,10 +622,20 @@ const UnifiedScanDevicesInterface = () => {
         />
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Scans */}
-        <div className="w-1/2 border-r border-border bg-background flex flex-col">
+      {/* Main Content Area with Resizable Layout */}
+      <div className="flex-1 overflow-hidden">
+        <ResizableLayout
+          direction="horizontal"
+          storageKey="discovery-layout"
+          defaultSizes={[500, 500]}
+          minSizes={[300, 300]}
+          maxSizes={[800, null]}
+          resizable={true}
+          gap={1}
+          className="h-full"
+        >
+          {/* Left Panel - Scans */}
+          <div className="h-full border-r border-border bg-background flex flex-col">
           {/* Scans Header */}
           <div className="flex-shrink-0 p-6 pb-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
@@ -898,8 +909,8 @@ const UnifiedScanDevicesInterface = () => {
           </div>
         </div>
 
-        {/* Right Panel - Devices */}
-        <div className="w-1/2 bg-background flex flex-col">
+          {/* Right Panel - Devices */}
+          <div className="h-full bg-background flex flex-col">
           {/* Devices Header */}
           <div className="flex-shrink-0 p-6 pb-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
@@ -1301,7 +1312,7 @@ const UnifiedScanDevicesInterface = () => {
               </Card>
             )}
           </div>
-        </div>
+        </ResizableLayout>
       </div>
 
       {/* Modals */}

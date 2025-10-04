@@ -6,6 +6,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
 import { HelpIcon } from './ui';
+import ResizableLayout from './ui/ResizableLayout';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -224,165 +225,180 @@ const Dashboard = () => {
       />
 
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="space-y-6">
-          {/* Key Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {keyMetrics.map((metric, index) => (
-              <Card 
-                key={index} 
-                className="surface-elevated hover:shadow-lg transition-all duration-300 group cursor-pointer transform hover:scale-105"
-                onClick={metric.onClick}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-sm", metric.color)}>
-                      {metric.icon}
-                    </div>
-                    <div className="text-right">
-                      <div className={cn(
-                        "text-xs font-medium flex items-center",
-                        metric.changeType === 'positive' ? 'text-success' : 
-                        metric.changeType === 'negative' ? 'text-error' : 'text-muted-foreground'
-                      )}>
-                        {metric.changeType === 'positive' && '↗'}
-                        {metric.changeType === 'negative' && '↘'}
-                        {metric.change}
+      {/* Main Content with Resizable Layout */}
+      <div className="flex-1 overflow-hidden">
+        <ResizableLayout
+          direction="horizontal"
+          storageKey="dashboard-layout"
+          defaultSizes={[400, 600]}
+          minSizes={[300, 400]}
+          maxSizes={[600, null]}
+          resizable={true}
+          gap={1}
+          className="h-full"
+        >
+          {/* Left Panel - Metrics and Status */}
+          <div className="h-full overflow-y-auto px-6 py-6">
+            <div className="space-y-6">
+              {/* Key Metrics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {keyMetrics.map((metric, index) => (
+                  <Card 
+                    key={index} 
+                    className="surface-elevated hover:shadow-lg transition-all duration-300 group cursor-pointer transform hover:scale-105"
+                    onClick={metric.onClick}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-sm", metric.color)}>
+                          {metric.icon}
+                        </div>
+                        <div className="text-right">
+                          <div className={cn(
+                            "text-xs font-medium flex items-center",
+                            metric.changeType === 'positive' ? 'text-success' : 
+                            metric.changeType === 'negative' ? 'text-error' : 'text-muted-foreground'
+                          )}>
+                            {metric.changeType === 'positive' && '↗'}
+                            {metric.changeType === 'negative' && '↘'}
+                            {metric.change}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">{metric.label}</p>
-                    <p className="text-lg font-bold text-foreground">{metric.value}</p>
-                    <p className="text-xs text-muted-foreground">{metric.description}</p>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{metric.label}</p>
+                        <p className="text-lg font-bold text-foreground">{metric.value}</p>
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Device Distribution */}
+              <Card className="surface-elevated">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
+                    📊 Device Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {deviceTypeStats.map((type, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm">{type.icon}</span>
+                          <span className="text-sm font-medium text-foreground">{type.name}</span>
+                        </div>
+                        <span className="text-sm font-semibold text-muted-foreground">{type.count}</span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
-            ))}
+
+              {/* System Status */}
+              <Card className="surface-elevated">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
+                    ⚡ System Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {getSystemStatus().map((status, index) => (
+                      <div key={index} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className={cn("w-2 h-2 rounded-full", status.color)}></div>
+                            <span className="text-sm font-medium text-foreground">{status.name}</span>
+                          </div>
+                          <Badge className={cn("text-xs", status.badgeColor)}>
+                            {status.status}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground ml-4">
+                          {status.details}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Scanner Details */}
+                  {scanners.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <div className="text-xs font-medium text-foreground mb-2">Available Scanners:</div>
+                      <div className="space-y-1">
+                        {scanners.slice(0, 3).map((scanner, index) => {
+                          const health = scannerHealth.find(h => h.scanner_id === scanner.id);
+                          return (
+                            <div key={index} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground truncate">{scanner.name}</span>
+                              <div className="flex items-center space-x-1">
+                                <div className={cn(
+                                  "w-1.5 h-1.5 rounded-full",
+                                  health?.status === 'healthy' ? 'bg-success' : 
+                                  health?.status === 'unhealthy' ? 'bg-error' : 'bg-warning'
+                                )}></div>
+                                <span className="text-muted-foreground">
+                                  {health?.status === 'healthy' ? 'Online' : 
+                                   health?.status === 'unhealthy' ? 'Offline' : 'Unknown'}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {scanners.length > 3 && (
+                          <div className="text-xs text-muted-foreground">
+                            +{scanners.length - 3} more scanners
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
-          {/* Device Distribution and System Status */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="surface-elevated">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                  📊 Device Distribution
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {deviceTypeStats.map((type, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm">{type.icon}</span>
-                        <span className="text-sm font-medium text-foreground">{type.name}</span>
-                      </div>
-                      <span className="text-sm font-semibold text-muted-foreground">{type.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="surface-elevated">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                  ⚡ System Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {getSystemStatus().map((status, index) => (
-                    <div key={index} className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className={cn("w-2 h-2 rounded-full", status.color)}></div>
-                          <span className="text-sm font-medium text-foreground">{status.name}</span>
-                        </div>
-                        <Badge className={cn("text-xs", status.badgeColor)}>
-                          {status.status}
+          {/* Right Panel - Recent Activity */}
+          <div className="h-full overflow-y-auto px-6 py-6">
+            <div className="space-y-6">
+              <Card className="surface-elevated">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
+                    📊 Recent Activity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {activeScanTask ? (
+                    <div className="p-3 bg-info/10 rounded-lg border border-info/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-semibold text-info">Active Scan</h4>
+                        <Badge className="badge-info text-xs">
+                          Running
                         </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground ml-4">
-                        {status.details}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Scanner Details */}
-                {scanners.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-border">
-                    <div className="text-xs font-medium text-foreground mb-2">Available Scanners:</div>
-                    <div className="space-y-1">
-                      {scanners.slice(0, 3).map((scanner, index) => {
-                        const health = scannerHealth.find(h => h.scanner_id === scanner.id);
-                        return (
-                          <div key={index} className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground truncate">{scanner.name}</span>
-                            <div className="flex items-center space-x-1">
-                              <div className={cn(
-                                "w-1.5 h-1.5 rounded-full",
-                                health?.status === 'healthy' ? 'bg-success' : 
-                                health?.status === 'unhealthy' ? 'bg-error' : 'bg-warning'
-                              )}></div>
-                              <span className="text-muted-foreground">
-                                {health?.status === 'healthy' ? 'Online' : 
-                                 health?.status === 'unhealthy' ? 'Offline' : 'Unknown'}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {scanners.length > 3 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{scanners.length - 3} more scanners
+                      <p className="text-sm text-info mb-2">{activeScanTask.name}</p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-info">
+                          <span>Progress</span>
+                          <span>{activeScanTask.progress || 0}%</span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
-            <Card className="surface-elevated">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                  📊 Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {activeScanTask ? (
-                  <div className="p-3 bg-info/10 rounded-lg border border-info/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-semibold text-info">Active Scan</h4>
-                      <Badge className="badge-info text-xs">
-                        Running
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-info mb-2">{activeScanTask.name}</p>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs text-info">
-                        <span>Progress</span>
-                        <span>{activeScanTask.progress || 0}%</span>
+                        <Progress value={activeScanTask.progress || 0} className="h-1.5" />
                       </div>
-                      <Progress value={activeScanTask.progress || 0} className="h-1.5" />
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <div className="text-2xl mb-1">⏸️</div>
-                    <p className="text-sm">No recent activity</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      <div className="text-2xl mb-1">⏸️</div>
+                      <p className="text-sm">No recent activity</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        </ResizableLayout>
       </div>
 
     </div>

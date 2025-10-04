@@ -7,6 +7,7 @@ import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
+import ResizableLayout from './ui/ResizableLayout';
 import { cn } from '../utils/cn';
 import { formatTimestampSafe } from '../utils/formatters';
 import PageHeader from './PageHeader';

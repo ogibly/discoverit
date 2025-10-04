@@ -156,7 +156,7 @@ const FlexibleLayout = ({
       case 'vertical':
         return 'flex-col';
       case 'grid':
-        return 'grid grid-cols-2 gap-4';
+        return 'grid grid-cols-2 gap-4 p-2';
       default:
         return 'flex-row';
     }
@@ -191,7 +191,10 @@ const FlexibleLayout = ({
     >
       {/* Layout Controls */}
       {showControls && (
-        <div className="absolute top-4 right-4 z-10 flex items-center space-x-2 bg-background/80 backdrop-blur-sm border border-border rounded-lg p-2 shadow-lg">
+        <div className={cn(
+          "absolute z-10 flex items-center space-x-2 bg-background/80 backdrop-blur-sm border border-border rounded-lg p-2 shadow-lg",
+          layout === 'grid' ? 'top-2 right-2' : 'top-4 right-4'
+        )}>
           <div className="flex items-center space-x-1">
             <button
               onClick={() => handleLayoutChange('horizontal')}
@@ -263,7 +266,7 @@ const FlexibleLayout = ({
             <div
               className={cn(
                 'relative flex-shrink-0 overflow-hidden',
-                layout === 'grid' && 'rounded-lg border border-border'
+                layout === 'grid' && 'rounded-lg border border-border bg-background shadow-sm'
               )}
               style={panelStyle}
             >

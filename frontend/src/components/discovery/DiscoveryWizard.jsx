@@ -26,6 +26,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
     assetTemplates,
     fetchScanTemplates,
     fetchAssetTemplates,
+    fetchAvailableScanners,
     createScanTask,
     api
   } = useApp();
@@ -58,6 +59,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [scannersLoaded, setScannersLoaded] = useState(false);
 
   const steps = [
     {
@@ -98,9 +100,22 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
   ];
 
   useEffect(() => {
-    fetchScanTemplates();
-    fetchAssetTemplates();
-  }, [fetchScanTemplates, fetchAssetTemplates]);
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          fetchScanTemplates(),
+          fetchAssetTemplates(),
+          fetchAvailableScanners()
+        ]);
+        setScannersLoaded(true);
+      } catch (error) {
+        console.error('Error loading wizard data:', error);
+        setScannersLoaded(true); // Still allow wizard to proceed
+      }
+    };
+    
+    loadData();
+  }, [fetchScanTemplates, fetchAssetTemplates, fetchAvailableScanners]);
 
   const updateWizardData = (updates) => {
     setWizardData(prev => ({ ...prev, ...updates }));
@@ -178,6 +193,24 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
   };
 
   const CurrentStepComponent = steps[currentStep - 1].component;
+  
+  // Don't render ScannerSelectionStep until scanners are loaded
+  if (currentStep === 3 && !scannersLoaded) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-center justify-center py-8">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                <span className="text-slate-400">Loading scanners...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -235,15 +268,24 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
 
         {/* Step Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh]">
-          <CurrentStepComponent
-            data={wizardData}
-            updateData={updateWizardData}
-            errors={errors}
-            availableScanners={availableScanners}
-            scanTemplates={scanTemplates}
-            assetTemplates={assetTemplates}
-            api={api}
-          />
+          {!scannersLoaded && currentStep === 3 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                <span className="text-slate-400">Loading scanners...</span>
+              </div>
+            </div>
+          ) : (
+            <CurrentStepComponent
+              data={wizardData}
+              updateData={updateWizardData}
+              errors={errors}
+              availableScanners={availableScanners || []}
+              scanTemplates={scanTemplates || []}
+              assetTemplates={assetTemplates || []}
+              api={api}
+            />
+          )}
         </div>
 
         {/* Footer */}
@@ -459,7 +501,7 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates, api })
   );
 };
 
-const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api }) => {
+const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = [], api }) => {
   const [scannerRecommendation, setScannerRecommendation] = useState(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
 
@@ -484,11 +526,11 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
       console.error('Error getting scanner recommendation:', error);
       setScannerRecommendation({
         recommended_scanner: null,
-        message: 'Using default scanner. Consider installing a satellite scanner for improved network scan performance.',
+        message: 'Using default scanner for optimal performance',
         scanner_type: 'default',
         suggestion: {
           type: 'info',
-          message: 'Satellite scanners provide faster and more accurate scans for specific network segments.'
+          message: '🚀 Boost your scan performance! Install a satellite scanner for faster, more accurate network discovery. Perfect for large networks and specific network segments.'
         }
       });
       return null;
@@ -556,12 +598,12 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
               </div>
               {scannerRecommendation.recommended_scanner && (
                 <div className="text-xs text-slate-400">
-                  Scanner: {scannerRecommendation.recommended_scanner.name} 
                   {scannerRecommendation.recommended_scanner.is_satellite && (
-                    <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                    <span className="mr-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
                       Satellite
                     </span>
                   )}
+                  {scannerRecommendation.recommended_scanner.name}
                 </div>
               )}
               {scannerRecommendation.suggestion && (
@@ -569,13 +611,28 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
                   <div className="text-xs text-slate-400">
                     💡 {scannerRecommendation.suggestion.message}
                   </div>
+                  {scannerRecommendation.scanner_type === 'default' && (
+                    <div className="mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs bg-green-500/10 border-green-500 text-green-400 hover:bg-green-500/20"
+                        onClick={() => {
+                          // This could open a modal or navigate to scanner setup
+                          console.log('Setup satellite scanner');
+                        }}
+                      >
+                        🚀 Install Satellite Scanner
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
       <div className="space-y-3">
-        {availableScanners?.map((scanner) => (
+        {availableScanners && Array.isArray(availableScanners) && availableScanners.length > 0 ? availableScanners.map((scanner) => (
           <div
             key={scanner.id}
             className={cn(
@@ -590,7 +647,12 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
               <div>
                 <div className="font-medium text-white">{scanner.name}</div>
                 <div className="text-sm text-slate-400">
-                  {scanner.url} • {scanner.subnets?.length || 0} subnets
+                  {scanner.subnets?.length || 0} configured subnets
+                  {scanner.is_satellite && (
+                    <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                      Satellite
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -603,7 +665,53 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
               </div>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="space-y-4">
+            <div className="text-center py-8 text-slate-400">
+              <div className="text-4xl mb-4">🔍</div>
+              <p className="text-sm">No scanners available</p>
+              <p className="text-xs text-slate-500 mt-1">Using default scanner</p>
+            </div>
+            
+            {/* Satellite Scanner Recommendation */}
+            <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <div className="text-2xl">🚀</div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-green-400 mb-2">
+                    Boost Your Scan Performance
+                  </h4>
+                  <p className="text-xs text-slate-300 mb-3">
+                    Install a satellite scanner for faster, more accurate network discovery. 
+                    Perfect for large networks and specific network segments.
+                  </p>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs bg-green-500/10 border-green-500 text-green-400 hover:bg-green-500/20"
+                      onClick={() => {
+                        console.log('Setup satellite scanner');
+                      }}
+                    >
+                      🚀 Install Satellite Scanner
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs text-slate-400 hover:text-slate-300"
+                      onClick={() => {
+                        console.log('Learn more about satellite scanners');
+                      }}
+                    >
+                      Learn More
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {errors.scannerId && (
@@ -740,7 +848,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                   <div className="text-white font-medium">
                     {(() => {
                       if (data.scannerId) {
-                        const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                        const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                         return selectedScanner ? selectedScanner.name : `Scanner ${data.scannerId}`;
                       }
                       return 'Default Scanner';
@@ -751,7 +859,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                       "text-xs px-2 py-1 rounded-full",
                       (() => {
                         if (data.scannerId) {
-                          const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default 
                               ? "bg-blue-500/20 text-blue-400" 
@@ -763,7 +871,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     )}>
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default ? 'Default' : 'Satellite';
                           }
@@ -774,7 +882,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     <span className="text-xs text-slate-400">
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_active ? '🟢 Online' : '🔴 Offline';
                           }
@@ -787,7 +895,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               </div>
               
               {data.scannerId && (() => {
-                const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                 if (selectedScanner && !selectedScanner.is_default) {
                   return (
                     <div className="space-y-2 pt-2 border-t border-slate-700">
@@ -821,7 +929,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               })()}
               
               {data.scannerId && (() => {
-                const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                 if (selectedScanner) {
                   return (
                     <div className="pt-2 border-t border-slate-700">

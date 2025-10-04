@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
 import { HelpIcon } from './ui';
-import ResizableLayout from './ui/ResizableLayout';
+import FlexibleLayout from './ui/FlexibleLayout';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -225,23 +225,24 @@ const Dashboard = () => {
       />
 
 
-      {/* Main Content with Resizable Layout */}
+      {/* Main Content with Flexible Layout */}
       <div className="flex-1 overflow-hidden">
-        <ResizableLayout
-          direction="horizontal"
+        <FlexibleLayout
           storageKey="dashboard-layout"
-          defaultSizes={[400, 600]}
-          minSizes={[300, 400]}
-          maxSizes={[600, null]}
+          defaultLayout="horizontal"
+          defaultSizes={[600, 600]}
+          minSizes={[250, 300]}
+          maxSizes={[1200, 1400]}
           resizable={true}
-          gap={1}
+          gap={8}
+          showControls={true}
           className="h-full"
         >
           {/* Left Panel - Metrics and Status */}
-          <div className="h-full overflow-y-auto px-6 py-6">
-            <div className="space-y-6">
+          <div className="h-full overflow-y-auto px-4 py-4">
+            <div className="space-y-4">
               {/* Key Metrics Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {keyMetrics.map((metric, index) => (
                   <Card 
                     key={index} 
@@ -274,28 +275,6 @@ const Dashboard = () => {
                   </Card>
                 ))}
               </div>
-
-              {/* Device Distribution */}
-              <Card className="surface-elevated">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                    📊 Device Distribution
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {deviceTypeStats.map((type, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm">{type.icon}</span>
-                          <span className="text-sm font-medium text-foreground">{type.name}</span>
-                        </div>
-                        <span className="text-sm font-semibold text-muted-foreground">{type.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* System Status */}
               <Card className="surface-elevated">
@@ -358,12 +337,34 @@ const Dashboard = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Device Distribution */}
+              <Card className="surface-elevated">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
+                    📊 Device Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {deviceTypeStats.map((type, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm">{type.icon}</span>
+                          <span className="text-sm font-medium text-foreground">{type.name}</span>
+                        </div>
+                        <span className="text-sm font-semibold text-muted-foreground">{type.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
           {/* Right Panel - Recent Activity */}
-          <div className="h-full overflow-y-auto px-6 py-6">
-            <div className="space-y-6">
+          <div className="h-full overflow-y-auto px-4 py-4">
+            <div className="space-y-4">
               <Card className="surface-elevated">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold text-foreground flex items-center">
@@ -398,7 +399,7 @@ const Dashboard = () => {
               </Card>
             </div>
           </div>
-        </ResizableLayout>
+        </FlexibleLayout>
       </div>
 
     </div>

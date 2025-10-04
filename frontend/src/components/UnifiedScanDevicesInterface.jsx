@@ -641,7 +641,7 @@ const UnifiedScanDevicesInterface = () => {
         <PageHeader
           title={
             <span className="flex items-center">
-              Network Discovery & Asset Management
+              Network Discovery
               <Activity className="ml-2 w-5 h-5 text-primary" />
             </span>
           }
@@ -659,7 +659,7 @@ const UnifiedScanDevicesInterface = () => {
       <div className="flex-1 flex overflow-hidden">
         <FlexibleLayout
           storageKey="scan-devices-layout"
-          defaultLayout="horizontal"
+          defaultLayout="grid"
           defaultSizes={[600, 600]}
           minSizes={[400, 400]}
           maxSizes={[1200, 1200]}

@@ -115,15 +115,20 @@ const EnhancedSidebar = ({
   const handleMouseEnter = useCallback((e) => {
     if (isCollapsed) {
       setIsHovered(true);
-      setShowTooltip(true);
-      setTooltipContent(e.target.getAttribute('data-tooltip') || '');
+      const tooltip = e.target.getAttribute('data-tooltip') || e.target.closest('[data-tooltip]')?.getAttribute('data-tooltip') || '';
+      if (tooltip) {
+        setShowTooltip(true);
+        setTooltipContent(tooltip);
+      }
     }
   }, [isCollapsed]);
 
   const handleMouseLeave = useCallback(() => {
-    setIsHovered(false);
-    setShowTooltip(false);
-  }, []);
+    if (isCollapsed) {
+      setIsHovered(false);
+      setShowTooltip(false);
+    }
+  }, [isCollapsed]);
 
   const sidebarStyle = {
     width: isCollapsed ? `${collapsedWidth}px` : `${currentWidth}px`,
@@ -190,7 +195,10 @@ const EnhancedSidebar = ({
         </div>
 
         {/* Footer with User Info */}
-        <div className="p-4 border-t border-border bg-muted/20">
+        <div className={cn(
+          "border-t border-border bg-muted/20",
+          isCollapsed ? "p-2" : "p-4"
+        )}>
           {!isCollapsed ? (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
@@ -210,15 +218,15 @@ const EnhancedSidebar = ({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center space-y-2">
-              <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-accent-foreground" />
+            <div className="flex flex-col items-center space-y-3">
+              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-accent-foreground" />
               </div>
-              <div className="flex items-center space-x-1">
-                <button className="p-1.5 rounded-md hover:bg-accent/50 transition-colors" title="Toggle theme">
+              <div className="flex items-center space-x-2">
+                <button className="p-2 rounded-md hover:bg-accent/50 transition-colors" title="Toggle theme">
                   <Moon className="w-4 h-4 text-muted-foreground" />
                 </button>
-                <button className="p-1.5 rounded-md hover:bg-accent/50 transition-colors" title="Logout">
+                <button className="p-2 rounded-md hover:bg-accent/50 transition-colors" title="Logout">
                   <LogOut className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
@@ -238,8 +246,8 @@ const EnhancedSidebar = ({
       </div>
 
       {/* Hover Tooltip */}
-      {showTooltip && isCollapsed && (
-        <div className="fixed left-16 top-1/2 transform -translate-y-1/2 z-50 bg-popover text-popover-foreground px-3 py-2 rounded-md shadow-lg border border-border">
+      {showTooltip && isCollapsed && tooltipContent && (
+        <div className="fixed left-16 top-1/2 transform -translate-y-1/2 z-50 bg-popover text-popover-foreground px-3 py-2 rounded-md shadow-lg border border-border animate-in fade-in-0 slide-in-from-left-2 duration-200">
           <div className="text-sm font-medium">{tooltipContent}</div>
           <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-popover border-l border-b border-border rotate-45" />
         </div>

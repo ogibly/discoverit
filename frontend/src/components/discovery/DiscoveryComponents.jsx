@@ -268,9 +268,9 @@ export const SmartTargetInput = ({
   ];
 
   // Get user's allowed subnets from scanners
-  const userSubnets = availableScanners.flatMap(scanner => 
+  const userSubnets = (availableScanners && Array.isArray(availableScanners) ? availableScanners.flatMap(scanner => 
     scanner.subnets || []
-  );
+  ) : []);
 
   // Parse target type based on input format
   const parseTargetType = (input) => {

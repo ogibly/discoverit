@@ -215,6 +215,7 @@ function appReducer(state, action) {
     case ActionTypes.SET_ASSET_TEMPLATES:
       return { ...state, assetTemplates: action.payload };
     case ActionTypes.SET_AVAILABLE_SCANNERS:
+      console.log('Setting availableScanners in state:', action.payload);
       return { ...state, availableScanners: action.payload };
     
     
@@ -808,10 +809,13 @@ export function AppProvider({ children }) {
 
   const fetchAvailableScanners = useCallback(async () => {
     try {
+      console.log('Fetching available scanners...');
       const scanners = await apiCall('/scanners');
+      console.log('Scanners fetched:', scanners);
       dispatch({ type: ActionTypes.SET_AVAILABLE_SCANNERS, payload: scanners });
       return scanners;
     } catch (error) {
+      console.error('Error fetching scanners:', error);
       throw error;
     }
   }, [apiCall]);

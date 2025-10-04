@@ -102,11 +102,13 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        await Promise.all([
+        console.log('Loading wizard data...');
+        const [scanTemplatesResult, assetTemplatesResult, scannersResult] = await Promise.all([
           fetchScanTemplates(),
           fetchAssetTemplates(),
           fetchAvailableScanners()
         ]);
+        console.log('Scanners loaded:', scannersResult);
         setScannersLoaded(true);
       } catch (error) {
         console.error('Error loading wizard data:', error);
@@ -195,7 +197,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
   const CurrentStepComponent = steps[currentStep - 1].component;
   
   // Don't render ScannerSelectionStep until scanners are loaded
-  if (currentStep === 3 && !scannersLoaded) {
+  if (currentStep === 3 && (!scannersLoaded || !availableScanners || !Array.isArray(availableScanners))) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -504,6 +506,13 @@ const ScanConfigurationStep = ({ data, updateData, errors, scanTemplates, api })
 const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = [], api }) => {
   const [scannerRecommendation, setScannerRecommendation] = useState(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
+  
+  console.log('ScannerSelectionStep - availableScanners:', availableScanners);
+  console.log('ScannerSelectionStep - availableScanners type:', typeof availableScanners);
+  console.log('ScannerSelectionStep - availableScanners is array:', Array.isArray(availableScanners));
+  
+  // Ensure availableScanners is always an array
+  const safeAvailableScanners = Array.isArray(availableScanners) ? availableScanners : [];
 
   const getScannerRecommendation = async () => {
     if (!data.target) return null;
@@ -632,7 +641,7 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = []
           )}
 
       <div className="space-y-3">
-        {availableScanners && Array.isArray(availableScanners) && availableScanners.length > 0 ? availableScanners.map((scanner) => (
+        {safeAvailableScanners && safeAvailableScanners.length > 0 ? safeAvailableScanners.map((scanner) => (
           <div
             key={scanner.id}
             className={cn(
@@ -848,7 +857,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                   <div className="text-white font-medium">
                     {(() => {
                       if (data.scannerId) {
-                        const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                        const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
                         return selectedScanner ? selectedScanner.name : `Scanner ${data.scannerId}`;
                       }
                       return 'Default Scanner';
@@ -859,7 +868,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                       "text-xs px-2 py-1 rounded-full",
                       (() => {
                         if (data.scannerId) {
-                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
                           if (selectedScanner) {
                             return selectedScanner.is_default 
                               ? "bg-blue-500/20 text-blue-400" 
@@ -871,7 +880,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     )}>
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
                           if (selectedScanner) {
                             return selectedScanner.is_default ? 'Default' : 'Satellite';
                           }
@@ -882,7 +891,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     <span className="text-xs text-slate-400">
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
                           if (selectedScanner) {
                             return selectedScanner.is_active ? '🟢 Online' : '🔴 Offline';
                           }
@@ -895,7 +904,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               </div>
               
               {data.scannerId && (() => {
-                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
                 if (selectedScanner && !selectedScanner.is_default) {
                   return (
                     <div className="space-y-2 pt-2 border-t border-slate-700">
@@ -929,7 +938,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               })()}
               
               {data.scannerId && (() => {
-                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
                 if (selectedScanner) {
                   return (
                     <div className="pt-2 border-t border-slate-700">

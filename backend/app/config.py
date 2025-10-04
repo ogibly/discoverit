@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     
     # CORS
-    allowed_origins: List[str] = ["http://localhost:5173", "http://frontend:5173"]
+    allowed_origins: List[str] = ["http://localhost:5173", "http://frontend:5173", "http://10.45.140.160:5173", "*"]
     
     # Logging
     log_level: str = "INFO"

@@ -41,6 +41,7 @@ class TemplateService:
             name=template_data.name,
             description=template_data.description,
             scan_config=template_data.scan_config,
+            scan_type=getattr(template_data, 'scan_type', 'standard'),
             is_system=template_data.is_system,
             created_by=user_id
         )
@@ -229,7 +230,6 @@ class TemplateService:
                 template = ScanTemplate(
                     name=template_data["name"],
                     description=template_data["description"],
-                    scan_type=template_data["scan_type"],
                     scan_config=template_data["scan_config"],
                     is_system=True
                 )

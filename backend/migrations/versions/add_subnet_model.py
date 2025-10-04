@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'add_subnet_model'
-down_revision = 'h1a2b3c4d5e6_add_discovery_depth_and_scanner_ids_to_scan_tasks'
+down_revision = 'h1a2b3c4d5e6'
 branch_labels = None
 depends_on = None
 

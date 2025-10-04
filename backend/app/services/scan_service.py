@@ -239,7 +239,7 @@ class ScanServiceV2:
                         asset_id=None,  # No asset created automatically
                         scan_task_id=task.id,
                         scan_data=scan_result,
-                        scan_type=scan_config["scan_type"],
+                        scan_type=scan_config.get("scan_type", "standard"),
                         status="completed" if categorization["is_device"] else "no_device"
                     )
                     self.db.add(scan)
@@ -259,7 +259,7 @@ class ScanServiceV2:
                             "error": str(e),
                             "timestamp": datetime.utcnow().isoformat()
                         },
-                        scan_type=scan_config["scan_type"],
+                        scan_type=scan_config.get("scan_type", "standard"),
                         status="failed"
                     )
                     self.db.add(failed_scan)

@@ -11,6 +11,7 @@ from .database import engine, Base, SessionLocal, get_db
 from .routes import router
 from .scanner_routes import router as scanner_router
 from .enterprise_routes import router as enterprise_router
+from .satellite_download_routes import router as satellite_download_router
 from .services.auth_service import AuthService
 from .middleware.audit_middleware import AuditMiddleware
 
@@ -206,6 +207,7 @@ app.add_middleware(AuditMiddleware)
 app.include_router(router, prefix="/api/v2", tags=["v2"])
 app.include_router(scanner_router, prefix="/api/v2", tags=["scanners"])
 app.include_router(enterprise_router, prefix="/api/v2", tags=["enterprise"])
+app.include_router(satellite_download_router, tags=["satellite-downloads"])
 
 # Legacy routes removed - only v2 API is used
 

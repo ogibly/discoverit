@@ -1749,11 +1749,20 @@ const AdminSettings = () => {
                       Additional scanners for specific subnets, VLANs, or network segments
                     </p>
                   </div>
-                  {hasPermission('satellite_scanners:create') && (
-                    <Button onClick={() => setShowScannerModal(true)}>
-                      Add Satellite Scanner
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => window.open('/api/v2/satellite-scanner/download/guide', '_blank')}
+                      title="Download Installation Guide"
+                    >
+                      📖 Download Guide
                     </Button>
-                  )}
+                    {hasPermission('satellite_scanners:create') && (
+                      <Button onClick={() => setShowScannerModal(true)}>
+                        Add Satellite Scanner
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1761,14 +1770,29 @@ const AdminSettings = () => {
                   <div className="text-center py-8">
                     <div className="text-4xl mb-4">🛰️</div>
                     <h3 className="text-subheading text-foreground mb-2">No Satellite Scanners</h3>
-                    <p className="text-body text-muted-foreground mb-4">
+                    <p className="text-body text-muted-foreground mb-6">
                       Add satellite scanners to enhance discovery capabilities for specific network segments.
                     </p>
-                    {hasPermission('satellite_scanners:create') && (
-                      <Button onClick={() => setShowScannerModal(true)}>
-                        Add Your First Satellite Scanner
-                      </Button>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button 
+                          variant="outline"
+                          onClick={() => window.open('/api/v2/satellite-scanner/download/windows', '_blank')}
+                          className="flex items-center space-x-2"
+                        >
+                          <span>🪟</span>
+                          <span>Download for Windows</span>
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => window.open('/api/v2/satellite-scanner/download/linux', '_blank')}
+                          className="flex items-center space-x-2"
+                        >
+                          <span>🐧</span>
+                          <span>Download for Linux</span>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">

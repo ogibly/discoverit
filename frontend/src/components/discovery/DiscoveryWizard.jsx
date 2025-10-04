@@ -511,8 +511,7 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = []
   console.log('ScannerSelectionStep - availableScanners type:', typeof availableScanners);
   console.log('ScannerSelectionStep - availableScanners is array:', Array.isArray(availableScanners));
   
-  // Ensure availableScanners is always an array
-  const safeAvailableScanners = Array.isArray(availableScanners) ? availableScanners : [];
+  // Ensure availableScanners is always an array - moved to where it's used
 
   const getScannerRecommendation = async () => {
     if (!data.target) return null;
@@ -641,7 +640,7 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners = []
           )}
 
       <div className="space-y-3">
-        {safeAvailableScanners && safeAvailableScanners.length > 0 ? safeAvailableScanners.map((scanner) => (
+        {availableScanners && Array.isArray(availableScanners) && availableScanners.length > 0 ? availableScanners.map((scanner) => (
           <div
             key={scanner.id}
             className={cn(
@@ -857,7 +856,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                   <div className="text-white font-medium">
                     {(() => {
                       if (data.scannerId) {
-                        const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
+                        const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                         return selectedScanner ? selectedScanner.name : `Scanner ${data.scannerId}`;
                       }
                       return 'Default Scanner';
@@ -868,7 +867,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                       "text-xs px-2 py-1 rounded-full",
                       (() => {
                         if (data.scannerId) {
-                          const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default 
                               ? "bg-blue-500/20 text-blue-400" 
@@ -880,7 +879,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     )}>
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default ? 'Default' : 'Satellite';
                           }
@@ -891,7 +890,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     <span className="text-xs text-slate-400">
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_active ? '🟢 Online' : '🔴 Offline';
                           }
@@ -904,7 +903,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               </div>
               
               {data.scannerId && (() => {
-                const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
+                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                 if (selectedScanner && !selectedScanner.is_default) {
                   return (
                     <div className="space-y-2 pt-2 border-t border-slate-700">
@@ -938,7 +937,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               })()}
               
               {data.scannerId && (() => {
-                const selectedScanner = safeAvailableScanners.find(s => s.id === data.scannerId);
+                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                 if (selectedScanner) {
                   return (
                     <div className="pt-2 border-t border-slate-700">

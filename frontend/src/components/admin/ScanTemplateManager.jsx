@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 const ScanTemplateManager = () => {
-  const { scanTemplates, fetchScanTemplates } = useApp();
+  const { scanTemplates, fetchScanTemplates, api } = useApp();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
@@ -111,18 +111,10 @@ const ScanTemplateManager = () => {
 
       if (isEditModalOpen && editingTemplate) {
         // Update existing template
-        await fetch(`/api/v2/scan-templates/${editingTemplate.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(templateData)
-        });
+        await api.put(`/scan-templates/${editingTemplate.id}`, templateData);
       } else {
         // Create new template
-        await fetch('/api/v2/scan-templates', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(templateData)
-        });
+        await api.post('/scan-templates', templateData);
       }
 
       await fetchScanTemplates();
@@ -141,15 +133,7 @@ const ScanTemplateManager = () => {
     if (!confirm(`Are you sure you want to delete "${template.name}"?`)) return;
     
     try {
-      const response = await fetch(`/api/v2/scan-templates/${template.id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to delete template');
-      }
-      
+      await api.delete(`/scan-templates/${template.id}`);
       await fetchScanTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);

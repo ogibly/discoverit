@@ -265,8 +265,11 @@ export function AppProvider({ children }) {
     
     // Get token from localStorage to ensure it's always current
     const currentToken = localStorage.getItem('token');
+    console.log('API Call to:', endpoint);
+    console.log('Token from localStorage:', currentToken);
     if (currentToken) {
       headers['Authorization'] = `Bearer ${currentToken}`;
+      console.log('Authorization header set:', headers['Authorization']);
     } else {
       console.warn('No authentication token found for API call to:', endpoint);
     }
@@ -290,39 +293,10 @@ export function AppProvider({ children }) {
         window.location.href = '/login';
       } else if (error.response?.status === 403) {
         console.error('403 Forbidden - Check authentication token and permissions');
-        // Try to refresh the token first
-        const currentToken = localStorage.getItem('token');
-        if (currentToken) {
-          try {
-            console.log('Attempting to refresh token...');
-            const refreshResponse = await axios.post(`${API_BASE}/auth/refresh`, {}, {
-              headers: {
-                'Authorization': `Bearer ${currentToken}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            if (refreshResponse.data.access_token) {
-              console.log('Token refreshed successfully');
-              localStorage.setItem('token', refreshResponse.data.access_token);
-              // Retry the original request with the new token
-              const retryResponse = await axios({
-                url: `${API_BASE}${endpoint}`,
-                headers: {
-                  ...headers,
-                  'Authorization': `Bearer ${refreshResponse.data.access_token}`
-                },
-                ...options
-              });
-              return retryResponse.data;
-            }
-          } catch (refreshError) {
-            console.warn('Token refresh failed, redirecting to login');
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-            return;
-          }
-        }
+        console.error('Current token:', localStorage.getItem('token'));
+        // For now, just redirect to login on 403
+        localStorage.removeItem('token');
+        window.location.href = '/login';
       }
       
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.response?.data?.detail || error.message });

@@ -773,8 +773,8 @@ class ScanServiceV2:
             "task_name": task.name,
             "target": task.target,
             "status": task.status,
-            "start_time": task.start_time.isoformat() if task.start_time else None,
-            "end_time": task.end_time.isoformat() if task.end_time else None,
+            "start_time": task.start_time.replace(tzinfo=timezone.utc).isoformat() if task.start_time else None,
+            "end_time": task.end_time.replace(tzinfo=timezone.utc).isoformat() if task.end_time else None,
             "scans": []
         }
         
@@ -784,7 +784,7 @@ class ScanServiceV2:
                 "asset_id": scan.asset_id,
                 "ip_address": scan.ip_address,
                 "status": scan.status,
-                "timestamp": scan.timestamp.isoformat() if scan.timestamp else None,
+                "timestamp": scan.timestamp.replace(tzinfo=timezone.utc).isoformat() if scan.timestamp else None,
                 "results": scan.results
             }
             results["scans"].append(scan_data)

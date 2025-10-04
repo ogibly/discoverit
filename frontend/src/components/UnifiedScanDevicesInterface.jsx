@@ -155,13 +155,46 @@ const UnifiedScanDevicesInterface = () => {
 
   const handleDownloadResults = async (scanId) => {
     try {
-      const downloadUrl = `/api/v2/scan-tasks/${scanId}/download`;
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        alert('Authentication required. Please log in again.');
+        return;
+      }
+
+      const response = await fetch(`/api/v2/scan-tasks/${scanId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Get the filename from the response headers or use a default
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `scan-results-${scanId}.json`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `scan-results-${scanId}.json`;
+      link.href = url;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to download scan results:', error);
       alert('Failed to download scan results. Please try again.');
@@ -222,8 +255,8 @@ const UnifiedScanDevicesInterface = () => {
   const handleViewDevices = (scanTask) => {
     // Set the selected scan ID to filter devices
     setSelectedScanId(scanTask.id);
-    // Update the search to filter by this scan
-    setSearchTerm(`scan_id=${scanTask.id}`);
+    // Update the search to filter by this scan using a more user-friendly format
+    setSearchTerm(`scan:${scanTask.id}`);
     // Switch to devices tab if not already there
     setActiveTab('devices');
   };
@@ -779,6 +812,7 @@ const UnifiedScanDevicesInterface = () => {
                                     e.stopPropagation();
                                     handleViewResults(task.id);
                                   }}
+                                  title="View scan results"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </Button>
@@ -789,6 +823,7 @@ const UnifiedScanDevicesInterface = () => {
                                     e.stopPropagation();
                                     handleDownloadResults(task.id);
                                   }}
+                                  title="Download scan results"
                                 >
                                   <Download className="w-4 h-4" />
                                 </Button>
@@ -844,28 +879,11 @@ const UnifiedScanDevicesInterface = () => {
                                       size="sm"
                                       onClick={() => handleViewDevices(task)}
                                       className="flex items-center space-x-2"
+                                      title="Filter devices from this scan"
                                     >
                                       <Network className="w-4 h-4" />
                                       <span>Filter Devices</span>
                                       <ExternalLink className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleViewResults(task.id)}
-                                      className="flex items-center space-x-2"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                      <span>View Results</span>
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDownloadResults(task.id)}
-                                      className="flex items-center space-x-2"
-                                    >
-                                      <Download className="w-4 h-4" />
-                                      <span>Download</span>
                                     </Button>
                                     {task.status === 'failed' && (
                                       <Button
@@ -874,6 +892,7 @@ const UnifiedScanDevicesInterface = () => {
                                         onClick={() => handleRetryScan(task.id)}
                                         disabled={retryingScans.has(task.id)}
                                         className="flex items-center space-x-2"
+                                        title="Retry this failed scan"
                                       >
                                         {retryingScans.has(task.id) ? (
                                           <RefreshCw className="w-4 h-4 animate-spin" />

@@ -722,8 +722,8 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
               </div>
             </div>
           </div>
-            );
-          } catch (error) {
+          );
+        } catch (error) {
             console.error('Error rendering scanners:', error);
             return (
               <div className="text-center py-8 text-red-400">

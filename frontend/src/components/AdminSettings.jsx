@@ -2244,6 +2244,7 @@ const AdminSettings = () => {
               Scanner Name
             </label>
             <Input
+              id="scanner-name"
               value={scannerForm.name}
               onChange={(e) => setScannerForm({...scannerForm, name: e.target.value})}
               placeholder="e.g., Branch Office Scanner"
@@ -2254,6 +2255,7 @@ const AdminSettings = () => {
               Scanner URL
             </label>
             <Input
+              id="scanner-url"
               value={scannerForm.url}
               onChange={(e) => setScannerForm({...scannerForm, url: e.target.value})}
               placeholder="e.g., http://scanner2:8001"
@@ -2264,6 +2266,7 @@ const AdminSettings = () => {
               Assigned Subnets
             </label>
             <Input
+              id="scanner-subnets"
               value={scannerForm.subnets.join(', ')}
               onChange={(e) => setScannerForm({...scannerForm, subnets: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
               placeholder="e.g., 192.168.1.0/24, 10.0.1.0/24"
@@ -2760,6 +2763,7 @@ const AdminSettings = () => {
                   API Key Name *
                 </label>
                 <Input
+                  id="api-key-name"
                   value={apiKeyForm.name}
                   onChange={(e) => setApiKeyForm({...apiKeyForm, name: e.target.value})}
                   placeholder="e.g., Satellite Scanner - Branch Office"
@@ -2770,6 +2774,7 @@ const AdminSettings = () => {
                   Description
                 </label>
                 <Input
+                  id="api-key-description"
                   value={apiKeyForm.description}
                   onChange={(e) => setApiKeyForm({...apiKeyForm, description: e.target.value})}
                   placeholder="Optional description for this API key"
@@ -2967,6 +2972,7 @@ const AdminSettings = () => {
               Subnet Name *
             </label>
             <Input
+              id="subnet-name"
               value={subnetForm.name}
               onChange={(e) => {
                 setSubnetForm({...subnetForm, name: e.target.value});
@@ -3006,6 +3012,7 @@ const AdminSettings = () => {
               CIDR Notation *
             </label>
             <Input
+              id="subnet-cidr"
               value={subnetForm.cidr}
               onChange={(e) => {
                 setSubnetForm({...subnetForm, cidr: e.target.value});

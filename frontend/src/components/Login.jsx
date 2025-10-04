@@ -80,6 +80,7 @@ const Login = () => {
                 onChange={(e) => handleUsernameChange(e.target.value)}
                 className={`w-full px-3 py-2 bg-background border rounded-md text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent ${formErrors.username ? 'border-red-500' : 'border-border'}`}
                 placeholder="Enter your username"
+                autoComplete="username"
               />
               {formErrors.username && (
                 <p className="text-red-500 text-sm mt-1">{formErrors.username}</p>

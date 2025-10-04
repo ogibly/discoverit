@@ -732,11 +732,114 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
 
           <div className="bg-slate-800 rounded-lg p-4">
             <h4 className="font-medium text-white mb-3">Scanner</h4>
-            <div className="text-sm">
-              <div className="text-slate-400">Selected Scanner:</div>
-              <div className="text-white">
-                {data.scannerId ? `Scanner ${data.scannerId}` : 'Default Scanner'}
+            <div className="text-sm space-y-3">
+              <div className="flex justify-between items-start">
+                <span className="text-slate-400">Selected Scanner:</span>
+                <div className="text-right">
+                  <div className="text-white font-medium">
+                    {(() => {
+                      if (data.scannerId) {
+                        const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                        return selectedScanner ? selectedScanner.name : `Scanner ${data.scannerId}`;
+                      }
+                      return 'Default Scanner';
+                    })()}
+                  </div>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className={cn(
+                      "text-xs px-2 py-1 rounded-full",
+                      (() => {
+                        if (data.scannerId) {
+                          const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                          if (selectedScanner) {
+                            return selectedScanner.is_default 
+                              ? "bg-blue-500/20 text-blue-400" 
+                              : "bg-green-500/20 text-green-400";
+                          }
+                        }
+                        return "bg-blue-500/20 text-blue-400";
+                      })()
+                    )}>
+                      {(() => {
+                        if (data.scannerId) {
+                          const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                          if (selectedScanner) {
+                            return selectedScanner.is_default ? 'Default' : 'Satellite';
+                          }
+                        }
+                        return 'Default';
+                      })()}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {(() => {
+                        if (data.scannerId) {
+                          const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                          if (selectedScanner) {
+                            return selectedScanner.is_active ? '🟢 Online' : '🔴 Offline';
+                          }
+                        }
+                        return '🟢 Online';
+                      })()}
+                    </span>
+                  </div>
+                </div>
               </div>
+              
+              {data.scannerId && (() => {
+                const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                if (selectedScanner && !selectedScanner.is_default) {
+                  return (
+                    <div className="space-y-2 pt-2 border-t border-slate-700">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Network Coverage:</span>
+                        <span className="text-white text-xs">
+                          {selectedScanner.subnets?.length || 0} subnet{selectedScanner.subnets?.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {selectedScanner.subnets && selectedScanner.subnets.length > 0 && (
+                        <div className="text-xs text-slate-400">
+                          <div className="text-slate-500 mb-1">Covered Networks:</div>
+                          <div className="space-y-1">
+                            {selectedScanner.subnets.slice(0, 3).map((subnet, index) => (
+                              <div key={index} className="text-slate-300 font-mono">
+                                {subnet}
+                              </div>
+                            ))}
+                            {selectedScanner.subnets.length > 3 && (
+                              <div className="text-slate-500">
+                                +{selectedScanner.subnets.length - 3} more networks
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              
+              {data.scannerId && (() => {
+                const selectedScanner = availableScanners.find(s => s.id === data.scannerId);
+                if (selectedScanner) {
+                  return (
+                    <div className="pt-2 border-t border-slate-700">
+                      <div className="text-xs text-slate-400 mb-2">Scanner Capabilities:</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Max Concurrent:</span>
+                          <span className="text-slate-300">{selectedScanner.max_concurrent_scans || 'Unlimited'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Timeout:</span>
+                          <span className="text-slate-300">{selectedScanner.timeout_seconds ? `${selectedScanner.timeout_seconds}s` : 'Default'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
         </div>

@@ -65,7 +65,6 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = async (username, password) => {
-    console.log('Login attempt for user:', username);
     try {
       const response = await fetch('/api/v2/auth/login', {
         method: 'POST',
@@ -74,18 +73,14 @@ export const AuthProvider = ({ children }) => {
         },
         body: JSON.stringify({ username, password }),
       });
-
-      console.log('Login response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Login successful, token:', data.access_token);
         setToken(data.access_token);
         setUser(data.user);
         setIsAuthenticated(true);
         setPermissions(data.user.role?.permissions || []);
         localStorage.setItem('token', data.access_token);
-        console.log('Token stored in localStorage:', localStorage.getItem('token'));
         
         // Dispatch custom event to notify AppContext
         window.dispatchEvent(new CustomEvent('auth-changed'));

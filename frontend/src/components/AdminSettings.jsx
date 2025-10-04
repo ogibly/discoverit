@@ -1412,6 +1412,7 @@ const AdminSettings = () => {
                       Scan Retry Time Limit (minutes)
                     </label>
                     <Input
+                      id="scan-retry-time-limit"
                       type="number"
                       value={settings?.scan_retry_time_limit_minutes || 30}
                       onChange={(e) => {
@@ -2140,6 +2141,7 @@ const AdminSettings = () => {
               Username *
             </label>
             <Input
+              id="user-username"
               value={userForm.username}
               onChange={(e) => handleUserFormChange('username', e.target.value)}
               placeholder="Enter username"
@@ -2154,6 +2156,7 @@ const AdminSettings = () => {
               Email *
             </label>
             <Input
+              id="user-email"
               type="email"
               value={userForm.email}
               onChange={(e) => handleUserFormChange('email', e.target.value)}
@@ -2169,6 +2172,7 @@ const AdminSettings = () => {
               Full Name
             </label>
             <Input
+              id="user-full-name"
               value={userForm.full_name}
               onChange={(e) => setUserForm({...userForm, full_name: e.target.value})}
               placeholder="Enter full name"
@@ -2179,6 +2183,7 @@ const AdminSettings = () => {
               Password *
             </label>
             <Input
+              id="user-password"
               type="password"
               value={userForm.password}
               onChange={(e) => handleUserFormChange('password', e.target.value)}

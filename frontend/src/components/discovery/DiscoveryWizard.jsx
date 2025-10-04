@@ -337,6 +337,7 @@ const TargetSelectionStep = ({ data, updateData, errors, api }) => {
               Target
             </label>
             <Input
+              id="scan-target"
               value={data.target}
               onChange={(e) => handleTargetChange(e.target.value)}
               placeholder="e.g., 192.168.1.0/24, 10.0.0.1-10.0.0.100"

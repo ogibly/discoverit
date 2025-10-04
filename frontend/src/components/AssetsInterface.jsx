@@ -607,6 +607,7 @@ const AssetsInterface = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
+                  id="asset-search"
                   placeholder="Search assets (e.g., name=server01, ip=192.168.1.1, status=active)..."
                   value={searchTerm}
                   onChange={(e) => handleSearchChange(e.target.value)}

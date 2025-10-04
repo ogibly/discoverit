@@ -91,14 +91,23 @@ def scanner_heartbeat(heartbeat_data: Dict[str, Any], db: Session = Depends(get_
 def list_scanners(
     db: Session = Depends(get_db)
 ):
-    """List all registered scanners."""
+    """List all registered satellite scanners (excluding default scanner)."""
     try:
         service = AssetService(db)
         settings = service.get_settings()
         if not settings or not settings.scanners:
             return []
         
-        return settings.scanners
+        # Filter out the default scanner - only return actual satellite scanners
+        satellite_scanners = []
+        for scanner in settings.scanners:
+            # Skip scanners that are marked as default or have default-like names
+            if (scanner.get('is_default', False) or 
+                scanner.get('name', '').lower() in ['default scanner', 'main scanner']):
+                continue
+            satellite_scanners.append(scanner)
+        
+        return satellite_scanners
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

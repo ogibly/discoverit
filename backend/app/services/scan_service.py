@@ -10,7 +10,7 @@ from .asset_service import AssetService
 import ipaddress
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 import concurrent.futures
 import logging
@@ -301,9 +301,7 @@ class ScanServiceV2:
             return {"can_retry": False, "reason": "Only failed scans can be retried"}
         
         # Get retry time limit from settings
-        from .asset_service import AssetService
-        asset_service = AssetService(self.db)
-        settings = asset_service.get_settings()
+        settings = self.asset_service.get_settings()
         retry_limit_minutes = getattr(settings, 'scan_retry_time_limit_minutes', 30)
         
         # Check if scan is within retry time limit

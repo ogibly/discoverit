@@ -39,6 +39,9 @@ def handle_service_errors(func):
             raise HTTPException(status_code=404, detail=str(e))
         except DuplicateError as e:
             raise HTTPException(status_code=409, detail=str(e))
+        except ValueError as e:
+            # Handle ValueError from service methods (e.g., retry eligibility checks)
+            raise HTTPException(status_code=400, detail=str(e))
         except ServiceError as e:
             logger.error(f"Service error in {func.__name__}: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")

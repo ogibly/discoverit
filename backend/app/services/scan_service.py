@@ -306,7 +306,15 @@ class ScanServiceV2:
         
         # Check if scan is within retry time limit
         if task.end_time:
-            time_since_failure = datetime.now(timezone.utc) - task.end_time
+            # Handle timezone-aware vs naive datetime comparison
+            now = datetime.now(timezone.utc)
+            end_time = task.end_time
+            
+            # If end_time is naive, assume it's UTC
+            if end_time.tzinfo is None:
+                end_time = end_time.replace(tzinfo=timezone.utc)
+            
+            time_since_failure = now - end_time
             if time_since_failure.total_seconds() > (retry_limit_minutes * 60):
                 return {
                     "can_retry": False, 

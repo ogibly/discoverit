@@ -656,7 +656,7 @@ async def get_settings(
 @router.put("/settings")
 @handle_service_errors
 async def update_settings(
-    settings_data: dict,
+    settings_data: schemas.SettingsUpdate,
     current_user: User = Depends(require_settings_write),
     services: ServiceFactory = Depends(get_services)
 ):

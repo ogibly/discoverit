@@ -220,8 +220,12 @@ const UnifiedScanDevicesInterface = () => {
   };
 
   const handleViewDevices = (scanTask) => {
-    const devicesUrl = `/devices?scan_task_id=${scanTask.id}&scan_name=${encodeURIComponent(scanTask.name)}`;
-    window.open(devicesUrl, '_blank');
+    // Set the selected scan ID to filter devices
+    setSelectedScanId(scanTask.id);
+    // Update the search to filter by this scan
+    setSearchTerm(`scan_id=${scanTask.id}`);
+    // Switch to devices tab if not already there
+    setActiveTab('devices');
   };
 
   // Device-related functions
@@ -842,7 +846,7 @@ const UnifiedScanDevicesInterface = () => {
                                       className="flex items-center space-x-2"
                                     >
                                       <Network className="w-4 h-4" />
-                                      <span>View Devices</span>
+                                      <span>Filter Devices</span>
                                       <ExternalLink className="w-3 h-3" />
                                     </Button>
                                     <Button

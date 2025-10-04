@@ -437,12 +437,18 @@ async def check_scan_retry_eligibility(
 @handle_service_errors
 async def retry_scan_task(
     task_id: int,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_discovery_write),
     services: ServiceFactory = Depends(get_services)
 ):
     """Retry a failed scan task."""
     scan_service = services.get_scan_service()
-    return scan_service.retry_scan_task(task_id)
+    result = scan_service.retry_scan_task(task_id)
+    
+    # Start the scan in the background
+    background_tasks.add_task(scan_service.run_scan_task, task_id)
+    
+    return result
 
 
 @router.get("/scan-tasks/{task_id}/results")

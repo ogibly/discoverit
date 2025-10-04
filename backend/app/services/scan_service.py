@@ -344,12 +344,6 @@ class ScanServiceV2:
         
         self.db.commit()
         
-        # Start the scan task
-        import threading
-        scan_thread = threading.Thread(target=self.run_scan_task, args=(task_id,))
-        scan_thread.daemon = True
-        scan_thread.start()
-        
         return {
             "message": "Scan task retry initiated",
             "task_id": task_id,

@@ -16,7 +16,6 @@ from .enhanced_discovery_service import EnhancedDiscoveryService
 from .template_service import TemplateService
 from .webhook_service import WebhookService
 from .audit_service import AuditService
-
 import logging
 
 logger = logging.getLogger(__name__)

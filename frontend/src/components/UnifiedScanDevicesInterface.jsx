@@ -922,6 +922,7 @@ const UnifiedScanDevicesInterface = () => {
                         );
                       })}
                     </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -1198,11 +1199,7 @@ const UnifiedScanDevicesInterface = () => {
                     </Card>
                   );
                 })}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              </div>
             ) : (
               <Card>
                 <CardContent className="p-0">

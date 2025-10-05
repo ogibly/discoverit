@@ -42,6 +42,15 @@ export const validators = {
     return num <= max ? null : `Must be no more than ${max}`;
   },
 
+  range: (min, max) => (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    const num = Number(value);
+    if (isNaN(num)) return 'Must be a valid number';
+    if (num < min) return `Must be at least ${min}`;
+    if (num > max) return `Must be no more than ${max}`;
+    return null;
+  },
+
   pattern: (regex, message) => (value) => {
     if (!value) return null;
     return regex.test(value) ? null : message;

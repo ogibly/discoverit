@@ -41,3 +41,6 @@ export {
   useMagneticEffect,
   useRippleEffect
 } from '../utils/animations';
+
+// Re-export component utilities
+export * from '../utils/componentUtils';

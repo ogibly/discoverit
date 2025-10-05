@@ -11,10 +11,6 @@ import {
   Database,
   Settings,
   BookOpen,
-  User,
-  LogOut,
-  Moon,
-  Sun,
   Maximize2,
   Minimize2
 } from 'lucide-react';
@@ -188,45 +184,6 @@ const EnhancedSidebar = ({
           {children}
         </div>
 
-        {/* Modern Footer with User Info */}
-        <div className={cn(
-          "border-t border-slate-300 dark:border-slate-700 bg-slate-200/50 dark:bg-slate-800/50",
-          isCollapsed ? "p-2" : "p-4"
-        )}>
-          {!isCollapsed ? (
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">U</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">uiamjad</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 truncate">Administrator</p>
-              </div>
-              <div className="flex items-center space-x-1">
-                <button className="p-2 rounded-lg hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Toggle theme">
-                  <Moon className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                </button>
-                <button className="p-2 rounded-lg hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Logout">
-                  <LogOut className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center space-y-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xs">U</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <button className="p-1.5 rounded-md hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Toggle theme">
-                  <Moon className="w-3 h-3 text-slate-600 dark:text-slate-300" />
-                </button>
-                <button className="p-1.5 rounded-md hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Logout">
-                  <LogOut className="w-3 h-3 text-slate-600 dark:text-slate-300" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Resize Handle */}
         {resizable && !isCollapsed && (

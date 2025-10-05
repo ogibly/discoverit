@@ -333,9 +333,9 @@ export const useRippleEffect = () => {
   };
 };
 
-// Animation utilities
+// Tailwind CSS animation utilities
 export const getAnimationClasses = (variant, options = {}) => {
-  const baseClasses = 'transition-all duration-300 ease-out';
+  const baseClasses = 'transition-all ease-out';
   
   const variantClasses = {
     fadeIn: 'opacity-0 animate-fade-in',

@@ -154,12 +154,17 @@ export const AriaLiveRegion = ({ announcements }) => {
   );
 };
 
-// Skip link component
-export const SkipLink = ({ href, children }) => {
+// Skip link component using Tailwind CSS
+export const SkipLink = ({ href, children, className = '' }) => {
   return (
     <a
       href={href}
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-yellow-500 focus:text-slate-900 focus:rounded-lg focus:font-semibold"
+      className={cn(
+        'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50',
+        'focus:px-4 focus:py-2 focus:bg-yellow-500 focus:text-slate-900',
+        'focus:rounded-lg focus:font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-500/20',
+        className
+      )}
     >
       {children}
     </a>
@@ -249,7 +254,7 @@ export const useColorScheme = () => {
   return colorScheme;
 };
 
-// Accessible button component
+// Accessible button component using Tailwind CSS
 export const AccessibleButton = ({ 
   children, 
   onClick, 
@@ -257,6 +262,8 @@ export const AccessibleButton = ({
   loading = false,
   ariaLabel,
   ariaDescribedBy,
+  variant = 'primary',
+  size = 'md',
   className = '',
   ...props 
 }) => {
@@ -271,6 +278,19 @@ export const AccessibleButton = ({
     }
   }, [disabled, loading, onClick]);
 
+  const variantClasses = {
+    primary: 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-slate-900 font-semibold',
+    secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-300 border border-slate-600',
+    outline: 'border border-slate-600 text-slate-300 hover:bg-slate-700/50',
+    ghost: 'text-slate-300 hover:bg-slate-700/50'
+  };
+
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-base',
+    lg: 'px-6 py-3 text-lg'
+  };
+
   return (
     <button
       ref={buttonRef}
@@ -280,7 +300,14 @@ export const AccessibleButton = ({
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedBy}
       aria-busy={loading}
-      className={`focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:ring-offset-2 focus:ring-offset-slate-900 ${className}`}
+      className={cn(
+        'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg',
+        'focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:ring-offset-2 focus:ring-offset-slate-900',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        variantClasses[variant],
+        sizeClasses[size],
+        className
+      )}
       {...props}
     >
       {loading ? (
@@ -295,7 +322,7 @@ export const AccessibleButton = ({
   );
 };
 
-// Accessible form field component
+// Accessible form field component using Tailwind CSS
 export const AccessibleFormField = ({
   label,
   error,
@@ -309,14 +336,16 @@ export const AccessibleFormField = ({
   const helpId = useRef(`help-${Math.random().toString(36).substr(2, 9)}`);
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className={cn('space-y-2', className)}>
       {label && (
         <label 
           htmlFor={fieldId.current}
           className="block text-sm font-medium text-slate-300"
         >
           {label}
-          {required && <span className="text-red-400 ml-1" aria-label="required">*</span>}
+          {required && (
+            <span className="text-red-400 ml-1" aria-label="required">*</span>
+          )}
         </label>
       )}
       {helpText && (
@@ -330,7 +359,7 @@ export const AccessibleFormField = ({
       {error && (
         <p 
           id={errorId.current}
-          className="text-sm text-red-400"
+          className="text-sm text-red-400 animate-shake"
           role="alert"
           aria-live="polite"
         >
@@ -341,16 +370,22 @@ export const AccessibleFormField = ({
   );
 };
 
-// Accessible table component
+// Accessible table component using Tailwind CSS
 export const AccessibleTable = ({ 
   children, 
   caption,
-  className = '' 
+  className = '',
+  striped = false,
+  hover = true
 }) => {
   return (
     <div className="overflow-x-auto">
       <table 
-        className={`w-full ${className}`}
+        className={cn(
+          'w-full border-collapse',
+          striped && 'divide-y divide-slate-700',
+          className
+        )}
         role="table"
         aria-label={caption}
       >
@@ -361,16 +396,24 @@ export const AccessibleTable = ({
   );
 };
 
-// Accessible modal component
+// Accessible modal component using Tailwind CSS
 export const AccessibleModal = ({ 
   isOpen, 
   onClose, 
   title, 
   children, 
+  size = 'md',
   className = '' 
 }) => {
   const modalRef = useRef(null);
   const { trapFocus } = useFocusManagement();
+
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-2xl',
+    lg: 'max-w-4xl',
+    xl: 'max-w-6xl'
+  };
 
   useEffect(() => {
     if (isOpen && modalRef.current) {
@@ -401,14 +444,20 @@ export const AccessibleModal = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
     >
       <div 
         ref={modalRef}
-        className={`bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-auto ${className}`}
+        className={cn(
+          'bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl',
+          'w-full mx-4 max-h-[90vh] overflow-auto',
+          'animate-scale-in-up',
+          sizeClasses[size],
+          className
+        )}
       >
         <div className="p-6 border-b border-slate-700">
           <h2 id="modal-title" className="text-2xl font-bold text-white">

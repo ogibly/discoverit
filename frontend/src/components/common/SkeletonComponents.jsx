@@ -6,7 +6,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 
-// Base skeleton component
+// Base skeleton component using Tailwind CSS
 const Skeleton = ({ 
   className = '', 
   variant = 'default',
@@ -18,6 +18,9 @@ const Skeleton = ({
       className={cn(
         'bg-slate-700/50 rounded',
         animate && 'animate-pulse',
+        // Tailwind CSS variants
+        variant === 'shimmer' && 'relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent',
+        variant === 'wave' && 'animate-wave',
         className
       )}
       {...props}

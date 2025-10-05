@@ -77,7 +77,7 @@
   }
 
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   html {
@@ -108,28 +108,28 @@
 @layer components {
   /* Elegant surface treatments */
   .surface {
-    @apply bg-background border border-border;
+    @apply bg-background border border-slate-200 dark:border-slate-700;
   }
   
   .surface-elevated {
-    @apply bg-card border border-border shadow-sm;
+    @apply bg-card border border-slate-200 dark:border-slate-700 shadow-sm;
   }
   
   .surface-interactive {
-    @apply surface-elevated transition-all duration-200 hover:shadow-md hover:border-border/80 cursor-pointer;
+    @apply surface-elevated transition-all duration-200 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer;
   }
 
   /* Refined card system */
   .card {
-    @apply rounded-md border border-border bg-card text-card-foreground;
+    @apply rounded-md border border-slate-200 dark:border-slate-700 bg-card text-card-foreground;
   }
   
   .card-subtle {
-    @apply card border-border/50 bg-muted/30;
+    @apply card border-slate-200/50 dark:border-slate-700/50 bg-muted/30;
   }
   
   .card-interactive {
-    @apply card transition-all duration-200 hover:shadow-sm hover:border-border/80 cursor-pointer;
+    @apply card transition-all duration-200 hover:shadow-sm hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer;
   }
 
   /* Sophisticated button system */
@@ -150,12 +150,12 @@
   }
   
   .btn-outline {
-    @apply btn border border-border bg-background hover:bg-accent hover:text-accent-foreground;
+    @apply btn border border-slate-200 dark:border-slate-700 bg-background hover:bg-accent hover:text-accent-foreground;
   }
 
   /* Refined input system */
   .input {
-    @apply flex h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-9 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   /* Elegant badge system */
@@ -164,7 +164,7 @@
   }
   
   .badge-default {
-    @apply badge border-border bg-muted text-muted-foreground;
+    @apply badge border-slate-200 dark:border-slate-700 bg-muted text-muted-foreground;
   }
   
   .badge-primary {

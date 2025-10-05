@@ -1,41 +1,76 @@
 /**
- * Custom hook for localStorage with type safety and error handling
+ * Custom Hook: useLocalStorage
+ * Efficiently manages localStorage with error handling and SSR support
  */
+
 import { useState, useEffect, useCallback } from 'react';
 
-export const useLocalStorage = (key, initialValue) => {
-  // Get from local storage then parse stored json or return initialValue
+export const useLocalStorage = (key, initialValue, options = {}) => {
+  const {
+    serialize = JSON.stringify,
+    deserialize = JSON.parse,
+    syncAcrossTabs = false,
+    onError = (error) => console.warn(`useLocalStorage error for key "${key}":`, error)
+  } = options;
+
+  // Get initial value from localStorage or use provided initial value
   const [storedValue, setStoredValue] = useState(() => {
+    if (typeof window === 'undefined') return initialValue;
+    
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      return item ? deserialize(item) : initialValue;
     } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
+      onError(error);
       return initialValue;
     }
   });
 
-  // Return a wrapped version of useState's setter function that persists the new value to localStorage
+  // Set value in localStorage and state
   const setValue = useCallback((value) => {
     try {
-      // Allow value to be a function so we have the same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, serialize(valueToStore));
+      }
     } catch (error) {
-      console.error(`Error setting localStorage key "${key}":`, error);
+      onError(error);
     }
-  }, [key, storedValue]);
+  }, [key, serialize, storedValue]);
 
-  // Remove from localStorage
+  // Remove value from localStorage
   const removeValue = useCallback(() => {
     try {
-      window.localStorage.removeItem(key);
       setStoredValue(initialValue);
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(key);
+      }
     } catch (error) {
-      console.error(`Error removing localStorage key "${key}":`, error);
+      onError(error);
     }
   }, [key, initialValue]);
 
+  // Sync across tabs if enabled
+  useEffect(() => {
+    if (!syncAcrossTabs || typeof window === 'undefined') return;
+
+    const handleStorageChange = (e) => {
+      if (e.key === key && e.newValue !== null) {
+        try {
+          setStoredValue(deserialize(e.newValue));
+        } catch (error) {
+          onError(error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [key, deserialize, syncAcrossTabs, onError]);
+
   return [storedValue, setValue, removeValue];
 };
+
+export default useLocalStorage;

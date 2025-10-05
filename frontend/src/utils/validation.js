@@ -1,235 +1,274 @@
 /**
- * Client-side validation utilities for forms
+ * Validation Utilities
+ * Comprehensive validation system to reduce repetitive validation code
  */
 
-// Validation rules
-export const VALIDATION_RULES = {
+// Common validation functions
+export const validators = {
   required: (value) => {
-    if (!value || (typeof value === 'string' && value.trim() === '')) {
+    if (value === null || value === undefined || value === '') {
       return 'This field is required';
     }
     return null;
   },
-  
-  minLength: (min) => (value) => {
-    if (value && value.length < min) {
-      return `Must be at least ${min} characters long`;
-    }
-    return null;
-  },
-  
-  maxLength: (max) => (value) => {
-    if (value && value.length > max) {
-      return `Must be no more than ${max} characters long`;
-    }
-    return null;
-  },
-  
+
   email: (value) => {
-    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
+    if (!value) return null;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value) ? null : 'Please enter a valid email address';
   },
-  
+
+  minLength: (min) => (value) => {
+    if (!value) return null;
+    return value.length >= min ? null : `Must be at least ${min} characters`;
+  },
+
+  maxLength: (max) => (value) => {
+    if (!value) return null;
+    return value.length <= max ? null : `Must be no more than ${max} characters`;
+  },
+
+  min: (min) => (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    const num = Number(value);
+    return num >= min ? null : `Must be at least ${min}`;
+  },
+
+  max: (max) => (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    const num = Number(value);
+    return num <= max ? null : `Must be no more than ${max}`;
+  },
+
+  pattern: (regex, message) => (value) => {
+    if (!value) return null;
+    return regex.test(value) ? null : message;
+  },
+
   url: (value) => {
-    if (value && !/^https?:\/\/.+/.test(value)) {
-      return 'Please enter a valid URL (starting with http:// or https://)';
-    }
-    return null;
-  },
-  
-  ldapUri: (value) => {
-    if (value && !/^(ldap|ldaps):\/\/.+/.test(value)) {
-      return 'Please enter a valid LDAP URI (starting with ldap:// or ldaps://)';
-    }
-    return null;
-  },
-  
-  port: (value) => {
-    if (value && (isNaN(value) || value < 1 || value > 65535)) {
-      return 'Port must be a number between 1 and 65535';
-    }
-    return null;
-  },
-  
-  positiveNumber: (value) => {
-    if (value && (isNaN(value) || value <= 0)) {
-      return 'Must be a positive number';
-    }
-    return null;
-  },
-  
-  range: (min, max) => (value) => {
-    if (value && (isNaN(value) || value < min || value > max)) {
-      return `Must be between ${min} and ${max}`;
-    }
-    return null;
-  },
-  
-  cidr: (value) => {
-    if (value && !/^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(value)) {
-      return 'Please enter a valid CIDR notation (e.g., 192.168.1.0/24)';
-    }
-    return null;
-  },
-  
-  ipAddress: (value) => {
-    if (value && !/^(\d{1,3}\.){3}\d{1,3}$/.test(value)) {
-      return 'Please enter a valid IP address';
-    }
-    return null;
-  },
-  
-  username: (value) => {
-    if (value && !/^[a-zA-Z0-9_-]{3,}$/.test(value)) {
-      return 'Username must be at least 3 characters and contain only letters, numbers, underscores, and hyphens';
-    }
-    return null;
-  },
-  
-  password: (value) => {
-    if (value && value.length < 8) {
-      return 'Password must be at least 8 characters long';
-    }
-    return null;
-  },
-  
-  // Additional validation rules for common edge cases
-  optionalString: (value) => {
-    // Allow empty strings, null, undefined for optional fields
-    if (value === '' || value === null || value === undefined) {
+    if (!value) return null;
+    try {
+      new URL(value);
       return null;
+    } catch {
+      return 'Please enter a valid URL';
     }
-    return null;
   },
-  
-  optionalNumber: (value) => {
-    // Allow empty strings, null, undefined for optional number fields
-    if (value === '' || value === null || value === undefined) {
-      return null;
-    }
-    // If value is provided, it should be a valid number
-    if (isNaN(value)) {
-      return 'Must be a valid number';
-    }
-    return null;
+
+  phone: (value) => {
+    if (!value) return null;
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    return phoneRegex.test(value.replace(/[\s\-\(\)]/g, '')) ? null : 'Please enter a valid phone number';
   },
-  
-  optionalInteger: (value) => {
-    // Allow empty strings, null, undefined for optional integer fields
-    if (value === '' || value === null || value === undefined) {
-      return null;
-    }
-    // If value is provided, it should be a valid integer
-    if (isNaN(value) || !Number.isInteger(Number(value))) {
-      return 'Must be a valid integer';
-    }
-    return null;
+
+  ip: (value) => {
+    if (!value) return null;
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    return ipRegex.test(value) ? null : 'Please enter a valid IP address';
+  },
+
+  mac: (value) => {
+    if (!value) return null;
+    const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+    return macRegex.test(value) ? null : 'Please enter a valid MAC address';
+  },
+
+  confirmPassword: (password) => (value) => {
+    return value === password ? null : 'Passwords do not match';
+  },
+
+  unique: (existingValues) => (value) => {
+    if (!value) return null;
+    return existingValues.includes(value) ? 'This value already exists' : null;
   }
 };
 
-// Field-specific validation rules
+// Field validation schemas
 export const FIELD_VALIDATIONS = {
-  // LDAP Configuration
-  ldapName: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(100)],
-  ldapServerUri: [VALIDATION_RULES.required, VALIDATION_RULES.ldapUri, VALIDATION_RULES.maxLength(500)],
-  ldapUserBaseDn: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(500)],
-  ldapBindDn: [VALIDATION_RULES.maxLength(500)],
-  ldapBindPassword: [VALIDATION_RULES.maxLength(500)],
-  ldapUserSearchFilter: [VALIDATION_RULES.maxLength(500)],
-  ldapGroupBaseDn: [VALIDATION_RULES.maxLength(500)],
-  ldapGroupSearchFilter: [VALIDATION_RULES.maxLength(500)],
-  ldapConnectionTimeout: [VALIDATION_RULES.range(1, 300)],
-  ldapReadTimeout: [VALIDATION_RULES.range(1, 300)],
-  ldapMaxConnections: [VALIDATION_RULES.range(1, 100)],
-  ldapRetryAttempts: [VALIDATION_RULES.range(1, 10)],
-  ldapSyncInterval: [VALIDATION_RULES.range(1, 1440)],
-  
-  // User Management
-  username: [VALIDATION_RULES.required, VALIDATION_RULES.username],
-  email: [VALIDATION_RULES.required, VALIDATION_RULES.email],
-  fullName: [VALIDATION_RULES.maxLength(255)],
-  password: [VALIDATION_RULES.required, VALIDATION_RULES.password],
-  
-  // Credentials
-  credentialName: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(100)],
-  credentialUsername: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(100)],
-  credentialPassword: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(500)],
-  credentialDescription: [VALIDATION_RULES.maxLength(500)],
-  
-  // Scanner Configuration
-  scannerName: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(100)],
-  scannerUrl: [VALIDATION_RULES.required, VALIDATION_RULES.url],
-  scannerTimeout: [VALIDATION_RULES.positiveNumber],
-  scannerMaxConcurrent: [VALIDATION_RULES.positiveNumber],
-  
-  // Asset Management
-  assetName: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(100)],
-  assetIp: [VALIDATION_RULES.required, VALIDATION_RULES.ipAddress],
-  assetDescription: [VALIDATION_RULES.maxLength(500)],
-  
-  // Subnet Management
-  subnetName: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(100)],
-  subnetCidr: [VALIDATION_RULES.required, VALIDATION_RULES.cidr],
-  subnetGateway: [VALIDATION_RULES.ipAddress],
-  subnetVlanId: [VALIDATION_RULES.range(1, 4094)],
-  
-  // Role Management
-  roleName: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1), VALIDATION_RULES.maxLength(100)],
-  roleDescription: [VALIDATION_RULES.maxLength(500)]
+  username: [
+    validators.required,
+    validators.minLength(3),
+    validators.maxLength(50),
+    validators.pattern(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores')
+  ],
+
+  email: [
+    validators.required,
+    validators.email
+  ],
+
+  password: [
+    validators.required,
+    validators.minLength(8),
+    validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number')
+  ],
+
+  phone: [
+    validators.required,
+    validators.phone
+  ],
+
+  url: [
+    validators.required,
+    validators.url
+  ],
+
+  ip: [
+    validators.required,
+    validators.ip
+  ],
+
+  mac: [
+    validators.required,
+    validators.mac
+  ],
+
+  name: [
+    validators.required,
+    validators.minLength(2),
+    validators.maxLength(100)
+  ],
+
+  description: [
+    validators.maxLength(500)
+  ]
 };
 
-// Validation function
-export const validateField = (value, validations) => {
-  // Safety check: ensure validations is an array
-  if (!Array.isArray(validations)) {
-    return null;
-  }
-  
-  for (const validation of validations) {
-    // Safety check: ensure validation is a function
-    if (typeof validation === 'function') {
-      const error = validation(value);
-      if (error) {
-        return error;
-      }
-    }
+// Validate single field
+export const validateField = (value, validators) => {
+  for (const validator of validators) {
+    const error = validator(value);
+    if (error) return error;
   }
   return null;
 };
 
 // Validate entire form
-export const validateForm = (formData, fieldValidations) => {
+export const validateForm = (values, validationSchema) => {
   const errors = {};
   let isValid = true;
-  
-  for (const [fieldName, validations] of Object.entries(fieldValidations)) {
-    const value = formData[fieldName];
-    const error = validateField(value, validations);
+
+  Object.keys(validationSchema).forEach(fieldName => {
+    const fieldValidators = validationSchema[fieldName];
+    const fieldValue = values[fieldName];
+    
+    const error = validateField(fieldValue, fieldValidators);
     if (error) {
       errors[fieldName] = error;
       isValid = false;
     }
-  }
-  
+  });
+
   return { isValid, errors };
 };
 
-// Helper to check if form has any errors
-export const hasFormErrors = (errors) => {
-  return Object.keys(errors).length > 0;
+// Create validation schema from field definitions
+export const createValidationSchema = (fields) => {
+  const schema = {};
+  
+  Object.entries(fields).forEach(([fieldName, fieldConfig]) => {
+    const validators = [];
+    
+    if (fieldConfig.required) {
+      validators.push(validators.required);
+    }
+    
+    if (fieldConfig.minLength) {
+      validators.push(validators.minLength(fieldConfig.minLength));
+    }
+    
+    if (fieldConfig.maxLength) {
+      validators.push(validators.maxLength(fieldConfig.maxLength));
+    }
+    
+    if (fieldConfig.min) {
+      validators.push(validators.min(fieldConfig.min));
+    }
+    
+    if (fieldConfig.max) {
+      validators.push(validators.max(fieldConfig.max));
+    }
+    
+    if (fieldConfig.pattern) {
+      validators.push(validators.pattern(fieldConfig.pattern, fieldConfig.patternMessage));
+    }
+    
+    if (fieldConfig.type === 'email') {
+      validators.push(validators.email);
+    }
+    
+    if (fieldConfig.type === 'url') {
+      validators.push(validators.url);
+    }
+    
+    if (fieldConfig.type === 'phone') {
+      validators.push(validators.phone);
+    }
+    
+    if (fieldConfig.type === 'ip') {
+      validators.push(validators.ip);
+    }
+    
+    if (fieldConfig.type === 'mac') {
+      validators.push(validators.mac);
+    }
+    
+    if (fieldConfig.unique) {
+      validators.push(validators.unique(fieldConfig.unique));
+    }
+    
+    schema[fieldName] = validators;
+  });
+  
+  return schema;
 };
 
-// Helper to get first error message
-export const getFirstError = (errors) => {
-  const firstKey = Object.keys(errors)[0];
-  return firstKey ? errors[firstKey] : null;
+// Async validation support
+export const createAsyncValidator = (asyncFunction, message) => {
+  return async (value) => {
+    try {
+      const result = await asyncFunction(value);
+      return result ? null : message;
+    } catch (error) {
+      return message;
+    }
+  };
 };
 
-// Helper to clear specific field error
-export const clearFieldError = (errors, fieldName) => {
-  const newErrors = { ...errors };
-  delete newErrors[fieldName];
-  return newErrors;
+// Validation middleware
+export const withValidation = (Component, validationSchema) => {
+  return (props) => {
+    const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
+
+    const validate = useCallback((values) => {
+      const { isValid, errors: newErrors } = validateForm(values, validationSchema);
+      setErrors(newErrors);
+      return isValid;
+    }, []);
+
+    const handleBlur = useCallback((fieldName) => {
+      setTouched(prev => ({ ...prev, [fieldName]: true }));
+    }, []);
+
+    return (
+      <Component
+        {...props}
+        errors={errors}
+        touched={touched}
+        validate={validate}
+        onBlur={handleBlur}
+      />
+    );
+  };
+};
+
+export default {
+  validators,
+  FIELD_VALIDATIONS,
+  validateField,
+  validateForm,
+  createValidationSchema,
+  createAsyncValidator,
+  withValidation
 };

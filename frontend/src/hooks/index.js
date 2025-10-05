@@ -1,10 +1,43 @@
 /**
+ * Custom Hooks Index
  * Centralized exports for all custom hooks
  */
 
-export { useApi } from './useApi';
-export { useLocalStorage } from './useLocalStorage';
-export { useDebounce } from './useDebounce';
-export { useAsync } from './useAsync';
-export { useFormState } from './useFormState';
-export { useScanUpdates } from './useScanUpdates';
+export { default as useLocalStorage } from './useLocalStorage';
+export { default as useForm } from './useForm';
+export { default as useAsync } from './useAsync';
+export { default as useToggle } from './useToggle';
+
+// Re-export performance hooks
+export {
+  useDebounce,
+  useThrottle,
+  useMemoizedFilter,
+  useMemoizedSort,
+  useVirtualScroll,
+  useIntersectionObserver,
+  useBatchedState,
+  usePerformanceMonitor,
+  createSearchFunction,
+  createSortFunction,
+  usePagination
+} from '../utils/performance';
+
+// Re-export accessibility hooks
+export {
+  useFocusManagement,
+  useKeyboardNavigation,
+  useScreenReaderAnnouncements,
+  useHighContrastMode,
+  useReducedMotion,
+  useColorScheme
+} from '../utils/accessibility';
+
+// Re-export animation hooks
+export {
+  useAnimation,
+  useStaggerAnimation,
+  useParallax,
+  useMagneticEffect,
+  useRippleEffect
+} from '../utils/animations';

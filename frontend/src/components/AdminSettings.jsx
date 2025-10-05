@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
 import { cn } from '../utils/cn';
 import PageHeader from './PageHeader';
 import ScanTemplateManager from './admin/ScanTemplateManager';
-import { validateForm, FIELD_VALIDATIONS, VALIDATION_RULES } from '../utils/validation';
+import { validateForm, FIELD_VALIDATIONS, validators } from '../utils/validation';
 import { handleFormSubmission, COMMON_FIELD_CONFIGS, createFieldChangeHandler } from '../utils/formHelpers';
 
 const AdminSettings = () => {

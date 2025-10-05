@@ -2,7 +2,7 @@
  * Form helper utilities for consistent form handling across the application
  */
 
-import { validateForm, VALIDATION_RULES } from './validation';
+import { validateForm, validators } from './validation';
 
 /**
  * Clean form data by converting empty strings to null for optional fields
@@ -127,55 +127,55 @@ export const createFormResetHandler = (defaultFormData, setFormData, setFormErro
  */
 export const COMMON_VALIDATIONS = {
   // Required text fields
-  requiredText: [VALIDATION_RULES.required, VALIDATION_RULES.minLength(1)],
+  requiredText: [validators.required, validators.minLength(1)],
   
   // Optional text fields
-  optionalText: [VALIDATION_RULES.optionalString],
+  optionalText: [validators.optionalString],
   
   // Required email
-  requiredEmail: [VALIDATION_RULES.required, VALIDATION_RULES.email],
+  requiredEmail: [validators.required, validators.email],
   
   // Optional email
-  optionalEmail: [VALIDATION_RULES.optionalString, VALIDATION_RULES.email],
+  optionalEmail: [validators.optionalString, validators.email],
   
   // Required IP address
-  requiredIp: [VALIDATION_RULES.required, VALIDATION_RULES.ipAddress],
+  requiredIp: [validators.required, validators.ipAddress],
   
   // Optional IP address
-  optionalIp: [VALIDATION_RULES.optionalString, VALIDATION_RULES.ipAddress],
+  optionalIp: [validators.optionalString, validators.ipAddress],
   
   // Required CIDR
-  requiredCidr: [VALIDATION_RULES.required, VALIDATION_RULES.cidr],
+  requiredCidr: [validators.required, validators.cidr],
   
   // Optional integer with range
   optionalIntegerRange: (min, max) => [
-    VALIDATION_RULES.optionalInteger,
-    VALIDATION_RULES.range(min, max)
+    validators.optionalInteger,
+    validators.range(min, max)
   ],
   
   // Required integer with range
   requiredIntegerRange: (min, max) => [
-    VALIDATION_RULES.required,
-    VALIDATION_RULES.range(min, max)
+    validators.required,
+    validators.range(min, max)
   ],
   
   // Optional number
-  optionalNumber: [VALIDATION_RULES.optionalNumber],
+  optionalNumber: [validators.optionalNumber],
   
   // Required number
-  requiredNumber: [VALIDATION_RULES.required, VALIDATION_RULES.positiveNumber],
+  requiredNumber: [validators.required, validators.positiveNumber],
   
   // Text with max length
   textWithMaxLength: (maxLength) => [
-    VALIDATION_RULES.optionalString,
-    VALIDATION_RULES.maxLength(maxLength)
+    validators.optionalString,
+    validators.maxLength(maxLength)
   ],
   
   // Required text with max length
   requiredTextWithMaxLength: (maxLength) => [
-    VALIDATION_RULES.required,
-    VALIDATION_RULES.minLength(1),
-    VALIDATION_RULES.maxLength(maxLength)
+    validators.required,
+    validators.minLength(1),
+    validators.maxLength(maxLength)
   ]
 };
 
@@ -203,10 +203,10 @@ export const COMMON_FIELD_CONFIGS = {
     optionalFields: ['full_name'],
     numericFields: [],
     validations: {
-      username: [VALIDATION_RULES.required, VALIDATION_RULES.username],
+      username: [validators.required, validators.username],
       email: COMMON_VALIDATIONS.requiredEmail,
       full_name: COMMON_VALIDATIONS.textWithMaxLength(255),
-      password: [VALIDATION_RULES.required, VALIDATION_RULES.password]
+      password: [validators.required, validators.password]
     }
   },
   
@@ -220,7 +220,7 @@ export const COMMON_FIELD_CONFIGS = {
       username: COMMON_VALIDATIONS.requiredTextWithMaxLength(100),
       password: COMMON_VALIDATIONS.requiredTextWithMaxLength(500),
       domain: COMMON_VALIDATIONS.textWithMaxLength(255),
-      port: [VALIDATION_RULES.optionalNumber, VALIDATION_RULES.range(1, 65535)]
+      port: [validators.optionalNumber, validators.range(1, 65535)]
     }
   }
 };

@@ -54,7 +54,7 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
 
   const adminItems = [
     { 
-      path: '/admin', 
+      path: '/admin-settings', 
       label: 'Admin Settings', 
       icon: Settings,
       description: 'System configuration',
@@ -141,13 +141,6 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
             />
           );
         })}
-        
-        {/* Guide - Main Navigation Item */}
-        <NavItem
-          item={guideItem}
-          isActive={location.pathname === guideItem.path}
-          isCollapsed={isCollapsed}
-        />
       </div>
 
       {/* Admin Section - Only show when not collapsed */}
@@ -192,30 +185,18 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
         </div>
       )}
 
-      {/* Quick Actions - Only show when not collapsed */}
-      {!isCollapsed && (
-        <div className="pt-4 border-t border-border">
-          <div className="px-3 py-2 mb-2">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Quick Actions
-            </h3>
-          </div>
-          
-          <div className="space-y-1">
-            <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200">
-              <Network className="w-4 h-4" />
-              <span>Start New Scan</span>
-              <ExternalLink className="w-3 h-3 ml-auto" />
-            </button>
-            
-            <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200">
-              <HardDrive className="w-4 h-4" />
-              <span>Import Assets</span>
-              <ExternalLink className="w-3 h-3 ml-auto" />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Guide - Bottom Navigation Item */}
+      <div className={cn(
+        "pt-4 border-t border-border",
+        isCollapsed && "pt-3"
+      )}>
+        <NavItem
+          item={guideItem}
+          isActive={location.pathname === guideItem.path}
+          isCollapsed={isCollapsed}
+        />
+      </div>
+
     </nav>
   );
 };

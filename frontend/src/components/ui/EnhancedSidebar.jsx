@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '../../utils/cn';
+import AppLogo from '../AppLogo';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -155,21 +156,11 @@ const EnhancedSidebar = ({
           isCollapsed ? "justify-center p-3" : "justify-between p-6"
         )}>
           {!isCollapsed && (
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">D</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white">DiscoverIT</h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Network Management Platform</p>
-              </div>
-            </div>
+            <AppLogo size={48} showText={true} />
           )}
           
           {isCollapsed && (
-            <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg">D</span>
-            </div>
+            <AppLogo size={40} showText={false} />
           )}
           
           {showToggle && (

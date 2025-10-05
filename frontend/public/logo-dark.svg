@@ -1,0 +1,59 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background with rounded corners -->
+  <rect width="64" height="64" rx="12" fill="#1f2937" stroke="#ffffff" stroke-width="1"/>
+  
+  <!-- Globe with network nodes -->
+  <g transform="translate(32, 20)">
+    <!-- Globe sphere -->
+    <circle cx="0" cy="0" r="12" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+    <!-- Latitude lines -->
+    <ellipse cx="0" cy="-4" rx="12" ry="3" fill="none" stroke="#ffffff" stroke-width="1"/>
+    <ellipse cx="0" cy="0" rx="12" ry="4" fill="none" stroke="#ffffff" stroke-width="1"/>
+    <ellipse cx="0" cy="4" rx="12" ry="3" fill="none" stroke="#ffffff" stroke-width="1"/>
+    <!-- Longitude lines -->
+    <path d="M-12,0 Q0,-8 12,0 Q0,8 -12,0" fill="none" stroke="#ffffff" stroke-width="1"/>
+    <path d="M-12,0 Q0,8 12,0 Q0,-8 -12,0" fill="none" stroke="#ffffff" stroke-width="1"/>
+    
+    <!-- Network nodes -->
+    <circle cx="-6" cy="-2" r="1.5" fill="#ffffff"/>
+    <circle cx="6" cy="-2" r="1.5" fill="#ffffff"/>
+    <circle cx="0" cy="4" r="1.5" fill="#ffffff"/>
+    
+    <!-- Connection lines between nodes -->
+    <line x1="-6" y1="-2" x2="6" y2="-2" stroke="#ffffff" stroke-width="0.8"/>
+    <line x1="-6" y1="-2" x2="0" y2="4" stroke="#ffffff" stroke-width="0.8"/>
+    <line x1="6" y1="-2" x2="0" y2="4" stroke="#ffffff" stroke-width="0.8"/>
+  </g>
+  
+  <!-- Gear icon -->
+  <g transform="translate(45, 15)">
+    <circle cx="0" cy="0" r="4" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="1.5" fill="#ffffff"/>
+    <!-- Gear teeth -->
+    <rect x="-0.5" y="-6" width="1" height="2" fill="#ffffff"/>
+    <rect x="-0.5" y="4" width="1" height="2" fill="#ffffff"/>
+    <rect x="-6" y="-0.5" width="2" height="1" fill="#ffffff"/>
+    <rect x="4" y="-0.5" width="2" height="1" fill="#ffffff"/>
+    <rect x="-4.2" y="-4.2" width="1" height="1.5" fill="#ffffff" transform="rotate(45)"/>
+    <rect x="3.2" y="3.2" width="1" height="1.5" fill="#ffffff" transform="rotate(45)"/>
+    <rect x="3.2" y="-4.2" width="1" height="1.5" fill="#ffffff" transform="rotate(-45)"/>
+    <rect x="-4.2" y="3.2" width="1" height="1.5" fill="#ffffff" transform="rotate(-45)"/>
+  </g>
+  
+  <!-- Magnifying glass -->
+  <g transform="translate(40, 35)">
+    <circle cx="0" cy="0" r="6" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+    <line x1="4" y1="4" x2="8" y2="8" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Data flow arcs -->
+  <g transform="translate(32, 20)">
+    <!-- Upper arc -->
+    <path d="M-8,-8 Q0,-16 8,-8" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Lower arc -->
+    <path d="M-6,4 Q0,8 6,4" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  
+  <!-- DiscoverIT text -->
+  <text x="32" y="55" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="10" font-weight="bold">DiscoverIT</text>
+</svg>

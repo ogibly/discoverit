@@ -193,7 +193,7 @@ const FlexibleLayout = ({
       {showControls && (
         <div className={cn(
           "absolute z-10 flex items-center space-x-2 bg-background/80 backdrop-blur-sm border border-border rounded-lg p-2 shadow-lg",
-          layout === 'grid' ? 'top-2 right-2' : 'top-4 right-4'
+          layout === 'grid' ? 'bottom-2 right-2' : 'bottom-4 right-4'
         )}>
           <div className="flex items-center space-x-1">
             <button

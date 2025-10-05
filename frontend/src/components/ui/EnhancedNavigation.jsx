@@ -89,7 +89,7 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
           ? 'bg-gradient-to-r from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 text-white dark:text-slate-900 shadow-lg shadow-slate-500/25 dark:shadow-yellow-500/25'
           : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50',
         isCollapsed 
-          ? 'justify-center w-12 h-12 mx-auto my-2 hover:bg-slate-200/50 dark:hover:bg-slate-700/50' 
+          ? 'justify-center w-12 h-12 mx-auto my-1 hover:bg-slate-200/50 dark:hover:bg-slate-700/50' 
           : 'space-x-4 px-4 py-4'
       )}
       onMouseEnter={() => handleItemHover(item, true)}
@@ -132,12 +132,12 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
   return (
     <nav className={cn(
       "flex flex-col h-full",
-      isCollapsed ? "space-y-3 p-4" : "space-y-4 p-6"
+      isCollapsed ? "space-y-2 p-3" : "space-y-4 p-6"
     )}>
       {/* Main Navigation */}
       <div className={cn(
-        "space-y-3",
-        isCollapsed && "space-y-4"
+        "space-y-2",
+        isCollapsed && "space-y-1"
       )}>
         {navigationItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -179,8 +179,8 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
 
       {/* Admin Items - Show as clean icons when collapsed */}
       {isCollapsed && (
-        <div className="space-y-3">
-          <div className="w-8 h-px bg-slate-300 dark:bg-slate-700 mx-auto my-3" />
+        <div className="space-y-1">
+          <div className="w-6 h-px bg-slate-300 dark:bg-slate-700 mx-auto my-2" />
           {adminItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -200,10 +200,10 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
 
       {/* Guide - Bottom Navigation Item */}
       <div className={cn(
-        "border-t border-slate-700",
-        isCollapsed ? "pt-4" : "pt-6"
+        "border-t border-slate-300 dark:border-slate-700",
+        isCollapsed ? "pt-2" : "pt-6"
       )}>
-        {isCollapsed && <div className="w-8 h-px bg-slate-700 mx-auto mb-4" />}
+        {isCollapsed && <div className="w-6 h-px bg-slate-300 dark:bg-slate-700 mx-auto mb-2" />}
         <NavItem
           item={guideItem}
           isActive={location.pathname === guideItem.path}

@@ -276,7 +276,7 @@ const AppContent = () => {
         resizable={true}
         showToggle={true}
       >
-        <EnhancedNavigation />
+        <Navigation />
       </EnhancedSidebar>
       <div className="flex-grow overflow-hidden bg-background">
         <Routes>

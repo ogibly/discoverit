@@ -6,6 +6,13 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
 import { Input } from './ui/Input';
+import { 
+  ModernCard,
+  ModernKPICard,
+  ModernButton,
+  ModernBadge,
+  ModernProgress
+} from '../design-system/ModernComponentLibrary';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';

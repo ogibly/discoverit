@@ -12,7 +12,7 @@ import { LayoutProvider, useLayout } from './contexts/LayoutContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import Login from './components/Login';
-import ModernDashboard from './components/ModernDashboard';
+import Dashboard from './components/Dashboard';
 import AssetsInterface from './components/AssetsInterface';
 import UnifiedScanDevicesInterface from './components/UnifiedScanDevicesInterface';
 import AssetDetail from './components/AssetDetail';
@@ -243,7 +243,7 @@ const ModernAppContent = () => {
           <Routes>
             <Route path="/dashboard" element={
               <ProtectedRoute requiredPermission="assets:read">
-                <ModernDashboard />
+                <Dashboard />
               </ProtectedRoute>
             } />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

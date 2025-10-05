@@ -27,7 +27,8 @@ import {
   Printer,
   Shield,
   Info,
-  Plus
+  Plus,
+  Grid3X3
 } from 'lucide-react';
 
 const AssetsInterface = () => {

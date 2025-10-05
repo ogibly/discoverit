@@ -763,9 +763,9 @@ const UnifiedScanDevicesInterface = () => {
                     <span>Scan History</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   {scanTasks.length === 0 ? (
-                    <div className="text-center py-8">
+                    <div className="text-center py-8 px-6">
                       <div className="text-4xl mb-4">📊</div>
                       <h3 className="text-lg font-semibold text-foreground mb-2">No Scans Yet</h3>
                       <p className="text-muted-foreground">
@@ -773,7 +773,8 @@ const UnifiedScanDevicesInterface = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="max-h-[calc(100vh-300px)] overflow-y-auto px-6 py-4">
+                      <div className="space-y-3">
                       {scanTasks.map((task) => {
                         const isExpanded = expandedScans.has(task.id);
                         return (
@@ -1197,7 +1198,11 @@ const UnifiedScanDevicesInterface = () => {
                     </Card>
                   );
                 })}
-              </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             ) : (
               <Card>
                 <CardContent className="p-0">

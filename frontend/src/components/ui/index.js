@@ -19,3 +19,8 @@ export { default as FormModal } from '../common/FormModal';
 export { default as DeviceCard } from '../common/DeviceCard';
 export { default as LoadingStates } from '../common/LoadingStates';
 export { default as FormComponents } from '../common/FormComponents';
+export { default as SkeletonComponents } from '../common/SkeletonComponents';
+
+// Optimized Components
+export { default as OptimizedScanResultsModal } from '../discovery/OptimizedScanResultsModal';
+export { default as OptimizedAssetsInterface } from '../OptimizedAssetsInterface';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { validateForm, FIELD_VALIDATIONS } from '../utils/validation';
+// import { validateForm, FIELD_VALIDATIONS } from '../utils/validation';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -28,19 +28,18 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    const loginValidations = {
-      username: FIELD_VALIDATIONS.username,
-      password: [FIELD_VALIDATIONS.required]
-    };
-    
-    const { isValid, errors } = validateForm({ username, password }, loginValidations);
-    setFormErrors(errors);
-    
-    if (!isValid) {
-      setError('Please fix the validation errors before submitting.');
+    // Simple validation for now
+    if (!username.trim()) {
+      setFormErrors({ username: 'Username is required' });
       return;
     }
+    
+    if (!password.trim()) {
+      setFormErrors({ password: 'Password is required' });
+      return;
+    }
+    
+    setFormErrors({});
     
     setLoading(true);
     setError('');

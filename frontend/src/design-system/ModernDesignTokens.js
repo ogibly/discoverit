@@ -6,19 +6,19 @@
 export const modernDesignTokens = {
   // Color System - Enterprise Grade
   colors: {
-    // Primary Brand Colors
+    // Primary Brand Colors - White/Light Grey Theme
     primary: {
-      50: '#f0f9ff',
-      100: '#e0f2fe',
-      200: '#bae6fd',
-      300: '#7dd3fc',
-      400: '#38bdf8',
-      500: '#0ea5e9',
-      600: '#0284c7',
-      700: '#0369a1',
-      800: '#075985',
-      900: '#0c4a6e',
-      950: '#082f49'
+      50: '#fafafa',
+      100: '#f4f4f5',
+      200: '#e4e4e7',
+      300: '#d4d4d8',
+      400: '#a1a1aa',
+      500: '#71717a',
+      600: '#52525b',
+      700: '#3f3f46',
+      800: '#27272a',
+      900: '#18181b',
+      950: '#09090b'
     },
     
     // Secondary Colors
@@ -220,29 +220,29 @@ export const modernDesignTokens = {
   }
 };
 
-// Light Theme Configuration
+// Light Theme Configuration - White/Light Grey
 export const lightTheme = {
   background: {
     primary: '#ffffff',
-    secondary: '#f8fafc',
-    tertiary: '#f1f5f9',
+    secondary: '#fafafa',
+    tertiary: '#f4f4f5',
     elevated: '#ffffff'
   },
   foreground: {
-    primary: '#0f172a',
-    secondary: '#334155',
-    tertiary: '#64748b',
-    disabled: '#94a3b8'
+    primary: '#18181b',
+    secondary: '#3f3f46',
+    tertiary: '#71717a',
+    disabled: '#a1a1aa'
   },
   border: {
-    primary: '#e2e8f0',
-    secondary: '#cbd5e1',
-    focus: '#0ea5e9'
+    primary: '#e4e4e7',
+    secondary: '#d4d4d8',
+    focus: '#52525b'
   },
   surface: {
     primary: '#ffffff',
-    secondary: '#f8fafc',
-    tertiary: '#f1f5f9',
+    secondary: '#fafafa',
+    tertiary: '#f4f4f5',
     elevated: '#ffffff'
   }
 };

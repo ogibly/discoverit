@@ -12,7 +12,7 @@
   }
 
   body {
-    @apply bg-slate-900 text-white;
+    @apply bg-white text-gray-900 dark:bg-slate-900 dark:text-white;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -35,28 +35,28 @@
 @layer components {
   /* Button variants */
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-50;
   }
   
   .btn-primary {
-    @apply btn bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-slate-900 font-semibold;
+    @apply btn bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white font-semibold dark:from-slate-500 dark:to-slate-600 dark:hover:from-slate-600 dark:hover:to-slate-700;
   }
   
   .btn-secondary {
-    @apply btn bg-slate-700 hover:bg-slate-600 text-slate-300 border border-slate-600;
+    @apply btn bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300 dark:border-slate-600;
   }
   
   .btn-outline {
-    @apply btn border border-slate-600 text-slate-300 hover:bg-slate-700/50;
+    @apply btn border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/50;
   }
   
   .btn-ghost {
-    @apply btn text-slate-300 hover:bg-slate-700/50;
+    @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700/50;
   }
 
   /* Card variants */
   .card {
-    @apply rounded-2xl border border-slate-700 bg-slate-800/50 shadow-lg;
+    @apply rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800/50;
   }
   
   .card-elevated {
@@ -69,7 +69,7 @@
 
   /* Input styles */
   .input {
-    @apply flex h-9 w-full rounded-lg border border-slate-600 bg-slate-700/50 px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/20 focus:border-yellow-500 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-9 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white dark:placeholder-slate-400 dark:focus:ring-slate-500/20 dark:focus:border-slate-500;
   }
 
   /* Badge variants */
@@ -78,44 +78,44 @@
   }
   
   .badge-default {
-    @apply badge border-slate-600 bg-slate-700 text-slate-300;
+    @apply badge border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300;
   }
   
   .badge-success {
-    @apply badge border-green-500/30 bg-green-500/20 text-green-400;
+    @apply badge border-green-500/30 bg-green-500/20 text-green-600 dark:text-green-400;
   }
   
   .badge-warning {
-    @apply badge border-yellow-500/30 bg-yellow-500/20 text-yellow-400;
+    @apply badge border-yellow-500/30 bg-yellow-500/20 text-yellow-600 dark:text-yellow-400;
   }
   
   .badge-error {
-    @apply badge border-red-500/30 bg-red-500/20 text-red-400;
+    @apply badge border-red-500/30 bg-red-500/20 text-red-600 dark:text-red-400;
   }
   
   .badge-info {
-    @apply badge border-blue-500/30 bg-blue-500/20 text-blue-400;
+    @apply badge border-blue-500/30 bg-blue-500/20 text-blue-600 dark:text-blue-400;
   }
 
   /* Typography */
   .text-display {
-    @apply text-3xl font-bold tracking-tight text-white;
+    @apply text-3xl font-bold tracking-tight text-slate-900 dark:text-white;
   }
   
   .text-heading {
-    @apply text-xl font-semibold tracking-tight text-white;
+    @apply text-xl font-semibold tracking-tight text-slate-900 dark:text-white;
   }
   
   .text-subheading {
-    @apply text-lg font-medium text-white;
+    @apply text-lg font-medium text-slate-900 dark:text-white;
   }
   
   .text-body {
-    @apply text-sm text-slate-300;
+    @apply text-sm text-slate-600 dark:text-slate-300;
   }
   
   .text-caption {
-    @apply text-xs text-slate-400;
+    @apply text-xs text-slate-500 dark:text-slate-400;
   }
 
   /* Layout utilities */

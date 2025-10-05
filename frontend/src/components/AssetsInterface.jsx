@@ -28,7 +28,8 @@ import {
   Shield,
   Info,
   Plus,
-  Grid3X3
+  Grid3X3,
+  Trash2
 } from 'lucide-react';
 
 const AssetsInterface = () => {

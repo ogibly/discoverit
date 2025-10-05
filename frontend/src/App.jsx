@@ -87,22 +87,6 @@ const Navigation = () => {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Sophisticated Header */}
-      <div className="px-4 py-4 border-b border-border bg-gradient-to-r from-primary/5 to-primary/10">
-        <Link 
-          to="/dashboard" 
-          className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200 cursor-pointer"
-        >
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-primary-foreground font-bold text-lg">D</span>
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">DiscoverIT</h1>
-            <p className="text-xs text-muted-foreground">Network Scanning & Asset Management</p>
-          </div>
-        </Link>
-      </div>
-      
       {/* Main Navigation */}
       <nav className="flex-grow px-3 py-3 space-y-1">
         {filteredItems.map((item) => (

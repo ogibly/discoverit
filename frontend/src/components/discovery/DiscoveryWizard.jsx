@@ -507,6 +507,9 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
   const [scannerRecommendation, setScannerRecommendation] = useState(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
   
+  // Safety check for availableScanners
+  const safeAvailableScanners = availableScanners || [];
+  
   console.log('ScannerSelectionStep - availableScanners:', availableScanners);
   console.log('ScannerSelectionStep - availableScanners type:', typeof availableScanners);
   console.log('ScannerSelectionStep - availableScanners is array:', Array.isArray(availableScanners));
@@ -640,8 +643,8 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
       <div className="space-y-3">
         {(() => {
           try {
-            if (availableScanners && Array.isArray(availableScanners) && availableScanners.length > 0) {
-              return availableScanners.map((scanner) => (
+            if (safeAvailableScanners && Array.isArray(safeAvailableScanners) && safeAvailableScanners.length > 0) {
+              return safeAvailableScanners.map((scanner) => (
                 <div
                   key={scanner.id}
                   className={cn(

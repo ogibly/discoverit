@@ -7,35 +7,27 @@ import { Badge } from './ui/Badge';
 import { Input } from './ui/Input';
 import { Modal } from './ui/Modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
-import ResizableLayout from './ui/ResizableLayout';
 import { cn } from '../utils/cn';
 import { formatTimestampSafe } from '../utils/formatters';
-import PageHeader from './PageHeader';
 import { 
   Search, 
   SortAsc, 
   SortDesc, 
-  Grid3X3, 
   List, 
   Eye, 
   Edit, 
-  Trash2, 
   RefreshCw,
   AlertCircle,
   CheckCircle,
   Clock,
   Network,
   Server,
-  Smartphone,
   Monitor,
   Router,
   Printer,
   Shield,
-  Zap,
   Info,
-  Plus,
-  Download,
-  Upload
+  Plus
 } from 'lucide-react';
 
 const AssetsInterface = () => {

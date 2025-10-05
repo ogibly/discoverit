@@ -6,44 +6,27 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
 import { Input } from './ui/Input';
-import { HelpIcon } from './ui';
-import FlexibleLayout from './ui/FlexibleLayout';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import PageHeader from './PageHeader';
 import { 
   Search, 
   Mic, 
-  Bell, 
   Plus, 
-  Eye, 
-  Activity, 
   Network, 
   Server, 
   Smartphone, 
   Monitor, 
   Router, 
   Printer, 
-  Shield, 
-  Zap, 
-  MapPin, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Settings, 
-  MoreHorizontal,
-  Play,
-  Pause,
   Power,
   Fan,
   Snowflake,
   Droplets,
-  Thermometer,
-  Wifi,
   Globe,
   ArrowLeft,
-  X
+  X,
+  MoreHorizontal
 } from 'lucide-react';
 
 const Dashboard = () => {

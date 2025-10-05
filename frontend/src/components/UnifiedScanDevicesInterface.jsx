@@ -17,15 +17,10 @@ import ScanNotifications from './discovery/ScanNotifications';
 import DiscoveryWizard from './discovery/DiscoveryWizard';
 import { 
   Search, 
-  Filter, 
-  SortAsc, 
-  SortDesc, 
-  Grid3X3, 
   List, 
   Eye, 
   ArrowRight, 
   RefreshCw,
-  AlertCircle,
   CheckCircle,
   Clock,
   Network,
@@ -34,30 +29,17 @@ import {
   Monitor,
   Router,
   Printer,
-  Shield,
-  Zap,
-  Info,
-  MoreHorizontal,
   Download,
-  Trash2,
   Plus,
   Play,
   X,
   ChevronDown,
   ChevronRight,
   ExternalLink,
-  Settings,
   Activity,
-  Target,
   Scan,
   Database,
-  Layers,
-  BarChart3,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle2,
-  Pause,
-  StopCircle
+  AlertTriangle
 } from 'lucide-react';
 
 const UnifiedScanDevicesInterface = () => {

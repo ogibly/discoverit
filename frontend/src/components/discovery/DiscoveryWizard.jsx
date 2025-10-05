@@ -724,16 +724,16 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
           </div>
           );
         } catch (error) {
-            console.error('Error rendering scanners:', error);
-            return (
-              <div className="text-center py-8 text-red-400">
-                <div className="text-4xl mb-4">⚠️</div>
-                <p className="text-sm">Error loading scanners</p>
-                <p className="text-xs text-red-500 mt-1">Please refresh the page</p>
-              </div>
-            );
-          }
-        })()}
+          console.error('Error rendering scanners:', error);
+          return (
+            <div className="text-center py-8 text-red-400">
+              <div className="text-4xl mb-4">⚠️</div>
+              <p className="text-sm">Error loading scanners</p>
+              <p className="text-xs text-red-500 mt-1">Please refresh the page</p>
+            </div>
+          );
+        }
+      })()}
       </div>
 
       {errors.scannerId && (

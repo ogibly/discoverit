@@ -140,7 +140,7 @@ const EnhancedSidebar = ({
     <>
       <div
         className={cn(
-          'relative flex flex-col h-full bg-gradient-to-b from-slate-800 to-slate-900 border-r border-slate-700 transition-all duration-300 ease-in-out',
+          'relative flex flex-col h-full bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-r border-slate-300 dark:border-slate-700 transition-all duration-300 ease-in-out',
           'shadow-2xl',
           className
         )}
@@ -151,24 +151,24 @@ const EnhancedSidebar = ({
       >
         {/* Modern Header with Logo and Toggle */}
         <div className={cn(
-          "flex items-center border-b border-slate-700 bg-gradient-to-r from-slate-800 to-slate-700",
+          "flex items-center border-b border-slate-300 dark:border-slate-700 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700",
           isCollapsed ? "justify-center p-4" : "justify-between p-6"
         )}>
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-slate-900 font-bold text-xl">Q</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-white dark:text-slate-900 font-bold text-xl">Q</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Q-Home</h1>
-                <p className="text-xs text-slate-400">Smart Network Management</p>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">Q-Home</h1>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Smart Network Management</p>
               </div>
             </div>
           )}
           
           {isCollapsed && (
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-slate-900 font-bold text-xl">Q</span>
+            <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white dark:text-slate-900 font-bold text-xl">Q</span>
             </div>
           )}
           
@@ -177,16 +177,16 @@ const EnhancedSidebar = ({
               onClick={handleToggle}
               className={cn(
                 'p-2 rounded-xl transition-all duration-200',
-                'hover:bg-slate-600/50 hover:scale-105',
-                'focus:outline-none focus:ring-2 focus:ring-yellow-500/20',
+                'hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:scale-105',
+                'focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:focus:ring-yellow-500/20',
                 isCollapsed ? 'absolute top-3 right-3' : ''
               )}
               title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {isCollapsed ? (
-                <ChevronRight className="w-5 h-5 text-slate-300" />
+                <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-300" />
               ) : (
-                <ChevronLeft className="w-5 h-5 text-slate-300" />
+                <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-300" />
               )}
             </button>
           )}
@@ -199,38 +199,38 @@ const EnhancedSidebar = ({
 
         {/* Modern Footer with User Info */}
         <div className={cn(
-          "border-t border-slate-700 bg-slate-800/50",
+          "border-t border-slate-300 dark:border-slate-700 bg-slate-200/50 dark:bg-slate-800/50",
           isCollapsed ? "p-3" : "p-4"
         )}>
           {!isCollapsed ? (
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-slate-900 font-bold text-sm">U</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white dark:text-slate-900 font-bold text-sm">U</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">uiamjad</p>
-                <p className="text-xs text-slate-400 truncate">Administrator</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">uiamjad</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 truncate">Administrator</p>
               </div>
               <div className="flex items-center space-x-1">
-                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Toggle theme">
-                  <Moon className="w-4 h-4 text-slate-300" />
+                <button className="p-2 rounded-lg hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Toggle theme">
+                  <Moon className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </button>
-                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Logout">
-                  <LogOut className="w-4 h-4 text-slate-300" />
+                <button className="p-2 rounded-lg hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Logout">
+                  <LogOut className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </button>
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-slate-900 font-bold text-sm">U</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white dark:text-slate-900 font-bold text-sm">U</span>
               </div>
               <div className="flex items-center space-x-1">
-                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Toggle theme">
-                  <Moon className="w-4 h-4 text-slate-300" />
+                <button className="p-2 rounded-lg hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Toggle theme">
+                  <Moon className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </button>
-                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Logout">
-                  <LogOut className="w-4 h-4 text-slate-300" />
+                <button className="p-2 rounded-lg hover:bg-slate-300/50 dark:hover:bg-slate-600/50 transition-colors" title="Logout">
+                  <LogOut className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                 </button>
               </div>
             </div>

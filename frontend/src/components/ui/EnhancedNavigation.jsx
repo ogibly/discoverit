@@ -86,10 +86,10 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
         'group flex items-center rounded-2xl transition-all duration-300',
         'hover:scale-[1.02] hover:shadow-lg',
         isActive
-          ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-slate-900 shadow-lg shadow-yellow-500/25'
-          : 'text-slate-300 hover:text-white hover:bg-slate-700/50',
+          ? 'bg-gradient-to-r from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 text-white dark:text-slate-900 shadow-lg shadow-slate-500/25 dark:shadow-yellow-500/25'
+          : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50',
         isCollapsed 
-          ? 'justify-center w-12 h-12 mx-auto my-2 hover:bg-slate-700/50' 
+          ? 'justify-center w-12 h-12 mx-auto my-2 hover:bg-slate-200/50 dark:hover:bg-slate-700/50' 
           : 'space-x-4 px-4 py-4'
       )}
       onMouseEnter={() => handleItemHover(item, true)}
@@ -121,7 +121,7 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-400 truncate mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-1">
             {item.description}
           </p>
         </div>
@@ -154,9 +154,9 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
 
       {/* Admin Section - Only show when not collapsed */}
       {!isCollapsed && (
-        <div className="pt-6 border-t border-slate-700">
+        <div className="pt-6 border-t border-slate-300 dark:border-slate-700">
           <div className="px-4 py-3 mb-4">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+            <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Administration
             </h3>
           </div>
@@ -180,7 +180,7 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
       {/* Admin Items - Show as clean icons when collapsed */}
       {isCollapsed && (
         <div className="space-y-3">
-          <div className="w-8 h-px bg-slate-700 mx-auto my-3" />
+          <div className="w-8 h-px bg-slate-300 dark:bg-slate-700 mx-auto my-3" />
           {adminItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (

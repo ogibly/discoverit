@@ -71,7 +71,7 @@ export const ModernThemeProvider = ({ children }) => {
 
   const setLightTheme = () => setTheme('light');
   const setDarkTheme = () => setTheme('dark');
-  const setSystemTheme = () => setTheme(systemTheme);
+  const setSystemThemeMode = () => setTheme(systemTheme);
 
   const currentTheme = theme === 'dark' ? darkTheme : lightTheme;
   const isDark = theme === 'dark';
@@ -84,7 +84,7 @@ export const ModernThemeProvider = ({ children }) => {
     toggleTheme,
     setLightTheme,
     setDarkTheme,
-    setSystemTheme,
+    setSystemTheme: setSystemThemeMode,
     designTokens: modernDesignTokens
   };
 

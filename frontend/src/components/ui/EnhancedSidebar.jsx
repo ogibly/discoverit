@@ -156,19 +156,19 @@ const EnhancedSidebar = ({
         )}>
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-white dark:text-slate-900 font-bold text-xl">Q</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-xl">D</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white">Q-Home</h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400">Smart Network Management</p>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">DiscoverIT</h1>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Network Management Platform</p>
               </div>
             </div>
           )}
           
           {isCollapsed && (
-            <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 dark:from-yellow-500 dark:to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white dark:text-slate-900 font-bold text-xl">Q</span>
+            <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xl">D</span>
             </div>
           )}
           

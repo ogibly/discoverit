@@ -218,9 +218,6 @@ const Dashboard = () => {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
-                <ArrowLeft className="w-5 h-5 text-slate-300" />
-              </button>
               <div>
                 <h1 className="text-2xl font-bold text-white">Welcome {user?.username || 'User'}</h1>
                 <p className="text-slate-400 text-sm">Network Discovery & Asset Management</p>
@@ -236,15 +233,6 @@ const Dashboard = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 w-64 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-2 focus:ring-yellow-500/20"
                 />
-              </div>
-              <button className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
-                <Mic className="w-5 h-5 text-slate-300" />
-              </button>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <span className="text-slate-900 font-bold text-sm">U</span>
-                </div>
-                <span className="text-slate-300 text-sm">uiamjad</span>
               </div>
             </div>
           </div>

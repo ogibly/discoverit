@@ -5,12 +5,46 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Progress } from './ui/Progress';
+import { Input } from './ui/Input';
 import { HelpIcon } from './ui';
 import FlexibleLayout from './ui/FlexibleLayout';
 import { cn } from '../utils/cn';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import PageHeader from './PageHeader';
+import { 
+  Search, 
+  Mic, 
+  Bell, 
+  Plus, 
+  Eye, 
+  Activity, 
+  Network, 
+  Server, 
+  Smartphone, 
+  Monitor, 
+  Router, 
+  Printer, 
+  Shield, 
+  Zap, 
+  MapPin, 
+  TrendingUp, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Settings, 
+  MoreHorizontal,
+  Play,
+  Pause,
+  Power,
+  Fan,
+  Snowflake,
+  Droplets,
+  Thermometer,
+  Wifi,
+  Globe,
+  ArrowLeft,
+  X
+} from 'lucide-react';
 
 const Dashboard = () => {
   const {
@@ -29,6 +63,15 @@ const Dashboard = () => {
   const [scannerHealth, setScannerHealth] = useState([]);
   const [loadingScanners, setLoadingScanners] = useState(true);
   
+  // Modern UI state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [deviceControls, setDeviceControls] = useState({
+    temperature: 22.5,
+    power: true,
+    mode: 'cooling',
+    fanSpeed: 3
+  });
   
   useEffect(() => {
     fetchAssets();
@@ -65,57 +108,32 @@ const Dashboard = () => {
   ).length;
   const deviceTypes = [...new Set(assets.map(asset => asset?.device_type).filter(Boolean))].length;
 
-  const keyMetrics = [
-    {
-      label: 'Total Assets',
-      value: totalAssets,
-      description: 'Assets in inventory',
-      icon: '📊',
-      color: 'bg-primary text-primary-foreground',
-      change: '+12%',
-      changeType: 'positive',
-      onClick: () => navigate('/assets')
-    },
-    {
-      label: 'Total Devices',
-      value: totalDevices,
-      description: 'Discovered devices',
-      icon: '📱',
-      color: 'bg-info text-info-foreground',
-      change: '+8%',
-      changeType: 'positive',
-      onClick: () => navigate('/devices')
-    },
-    {
-      label: 'New Devices',
-      value: newDevices,
-      description: 'Awaiting conversion',
-      icon: '🆕',
-      color: 'bg-warning text-warning-foreground',
-      change: '-3%',
-      changeType: 'negative',
-      onClick: () => navigate('/devices?filter=new')
-    },
-    {
-      label: 'Device Types',
-      value: deviceTypes,
-      description: 'Unique device models',
-      icon: '🔧',
-      color: 'bg-success text-success-foreground',
-      change: '+2',
-      changeType: 'positive',
-      onClick: () => navigate('/assets')
-    }
+  // Modern device categories for Q-Home style interface
+  const deviceCategories = [
+    { name: 'Network Infrastructure', count: assets.filter(a => ['router', 'switch'].includes(a?.device_type)).length, icon: Router, color: 'text-blue-500' },
+    { name: 'Servers', count: assets.filter(a => a?.device_type === 'server').length, icon: Server, color: 'text-green-500' },
+    { name: 'Workstations', count: assets.filter(a => a?.device_type === 'workstation').length, icon: Monitor, color: 'text-purple-500' },
+    { name: 'Mobile Devices', count: assets.filter(a => a?.device_type === 'smartphone').length, icon: Smartphone, color: 'text-orange-500' },
+    { name: 'Printers', count: assets.filter(a => a?.device_type === 'printer').length, icon: Printer, color: 'text-red-500' }
   ];
 
-  const deviceTypeStats = [
-    { name: 'Routers', count: assets.filter(a => a && a.device_type === 'router').length, icon: '🌐' },
-    { name: 'Switches', count: assets.filter(a => a && a.device_type === 'switch').length, icon: '🔀' },
-    { name: 'Servers', count: assets.filter(a => a && a.device_type === 'server').length, icon: '🖥️' },
-    { name: 'Workstations', count: assets.filter(a => a && a.device_type === 'workstation').length, icon: '💻' },
-    { name: 'Printers', count: assets.filter(a => a && a.device_type === 'printer').length, icon: '🖨️' },
-    { name: 'Other', count: assets.filter(a => a && (!a.device_type || a.device_type === 'other')).length, icon: '📱' }
-  ];
+  // Most used devices (frequently accessed)
+  const mostUsedDevices = assets.slice(0, 3).map(asset => ({
+    ...asset,
+    icon: asset.device_type === 'server' ? Server : 
+          asset.device_type === 'router' ? Router :
+          asset.device_type === 'printer' ? Printer : Network,
+    status: 'online',
+    lastSeen: '2 minutes ago'
+  }));
+
+  // Weather widget data (simulated)
+  const weatherData = {
+    condition: 'Sunny',
+    temperature: 32,
+    icon: '☀️',
+    location: 'Data Center'
+  };
 
   // Calculate system status based on actual data
   const getSystemStatus = () => {
@@ -204,204 +222,201 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-      <PageHeader
-        title={
-          <span className="flex items-center">
-            Dashboard
-            <HelpIcon 
-              content="Overview of your network discovery and asset management system. Click on metrics to navigate to relevant sections."
-              className="ml-2"
-              size="sm"
-            />
-          </span>
-        }
-        subtitle="Real-time overview of your network discovery and asset management system"
-        metrics={[
-          { value: totalAssets, label: "Assets", color: "text-primary" },
-          { value: totalDevices, label: "Devices", color: "text-info" },
-          { value: newDevices, label: "New", color: "text-warning" }
-        ]}
-      />
-
-
-      {/* Main Content with Flexible Layout */}
-      <div className="flex-1 overflow-hidden">
-        <FlexibleLayout
-          storageKey="dashboard-layout"
-          defaultLayout="horizontal"
-          defaultSizes={[600, 600]}
-          minSizes={[250, 300]}
-          maxSizes={[1200, 1400]}
-          resizable={true}
-          gap={8}
-          showControls={true}
-          className="h-full"
-        >
-          {/* Left Panel - Metrics and Status */}
-          <div className="h-full overflow-y-auto px-4 py-4">
-            <div className="space-y-4">
-              {/* Key Metrics Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {keyMetrics.map((metric, index) => (
-                  <Card 
-                    key={index} 
-                    className="surface-elevated hover:shadow-lg transition-all duration-300 group cursor-pointer transform hover:scale-105"
-                    onClick={metric.onClick}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-sm", metric.color)}>
-                          {metric.icon}
-                        </div>
-                        <div className="text-right">
-                          <div className={cn(
-                            "text-xs font-medium flex items-center",
-                            metric.changeType === 'positive' ? 'text-success' : 
-                            metric.changeType === 'negative' ? 'text-error' : 'text-muted-foreground'
-                          )}>
-                            {metric.changeType === 'positive' && '↗'}
-                            {metric.changeType === 'negative' && '↘'}
-                            {metric.change}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{metric.label}</p>
-                        <p className="text-lg font-bold text-foreground">{metric.value}</p>
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Modern Header */}
+      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
+                <ArrowLeft className="w-5 h-5 text-slate-300" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Welcome {user?.username || 'User'}</h1>
+                <p className="text-slate-400 text-sm">Network Discovery & Asset Management</p>
               </div>
-
-              {/* System Status */}
-              <Card className="surface-elevated">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                    ⚡ System Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {getSystemStatus().map((status, index) => (
-                      <div key={index} className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <div className={cn("w-2 h-2 rounded-full", status.color)}></div>
-                            <span className="text-sm font-medium text-foreground">{status.name}</span>
-                          </div>
-                          <Badge className={cn("text-xs", status.badgeColor)}>
-                            {status.status}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground ml-4">
-                          {status.details}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Scanner Details */}
-                  {scanners.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <div className="text-xs font-medium text-foreground mb-2">Available Scanners:</div>
-                      <div className="space-y-1">
-                        {scanners.slice(0, 3).map((scanner, index) => {
-                          const health = scannerHealth.find(h => h.scanner_id === scanner.id);
-                          return (
-                            <div key={index} className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground truncate">{scanner.name}</span>
-                              <div className="flex items-center space-x-1">
-                                <div className={cn(
-                                  "w-1.5 h-1.5 rounded-full",
-                                  health?.status === 'healthy' ? 'bg-success' : 
-                                  health?.status === 'unhealthy' ? 'bg-error' : 'bg-warning'
-                                )}></div>
-                                <span className="text-muted-foreground">
-                                  {health?.status === 'healthy' ? 'Online' : 
-                                   health?.status === 'unhealthy' ? 'Offline' : 'Unknown'}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {scanners.length > 3 && (
-                          <div className="text-xs text-muted-foreground">
-                            +{scanners.length - 3} more scanners
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Device Distribution */}
-              <Card className="surface-elevated">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                    📊 Device Distribution
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {deviceTypeStats.map((type, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm">{type.icon}</span>
-                          <span className="text-sm font-medium text-foreground">{type.name}</span>
-                        </div>
-                        <span className="text-sm font-semibold text-muted-foreground">{type.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Search for device..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-64 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-2 focus:ring-yellow-500/20"
+                />
+              </div>
+              <button className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors">
+                <Mic className="w-5 h-5 text-slate-300" />
+              </button>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                  <span className="text-slate-900 font-bold text-sm">U</span>
+                </div>
+                <span className="text-slate-300 text-sm">uiamjad</span>
+              </div>
             </div>
           </div>
-
-          {/* Right Panel - Recent Activity */}
-          <div className="h-full overflow-y-auto px-4 py-4">
-            <div className="space-y-4">
-              <Card className="surface-elevated">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold text-foreground flex items-center">
-                    📊 Recent Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {activeScanTask ? (
-                    <div className="p-3 bg-info/10 rounded-lg border border-info/20">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-sm font-semibold text-info">Active Scan</h4>
-                        <Badge className="badge-info text-xs">
-                          Running
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-info mb-2">{activeScanTask.name}</p>
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-info">
-                          <span>Progress</span>
-                          <span>{activeScanTask.progress || 0}%</span>
-                        </div>
-                        <Progress value={activeScanTask.progress || 0} className="h-1.5" />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <div className="text-2xl mb-1">⏸️</div>
-                      <p className="text-sm">No recent activity</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </FlexibleLayout>
+        </div>
       </div>
 
+      {/* Main Content */}
+      <div className="p-6 space-y-6">
+        {/* Devices Section */}
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-white">Devices ({totalAssets})</h2>
+              <p className="text-slate-400 text-sm">Manage your network assets</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button className="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-semibold px-4 py-2 rounded-lg">
+                <Plus className="w-4 h-4 mr-2" />
+                Add new
+              </Button>
+              <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                Edit
+              </Button>
+            </div>
+          </div>
+
+          {/* Device Categories */}
+          <div className="flex space-x-2 mb-6">
+            {deviceCategories.map((category, index) => (
+              <button
+                key={index}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                  index === 0 
+                    ? "bg-yellow-500 text-slate-900" 
+                    : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"
+                )}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Device Control Card */}
+          {assets.length > 0 && (
+            <div className="bg-slate-700/50 rounded-xl p-6 border border-slate-600">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Network Infrastructure</h3>
+                  <p className="text-slate-400">Primary Router • 12.5 kW</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-yellow-500">22.5°C</div>
+                  <div className="text-sm text-slate-400">Optimal</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center mb-6">
+                <div className="relative">
+                  <div className="w-32 h-32 rounded-full border-4 border-slate-600 flex items-center justify-center">
+                    <div className="text-3xl font-bold text-white">22.5°</div>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-slate-900 text-xs">°C</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center space-x-4 mb-6">
+                <button className="w-12 h-12 rounded-full bg-slate-600 hover:bg-slate-500 flex items-center justify-center transition-colors">
+                  <Power className="w-5 h-5 text-white" />
+                </button>
+                <button className="w-12 h-12 rounded-full bg-yellow-500 hover:bg-yellow-600 flex items-center justify-center transition-colors">
+                  <Snowflake className="w-5 h-5 text-slate-900" />
+                </button>
+                <button className="w-12 h-12 rounded-full bg-slate-600 hover:bg-slate-500 flex items-center justify-center transition-colors">
+                  <Fan className="w-5 h-5 text-white" />
+                </button>
+                <button className="w-12 h-12 rounded-full bg-slate-600 hover:bg-slate-500 flex items-center justify-center transition-colors">
+                  <Droplets className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>05°C</span>
+                <span>32°C</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Live Map Section */}
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">Live Map</h2>
+            <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+              Stop sharing
+            </Button>
+          </div>
+          <div className="bg-slate-900/50 rounded-xl h-64 flex items-center justify-center border border-slate-600">
+            <div className="text-center">
+              <Globe className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+              <p className="text-slate-400">Geographic device distribution</p>
+              <p className="text-slate-500 text-sm">Map view coming soon</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Most Used Devices */}
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">Most Used ({mostUsedDevices.length})</h2>
+            <button className="text-yellow-500 hover:text-yellow-400 text-sm font-medium">
+              See all
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {mostUsedDevices.map((device, index) => (
+              <div key={index} className="bg-slate-700/50 rounded-xl p-4 border border-slate-600 relative">
+                <div className="flex items-center justify-between mb-2">
+                  <device.icon className="w-6 h-6 text-slate-300" />
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <h3 className="text-white font-medium text-sm">{device.name || 'Device'}</h3>
+                <p className="text-slate-400 text-xs">{device.lastSeen}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Widgets Section */}
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">Widgets (01)</h2>
+            <Button className="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-semibold">
+              <Plus className="w-4 h-4 mr-2" />
+              Add new
+            </Button>
+          </div>
+          
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-6 text-slate-900">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-2xl">☀️</span>
+                  <span className="text-3xl font-bold">{weatherData.temperature}°</span>
+                </div>
+                <p className="font-semibold">{weatherData.condition} Weather</p>
+                <p className="text-sm opacity-80">{weatherData.location}</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button className="p-2 rounded-lg hover:bg-slate-900/20 transition-colors">
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+                <button className="p-2 rounded-lg hover:bg-slate-900/20 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

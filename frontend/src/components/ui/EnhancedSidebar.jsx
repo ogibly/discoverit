@@ -140,8 +140,8 @@ const EnhancedSidebar = ({
     <>
       <div
         className={cn(
-          'relative flex flex-col h-full bg-background border-r border-border transition-all duration-300 ease-in-out',
-          'shadow-lg',
+          'relative flex flex-col h-full bg-gradient-to-b from-slate-800 to-slate-900 border-r border-slate-700 transition-all duration-300 ease-in-out',
+          'shadow-2xl',
           className
         )}
         style={sidebarStyle}
@@ -149,23 +149,26 @@ const EnhancedSidebar = ({
         onMouseLeave={handleMouseLeave}
         {...props}
       >
-        {/* Header with Logo and Toggle */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/5 to-primary/10">
+        {/* Modern Header with Logo and Toggle */}
+        <div className={cn(
+          "flex items-center border-b border-slate-700 bg-gradient-to-r from-slate-800 to-slate-700",
+          isCollapsed ? "justify-center p-4" : "justify-between p-6"
+        )}>
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-primary-foreground font-bold text-xl">D</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-slate-900 font-bold text-xl">Q</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">DiscoverIT</h1>
-                <p className="text-xs text-muted-foreground">Network Discovery</p>
+                <h1 className="text-xl font-bold text-white">Q-Home</h1>
+                <p className="text-xs text-slate-400">Smart Network Management</p>
               </div>
             </div>
           )}
           
           {isCollapsed && (
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg mx-auto">
-              <span className="text-primary-foreground font-bold text-xl">D</span>
+            <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-slate-900 font-bold text-xl">Q</span>
             </div>
           )}
           
@@ -173,17 +176,17 @@ const EnhancedSidebar = ({
             <button
               onClick={handleToggle}
               className={cn(
-                'p-2 rounded-lg transition-all duration-200',
-                'hover:bg-accent/50 hover:scale-105',
-                'focus:outline-none focus:ring-2 focus:ring-primary/20',
-                isCollapsed ? 'mx-auto' : ''
+                'p-2 rounded-xl transition-all duration-200',
+                'hover:bg-slate-600/50 hover:scale-105',
+                'focus:outline-none focus:ring-2 focus:ring-yellow-500/20',
+                isCollapsed ? 'absolute top-3 right-3' : ''
               )}
               title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {isCollapsed ? (
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-slate-300" />
               ) : (
-                <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                <ChevronLeft className="w-5 h-5 text-slate-300" />
               )}
             </button>
           )}
@@ -194,40 +197,40 @@ const EnhancedSidebar = ({
           {children}
         </div>
 
-        {/* Footer with User Info */}
+        {/* Modern Footer with User Info */}
         <div className={cn(
-          "border-t border-border bg-muted/20",
-          isCollapsed ? "p-2" : "p-4"
+          "border-t border-slate-700 bg-slate-800/50",
+          isCollapsed ? "p-3" : "p-4"
         )}>
           {!isCollapsed ? (
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-accent-foreground" />
+              <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-slate-900 font-bold text-sm">U</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">System Administrator</p>
-                <p className="text-xs text-muted-foreground truncate">Administrator</p>
+                <p className="text-sm font-medium text-white truncate">uiamjad</p>
+                <p className="text-xs text-slate-400 truncate">Administrator</p>
               </div>
               <div className="flex items-center space-x-1">
-                <button className="p-1.5 rounded-md hover:bg-accent/50 transition-colors" title="Toggle theme">
-                  <Moon className="w-4 h-4 text-muted-foreground" />
+                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Toggle theme">
+                  <Moon className="w-4 h-4 text-slate-300" />
                 </button>
-                <button className="p-1.5 rounded-md hover:bg-accent/50 transition-colors" title="Logout">
-                  <LogOut className="w-4 h-4 text-muted-foreground" />
+                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Logout">
+                  <LogOut className="w-4 h-4 text-slate-300" />
                 </button>
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-3">
-              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-accent-foreground" />
+              <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-slate-900 font-bold text-sm">U</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 rounded-md hover:bg-accent/50 transition-colors" title="Toggle theme">
-                  <Moon className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center space-x-1">
+                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Toggle theme">
+                  <Moon className="w-4 h-4 text-slate-300" />
                 </button>
-                <button className="p-2 rounded-md hover:bg-accent/50 transition-colors" title="Logout">
-                  <LogOut className="w-4 h-4 text-muted-foreground" />
+                <button className="p-2 rounded-lg hover:bg-slate-600/50 transition-colors" title="Logout">
+                  <LogOut className="w-4 h-4 text-slate-300" />
                 </button>
               </div>
             </div>

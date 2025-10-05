@@ -27,28 +27,32 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
       label: 'Dashboard', 
       icon: Home,
       description: 'Overview and analytics',
-      permission: null
+      permission: null,
+      badge: null
     },
     { 
       path: '/discovery', 
       label: 'Discovery', 
       icon: Search,
       description: 'Network scanning and discovery',
-      permission: 'discovery:read'
+      permission: 'discovery:read',
+      badge: null
     },
     { 
       path: '/assets', 
       label: 'Assets', 
       icon: Database,
       description: 'Asset management and inventory',
-      permission: 'assets:read'
+      permission: 'assets:read',
+      badge: null
     },
     { 
       path: '/credentials', 
       label: 'Credentials', 
       icon: Key,
       description: 'Credential management',
-      permission: 'credentials:read'
+      permission: 'credentials:read',
+      badge: null
     }
   ];
 
@@ -79,14 +83,14 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
     <Link
       to={item.path}
       className={cn(
-        'group flex items-center rounded-xl transition-all duration-200',
-        'hover:scale-[1.02] hover:shadow-md',
+        'group flex items-center rounded-2xl transition-all duration-300',
+        'hover:scale-[1.02] hover:shadow-lg',
         isActive
-          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+          ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-slate-900 shadow-lg shadow-yellow-500/25'
+          : 'text-slate-300 hover:text-white hover:bg-slate-700/50',
         isCollapsed 
-          ? 'justify-center w-12 h-12 mx-auto' 
-          : 'space-x-3 px-3 py-3'
+          ? 'justify-center w-12 h-12 mx-auto my-2 hover:bg-slate-700/50' 
+          : 'space-x-4 px-4 py-4'
       )}
       onMouseEnter={() => handleItemHover(item, true)}
       onMouseLeave={() => handleItemHover(item, false)}
@@ -94,25 +98,30 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
       title={isCollapsed ? item.description : ''}
     >
       <div className={cn(
-        'flex-shrink-0 transition-all duration-200',
+        'flex-shrink-0 transition-all duration-300',
         isActive ? 'scale-110' : 'group-hover:scale-105',
         isCollapsed ? 'mx-auto' : ''
       )}>
         <item.icon className={cn(
-          "transition-all duration-200",
-          isCollapsed ? "w-6 h-6" : "w-5 h-5"
+          "transition-all duration-300",
+          isCollapsed ? "w-6 h-6" : "w-6 h-6"
         )} />
       </div>
       
       {!isCollapsed && (
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="font-medium truncate">{item.label}</span>
+            <span className="font-semibold truncate text-lg">{item.label}</span>
             {isActive && (
-              <ChevronRight className="w-4 h-4 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 flex-shrink-0" />
+            )}
+            {item.badge && (
+              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                {item.badge}
+              </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground truncate mt-0.5">
+          <p className="text-sm text-slate-400 truncate mt-1">
             {item.description}
           </p>
         </div>
@@ -122,13 +131,13 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
 
   return (
     <nav className={cn(
-      "flex flex-col",
-      isCollapsed ? "space-y-3 p-2" : "space-y-2 p-3"
+      "flex flex-col h-full",
+      isCollapsed ? "space-y-3 p-4" : "space-y-4 p-6"
     )}>
       {/* Main Navigation */}
       <div className={cn(
-        "space-y-1",
-        isCollapsed && "space-y-3"
+        "space-y-3",
+        isCollapsed && "space-y-4"
       )}>
         {navigationItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -145,14 +154,14 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
 
       {/* Admin Section - Only show when not collapsed */}
       {!isCollapsed && (
-        <div className="pt-4 border-t border-border">
-          <div className="px-3 py-2 mb-2">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <div className="pt-6 border-t border-slate-700">
+          <div className="px-4 py-3 mb-4">
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
               Administration
             </h3>
           </div>
           
-          <div className="space-y-1">
+          <div className="space-y-3">
             {adminItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -171,6 +180,7 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
       {/* Admin Items - Show as clean icons when collapsed */}
       {isCollapsed && (
         <div className="space-y-3">
+          <div className="w-8 h-px bg-slate-700 mx-auto my-3" />
           {adminItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -185,11 +195,15 @@ const EnhancedNavigation = ({ isCollapsed = false, onItemHover = null }) => {
         </div>
       )}
 
+      {/* Spacer to push footer items to bottom */}
+      <div className="flex-1" />
+
       {/* Guide - Bottom Navigation Item */}
       <div className={cn(
-        "pt-4 border-t border-border",
-        isCollapsed && "pt-3"
+        "border-t border-slate-700",
+        isCollapsed ? "pt-4" : "pt-6"
       )}>
+        {isCollapsed && <div className="w-8 h-px bg-slate-700 mx-auto mb-4" />}
         <NavItem
           item={guideItem}
           isActive={location.pathname === guideItem.path}

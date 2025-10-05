@@ -412,165 +412,176 @@ const AssetsInterface = () => {
 
   // Render functions
   const renderAssetCard = (asset) => (
-    <Card className="group hover:shadow-lg transition-all duration-200 border-border hover:border-primary/50 h-full">
-      <CardContent className="p-4 flex flex-col h-full">
-        {/* Header with asset info and badges */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-3 min-w-0 flex-1">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+    <div className="group bg-slate-800/50 rounded-2xl border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] h-full">
+      <div className="p-6 flex flex-col h-full">
+        {/* Header with asset info and status */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center space-x-4 min-w-0 flex-1">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-600 text-slate-200 flex-shrink-0 group-hover:from-slate-600 group-hover:to-slate-500 transition-all duration-300">
               {asset.assetIcon}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="font-semibold text-foreground truncate">
+              <h4 className="font-bold text-white text-lg truncate group-hover:text-yellow-400 transition-colors">
                 {asset.name || 'Unnamed Asset'}
               </h4>
-              <p className="text-sm text-muted-foreground font-mono truncate">
+              <p className="text-slate-400 font-mono text-sm truncate">
                 {asset.primary_ip || 'No IP'}
               </p>
             </div>
           </div>
-          <div className="flex flex-col space-y-1 flex-shrink-0">
-            <Badge className={cn("text-xs", getStatusColor(asset.status))}>
-              {getStatusIcon(asset.status)}
-              <span className="ml-1">{asset.status === 'active' ? 'Active' : 'Inactive'}</span>
-            </Badge>
+          <div className="flex flex-col space-y-2 flex-shrink-0">
+            <div className={cn(
+              "px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1",
+              asset.status === 'active' 
+                ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+                : "bg-red-500/20 text-red-400 border border-red-500/30"
+            )}>
+              <div className={cn(
+                "w-2 h-2 rounded-full",
+                asset.status === 'active' ? "bg-green-400" : "bg-red-400"
+              )}></div>
+              <span>{asset.status === 'active' ? 'Online' : 'Offline'}</span>
+            </div>
             {asset.is_managed && (
-              <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">
-                <Shield className="w-3 h-3 mr-1" />
-                Managed
-              </Badge>
+              <div className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center space-x-1">
+                <Shield className="w-3 h-3" />
+                <span>Managed</span>
+              </div>
             )}
           </div>
         </div>
         
-        {/* Asset details */}
-        <div className="space-y-2 text-sm flex-1">
+        {/* Asset details with modern styling */}
+        <div className="space-y-3 text-sm flex-1">
           {asset.assetType && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Type:</span>
-              <span className="text-foreground font-medium truncate ml-2">{asset.assetType}</span>
+            <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-xl">
+              <span className="text-slate-400 font-medium">Type</span>
+              <span className="text-white font-semibold truncate ml-2">{asset.assetType}</span>
             </div>
           )}
           {asset.manufacturer && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Manufacturer:</span>
-              <span className="text-foreground font-medium truncate ml-2">{asset.manufacturer}</span>
+            <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-xl">
+              <span className="text-slate-400 font-medium">Manufacturer</span>
+              <span className="text-white font-semibold truncate ml-2">{asset.manufacturer}</span>
             </div>
           )}
           {asset.model && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Model:</span>
-              <span className="text-foreground font-medium truncate ml-2">{asset.model}</span>
+            <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-xl">
+              <span className="text-slate-400 font-medium">Model</span>
+              <span className="text-white font-semibold truncate ml-2">{asset.model}</span>
             </div>
           )}
           {asset.location && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Location:</span>
-              <span className="text-foreground font-medium truncate ml-2">{asset.location}</span>
+            <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-xl">
+              <span className="text-slate-400 font-medium">Location</span>
+              <span className="text-white font-semibold truncate ml-2">{asset.location}</span>
             </div>
           )}
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Created:</span>
-            <span className="text-foreground text-xs">
+          <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-xl">
+            <span className="text-slate-400 font-medium">Created</span>
+            <span className="text-slate-300 text-xs">
               {formatTimestampSafe(asset.created_at)}
             </span>
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex space-x-2 mt-4 pt-3 border-t border-border">
+        {/* Modern action buttons */}
+        <div className="flex space-x-3 mt-6 pt-4 border-t border-slate-700">
           <Button
-            variant="outline"
-            size="sm"
             onClick={() => handleEditAsset(asset)}
-            className="flex-1"
+            className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-slate-900 font-semibold rounded-xl py-3 transition-all duration-300 hover:scale-105"
           >
             <Eye className="w-4 h-4 mr-2" />
-            View
+            View Details
           </Button>
           <Button
-            variant="outline"
-            size="sm"
             onClick={() => handleDeleteAsset(asset)}
-            className="flex-1"
+            variant="outline"
+            className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white rounded-xl py-3 transition-all duration-300 hover:scale-105"
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+            Remove
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 
   const renderAssetRow = (asset) => (
-    <tr key={asset.id} className="hover:bg-muted/50 transition-colors">
+    <tr key={asset.id} className="hover:bg-slate-700/30 transition-colors">
       <td className="px-6 py-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 rounded-xl bg-slate-700/50 text-slate-200">
             {asset.assetIcon}
           </div>
           <div>
-            <p className="font-medium text-foreground">
+            <p className="font-semibold text-white text-lg">
               {asset.name || 'Unnamed Asset'}
             </p>
-            <p className="text-sm text-muted-foreground">{asset.assetType}</p>
+            <p className="text-sm text-slate-400">{asset.assetType}</p>
           </div>
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className="font-mono text-sm text-foreground">
+        <span className="font-mono text-sm text-slate-300 bg-slate-700/50 px-3 py-1 rounded-lg">
           {asset.primary_ip || 'No IP'}
         </span>
       </td>
       <td className="px-6 py-4">
         <div className="max-w-xs">
-          <span className="text-sm text-foreground">
+          <span className="text-sm text-white font-medium">
             {asset.manufacturer || 'Unknown'}
           </span>
           {asset.model && (
-            <div className="text-xs text-muted-foreground">{asset.model}</div>
+            <div className="text-xs text-slate-400">{asset.model}</div>
           )}
         </div>
       </td>
       <td className="px-6 py-4">
-        <div className="flex flex-col space-y-1">
-          <Badge className={cn("text-xs w-fit", getStatusColor(asset.status))}>
-            {getStatusIcon(asset.status)}
-            <span className="ml-1">{asset.status === 'active' ? 'Active' : 'Inactive'}</span>
-          </Badge>
+        <div className="flex flex-col space-y-2">
+          <div className={cn(
+            "px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 w-fit",
+            asset.status === 'active' 
+              ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+              : "bg-red-500/20 text-red-400 border border-red-500/30"
+          )}>
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              asset.status === 'active' ? "bg-green-400" : "bg-red-400"
+            )}></div>
+            <span>{asset.status === 'active' ? 'Online' : 'Offline'}</span>
+          </div>
           {asset.is_managed && (
-            <Badge className="text-xs w-fit bg-blue-100 text-blue-800 border-blue-200">
-              <Shield className="w-3 h-3 mr-1" />
-              Managed
-            </Badge>
+            <div className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center space-x-1 w-fit">
+              <Shield className="w-3 h-3" />
+              <span>Managed</span>
+            </div>
           )}
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-slate-300">
           {asset.location || 'Not specified'}
         </span>
       </td>
       <td className="px-6 py-4">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-slate-400">
           {formatTimestampSafe(asset.created_at)}
         </span>
       </td>
       <td className="px-6 py-4">
         <div className="flex space-x-2">
           <Button
-            variant="outline"
-            size="sm"
             onClick={() => handleEditAsset(asset)}
             title="View asset details"
+            className="p-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 rounded-lg transition-all duration-300"
           >
             <Eye className="w-4 h-4" />
           </Button>
           <Button
-            variant="outline"
-            size="sm"
             onClick={() => handleDeleteAsset(asset)}
             title="Delete asset"
+            className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all duration-300"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -580,53 +591,67 @@ const AssetsInterface = () => {
   );
 
   return (
-    <div className="h-screen bg-background flex flex-col">
-      {/* Fixed Header */}
-      <div className="flex-shrink-0 border-b border-border bg-background">
-        <PageHeader
-          title={
-            <span className="flex items-center">
-              Asset Management
-              <Info className="ml-2 w-4 h-4 text-muted-foreground" />
-            </span>
-          }
-          subtitle="Manage and organize your network assets"
-          metrics={[
-            { value: statistics.total, label: "Total Assets", color: "primary" },
-            { value: statistics.active, label: "Active", color: "green" },
-            { value: statistics.managed, label: "Managed", color: "blue" },
-            { value: statistics.inactive, label: "Inactive", color: "red" }
-          ]}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+      {/* Modern Header */}
+      <div className="flex-shrink-0 border-b border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+        <div className="px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-white flex items-center">
+                Asset Management
+                <Info className="ml-3 w-6 h-6 text-slate-400" />
+              </h1>
+              <p className="text-slate-400 text-lg mt-1">Manage and organize your network assets</p>
+            </div>
+            <div className="flex items-center space-x-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-500">{statistics.total}</div>
+                <div className="text-sm text-slate-400">Total Assets</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-500">{statistics.active}</div>
+                <div className="text-sm text-slate-400">Active</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-500">{statistics.managed}</div>
+                <div className="text-sm text-slate-400">Managed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-500">{statistics.inactive}</div>
+                <div className="text-sm text-slate-400">Inactive</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Fixed Search and Filter Bar */}
-      <div className="flex-shrink-0 p-6 pb-4 border-b border-border bg-background">
-        <div className="space-y-4">
+      {/* Modern Search and Filter Bar */}
+      <div className="flex-shrink-0 p-6 pb-4 border-b border-slate-700 bg-slate-800/30">
+        <div className="space-y-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input
                   id="asset-search"
-                  placeholder="Search assets (e.g., name=server01, ip=192.168.1.1, status=active)..."
+                  placeholder="Search for device..."
                   value={searchTerm}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onFocus={() => setShowSearchSuggestions(searchSuggestions.length > 0)}
                   onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
-                  className="pl-10"
+                  className="pl-12 h-12 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 focus:ring-2 focus:ring-yellow-500/20 rounded-xl"
                 />
                 
                 {/* Search Suggestions Dropdown */}
                 {showSearchSuggestions && searchSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
-                    <div className="p-2 text-xs text-muted-foreground border-b border-border">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto">
+                    <div className="p-3 text-sm text-slate-400 border-b border-slate-600">
                       Available fields (JQL-style):
                     </div>
                     {searchSuggestions.map((suggestion, index) => (
                       <div
                         key={index}
-                        className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                        className="px-4 py-3 hover:bg-slate-700 cursor-pointer text-sm transition-colors"
                         onClick={() => {
                           const currentQuery = searchTerm.split(' ').slice(0, -1).join(' ');
                           const newQuery = currentQuery ? `${currentQuery} ${suggestion.display}` : suggestion.display;
@@ -634,8 +659,8 @@ const AssetsInterface = () => {
                           setShowSearchSuggestions(false);
                         }}
                       >
-                        <div className="font-medium">{suggestion.display}</div>
-                        <div className="text-xs text-muted-foreground">{suggestion.label}</div>
+                        <div className="font-semibold text-white">{suggestion.display}</div>
+                        <div className="text-xs text-slate-400">{suggestion.label}</div>
                       </div>
                     ))}
                   </div>
@@ -643,11 +668,11 @@ const AssetsInterface = () => {
               </div>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[140px]"
+                className="px-4 py-3 border border-slate-600 rounded-xl bg-slate-700/50 text-white text-sm min-w-[160px] focus:ring-2 focus:ring-yellow-500/20"
               >
                 <option value="all">All Assets</option>
                 <option value="active">Active</option>
@@ -663,7 +688,7 @@ const AssetsInterface = () => {
                   setSortBy(field);
                   setSortOrder(order);
                 }}
-                className="px-3 py-2 border border-border rounded-md bg-background text-foreground text-sm min-w-[140px]"
+                className="px-4 py-3 border border-slate-600 rounded-xl bg-slate-700/50 text-white text-sm min-w-[160px] focus:ring-2 focus:ring-yellow-500/20"
               >
                 <option value="name-asc">Name ↑</option>
                 <option value="name-desc">Name ↓</option>
@@ -678,49 +703,54 @@ const AssetsInterface = () => {
           </div>
           
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center space-x-8">
+              <span className="text-slate-400 font-medium">
                 Showing {filteredAssets.length} of {processedAssets.length} assets
               </span>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Active:</span>
-                <span className="text-sm font-medium text-green-600">{statistics.active}</span>
+                <span className="text-slate-400">Active:</span>
+                <span className="text-green-400 font-semibold">{statistics.active}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Managed:</span>
-                <span className="text-sm font-medium text-blue-600">{statistics.managed}</span>
+                <span className="text-slate-400">Managed:</span>
+                <span className="text-blue-400 font-semibold">{statistics.managed}</span>
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <Button
-                variant="outline"
-                size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 title="Refresh asset list"
+                className="p-3 bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 rounded-xl transition-all duration-300"
               >
-                <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+                <RefreshCw className={cn("w-5 h-5", isRefreshing && "animate-spin")} />
               </Button>
               
-              <div className="flex border border-border rounded-md">
+              <div className="flex border border-slate-600 rounded-xl overflow-hidden">
                 <Button
-                  variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                  size="sm"
                   onClick={() => setViewMode('cards')}
-                  className="rounded-r-none"
+                  className={cn(
+                    "px-4 py-3 transition-all duration-300",
+                    viewMode === 'cards' 
+                      ? "bg-yellow-500 text-slate-900 font-semibold" 
+                      : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"
+                  )}
                   title="Card view"
                 >
-                  <Grid3X3 className="w-4 h-4" />
+                  <Grid3X3 className="w-5 h-5" />
                 </Button>
                 <Button
-                  variant={viewMode === 'table' ? 'default' : 'ghost'}
-                  size="sm"
                   onClick={() => setViewMode('table')}
-                  className="rounded-l-none"
+                  className={cn(
+                    "px-4 py-3 transition-all duration-300",
+                    viewMode === 'table' 
+                      ? "bg-yellow-500 text-slate-900 font-semibold" 
+                      : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/50"
+                  )}
                   title="Table view"
                 >
-                  <List className="w-4 h-4" />
+                  <List className="w-5 h-5" />
                 </Button>
               </div>
             </div>
@@ -728,31 +758,29 @@ const AssetsInterface = () => {
         </div>
       </div>
 
-      {/* Scrollable Content Area */}
+      {/* Modern Content Area */}
       <div className="flex-1 overflow-auto p-6">
         {/* Asset List */}
         {filteredAssets.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <div className="text-4xl mb-4">📋</div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No Assets Found</h3>
-              <p className="text-muted-foreground mb-6">
-                {searchTerm || filterType !== 'all' 
-                  ? 'Try adjusting your search or filter criteria.'
-                  : 'No assets have been created yet. Create your first asset to get started.'
-                }
-              </p>
-              <Button
-                onClick={handleCreateModalOpen}
-                className="flex items-center space-x-2"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Asset
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-slate-800/50 rounded-2xl border border-slate-700 p-12 text-center">
+            <div className="text-6xl mb-6">📋</div>
+            <h3 className="text-2xl font-bold text-white mb-4">No Assets Found</h3>
+            <p className="text-slate-400 text-lg mb-8">
+              {searchTerm || filterType !== 'all' 
+                ? 'Try adjusting your search or filter criteria.'
+                : 'No assets have been created yet. Create your first asset to get started.'
+              }
+            </p>
+            <Button
+              onClick={handleCreateModalOpen}
+              className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-slate-900 font-semibold px-8 py-4 rounded-xl text-lg transition-all duration-300 hover:scale-105"
+            >
+              <Plus className="w-5 h-5 mr-3" />
+              Create Asset
+            </Button>
+          </div>
         ) : viewMode === 'cards' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredAssets.map((asset) => (
               <div key={asset.id} className="min-h-0">
                 {renderAssetCard(asset)}
@@ -760,14 +788,13 @@ const AssetsInterface = () => {
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-auto max-h-[calc(100vh-400px)]">
-                <table className="w-full">
-                  <thead className="border-b border-border bg-muted/50 sticky top-0 z-10">
+          <div className="bg-slate-800/50 rounded-2xl border border-slate-700 overflow-hidden">
+            <div className="overflow-auto max-h-[calc(100vh-400px)]">
+              <table className="w-full">
+                <thead className="border-b border-slate-700 bg-slate-800/50 sticky top-0 z-10">
                     <tr>
                       <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                        className="px-6 py-4 text-left text-sm font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-700/50 transition-colors"
                         onClick={() => {
                           if (sortBy === 'name') {
                             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -778,15 +805,15 @@ const AssetsInterface = () => {
                         }}
                         title="Click to sort by asset name"
                       >
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-2">
                           <span>Asset</span>
                           {sortBy === 'name' && (
-                            sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />
                           )}
                         </div>
                       </th>
                       <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                        className="px-6 py-4 text-left text-sm font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-700/50 transition-colors"
                         onClick={() => {
                           if (sortBy === 'ip') {
                             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -797,15 +824,15 @@ const AssetsInterface = () => {
                         }}
                         title="Click to sort by IP address"
                       >
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-2">
                           <span>IP Address</span>
                           {sortBy === 'ip' && (
-                            sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />
                           )}
                         </div>
                       </th>
                       <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                        className="px-6 py-4 text-left text-sm font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-700/50 transition-colors"
                         onClick={() => {
                           if (sortBy === 'manufacturer') {
                             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -816,21 +843,21 @@ const AssetsInterface = () => {
                         }}
                         title="Click to sort by manufacturer"
                       >
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-2">
                           <span>Manufacturer</span>
                           {sortBy === 'manufacturer' && (
-                            sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />
                           )}
                         </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300 uppercase tracking-wider">
                         Location
                       </th>
                       <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                        className="px-6 py-4 text-left text-sm font-semibold text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-700/50 transition-colors"
                         onClick={() => {
                           if (sortBy === 'created_at') {
                             setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -841,25 +868,24 @@ const AssetsInterface = () => {
                         }}
                         title="Click to sort by created date"
                       >
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-2">
                           <span>Created</span>
                           {sortBy === 'created_at' && (
-                            sortOrder === 'asc' ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                            sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />
                           )}
                         </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border">
+                  <tbody className="divide-y divide-slate-700">
                     {filteredAssets.map((asset) => renderAssetRow(asset))}
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
         )}
       </div>
 

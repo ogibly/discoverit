@@ -47,10 +47,6 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
     scannerId: null,
     scannerRecommendation: null,
     
-    // Step 4: Advanced Options
-    credentials: [],
-    schedule: null,
-    notifications: true,
     
     // Step 5: Review & Launch
     estimatedDuration: 0,
@@ -85,13 +81,6 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
     },
     {
       id: 4,
-      title: 'Advanced Options',
-      description: 'Set additional options',
-      icon: Shield,
-      component: AdvancedOptionsStep
-    },
-    {
-      id: 5,
       title: 'Review & Launch',
       description: 'Review and start scan',
       icon: CheckCircle,
@@ -181,8 +170,6 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
         target: wizardData.target,
         scan_template_id: wizardData.scanTemplateId,
         scanner_ids: wizardData.scannerId ? [wizardData.scannerId] : [], // Convert to array format
-        credentials: wizardData.credentials,
-        schedule: wizardData.schedule
       };
 
       const result = await createScanTask(scanConfig);
@@ -752,65 +739,6 @@ const ScannerSelectionStep = ({ data, updateData, errors, availableScanners, api
   );
 };
 
-const AdvancedOptionsStep = ({ data, updateData, api }) => {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Advanced Options</h3>
-        <p className="text-slate-400 mb-4">
-          Configure additional scan options and notifications
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Notifications
-          </label>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="notifications"
-              checked={data.notifications}
-              onChange={(e) => updateData({ notifications: e.target.checked })}
-              className="w-4 h-4 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="notifications" className="text-sm text-slate-300">
-              Send notifications when scan completes
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">
-            Schedule (Optional)
-          </label>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Start Time</label>
-              <Input
-                type="datetime-local"
-                className="w-full"
-                onChange={(e) => updateData({ 
-                  schedule: { ...data.schedule, start_time: e.target.value }
-                })}
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Recurrence</label>
-              <select className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white">
-                <option value="">One-time</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
   // Get the selected template
@@ -874,7 +802,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                   <div className="text-white font-medium">
                     {(() => {
                       if (data.scannerId) {
-                        const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
+                        const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                         return selectedScanner ? selectedScanner.name : `Scanner ${data.scannerId}`;
                       }
                       return 'Default Scanner';
@@ -885,7 +813,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                       "text-xs px-2 py-1 rounded-full",
                       (() => {
                         if (data.scannerId) {
-                          const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default 
                               ? "bg-blue-500/20 text-blue-400" 
@@ -897,7 +825,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     )}>
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default ? 'Default' : 'Satellite';
                           }
@@ -908,7 +836,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     <span className="text-xs text-slate-400">
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_active ? '🟢 Online' : '🔴 Offline';
                           }
@@ -990,10 +918,6 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               <div className="flex justify-between">
                 <span className="text-slate-400">Expected Devices:</span>
                 <span className="text-white">{estimatedDevices}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Notifications:</span>
-                <span className="text-white">{data.notifications ? 'Enabled' : 'Disabled'}</span>
               </div>
             </div>
           </div>

@@ -14,7 +14,7 @@ import { formatTimestampSafe, formatScanProgress, getCappedProgress } from '../u
 import PageHeader from './PageHeader';
 import ScanResultsModal from './discovery/ScanResultsModal';
 import ScanNotifications from './discovery/ScanNotifications';
-import DiscoveryWizard from './discovery/DiscoveryWizard';
+import StreamlinedDiscoveryWizard from './discovery/StreamlinedDiscoveryWizard';
 import { 
   Search, 
   List, 
@@ -1338,7 +1338,7 @@ const UnifiedScanDevicesInterface = () => {
       />
 
       {showWizard && (
-        <DiscoveryWizard
+        <StreamlinedDiscoveryWizard
           onComplete={handleWizardComplete}
           onCancel={() => setShowWizard(false)}
         />

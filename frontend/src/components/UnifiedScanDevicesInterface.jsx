@@ -402,9 +402,14 @@ const UnifiedScanDevicesInterface = () => {
   };
 
   // Format functions
-  const formatScanDate = (startTime) => {
-    if (!startTime) return 'Pending';
-    const date = new Date(startTime);
+  const formatScanDate = (startTime, endTime, status) => {
+    // For completed scans, use endTime; for running/pending, use startTime
+    const timeToUse = (status === 'completed' && endTime) ? endTime : startTime;
+    
+    if (!timeToUse) return 'Pending';
+    
+    // Handle timezone-aware datetime strings from backend
+    const date = new Date(timeToUse);
     if (isNaN(date.getTime())) return 'Invalid date';
     
     const now = new Date();
@@ -420,6 +425,7 @@ const UnifiedScanDevicesInterface = () => {
   const formatScanDuration = (startTime, endTime, status) => {
     if (!startTime) return 'Pending';
     
+    // Handle timezone-aware datetime strings from backend
     const start = new Date(startTime);
     if (isNaN(start.getTime())) return 'Invalid date';
     
@@ -826,7 +832,7 @@ const UnifiedScanDevicesInterface = () => {
                                 <div>
                                   <p className="font-medium text-foreground">{task.name}</p>
                                   <p className="text-sm text-muted-foreground">
-                                    {task.target} • {formatScanDate(task.start_time)}
+                                    {task.target} • {formatScanDate(task.start_time, task.end_time, task.status)}
                                   </p>
                                 </div>
                               </div>

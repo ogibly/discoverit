@@ -1,14 +1,14 @@
 ﻿import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App.jsx';
+import UnifiedApp from './UnifiedApp.jsx';
 import './index.css';
 
-// Cache bust: 2024-01-15-v2
+// Cache bust: 2024-01-15-v3 - Unified Design System
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <UnifiedApp />
     </BrowserRouter>
   </React.StrictMode>
 );

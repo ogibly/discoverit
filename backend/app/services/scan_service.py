@@ -43,7 +43,8 @@ class ScanServiceV2:
             target=task_data.target,
             scan_template_id=task_data.scan_template_id,
             created_by=task_data.created_by,
-            scanner_ids=getattr(task_data, 'scanner_ids', [])
+            scanner_ids=getattr(task_data, 'scanner_ids', []),
+            start_time=datetime.utcnow()  # Set start time immediately when task is created
         )
         
         self.db.add(task)
@@ -189,7 +190,6 @@ class ScanServiceV2:
             
             # Initialize task status
             task.status = "running"
-            task.start_time = datetime.utcnow()
             self.db.commit()
             
             # Get IPs to scan

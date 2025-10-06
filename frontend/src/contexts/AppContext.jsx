@@ -918,9 +918,11 @@ export function AppProvider({ children }) {
     
     const interval = setInterval(() => {
       fetchActiveScanTask();
+      // Also refresh scan tasks list to update progress in scan history
+      fetchScanTasks();
     }, 2000);
     return () => clearInterval(interval);
-  }, [fetchActiveScanTask, token]);
+  }, [fetchActiveScanTask, fetchScanTasks, token]);
 
   // Auto-clear status messages
   useEffect(() => {

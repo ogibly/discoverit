@@ -15,11 +15,11 @@ import PageHeader from './PageHeader';
 import ScanResultsModal from './discovery/ScanResultsModal';
 import ScanNotifications from './discovery/ScanNotifications';
 import StreamlinedDiscoveryWizard from './discovery/StreamlinedDiscoveryWizard';
-import { 
-  Search, 
-  List, 
-  Eye, 
-  ArrowRight, 
+import {
+  Search,
+  List,
+  Eye,
+  ArrowRight,
   RefreshCw,
   CheckCircle,
   Clock,
@@ -38,7 +38,6 @@ import {
   ExternalLink,
   Activity,
   Scan,
-  Database,
   AlertTriangle,
   Grid3X3
 } from 'lucide-react';
@@ -210,6 +209,31 @@ const UnifiedScanDevicesInterface = () => {
       setRetryingScans(prev => {
         const newSet = new Set(prev);
         newSet.delete(taskId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleRescan = async (task) => {
+    try {
+      setRetryingScans(prev => new Set([...prev, task.id]));
+      
+      // Create a new scan task with the same parameters
+      const newTaskData = {
+        name: `Rescan - ${task.name}`,
+        target: task.target,
+        scan_template_id: task.scan_template_id,
+        scanner_ids: task.scanner_ids || [],
+        created_by: user?.username
+      };
+      
+      await createScanTask(newTaskData);
+    } catch (error) {
+      console.error('Error rescanning:', error);
+    } finally {
+      setRetryingScans(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(task.id);
         return newSet;
       });
     }
@@ -394,12 +418,6 @@ const UnifiedScanDevicesInterface = () => {
     }
   };
 
-  // Handle scan selection for device correlation
-  const handleScanSelect = (scanId) => {
-    setSelectedScanId(scanId);
-    // Auto-refresh devices when scan is selected
-    handleRefreshDevices();
-  };
 
   // Format functions
   const formatScanDate = (startTime, endTime, status) => {
@@ -838,17 +856,6 @@ const UnifiedScanDevicesInterface = () => {
                               </div>
                               <div className="flex items-center space-x-2">
                                 <Button
-                                  variant={selectedScanId === task.id ? "default" : "ghost"}
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleScanSelect(task.id);
-                                  }}
-                                  title="View devices from this scan"
-                                >
-                                  <Database className="w-4 h-4" />
-                                </Button>
-                                <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={(e) => {
@@ -923,8 +930,28 @@ const UnifiedScanDevicesInterface = () => {
                                     >
                                       <Network className="w-4 h-4" />
                                       <span>Filter Devices</span>
-                                      <ExternalLink className="w-3 h-3" />
                                     </Button>
+                                    
+                                    {/* Rescan button for completed scans */}
+                                    {task.status === 'completed' && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleRescan(task)}
+                                        disabled={retryingScans.has(task.id)}
+                                        className="flex items-center space-x-2"
+                                        title="Run a new scan with the same parameters"
+                                      >
+                                        {retryingScans.has(task.id) ? (
+                                          <RefreshCw className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <Play className="w-4 h-4" />
+                                        )}
+                                        <span>{retryingScans.has(task.id) ? 'Rescanning...' : 'Rescan'}</span>
+                                      </Button>
+                                    )}
+                                    
+                                    {/* Retry button for failed scans */}
                                     {task.status === 'failed' && (
                                       <Button
                                         variant="outline"

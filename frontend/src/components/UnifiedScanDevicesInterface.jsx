@@ -39,7 +39,8 @@ import {
   Activity,
   Scan,
   AlertTriangle,
-  Grid3X3
+  Grid3X3,
+  Database
 } from 'lucide-react';
 
 const UnifiedScanDevicesInterface = () => {
@@ -63,7 +64,8 @@ const UnifiedScanDevicesInterface = () => {
     fetchAssets,
     convertDeviceToAsset,
     selectAllDevices,
-    createAsset
+    createAsset,
+    createScanTask
   } = useApp();
 
   const { user } = useAuth();
@@ -427,7 +429,18 @@ const UnifiedScanDevicesInterface = () => {
     if (!timeToUse) return 'Pending';
     
     // Handle timezone-aware datetime strings from backend
-    const date = new Date(timeToUse);
+    let date;
+    if (typeof timeToUse === 'string') {
+      // If it's an ISO string without timezone info, assume it's UTC
+      if (!timeToUse.includes('Z') && !timeToUse.includes('+') && !timeToUse.includes('-', 10)) {
+        date = new Date(timeToUse + 'Z');
+      } else {
+        date = new Date(timeToUse);
+      }
+    } else {
+      date = new Date(timeToUse);
+    }
+    
     if (isNaN(date.getTime())) return 'Invalid date';
     
     const now = new Date();
@@ -437,14 +450,32 @@ const UnifiedScanDevicesInterface = () => {
     if (diffInHours < 24) return `${Math.floor(diffInHours)}h ago`;
     if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
     
-    return date.toLocaleDateString();
+    // Use timezone-aware formatting for older dates
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
   };
 
   const formatScanDuration = (startTime, endTime, status) => {
     if (!startTime) return 'Pending';
     
     // Handle timezone-aware datetime strings from backend
-    const start = new Date(startTime);
+    let start;
+    if (typeof startTime === 'string') {
+      if (!startTime.includes('Z') && !startTime.includes('+') && !startTime.includes('-', 10)) {
+        start = new Date(startTime + 'Z');
+      } else {
+        start = new Date(startTime);
+      }
+    } else {
+      start = new Date(startTime);
+    }
+    
     if (isNaN(start.getTime())) return 'Invalid date';
     
     if (status === 'running' || !endTime) {
@@ -453,7 +484,17 @@ const UnifiedScanDevicesInterface = () => {
       return formatDuration(diffMs);
     } else {
       // For completed scans, show actual duration
-      const end = new Date(endTime);
+      let end;
+      if (typeof endTime === 'string') {
+        if (!endTime.includes('Z') && !endTime.includes('+') && !endTime.includes('-', 10)) {
+          end = new Date(endTime + 'Z');
+        } else {
+          end = new Date(endTime);
+        }
+      } else {
+        end = new Date(endTime);
+      }
+      
       if (isNaN(end.getTime())) return 'Invalid end time';
       const diffMs = end - start;
       return formatDuration(diffMs);
@@ -851,6 +892,9 @@ const UnifiedScanDevicesInterface = () => {
                                   <p className="font-medium text-foreground">{task.name}</p>
                                   <p className="text-sm text-muted-foreground">
                                     {task.target} • {formatScanDate(task.start_time, task.end_time, task.status)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Scan ID: {task.id}
                                   </p>
                                 </div>
                               </div>

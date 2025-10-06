@@ -686,16 +686,29 @@ class ScanServiceV2:
         # 3. Has hostname (different from IP)
         # 4. Has OS information
         # 5. Host responds to ping (for ping scans like -sn)
+        # 6. Has response time (indicates host is alive)
+        # 7. Has TTL (indicates network response)
         
         has_ports = scan_result.get("ports") and len(scan_result["ports"]) > 0
         has_mac = scan_result.get("addresses", {}).get("mac")
         has_hostname = scan_result.get("hostname") and scan_result["hostname"] != scan_result.get("ip")
         has_os = scan_result.get("os_info", {}).get("os_name")
+        has_response_time = scan_result.get("response_time") is not None
+        has_ttl = scan_result.get("ttl") is not None
         
-        # Check if host is up (for ping scans)
-        is_host_up = "Host is up" in scan_result.get("raw_output", "")
+        # Check if host is up (for ping scans) - be more flexible with this check
+        raw_output = scan_result.get("raw_output", "")
+        is_host_up = ("Host is up" in raw_output or 
+                     "1 host up" in raw_output or 
+                     "host up" in raw_output.lower())
         
-        return has_ports or has_mac or has_hostname or has_os or is_host_up
+        # Also check if scan didn't fail and we have some response
+        scan_successful = (scan_result.get("status") != "failed" and 
+                          "error" not in scan_result and
+                          not ("0 hosts up" in raw_output))
+        
+        return (has_ports or has_mac or has_hostname or has_os or 
+                is_host_up or has_response_time or has_ttl or scan_successful)
 
     def delete_scan(self, scan_id: int) -> bool:
         """Delete a scan record."""

@@ -91,6 +91,7 @@ const UnifiedScanDevicesInterface = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Search field definitions (JQL-style) - Removed confidence
   const searchFields = [
@@ -121,6 +122,14 @@ const UnifiedScanDevicesInterface = () => {
       fetchDiscoveredDevices();
     }
   }, [activeScanTask, fetchScanTasks, fetchDiscoveredDevices]);
+
+  // Real-time updates for running scans
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Scan-related functions
   const handleWizardComplete = (result) => {
@@ -406,6 +415,39 @@ const UnifiedScanDevicesInterface = () => {
     if (diffInHours < 168) return `${Math.floor(diffInHours / 24)}d ago`;
     
     return date.toLocaleDateString();
+  };
+
+  const formatScanDuration = (startTime, endTime, status) => {
+    if (!startTime) return 'Pending';
+    
+    const start = new Date(startTime);
+    if (isNaN(start.getTime())) return 'Invalid date';
+    
+    if (status === 'running' || !endTime) {
+      // For running scans, show elapsed time (use currentTime for real-time updates)
+      const diffMs = currentTime - start;
+      return formatDuration(diffMs);
+    } else {
+      // For completed scans, show actual duration
+      const end = new Date(endTime);
+      if (isNaN(end.getTime())) return 'Invalid end time';
+      const diffMs = end - start;
+      return formatDuration(diffMs);
+    }
+  };
+
+  const formatDuration = (milliseconds) => {
+    const seconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
+    } else {
+      return `${seconds}s`;
+    }
   };
 
   const getStatusColor = (status) => {
@@ -859,10 +901,7 @@ const UnifiedScanDevicesInterface = () => {
                                     <div>
                                       <span className="text-muted-foreground">Duration:</span>
                                       <p className="mt-1 font-mono">
-                                        {task.start_time && task.end_time 
-                                          ? formatScanDate(task.start_time) 
-                                          : 'In progress'
-                                        }
+                                        {formatScanDuration(task.start_time, task.end_time, task.status)}
                                       </p>
                                     </div>
                                   </div>

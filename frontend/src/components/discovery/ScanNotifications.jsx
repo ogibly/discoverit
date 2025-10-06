@@ -125,15 +125,15 @@ const ScanNotifications = ({
   const getNotificationColor = (type) => {
     switch (type) {
       case 'success':
-        return 'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800';
+        return 'border-green-200 bg-green-50 dark:bg-green-900/90 dark:border-green-700';
       case 'error':
-        return 'border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800';
+        return 'border-red-200 bg-red-50 dark:bg-red-900/90 dark:border-red-700';
       case 'warning':
-        return 'border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-800';
+        return 'border-yellow-200 bg-yellow-50 dark:bg-yellow-900/90 dark:border-yellow-700';
       case 'info':
-        return 'border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800';
+        return 'border-blue-200 bg-blue-50 dark:bg-blue-900/90 dark:border-blue-700';
       default:
-        return 'border-gray-200 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800';
+        return 'border-gray-200 bg-gray-50 dark:bg-gray-800/90 dark:border-gray-600';
     }
   };
 
@@ -184,20 +184,20 @@ const ScanNotifications = ({
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-foreground">
+                  <h4 className="text-sm font-medium text-slate-900 dark:text-white">
                     {notification.title}
                   </h4>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => dismissNotification(notification.id)}
-                    className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+                    className="h-6 w-6 p-0 opacity-50 hover:opacity-100 text-slate-600 dark:text-slate-300"
                   >
                     <X className="w-3 h-3" />
                   </Button>
                 </div>
                 
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-slate-700 dark:text-slate-200 mt-1">
                   {notification.message}
                 </p>
                 
@@ -210,10 +210,10 @@ const ScanNotifications = ({
                 )}
                 
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
                     {notification.timestamp.toLocaleTimeString()}
                   </span>
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs text-slate-700 dark:text-slate-200">
                     Scan #{notification.scanId}
                   </Badge>
                 </div>

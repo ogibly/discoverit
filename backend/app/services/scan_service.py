@@ -669,7 +669,7 @@ class ScanServiceV2:
         if result_type == "unknown" and len(indicators) == 0:
             result_type = "responding_ip"
             confidence = "low"
-            indicators.append("Basic response")
+            indicators.append("Host responds to ping")
 
         return {
             "result_type": result_type,
@@ -685,13 +685,17 @@ class ScanServiceV2:
         # 2. Has MAC address
         # 3. Has hostname (different from IP)
         # 4. Has OS information
+        # 5. Host responds to ping (for ping scans like -sn)
         
         has_ports = scan_result.get("ports") and len(scan_result["ports"]) > 0
         has_mac = scan_result.get("addresses", {}).get("mac")
         has_hostname = scan_result.get("hostname") and scan_result["hostname"] != scan_result.get("ip")
         has_os = scan_result.get("os_info", {}).get("os_name")
         
-        return has_ports or has_mac or has_hostname or has_os
+        # Check if host is up (for ping scans)
+        is_host_up = "Host is up" in scan_result.get("raw_output", "")
+        
+        return has_ports or has_mac or has_hostname or has_os or is_host_up
 
     def delete_scan(self, scan_id: int) -> bool:
         """Delete a scan record."""

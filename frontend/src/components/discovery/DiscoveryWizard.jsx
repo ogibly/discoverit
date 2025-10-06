@@ -874,7 +874,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                   <div className="text-white font-medium">
                     {(() => {
                       if (data.scannerId) {
-                        const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                        const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
                         return selectedScanner ? selectedScanner.name : `Scanner ${data.scannerId}`;
                       }
                       return 'Default Scanner';
@@ -885,7 +885,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                       "text-xs px-2 py-1 rounded-full",
                       (() => {
                         if (data.scannerId) {
-                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default 
                               ? "bg-blue-500/20 text-blue-400" 
@@ -897,7 +897,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     )}>
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_default ? 'Default' : 'Satellite';
                           }
@@ -908,7 +908,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
                     <span className="text-xs text-slate-400">
                       {(() => {
                         if (data.scannerId) {
-                          const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                          const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
                           if (selectedScanner) {
                             return selectedScanner.is_active ? '🟢 Online' : '🔴 Offline';
                           }
@@ -921,7 +921,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               </div>
               
               {data.scannerId && (() => {
-                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
                 if (selectedScanner && !selectedScanner.is_default) {
                   return (
                     <div className="space-y-2 pt-2 border-t border-slate-700">
@@ -955,7 +955,7 @@ const ReviewLaunchStep = ({ data, errors, scanTemplates, api }) => {
               })()}
               
               {data.scannerId && (() => {
-                const selectedScanner = (availableScanners && Array.isArray(availableScanners) ? availableScanners.find(s => s.id === data.scannerId) : null);
+                const selectedScanner = (safeAvailableScanners && Array.isArray(safeAvailableScanners) ? safeAvailableScanners.find(s => s.id === data.scannerId) : null);
                 if (selectedScanner) {
                   return (
                     <div className="pt-2 border-t border-slate-700">

@@ -56,9 +56,30 @@ class ScanServiceV2:
 
     def get_scan_task(self, task_id: int) -> Optional[ScanTask]:
         """Get a scan task by ID with all related data."""
-        return self.db.query(ScanTask).options(
+        task = self.db.query(ScanTask).options(
             joinedload(ScanTask.scans)
         ).filter(ScanTask.id == task_id).first()
+        
+        if task and task.scan_template_id:
+            try:
+                from .template_service import TemplateService
+                template_service = TemplateService(self.db)
+                template = template_service.get_scan_template(task.scan_template_id)
+                if template:
+                    # Add template info to the task object
+                    task.scan_template = {
+                        "id": template.id,
+                        "name": template.name,
+                        "scan_type": template.scan_type,
+                        "description": template.description
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
+                task.scan_template = None
+        elif task:
+            task.scan_template = None
+        
+        return task
 
     def get_scan_tasks(
         self, 
@@ -68,14 +89,36 @@ class ScanServiceV2:
     ) -> List[ScanTask]:
         """Get scan tasks with optional filtering."""
         query = self.db.query(ScanTask).options(
-            joinedload(ScanTask.scans),
-            joinedload(ScanTask.scan_template)
+            joinedload(ScanTask.scans)
         )
         
         if status:
             query = query.filter(ScanTask.status == status)
         
-        return query.order_by(desc(ScanTask.start_time)).offset(skip).limit(limit).all()
+        tasks = query.order_by(desc(ScanTask.start_time)).offset(skip).limit(limit).all()
+        
+        # Load template information separately to avoid relationship issues
+        for task in tasks:
+            if task.scan_template_id:
+                try:
+                    from .template_service import TemplateService
+                    template_service = TemplateService(self.db)
+                    template = template_service.get_scan_template(task.scan_template_id)
+                    if template:
+                        # Add template info to the task object
+                        task.scan_template = {
+                            "id": template.id,
+                            "name": template.name,
+                            "scan_type": template.scan_type,
+                            "description": template.description
+                        }
+                except Exception as e:
+                    logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
+                    task.scan_template = None
+            else:
+                task.scan_template = None
+        
+        return tasks
 
     def get_active_scan_task(self) -> Optional[ScanTask]:
         """Get the currently active scan task."""

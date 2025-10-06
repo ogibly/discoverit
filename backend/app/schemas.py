@@ -258,6 +258,7 @@ class ScanTask(ScanTaskBase):
     completed_ips: Optional[int] = None
     discovered_devices: Optional[int] = None  # Actual devices discovered (not just IPs scanned)
     error_message: Optional[str] = None
+    scan_template: Optional[Dict[str, Any]] = None  # Template information
     
     class Config:
         from_attributes = True

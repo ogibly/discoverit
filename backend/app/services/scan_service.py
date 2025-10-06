@@ -68,7 +68,8 @@ class ScanServiceV2:
     ) -> List[ScanTask]:
         """Get scan tasks with optional filtering."""
         query = self.db.query(ScanTask).options(
-            joinedload(ScanTask.scans)
+            joinedload(ScanTask.scans),
+            joinedload(ScanTask.scan_template)
         )
         
         if status:
@@ -245,7 +246,7 @@ class ScanServiceV2:
                     self.db.add(scan)
                     self.db.commit()
                     
-                    logger.debug(f"Scanned {ip}: {categorization['result_type']}")
+                    logger.info(f"Scanned {ip}: {categorization['result_type']} (is_device: {categorization['is_device']}, indicators: {categorization['indicators']})")
                     
                 except Exception as e:
                     logger.error(f"Failed to scan {ip}: {e}")
@@ -271,10 +272,10 @@ class ScanServiceV2:
                 task.progress = 100
                 task.completed_ips = total_ips
                 
-                # Count actual discovered devices
+                # Count actual discovered devices - count scans where devices were actually found
                 discovered_count = self.db.query(Scan).filter(
                     Scan.scan_task_id == task.id,
-                    Scan.status == "completed"
+                    Scan.status == "completed"  # This means is_device was True
                 ).count()
                 
                 task.discovered_devices = discovered_count
@@ -499,11 +500,17 @@ class ScanServiceV2:
             "network_info": {}
         }
         
-        # Check if host is up
-        if "Host is up" not in result.stdout and "0 hosts up" in result.stdout:
+        # Check if host is up - be more flexible
+        if ("0 hosts up" in result.stdout or 
+            "Note: Host seems down" in result.stdout or
+            "Host is down" in result.stdout):
             scan_result["status"] = "failed"
             scan_result["error"] = "Host is down or unreachable"
             return scan_result
+        
+        # If we get here and the scan didn't fail, mark as completed
+        if result.returncode == 0:
+            scan_result["status"] = "completed"
         
         # Extract hostname
         hostname_match = re.search(r'for (\S+)', result.stdout)
@@ -606,8 +613,12 @@ class ScanServiceV2:
                 "is_device": False
             }
 
-        # Check if host is up
-        if "Host is up" not in scan_result.get("raw_output", ""):
+        # Check if host is up - be more flexible with this check
+        raw_output = scan_result.get("raw_output", "")
+        if ("Host is up" not in raw_output and 
+            "1 host up" not in raw_output and 
+            "host up" not in raw_output.lower() and
+            "0 hosts up" in raw_output):
             result_type = "no_response"
             confidence = "none"
             indicators.append("No response")
@@ -688,6 +699,7 @@ class ScanServiceV2:
         # 5. Host responds to ping (for ping scans like -sn)
         # 6. Has response time (indicates host is alive)
         # 7. Has TTL (indicates network response)
+        # 8. Scan completed successfully (indicates host responded)
         
         has_ports = scan_result.get("ports") and len(scan_result["ports"]) > 0
         has_mac = scan_result.get("addresses", {}).get("mac")
@@ -700,15 +712,22 @@ class ScanServiceV2:
         raw_output = scan_result.get("raw_output", "")
         is_host_up = ("Host is up" in raw_output or 
                      "1 host up" in raw_output or 
-                     "host up" in raw_output.lower())
+                     "host up" in raw_output.lower() or
+                     "Nmap scan report" in raw_output)  # nmap found something
         
-        # Also check if scan didn't fail and we have some response
-        scan_successful = (scan_result.get("status") != "failed" and 
+        # Check if scan completed successfully (this is the key indicator)
+        scan_successful = (scan_result.get("status") == "completed" and 
                           "error" not in scan_result and
-                          not ("0 hosts up" in raw_output))
+                          not ("0 hosts up" in raw_output) and
+                          not ("Host is down" in raw_output))
         
+        # If scan was successful, it means the host responded in some way
+        if scan_successful:
+            return True
+        
+        # Otherwise, check for specific indicators
         return (has_ports or has_mac or has_hostname or has_os or 
-                is_host_up or has_response_time or has_ttl or scan_successful)
+                is_host_up or has_response_time or has_ttl)
 
     def delete_scan(self, scan_id: int) -> bool:
         """Delete a scan record."""

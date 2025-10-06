@@ -895,6 +895,11 @@ const UnifiedScanDevicesInterface = () => {
                                   </p>
                                   <p className="text-xs text-muted-foreground">
                                     Scan ID: {task.id}
+                                    {task.scan_template && (
+                                      <span className="ml-2">
+                                        • {task.scan_template.name || task.scan_template.scan_type || 'Custom Scan'}
+                                      </span>
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -929,7 +934,7 @@ const UnifiedScanDevicesInterface = () => {
                               <div className="px-4 pb-4 border-t border-border">
                                 <div className="pt-4 space-y-4">
                                   {/* Scan Details */}
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                                     <div>
                                       <span className="text-muted-foreground">Status:</span>
                                       <div className="mt-1">
@@ -959,6 +964,15 @@ const UnifiedScanDevicesInterface = () => {
                                       <span className="text-muted-foreground">Duration:</span>
                                       <p className="mt-1 font-mono">
                                         {formatScanDuration(task.start_time, task.end_time, task.status)}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground">Scan Type:</span>
+                                      <p className="mt-1 font-medium">
+                                        {task.scan_template ? 
+                                          (task.scan_template.name || task.scan_template.scan_type || 'Custom') : 
+                                          'Unknown'
+                                        }
                                       </p>
                                     </div>
                                   </div>

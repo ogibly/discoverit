@@ -103,13 +103,26 @@ class ScanServiceV2:
                 template_service = TemplateService(self.db)
                 template = template_service.get_scan_template(task.scan_template_id)
                 if template:
-                    # Add template info to the task object
-                    task.scan_template = {
-                        "id": template.id,
-                        "name": template.name,
-                        "scan_type": template.scan_type,
-                        "description": template.description
-                    }
+                    # Handle both SQLAlchemy objects and dictionaries
+                    if hasattr(template, '_sa_instance_state'):
+                        # It's a SQLAlchemy object
+                        task.scan_template = {
+                            "id": template.id,
+                            "name": template.name,
+                            "scan_type": getattr(template, 'scan_type', 'standard'),
+                            "description": template.description
+                        }
+                    elif isinstance(template, dict):
+                        # It's already a dictionary
+                        task.scan_template = template
+                    else:
+                        # Unknown type, create a safe dictionary
+                        task.scan_template = {
+                            "id": getattr(template, 'id', task.scan_template_id),
+                            "name": getattr(template, 'name', 'Unknown Template'),
+                            "scan_type": getattr(template, 'scan_type', 'standard'),
+                            "description": getattr(template, 'description', '')
+                        }
             except Exception as e:
                 logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
                 task.scan_template = None
@@ -142,13 +155,26 @@ class ScanServiceV2:
                     template_service = TemplateService(self.db)
                     template = template_service.get_scan_template(task.scan_template_id)
                     if template:
-                        # Add template info to the task object
-                        task.scan_template = {
-                            "id": template.id,
-                            "name": template.name,
-                            "scan_type": template.scan_type,
-                            "description": template.description
-                        }
+                        # Handle both SQLAlchemy objects and dictionaries
+                        if hasattr(template, '_sa_instance_state'):
+                            # It's a SQLAlchemy object
+                            task.scan_template = {
+                                "id": template.id,
+                                "name": template.name,
+                                "scan_type": getattr(template, 'scan_type', 'standard'),
+                                "description": template.description
+                            }
+                        elif isinstance(template, dict):
+                            # It's already a dictionary
+                            task.scan_template = template
+                        else:
+                            # Unknown type, create a safe dictionary
+                            task.scan_template = {
+                                "id": getattr(template, 'id', task.scan_template_id),
+                                "name": getattr(template, 'name', 'Unknown Template'),
+                                "scan_type": getattr(template, 'scan_type', 'standard'),
+                                "description": getattr(template, 'description', '')
+                            }
                 except Exception as e:
                     logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
                     task.scan_template = None

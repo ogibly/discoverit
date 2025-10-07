@@ -44,6 +44,7 @@ class ScanServiceV2:
             scan_template_id=task_data.scan_template_id,
             created_by=task_data.created_by or "system",
             scanner_ids=getattr(task_data, 'scanner_ids', []),
+            status="pending",  # Set initial status
             start_time=datetime.utcnow()  # Set start time immediately when task is created
         )
         

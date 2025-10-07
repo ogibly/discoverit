@@ -502,6 +502,7 @@ const UnifiedScanDevicesInterface = () => {
       case 'running': return 'text-blue-400';
       case 'failed': return 'text-red-400';
       case 'cancelled': return 'text-yellow-400';
+      case 'pending': return 'text-orange-400';
       default: return 'text-gray-400';
     }
   };
@@ -512,6 +513,7 @@ const UnifiedScanDevicesInterface = () => {
       case 'running': return <Play className="w-4 h-4" />;
       case 'failed': return <AlertTriangle className="w-4 h-4" />;
       case 'cancelled': return <Clock className="w-4 h-4" />;
+      case 'pending': return <Clock className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
   };
@@ -937,9 +939,10 @@ const UnifiedScanDevicesInterface = () => {
                                           task.status === 'completed' ? 'bg-green-100 text-green-800' :
                                           task.status === 'running' ? 'bg-blue-100 text-blue-800' :
                                           task.status === 'failed' ? 'bg-red-100 text-red-800' :
+                                          task.status === 'pending' ? 'bg-orange-100 text-orange-800' :
                                           'bg-gray-100 text-gray-800'
                                         )}>
-                                          {task.status || 'unknown'}
+                                          {task.status === 'pending' ? 'Pending' : task.status || 'Unknown'}
                                         </Badge>
                                       </div>
                                     </div>

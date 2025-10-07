@@ -54,43 +54,6 @@ class ScanServiceV2:
         logger.info(f"Created scan task {task.id}: {task.name}")
         return task
 
-    def create_enhanced_scan_task(
-        self, 
-        name: str, 
-        target: str, 
-        scan_config: Dict[str, Any], 
-        scanner_id: Optional[int] = None,
-        credentials: Optional[Dict[str, Any]] = None,
-        created_by: Optional[str] = None
-    ) -> ScanTask:
-        """Create an enhanced scan task with custom configuration."""
-        # Validate target format
-        try:
-            if '/' in target:
-                ipaddress.ip_network(target, strict=False)
-            else:
-                ipaddress.ip_address(target)
-        except ValueError as e:
-            raise ValueError(f"Invalid target format: {e}")
-        
-        # Create a temporary template ID for enhanced scans
-        # In a real implementation, you might want to create a temporary template
-        task = ScanTask(
-            name=name,
-            target=target,
-            scan_template_id=None,  # Enhanced scans don't use templates
-            created_by=created_by,
-            scanner_ids=[scanner_id] if scanner_id else [],
-            start_time=datetime.utcnow()
-        )
-        
-        self.db.add(task)
-        self.db.commit()
-        self.db.refresh(task)
-        
-        logger.info(f"Created enhanced scan task {task.id}: {task.name}")
-        return task
-
     def get_scan_task(self, task_id: int) -> Optional[ScanTask]:
         """Get a scan task by ID with all related data."""
         task = self.db.query(ScanTask).options(
@@ -466,13 +429,7 @@ class ScanServiceV2:
     def _get_scan_config_from_template(self, task: ScanTask) -> Dict[str, Any]:
         """Get scan configuration from the associated template."""
         if not task.scan_template_id:
-            # Return default scan configuration for enhanced scans
-            return {
-                "scan_type": "standard",
-                "arguments": "-sS -O -sV -A",
-                "timeout": 300,
-                "description": "Default scan configuration"
-            }
+            raise ValueError("Scan template is required for all scan tasks")
         
         # Get template from database
         from .template_service import TemplateService
@@ -480,14 +437,7 @@ class ScanServiceV2:
         template = template_service.get_scan_template(task.scan_template_id)
         
         if not template:
-            # Fallback to default configuration if template not found
-            logger.warning(f"Scan template {task.scan_template_id} not found, using default configuration")
-            return {
-                "scan_type": "standard",
-                "arguments": "-sS -O -sV -A",
-                "timeout": 300,
-                "description": "Default scan configuration (template not found)"
-            }
+            raise ValueError(f"Scan template {task.scan_template_id} not found")
         
         # Use template configuration
         config = template.scan_config.copy()

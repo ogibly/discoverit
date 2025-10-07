@@ -5,14 +5,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Unified Design System - Base styles */
+/* Base styles */
 @layer base {
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    @apply bg-white text-secondary-900 dark:bg-secondary-900 dark:text-secondary-100;
+    @apply bg-white text-gray-900 dark:bg-slate-900 dark:text-white;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -22,12 +22,12 @@
 
   /* Focus management for accessibility */
   :focus-visible {
-    @apply outline-none ring-2 ring-primary-500/20 ring-offset-2 ring-offset-white dark:ring-primary-400/20 dark:ring-offset-secondary-900;
+    @apply outline-none ring-2 ring-slate-500/20 ring-offset-2 ring-offset-white dark:ring-slate-400/20 dark:ring-offset-slate-900;
   }
 
   /* Selection styling */
   ::selection {
-    @apply bg-primary-200 text-primary-900 dark:bg-primary-700 dark:text-primary-100;
+    @apply bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-100;
   }
 }
 

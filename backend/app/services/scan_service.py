@@ -38,10 +38,25 @@ class ScanServiceV2:
         except ValueError as e:
             raise ValueError(f"Invalid target format: {e}")
         
+        # Ensure we have a scan template - use default if none provided
+        scan_template_id = task_data.scan_template_id
+        if not scan_template_id:
+            # Get the first active system template as default
+            from ..models import ScanTemplate
+            default_template = self.db.query(ScanTemplate).filter(
+                ScanTemplate.is_system == True,
+                ScanTemplate.is_active == True
+            ).first()
+            if default_template:
+                scan_template_id = default_template.id
+                logger.info(f"Using default template {default_template.id} ({default_template.name}) for scan task")
+            else:
+                raise ValueError("No scan template provided and no default template available")
+        
         task = ScanTask(
             name=task_data.name,
             target=task_data.target,
-            scan_template_id=task_data.scan_template_id,
+            scan_template_id=scan_template_id,
             created_by=task_data.created_by or "system",
             scanner_ids=getattr(task_data, 'scanner_ids', []),
             status="pending",  # Set initial status

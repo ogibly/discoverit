@@ -89,6 +89,16 @@ const StreamlinedDiscoveryWizard = ({ onComplete, onCancel }) => {
     loadData();
   }, [fetchScanTemplates, fetchAvailableScanners]);
 
+  // Auto-select first template when templates are loaded
+  useEffect(() => {
+    if (scanTemplates.length > 0 && !wizardData.scanTemplateId) {
+      setWizardData(prev => ({
+        ...prev,
+        scanTemplateId: scanTemplates[0].id
+      }));
+    }
+  }, [scanTemplates, wizardData.scanTemplateId]);
+
   const updateWizardData = useCallback((updates) => {
     setWizardData(prev => ({ ...prev, ...updates }));
     setErrors({});

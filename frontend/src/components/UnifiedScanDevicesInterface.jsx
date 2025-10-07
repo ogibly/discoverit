@@ -40,8 +40,7 @@ import {
   Scan,
   Database,
   AlertTriangle,
-  Grid3X3,
-  Database
+  Grid3X3
 } from 'lucide-react';
 
 const UnifiedScanDevicesInterface = () => {
@@ -1303,7 +1302,7 @@ const UnifiedScanDevicesInterface = () => {
                           Operating System
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Status & Confidence
+                          Status
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                           Scan Info
@@ -1354,9 +1353,6 @@ const UnifiedScanDevicesInterface = () => {
                                   <Badge className={cn("text-xs w-fit", getStatusColor(device.status))}>
                                     {getStatusIcon(device.status)}
                                     <span className="ml-1">{device.status === 'new' ? 'New Device' : 'Converted'}</span>
-                                  </Badge>
-                                  <Badge className={cn("text-xs w-fit", getConfidenceColor(device.confidence))}>
-                                    {Math.round(device.confidence * 100)}% confidence
                                   </Badge>
                                 </div>
                               </td>
@@ -1496,13 +1492,6 @@ const UnifiedScanDevicesInterface = () => {
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Model</label>
                     <p className="text-foreground">{selectedDevice.model || 'Not detected'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Confidence Score</label>
-                    <div className="flex items-center space-x-2">
-                      <Progress value={selectedDevice.confidence * 100} className="flex-1" />
-                      <span className="text-sm font-medium">{Math.round(selectedDevice.confidence * 100)}%</span>
-                    </div>
                   </div>
                 </div>
               </TabsContent>

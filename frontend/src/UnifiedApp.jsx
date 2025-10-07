@@ -8,7 +8,6 @@ import { Route, Routes, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UnifiedThemeProvider } from './contexts/UnifiedThemeContext';
-import { LayoutProvider } from './contexts/LayoutContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import Login from './components/Login';
@@ -86,13 +85,11 @@ const UnifiedApp = () => {
   return (
     <ErrorBoundary>
       <UnifiedThemeProvider>
-        <LayoutProvider>
-          <AuthProvider>
-            <AppProvider>
-              <AppContent />
-            </AppProvider>
-          </AuthProvider>
-        </LayoutProvider>
+        <AuthProvider>
+          <AppProvider>
+            <AppContent />
+          </AppProvider>
+        </AuthProvider>
       </UnifiedThemeProvider>
     </ErrorBoundary>
   );

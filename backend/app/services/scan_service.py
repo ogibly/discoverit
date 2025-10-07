@@ -72,20 +72,27 @@ class ScanServiceV2:
                         task.scan_template = {
                             "id": template.id,
                             "name": template.name,
-                            "scan_type": getattr(template, 'scan_type', 'standard'),
-                            "description": template.description
+                            "scan_type": template.scan_type,
+                            "description": template.description or ""
                         }
                     elif isinstance(template, dict):
-                        # It's already a dictionary
-                        task.scan_template = template
+                        # It's a dictionary (serialized)
+                        task.scan_template = {
+                            "id": template.get("id", task.scan_template_id),
+                            "name": template.get("name", "Unknown Template"),
+                            "scan_type": template.get("scan_type", "standard"),
+                            "description": template.get("description", "")
+                        }
                     else:
-                        # Unknown type, create a safe dictionary
+                        # Fallback for unknown types
                         task.scan_template = {
                             "id": getattr(template, 'id', task.scan_template_id),
                             "name": getattr(template, 'name', 'Unknown Template'),
                             "scan_type": getattr(template, 'scan_type', 'standard'),
                             "description": getattr(template, 'description', '')
                         }
+                else:
+                    task.scan_template = None
             except Exception as e:
                 logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
                 task.scan_template = None
@@ -124,20 +131,27 @@ class ScanServiceV2:
                             task.scan_template = {
                                 "id": template.id,
                                 "name": template.name,
-                                "scan_type": getattr(template, 'scan_type', 'standard'),
-                                "description": template.description
+                                "scan_type": template.scan_type,
+                                "description": template.description or ""
                             }
                         elif isinstance(template, dict):
-                            # It's already a dictionary
-                            task.scan_template = template
+                            # It's a dictionary (serialized)
+                            task.scan_template = {
+                                "id": template.get("id", task.scan_template_id),
+                                "name": template.get("name", "Unknown Template"),
+                                "scan_type": template.get("scan_type", "standard"),
+                                "description": template.get("description", "")
+                            }
                         else:
-                            # Unknown type, create a safe dictionary
+                            # Fallback for unknown types
                             task.scan_template = {
                                 "id": getattr(template, 'id', task.scan_template_id),
                                 "name": getattr(template, 'name', 'Unknown Template'),
                                 "scan_type": getattr(template, 'scan_type', 'standard'),
                                 "description": getattr(template, 'description', '')
                             }
+                    else:
+                        task.scan_template = None
                 except Exception as e:
                     logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
                     task.scan_template = None

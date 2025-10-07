@@ -42,7 +42,7 @@ class ScanServiceV2:
             name=task_data.name,
             target=task_data.target,
             scan_template_id=task_data.scan_template_id,
-            created_by=task_data.created_by,
+            created_by=task_data.created_by or "system",
             scanner_ids=getattr(task_data, 'scanner_ids', []),
             start_time=datetime.utcnow()  # Set start time immediately when task is created
         )

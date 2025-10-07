@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -30,6 +31,8 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
     createScanTask,
     api
   } = useApp();
+  
+  const { user } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [wizardData, setWizardData] = useState({
@@ -170,6 +173,7 @@ const DiscoveryWizard = ({ onComplete, onCancel }) => {
         target: wizardData.target,
         scan_template_id: wizardData.scanTemplateId,
         scanner_ids: wizardData.scannerId ? [wizardData.scannerId] : [], // Convert to array format
+        created_by: user?.username || 'system'
       };
 
       const result = await createScanTask(scanConfig);

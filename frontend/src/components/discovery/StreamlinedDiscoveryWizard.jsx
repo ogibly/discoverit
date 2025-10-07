@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../contexts/AppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -28,6 +29,8 @@ const StreamlinedDiscoveryWizard = ({ onComplete, onCancel }) => {
     createScanTask,
     api
   } = useApp();
+  
+  const { user } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -133,7 +136,8 @@ const StreamlinedDiscoveryWizard = ({ onComplete, onCancel }) => {
         name: `Network Scan - ${wizardData.target}`,
         target: wizardData.target,
         scan_template_id: wizardData.scanTemplateId,
-        scanner_ids: wizardData.scannerId ? [wizardData.scannerId] : []
+        scanner_ids: wizardData.scannerId ? [wizardData.scannerId] : [],
+        created_by: user?.username || 'system'
       };
 
       const result = await createScanTask(scanConfig);
@@ -143,7 +147,7 @@ const StreamlinedDiscoveryWizard = ({ onComplete, onCancel }) => {
     } finally {
       setLoading(false);
     }
-  }, [wizardData, currentStep, validateStep, createScanTask, onComplete]);
+  }, [wizardData, currentStep, validateStep, createScanTask, onComplete, user]);
 
   // Loading state
   if (loading && !dataLoaded) {

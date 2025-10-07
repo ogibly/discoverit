@@ -886,17 +886,6 @@ const UnifiedScanDevicesInterface = () => {
                               </div>
                               <div className="flex items-center space-x-2">
                                 <Button
-                                  variant={selectedScanId === task.id ? "default" : "ghost"}
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleScanSelect(task.id);
-                                  }}
-                                  title="View devices from this scan"
-                                >
-                                  <Database className="w-4 h-4" />
-                                </Button>
-                                <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={(e) => {
@@ -918,6 +907,20 @@ const UnifiedScanDevicesInterface = () => {
                                 >
                                   <Download className="w-4 h-4" />
                                 </Button>
+                                {task.status === 'running' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cancelScanTask(task.id);
+                                    }}
+                                    title="Cancel this running scan"
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                )}
                               </div>
                             </div>
 

@@ -52,6 +52,26 @@ class ScanServiceV2:
         self.db.commit()
         self.db.refresh(task)
         
+        # Load template information and convert to dictionary for API response
+        if task.scan_template_id:
+            try:
+                from ..models import ScanTemplate
+                template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
+                if template:
+                    task.scan_template = {
+                        "id": template.id,
+                        "name": template.name,
+                        "scan_type": template.scan_type,
+                        "description": template.description or ""
+                    }
+                else:
+                    task.scan_template = None
+            except Exception as e:
+                logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
+                task.scan_template = None
+        else:
+            task.scan_template = None
+        
         logger.info(f"Created scan task {task.id}: {task.name}")
         return task
 

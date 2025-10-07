@@ -964,15 +964,6 @@ const UnifiedScanDevicesInterface = () => {
                                         {formatScanDuration(task.start_time, task.end_time, task.status)}
                                       </p>
                                     </div>
-                                    <div>
-                                      <span className="text-muted-foreground">Scan Type:</span>
-                                      <p className="mt-1 font-medium">
-                                        {task.scan_template ? 
-                                          (task.scan_template.name || task.scan_template.scan_type || 'Custom') : 
-                                          'Unknown'
-                                        }
-                                      </p>
-                                    </div>
                                   </div>
 
                                   {/* Action Buttons */}

@@ -455,13 +455,6 @@ const ReviewStep = ({ data, availableScanners, scanTemplates }) => {
               <p className="text-white">2-5 minutes</p>
             </div>
 
-            <div className="bg-green-500/10 border border-green-500 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <Shield className="w-4 h-4 text-green-500" />
-                <span className="text-green-400 font-medium">Scan Type</span>
-              </div>
-              <p className="text-white">{selectedTemplate?.scan_config?.scan_type || 'Standard'}</p>
-            </div>
           </div>
         </div>
       </div>

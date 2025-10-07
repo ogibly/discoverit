@@ -58,30 +58,41 @@ class ScanServiceV2:
     def get_scan_task(self, task_id: int) -> Optional[ScanTask]:
         """Get a scan task by ID with all related data."""
         task = self.db.query(ScanTask).options(
-            joinedload(ScanTask.scans)
+            joinedload(ScanTask.scans),
+            joinedload(ScanTask.scan_template)
         ).filter(ScanTask.id == task_id).first()
         
-        if task and task.scan_template_id:
+        # Convert the SQLAlchemy relationship to a dictionary for API response
+        if task and task.scan_template:
             try:
-                # Get template directly from database to avoid any serialization issues
-                from ..models import ScanTemplate
-                template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
-                
-                if template:
-                    # Always create a clean dictionary from the SQLAlchemy object
+                # Handle both SQLAlchemy objects and dictionaries
+                if hasattr(task.scan_template, '_sa_instance_state'):
+                    # It's a SQLAlchemy object
                     task.scan_template = {
-                        "id": template.id,
-                        "name": template.name,
-                        "scan_type": template.scan_type,
-                        "description": template.description or ""
+                        "id": task.scan_template.id,
+                        "name": task.scan_template.name,
+                        "scan_type": task.scan_template.scan_type,
+                        "description": task.scan_template.description or ""
+                    }
+                elif isinstance(task.scan_template, dict):
+                    # It's already a dictionary, ensure it has the right structure
+                    task.scan_template = {
+                        "id": task.scan_template.get("id", task.scan_template_id),
+                        "name": task.scan_template.get("name", "Unknown Template"),
+                        "scan_type": task.scan_template.get("scan_type", "standard"),
+                        "description": task.scan_template.get("description", "")
                     }
                 else:
-                    task.scan_template = None
+                    # Fallback for unknown types
+                    task.scan_template = {
+                        "id": getattr(task.scan_template, 'id', task.scan_template_id),
+                        "name": getattr(task.scan_template, 'name', 'Unknown Template'),
+                        "scan_type": getattr(task.scan_template, 'scan_type', 'standard'),
+                        "description": getattr(task.scan_template, 'description', '')
+                    }
             except Exception as e:
-                logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
+                logger.warning(f"Failed to process template for task {task.id}: {e}")
                 task.scan_template = None
-        elif task:
-            task.scan_template = None
         
         return task
 
@@ -99,31 +110,42 @@ class ScanServiceV2:
         if status:
             query = query.filter(ScanTask.status == status)
         
-        tasks = query.order_by(desc(ScanTask.start_time)).offset(skip).limit(limit).all()
+        tasks = query.options(
+            joinedload(ScanTask.scan_template)
+        ).order_by(desc(ScanTask.start_time)).offset(skip).limit(limit).all()
         
-        # Load template information separately to avoid relationship issues
+        # Convert SQLAlchemy relationships to dictionaries for API response
         for task in tasks:
-            if task.scan_template_id:
+            if task.scan_template:
                 try:
-                    # Get template directly from database to avoid any serialization issues
-                    from ..models import ScanTemplate
-                    template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
-                    
-                    if template:
-                        # Always create a clean dictionary from the SQLAlchemy object
+                    # Handle both SQLAlchemy objects and dictionaries
+                    if hasattr(task.scan_template, '_sa_instance_state'):
+                        # It's a SQLAlchemy object
                         task.scan_template = {
-                            "id": template.id,
-                            "name": template.name,
-                            "scan_type": template.scan_type,
-                            "description": template.description or ""
+                            "id": task.scan_template.id,
+                            "name": task.scan_template.name,
+                            "scan_type": task.scan_template.scan_type,
+                            "description": task.scan_template.description or ""
+                        }
+                    elif isinstance(task.scan_template, dict):
+                        # It's already a dictionary, ensure it has the right structure
+                        task.scan_template = {
+                            "id": task.scan_template.get("id", task.scan_template_id),
+                            "name": task.scan_template.get("name", "Unknown Template"),
+                            "scan_type": task.scan_template.get("scan_type", "standard"),
+                            "description": task.scan_template.get("description", "")
                         }
                     else:
-                        task.scan_template = None
+                        # Fallback for unknown types
+                        task.scan_template = {
+                            "id": getattr(task.scan_template, 'id', task.scan_template_id),
+                            "name": getattr(task.scan_template, 'name', 'Unknown Template'),
+                            "scan_type": getattr(task.scan_template, 'scan_type', 'standard'),
+                            "description": getattr(task.scan_template, 'description', '')
+                        }
                 except Exception as e:
-                    logger.warning(f"Failed to load template {task.scan_template_id} for task {task.id}: {e}")
+                    logger.warning(f"Failed to process template for task {task.id}: {e}")
                     task.scan_template = None
-            else:
-                task.scan_template = None
         
         return tasks
 
@@ -412,9 +434,12 @@ class ScanServiceV2:
         if not task.scan_template_id:
             raise ValueError("Scan template is required for all scan tasks")
         
-        # Get template directly from database to avoid any serialization issues
-        from ..models import ScanTemplate
-        template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
+        # Get template using the relationship to avoid serialization issues
+        if not task.scan_template:
+            from ..models import ScanTemplate
+            template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
+        else:
+            template = task.scan_template
         
         if not template:
             raise ValueError(f"Scan template {task.scan_template_id} not found")

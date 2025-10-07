@@ -309,10 +309,10 @@ class ScanServiceV2:
                 task.progress = min(progress, 100)
                 self.db.commit()
                 
+                # Get scan configuration from template (outside try block to avoid scope issues)
+                scan_config = self._get_scan_config_from_template(task)
+                
                 try:
-                    # Get scan configuration from template
-                    scan_config = self._get_scan_config_from_template(task)
-                    
                     # Perform the scan
                     scan_result = self._perform_scan(ip, scan_config)
                     

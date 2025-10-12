@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     """Application settings with environment variable support."""
     
     # Database
-    database_url: str = "postgresql://discoverit:DiscoverIT4DB@postgres:5432/discoverit"
+    database_url: str = "postgresql://discoverit:DiscoverIT4DB@localhost:5432/discoverit"
     
     # Security
     secret_key: str = "your-secret-key-change-in-production"

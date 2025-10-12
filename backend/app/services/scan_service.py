@@ -28,49 +28,113 @@ class ScanServiceV2:
         self.asset_service = AssetService(db)
 
     def create_scan_task(self, task_data: ScanTaskCreate) -> ScanTask:
-        """Create a new scan task with enhanced validation."""
-        # Validate target format
+        """Create a new scan task with bulletproof validation and fallbacks."""
+        logger.info(f"Creating scan task: {task_data.name} for target: {task_data.target}")
+        
+        # Import ScanTemplate at the beginning to avoid scope issues
+        from ..models import ScanTemplate
+        
+        # Layer 1: Validate target format with comprehensive error handling
         try:
             if '/' in task_data.target:
                 ipaddress.ip_network(task_data.target, strict=False)
+                logger.info(f"Validated network target: {task_data.target}")
             else:
                 ipaddress.ip_address(task_data.target)
+                logger.info(f"Validated IP target: {task_data.target}")
         except ValueError as e:
-            raise ValueError(f"Invalid target format: {e}")
+            error_msg = f"Invalid target format '{task_data.target}': {e}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
-        # Ensure we have a scan template - use default if none provided
+        # Layer 2: Bulletproof template selection with multiple fallbacks
         scan_template_id = task_data.scan_template_id
+        template_source = "provided"
+        
         if not scan_template_id:
-            # Get the first active system template as default
-            from ..models import ScanTemplate
+            logger.warning("No scan template provided, searching for fallback options")
+            
+            # Fallback 1: Try to get the first active system template
             default_template = self.db.query(ScanTemplate).filter(
                 ScanTemplate.is_system == True,
                 ScanTemplate.is_active == True
-            ).first()
+            ).order_by(ScanTemplate.id).first()
+            
             if default_template:
                 scan_template_id = default_template.id
-                logger.info(f"Using default template {default_template.id} ({default_template.name}) for scan task")
+                template_source = "system_default"
+                logger.info(f"Using system default template {default_template.id} ({default_template.name})")
             else:
-                raise ValueError("No scan template provided and no default template available")
+                # Fallback 2: Try any active template
+                any_template = self.db.query(ScanTemplate).filter(
+                    ScanTemplate.is_active == True
+                ).order_by(ScanTemplate.id).first()
+                
+                if any_template:
+                    scan_template_id = any_template.id
+                    template_source = "any_active"
+                    logger.info(f"Using any active template {any_template.id} ({any_template.name})")
+                else:
+                    # Fallback 3: Create a minimal default template
+                    logger.warning("No templates available, creating emergency default template")
+                    emergency_template = ScanTemplate(
+                        name="Emergency Default Template",
+                        description="Auto-generated emergency template",
+                        scan_config={
+                            "scan_type": "quick",
+                            "discovery_depth": 1,
+                            "timeout": 30,
+                            "arguments": "-sn -T4"
+                        },
+                        scan_type="quick",
+                        is_system=True,
+                        is_active=True,
+                        created_by=0
+                    )
+                    self.db.add(emergency_template)
+                    self.db.commit()
+                    self.db.refresh(emergency_template)
+                    scan_template_id = emergency_template.id
+                    template_source = "emergency_created"
+                    logger.info(f"Created emergency template {emergency_template.id}")
         
-        task = ScanTask(
-            name=task_data.name,
-            target=task_data.target,
-            scan_template_id=scan_template_id,
-            created_by=task_data.created_by or "system",
-            scanner_ids=getattr(task_data, 'scanner_ids', []),
-            status="pending",  # Set initial status
-            start_time=datetime.utcnow()  # Set start time immediately when task is created
-        )
+        # Layer 3: Validate template exists and is accessible
+        if scan_template_id:
+            template = self.db.query(ScanTemplate).filter(ScanTemplate.id == scan_template_id).first()
+            if not template:
+                error_msg = f"Template {scan_template_id} not found in database"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+            if not template.is_active:
+                logger.warning(f"Template {scan_template_id} is inactive, but proceeding")
         
-        self.db.add(task)
-        self.db.commit()
-        self.db.refresh(task)
+        # Layer 4: Create task with comprehensive error handling
+        try:
+            task = ScanTask(
+                name=task_data.name or f"Network Scan - {task_data.target}",
+                target=task_data.target,
+                scan_template_id=scan_template_id,
+                created_by=task_data.created_by or "system",
+                scanner_ids=getattr(task_data, 'scanner_ids', []) or [],
+                status="pending",
+                start_time=datetime.utcnow()
+            )
+            
+            self.db.add(task)
+            self.db.commit()
+            self.db.refresh(task)
+            
+            logger.info(f"Successfully created scan task {task.id} using template {scan_template_id} (source: {template_source})")
+            
+        except Exception as e:
+            self.db.rollback()
+            error_msg = f"Failed to create scan task: {e}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
         # Load template information and convert to dictionary for API response
         if task.scan_template_id:
             try:
-                from ..models import ScanTemplate
                 template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
                 if template:
                     task.scan_template = {
@@ -287,117 +351,276 @@ class ScanServiceV2:
             }
 
     def run_scan_task(self, task_id: int) -> None:
-        """Run a scan task with enhanced error handling and progress tracking."""
-        task = self.get_scan_task(task_id)
-        if not task:
-            logger.error(f"Scan task {task_id} not found")
-            return
+        """Run a scan task with bulletproof error handling and progress tracking."""
+        logger.info(f"Starting scan task execution for task {task_id}")
         
         try:
-            logger.info(f"Starting scan task {task_id}: {task.name}")
+            # Layer 1: Validate task exists and is in correct state
+            # Use raw SQLAlchemy object for internal processing (not API response)
+            task = self.db.query(ScanTask).options(
+                joinedload(ScanTask.scan_template)
+            ).filter(ScanTask.id == task_id).first()
             
-            # Initialize task status
-            task.status = "running"
-            self.db.commit()
+            if not task:
+                logger.error(f"Scan task {task_id} not found")
+                return
             
-            # Get IPs to scan
-            ips_to_scan = self.get_ips_from_target(task.target)
-            total_ips = len(ips_to_scan)
-            task.total_ips = total_ips
-            self.db.commit()
+            if task.status not in ["pending", "failed"]:
+                logger.warning(f"Scan task {task_id} is in status '{task.status}', cannot run")
+                return
             
-            logger.info(f"Scanning {total_ips} IPs for task {task_id}")
+            logger.info(f"Starting scan task {task_id}: {task.name} for target: {task.target}")
             
-            # Update progress as we scan
-            for i, ip in enumerate(ips_to_scan):
-                # Check for cancellation
-                self.db.refresh(task)
-                if task.status == "cancelled":
-                    logger.info(f"Scan task {task_id} cancelled")
-                    break
-                
-                # Update current IP and progress
-                task.current_ip = ip
-                task.completed_ips = i
-                # Ensure progress never exceeds 100%
-                progress = int((i / total_ips) * 100) if total_ips > 0 else 0
-                task.progress = min(progress, 100)
+            # Layer 2: Validate template exists before starting
+            if not task.scan_template_id:
+                error_msg = "Scan template is required for all scan tasks"
+                logger.error(f"Task {task_id}: {error_msg}")
+                task.status = "failed"
+                task.error_message = error_msg
+                task.end_time = datetime.utcnow()
                 self.db.commit()
+                return
+            
+            # Layer 3: Initialize task status with error handling
+            try:
+                task.status = "running"
+                task.error_message = None
+                self.db.commit()
+                logger.info(f"Task {task_id} status set to running")
+            except Exception as e:
+                logger.error(f"Failed to update task {task_id} status: {e}")
+                return
+            
+            # Layer 4: Get IPs to scan with comprehensive validation
+            try:
+                ips_to_scan = self.get_ips_from_target(task.target)
+                total_ips = len(ips_to_scan)
                 
-                # Get scan configuration from template (outside try block to avoid scope issues)
-                scan_config = self._get_scan_config_from_template(task)
+                if total_ips == 0:
+                    error_msg = f"No valid IPs found for target: {task.target}"
+                    logger.error(f"Task {task_id}: {error_msg}")
+                    task.status = "failed"
+                    task.error_message = error_msg
+                    task.end_time = datetime.utcnow()
+                    self.db.commit()
+                    return
                 
+                task.total_ips = total_ips
+                self.db.commit()
+                logger.info(f"Task {task_id}: Scanning {total_ips} IPs")
+                
+            except Exception as e:
+                error_msg = f"Failed to parse target '{task.target}': {e}"
+                logger.error(f"Task {task_id}: {error_msg}")
+                task.status = "failed"
+                task.error_message = error_msg
+                task.end_time = datetime.utcnow()
+                self.db.commit()
+                return
+            
+            # Layer 5: Main scan loop with bulletproof error handling
+            successful_scans = 0
+            failed_scans = 0
+            
+            for i, ip in enumerate(ips_to_scan):
                 try:
-                    # Perform the scan
-                    scan_result = self._perform_scan(ip, scan_config)
+                    # Check for cancellation with error handling
+                    try:
+                        self.db.refresh(task)
+                        if task.status == "cancelled":
+                            logger.info(f"Scan task {task_id} cancelled at IP {ip}")
+                            break
+                    except Exception as e:
+                        logger.error(f"Failed to check cancellation status: {e}")
+                        # Continue with scan despite error
                     
-                    # Categorize the scan result
-                    categorization = self._categorize_scan_result(scan_result)
-                    scan_result["categorization"] = categorization
+                    # Update current IP and progress with error handling
+                    try:
+                        task.current_ip = ip
+                        task.completed_ips = i
+                        progress = int((i / total_ips) * 100) if total_ips > 0 else 0
+                        task.progress = min(progress, 100)
+                        self.db.commit()
+                    except Exception as e:
+                        logger.error(f"Failed to update progress for IP {ip}: {e}")
+                        # Continue with scan despite error
                     
-                    # Add task metadata
-                    scan_result["task_metadata"] = {
-                        "task_id": task.id,
-                        "task_name": task.name,
-                        "scan_timestamp": datetime.utcnow().isoformat()
-                    }
+                    logger.info(f"Task {task_id}: Scanning IP {ip} ({i+1}/{total_ips})")
                     
-                    # Create scan record
-                    scan = Scan(
-                        asset_id=None,  # No asset created automatically
-                        scan_task_id=task.id,
-                        scan_data=scan_result,
-                        scan_type=scan_config.get("scan_type", "standard"),
-                        status="completed" if categorization["is_device"] else "no_device"
-                    )
-                    self.db.add(scan)
-                    self.db.commit()
+                    # Get scan configuration with error handling
+                    try:
+                        scan_config = self._get_scan_config_from_template(task)
+                        if not scan_config:
+                            raise ValueError("Failed to get scan configuration from template")
+                    except Exception as e:
+                        logger.error(f"Task {task_id}: Failed to get scan config for IP {ip}: {e}")
+                        failed_scans += 1
+                        continue
                     
-                    logger.info(f"Scanned {ip}: {categorization['result_type']} (is_device: {categorization['is_device']}, indicators: {categorization['indicators']})")
+                    # Perform the scan with comprehensive error handling
+                    try:
+                        scan_result = self._perform_scan(ip, scan_config)
+                        if not scan_result:
+                            raise ValueError("Scan returned no result")
+                    except Exception as e:
+                        logger.error(f"Task {task_id}: Scan failed for IP {ip}: {e}")
+                        failed_scans += 1
+                        
+                        # Create failed scan record
+                        try:
+                            failed_scan = Scan(
+                                asset_id=None,
+                                scan_task_id=task.id,
+                                scan_data={
+                                    "ip": ip,
+                                    "status": "failed",
+                                    "error": str(e),
+                                    "timestamp": datetime.utcnow().isoformat()
+                                },
+                                scan_type=scan_config.get("scan_type", "standard"),
+                                status="failed"
+                            )
+                            self.db.add(failed_scan)
+                            self.db.commit()
+                        except Exception as db_error:
+                            logger.error(f"Failed to save failed scan record: {db_error}")
+                        continue
                     
+                    # Process successful scan result
+                    try:
+                        # Categorize the scan result
+                        categorization = self._categorize_scan_result(scan_result)
+                        scan_result["categorization"] = categorization
+                        
+                        # Add task metadata
+                        scan_result["task_metadata"] = {
+                            "task_id": task.id,
+                            "task_name": task.name,
+                            "scan_timestamp": datetime.utcnow().isoformat()
+                        }
+                        
+                        # Create scan record with error handling
+                        try:
+                            scan = Scan(
+                                asset_id=None,  # No asset created automatically
+                                scan_task_id=task.id,
+                                scan_data=scan_result,
+                                scan_type=scan_config.get("scan_type", "standard"),
+                                status="completed" if categorization["is_device"] else "no_device"
+                            )
+                            self.db.add(scan)
+                            self.db.commit()
+                            successful_scans += 1
+                            
+                            logger.info(f"Task {task_id}: Successfully scanned {ip}: {categorization['result_type']} (is_device: {categorization['is_device']})")
+                            
+                        except Exception as db_error:
+                            logger.error(f"Task {task_id}: Failed to save scan result for IP {ip}: {db_error}")
+                            failed_scans += 1
+                            
+                    except Exception as process_error:
+                        logger.error(f"Task {task_id}: Failed to process scan result for IP {ip}: {process_error}")
+                        failed_scans += 1
+                
                 except Exception as e:
-                    logger.error(f"Failed to scan {ip}: {e}")
-                    # Create failed scan record
-                    failed_scan = Scan(
-                        asset_id=None,
-                        scan_task_id=task.id,
-                        scan_data={
-                            "ip": ip,
-                            "status": "failed",
-                            "error": str(e),
-                            "timestamp": datetime.utcnow().isoformat()
-                        },
-                        scan_type=scan_config.get("scan_type", "standard"),
-                        status="failed"
-                    )
-                    self.db.add(failed_scan)
+                    logger.error(f"Task {task_id}: Unexpected error scanning IP {ip}: {e}")
+                    failed_scans += 1
+                    
+                    # Create failed scan record with error handling
+                    try:
+                        failed_scan = Scan(
+                            asset_id=None,
+                            scan_task_id=task.id,
+                            scan_data={
+                                "ip": ip,
+                                "status": "failed",
+                                "error": str(e),
+                                "timestamp": datetime.utcnow().isoformat()
+                            },
+                            scan_type="standard",  # Default scan type for failed scans
+                            status="failed"
+                        )
+                        self.db.add(failed_scan)
+                        self.db.commit()
+                    except Exception as db_error:
+                        logger.error(f"Failed to save failed scan record: {db_error}")
+            
+            # Layer 6: Final task completion with comprehensive error handling
+            try:
+                # Refresh task to get latest status
+                self.db.refresh(task)
+                
+                if task.status != "cancelled":
+                    # Determine final status based on results
+                    if successful_scans > 0:
+                        task.status = "completed"
+                        logger.info(f"Task {task_id}: Completed successfully with {successful_scans} successful scans")
+                    elif failed_scans == total_ips:
+                        task.status = "failed"
+                        task.error_message = f"All {total_ips} scans failed"
+                        logger.error(f"Task {task_id}: All scans failed")
+                    else:
+                        task.status = "completed"  # Partial success is still completion
+                        logger.warning(f"Task {task_id}: Completed with {successful_scans} successful and {failed_scans} failed scans")
+                    
+                    # Update progress and completion stats
+                    task.progress = 100
+                    task.completed_ips = total_ips
+                    
+                    # Count actual discovered devices with error handling
+                    try:
+                        discovered_count = self.db.query(Scan).filter(
+                            Scan.scan_task_id == task.id,
+                            Scan.status == "completed"  # This means is_device was True
+                        ).count()
+                        task.discovered_devices = discovered_count
+                        logger.info(f"Task {task_id}: Found {discovered_count} devices out of {total_ips} IPs scanned")
+                    except Exception as e:
+                        logger.error(f"Task {task_id}: Failed to count discovered devices: {e}")
+                        task.discovered_devices = 0
+                
+                # Set end time
+                task.end_time = datetime.utcnow()
+                
+                # Final commit with error handling
+                try:
                     self.db.commit()
-            
-            # Mark task as completed
-            if task.status != "cancelled":
-                task.status = "completed"
-                task.progress = 100
-                task.completed_ips = total_ips
-                
-                # Count actual discovered devices - count scans where devices were actually found
-                discovered_count = self.db.query(Scan).filter(
-                    Scan.scan_task_id == task.id,
-                    Scan.status == "completed"  # This means is_device was True
-                ).count()
-                
-                task.discovered_devices = discovered_count
-                logger.info(f"Scan task {task_id} completed: {discovered_count} devices found")
-            
-            task.end_time = datetime.utcnow()
-            self.db.commit()
+                    logger.info(f"Task {task_id}: Final status saved successfully")
+                except Exception as e:
+                    logger.error(f"Task {task_id}: Failed to save final status: {e}")
+                    self.db.rollback()
+                    
+            except Exception as e:
+                logger.error(f"Task {task_id}: Critical error during completion: {e}")
+                try:
+                    task.status = "failed"
+                    task.error_message = f"Critical error during completion: {e}"
+                    task.end_time = datetime.utcnow()
+                    self.db.commit()
+                except Exception as final_error:
+                    logger.error(f"Task {task_id}: Failed to save error status: {final_error}")
+                    self.db.rollback()
             
         except Exception as e:
-            logger.error(f"Scan task {task_id} failed: {e}")
-            # Mark task as failed
-            task.status = "failed"
-            task.error_message = str(e)
-            task.end_time = datetime.utcnow()
-            self.db.commit()
+            logger.error(f"Task {task_id}: Critical failure during scan execution: {e}")
+            # Try to mark task as failed with comprehensive error handling
+            try:
+                # Get fresh task reference
+                task = self.get_scan_task(task_id)
+                if task:
+                    task.status = "failed"
+                    task.error_message = f"Critical failure: {str(e)}"
+                    task.end_time = datetime.utcnow()
+                    self.db.commit()
+                    logger.info(f"Task {task_id}: Marked as failed due to critical error")
+                else:
+                    logger.error(f"Task {task_id}: Could not retrieve task to mark as failed")
+            except Exception as final_error:
+                logger.error(f"Task {task_id}: Failed to mark task as failed: {final_error}")
+                try:
+                    self.db.rollback()
+                except:
+                    pass  # Ignore rollback errors
 
     def can_retry_scan_task(self, task_id: int) -> Dict[str, Any]:
         """Check if a failed scan task can be retried based on time limits."""
@@ -469,18 +692,12 @@ class ScanServiceV2:
         if not task.scan_template_id:
             raise ValueError("Scan template is required for all scan tasks")
         
-        # Get template using the relationship to avoid serialization issues
+        # Use the template relationship that should be loaded
         if not task.scan_template:
-            from ..models import ScanTemplate
-            template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
-        else:
-            template = task.scan_template
-        
-        if not template:
-            raise ValueError(f"Scan template {task.scan_template_id} not found")
+            raise ValueError(f"Scan template {task.scan_template_id} not found or not loaded")
         
         # Use template configuration
-        config = template.scan_config.copy()
+        config = task.scan_template.scan_config.copy()
         return config
 
     def _perform_scan(self, ip: str, scan_config: Dict[str, Any]) -> Dict[str, Any]:

@@ -138,26 +138,66 @@ const StreamlinedDiscoveryWizard = ({ onComplete, onCancel }) => {
   }, []);
 
   const handleLaunch = useCallback(async () => {
-    if (!validateStep(currentStep)) return;
-    
+    // Bulletproof validation before launching
+    if (!validateStep(currentStep)) {
+      console.error('Validation failed for current step:', currentStep);
+      setErrors({ general: 'Please complete all required fields' });
+      return;
+    }
+
+    // Additional validation layers
+    if (!wizardData.target || wizardData.target.trim() === '') {
+      console.error('Target is required');
+      setErrors({ general: 'Target is required' });
+      return;
+    }
+
+    if (!wizardData.scanTemplateId) {
+      console.error('Scan template is required');
+      setErrors({ general: 'Scan template is required' });
+      return;
+    }
+
+    // Validate target format
+    const targetPattern = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?:\/\d{1,2})?|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}-\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/;
+    if (!targetPattern.test(wizardData.target.trim())) {
+      console.error('Invalid target format:', wizardData.target);
+      setErrors({ general: 'Invalid target format. Use IP address, CIDR notation, or IP range' });
+      return;
+    }
+
     setLoading(true);
+    setErrors({});
+    
     try {
+      // Double-check template exists
+      const selectedTemplate = scanTemplates.find(t => t.id === wizardData.scanTemplateId);
+      if (!selectedTemplate) {
+        console.error('Selected template not found:', wizardData.scanTemplateId);
+        setErrors({ general: 'Selected scan template not found' });
+        return;
+      }
+      
       const scanConfig = {
-        name: `Network Scan - ${wizardData.target}`,
-        target: wizardData.target,
+        name: `Network Scan - ${wizardData.target.trim()}`,
+        target: wizardData.target.trim(),
         scan_template_id: wizardData.scanTemplateId,
         scanner_ids: wizardData.scannerId ? [wizardData.scannerId] : [],
         created_by: user?.username || 'system'
       };
 
+      console.log('Launching scan with validated config:', scanConfig);
+      console.log('Using template:', selectedTemplate.name);
+      
       const result = await createScanTask(scanConfig);
       onComplete(result);
     } catch (error) {
+      console.error('Failed to create scan task:', error);
       setErrors({ general: error.message || 'Failed to start scan' });
     } finally {
       setLoading(false);
     }
-  }, [wizardData, currentStep, validateStep, createScanTask, onComplete, user]);
+  }, [wizardData, currentStep, validateStep, createScanTask, onComplete, user, scanTemplates]);
 
   // Loading state
   if (loading && !dataLoaded) {

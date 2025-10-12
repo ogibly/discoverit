@@ -40,7 +40,8 @@ import {
   Scan,
   Database,
   AlertTriangle,
-  Grid3X3
+  Grid3X3,
+  RefreshCw
 } from 'lucide-react';
 
 const UnifiedScanDevicesInterface = () => {
@@ -909,20 +910,34 @@ const UnifiedScanDevicesInterface = () => {
                                 >
                                   <Download className="w-4 h-4" />
                                 </Button>
-                                {task.status === 'running' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      cancelScanTask(task.id);
-                                    }}
-                                    title="Cancel this running scan"
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </Button>
-                                )}
+          {(task.status === 'running' || task.status === 'pending') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                cancelScanTask(task.id);
+              }}
+              title={`Cancel this ${task.status} scan`}
+              className="text-red-600 hover:text-red-700"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+          {task.status === 'failed' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                retryScanTask(task.id);
+              }}
+              title="Retry this failed scan"
+              className="text-blue-600 hover:text-blue-700"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          )}
                               </div>
                             </div>
 

@@ -194,7 +194,7 @@ class TemplateService:
 
     def create_default_templates(self) -> None:
         """Create default system templates."""
-        # Default scan templates
+        # Default scan templates - using container-friendly arguments
         default_scan_templates = [
             {
                 "name": "Quick Network Discovery",
@@ -209,7 +209,7 @@ class TemplateService:
                 "description": "Comprehensive port and service discovery",
                 "scan_config": {
                     "timeout": 300,
-                    "arguments": "-sS -O -sV -A"
+                    "arguments": "-sT -sV -A"
                 }
             },
             {
@@ -217,7 +217,7 @@ class TemplateService:
                 "description": "Comprehensive scan with vulnerability detection",
                 "scan_config": {
                     "timeout": 600,
-                    "arguments": "-sS -O -sV -A --script default,safe,vuln"
+                    "arguments": "-sT -sV -A --script default,safe,vuln"
                 }
             }
         ]

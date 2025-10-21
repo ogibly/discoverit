@@ -84,7 +84,7 @@ class ScanServiceV2:
                             "scan_type": "quick",
                             "discovery_depth": 1,
                             "timeout": 30,
-                            "arguments": "-sn -T4"
+                            "arguments": "-sT -T4"
                         },
                         scan_type="quick",
                         is_system=True,
@@ -120,11 +120,20 @@ class ScanServiceV2:
                 start_time=datetime.utcnow()
             )
             
+            logger.info(f"Creating scan task with scan_template_id: {scan_template_id}")
             self.db.add(task)
+            logger.info(f"Task added to session, scan_template_id: {task.scan_template_id}")
             self.db.commit()
+            logger.info(f"Database commit successful")
             self.db.refresh(task)
+            logger.info(f"Task refreshed from database")
             
             logger.info(f"Successfully created scan task {task.id} using template {scan_template_id} (source: {template_source})")
+            logger.info(f"Task {task.id} scan_template_id after commit: {task.scan_template_id}")
+            
+            # Verify the task was saved correctly by querying the database
+            saved_task = self.db.query(ScanTask).filter(ScanTask.id == task.id).first()
+            logger.info(f"Task {task.id} scan_template_id from database query: {saved_task.scan_template_id if saved_task else 'NOT_FOUND'}")
             
         except Exception as e:
             self.db.rollback()
@@ -137,6 +146,9 @@ class ScanServiceV2:
             try:
                 template = self.db.query(ScanTemplate).filter(ScanTemplate.id == task.scan_template_id).first()
                 if template:
+                    # Store the actual template object for internal use
+                    task._scan_template_obj = template
+                    # Create a dictionary representation for API response
                     task.scan_template = {
                         "id": template.id,
                         "name": template.name,
@@ -150,6 +162,10 @@ class ScanServiceV2:
                 task.scan_template = None
         else:
             task.scan_template = None
+        
+        # Ensure scan_template_id is preserved
+        if hasattr(task, '_scan_template_obj') and task._scan_template_obj:
+            task.scan_template_id = task._scan_template_obj.id
         
         logger.info(f"Created scan task {task.id}: {task.name}")
         return task
@@ -372,6 +388,7 @@ class ScanServiceV2:
             logger.info(f"Starting scan task {task_id}: {task.name} for target: {task.target}")
             
             # Layer 2: Validate template exists before starting
+            logger.info(f"Task {task_id}: scan_template_id = {task.scan_template_id}")
             if not task.scan_template_id:
                 error_msg = "Scan template is required for all scan tasks"
                 logger.error(f"Task {task_id}: {error_msg}")
@@ -380,6 +397,10 @@ class ScanServiceV2:
                 task.end_time = datetime.utcnow()
                 self.db.commit()
                 return
+            
+            # Preserve scan_template_id for the duration of the scan
+            preserved_scan_template_id = task.scan_template_id
+            logger.info(f"Task {task_id}: Preserved scan_template_id = {preserved_scan_template_id}")
             
             # Layer 3: Initialize task status with error handling
             try:
@@ -449,7 +470,7 @@ class ScanServiceV2:
                     
                     # Get scan configuration with error handling
                     try:
-                        scan_config = self._get_scan_config_from_template(task)
+                        scan_config = self._get_scan_config_from_template(task, preserved_scan_template_id)
                         if not scan_config:
                             raise ValueError("Failed to get scan configuration from template")
                     except Exception as e:
@@ -687,17 +708,25 @@ class ScanServiceV2:
             "status": "pending"
         }
 
-    def _get_scan_config_from_template(self, task: ScanTask) -> Dict[str, Any]:
+    def _get_scan_config_from_template(self, task: ScanTask, preserved_scan_template_id: int = None) -> Dict[str, Any]:
         """Get scan configuration from the associated template."""
-        if not task.scan_template_id:
+        # Use preserved scan_template_id if provided, otherwise use task's scan_template_id
+        scan_template_id = preserved_scan_template_id or task.scan_template_id
+        
+        if not scan_template_id:
             raise ValueError("Scan template is required for all scan tasks")
         
-        # Use the template relationship that should be loaded
-        if not task.scan_template:
-            raise ValueError(f"Scan template {task.scan_template_id} not found or not loaded")
+        # Use the stored template object if available, otherwise load it
+        if hasattr(task, '_scan_template_obj') and task._scan_template_obj:
+            template = task._scan_template_obj
+        else:
+            # Load the template from database
+            template = self.db.query(ScanTemplate).filter(ScanTemplate.id == scan_template_id).first()
+            if not template:
+                raise ValueError(f"Scan template {scan_template_id} not found")
         
         # Use template configuration
-        config = task.scan_template.scan_config.copy()
+        config = template.scan_config.copy()
         return config
 
     def _perform_scan(self, ip: str, scan_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -766,7 +795,8 @@ class ScanServiceV2:
             base_opts = ["--privileged", "--send-ip"]  # Use privileged mode and send IP packets
             
             # Get arguments from scan config (from template)
-            arguments = scan_config.get("arguments", "-sS -O -sV -A")
+            # Use container-friendly arguments that don't require root privileges
+            arguments = scan_config.get("arguments", "-sT -sV -A")
             timeout = scan_config.get("timeout", 300)
             
             # Parse arguments and build command

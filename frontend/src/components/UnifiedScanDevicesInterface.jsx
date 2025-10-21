@@ -40,8 +40,7 @@ import {
   Scan,
   Database,
   AlertTriangle,
-  Grid3X3,
-  RefreshCw
+  Grid3X3
 } from 'lucide-react';
 
 const UnifiedScanDevicesInterface = () => {

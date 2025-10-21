@@ -49,33 +49,64 @@ def unified_scan(request: ScanRequest):
     
     try:
         # Build scan arguments based on type and depth
+        # Use container-friendly scan arguments that don't require root privileges
         if request.scan_type == "quick":
-            arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995 -PA21,22,23,25,53,80,110,443,993,995"
+            arguments = "-sT -PE -PS21,22,23,25,53,80,110,443,993,995 -PA21,22,23,25,53,80,110,443,993,995"
         elif request.scan_type == "comprehensive":
-            arguments = "-sS -O -sV -A --script default,safe"
+            arguments = "-sT -sV -A --script default,safe"
         elif request.scan_type == "lan_discovery":
-            arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995 -PR"
+            arguments = "-sT -PE -PS21,22,23,25,53,80,110,443,993,995 -PR"
         elif request.scan_type == "arp":
             arguments = "-sn -PR"
         elif request.scan_type == "snmp":
             arguments = "-sU -p 161 --script snmp-info,snmp-brute"
         else:
-            arguments = "-sn -PE -PS21,22,23,25,53,80,110,443,993,995"
+            arguments = "-sT -PE -PS21,22,23,25,53,80,110,443,993,995"
         
         # Add timing and timeout
         arguments += f" -T4 --host-timeout {request.timeout}s"
         
         # Run the scan
+        print(f"Running nmap scan on {request.target} with arguments: {arguments}")
         nm.scan(request.target, arguments=arguments)
         
-        if request.target not in nm.all_hosts():
-            return {
-                "ip": request.target,
-                "status": "failed",
-                "error": "Host is down or unreachable",
-                "timestamp": timestamp,
-                "scan_type": request.scan_type
-            }
+        # Debug information
+        all_hosts = nm.all_hosts()
+        print(f"All hosts found: {all_hosts}")
+        print(f"Scan info: {nm.scaninfo()}")
+        
+        if request.target not in all_hosts:
+            # Try a more basic ping scan to see if the host is reachable at all
+            print(f"Target {request.target} not found in scan results, trying basic ping scan")
+            nm_ping = nmap.PortScanner()
+            nm_ping.scan(request.target, arguments="-sn")
+            
+            if request.target in nm_ping.all_hosts():
+                return {
+                    "ip": request.target,
+                    "status": "failed",
+                    "error": "Host is reachable but scan failed - possible network restrictions or firewall",
+                    "timestamp": timestamp,
+                    "scan_type": request.scan_type,
+                    "debug_info": {
+                        "ping_successful": True,
+                        "scan_arguments": arguments,
+                        "all_hosts_found": all_hosts
+                    }
+                }
+            else:
+                return {
+                    "ip": request.target,
+                    "status": "failed",
+                    "error": "Host is down or unreachable",
+                    "timestamp": timestamp,
+                    "scan_type": request.scan_type,
+                    "debug_info": {
+                        "ping_successful": False,
+                        "scan_arguments": arguments,
+                        "all_hosts_found": all_hosts
+                    }
+                }
         
         host_data = nm[request.target]
         
@@ -157,12 +188,17 @@ def unified_scan(request: ScanRequest):
         return result
         
     except Exception as e:
+        print(f"Scan failed with exception: {e}")
         return {
             "ip": request.target,
             "status": "failed",
             "error": str(e),
             "timestamp": timestamp,
-            "scan_type": request.scan_type
+            "scan_type": request.scan_type,
+            "debug_info": {
+                "exception_type": type(e).__name__,
+                "scan_arguments": arguments if 'arguments' in locals() else "not_set"
+            }
         }
 
 def _determine_device_type(scan_result: Dict) -> str:
